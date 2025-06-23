@@ -2,6 +2,7 @@ import React from 'react';
 import { TextInput, View, Text, StyleSheet, KeyboardTypeOptions, TextInputProps } from 'react-native';
 import { COLORS, COMPONENT_STYLES } from '../theme/theme';
 import { moderateScale } from 'react-native-size-matters';
+import Fonts from '../theme/fonts';
 
 interface ThemedInputProps {
   value: string;
@@ -59,16 +60,17 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: '#ef4444',
-    fontSize: 14,
+    fontSize: moderateScale(14),
     marginTop: moderateScale(5),
+    fontFamily: Fonts.Sen_Regular,
 
   },
   container: {
     marginBottom: 0,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: moderateScale(12),
+    fontFamily: Fonts.Sen_Regular,
     marginBottom: 8,
     color: COLORS.textPrimary,
   },

@@ -1,5 +1,21 @@
 {
+  "hi_welcome":"Hi, Welcome!",
+  "sign_in":"Sign in",
+  "please_enter_your_credential":"Please enter your credentials to\naccess your account.",
+  "mobile_number": "Mobile Number",
+  "enter_mobile_number": "Enter mobile number",
+  "send_otp": "SEND OTP",
+  "by_signing_in_you_agree_to_our":"By continuing, you agree to our Terms of Service and Privacy Policy",
+  "terms_of_service": "Terms of Service",
+  "privacy_policy": "Privacy Policy",
   "welcome": "Welcome",
   "login": "Login",
-  "language": "Language"
+  "language": "Language",
+  "otp_verification": "OTP Verification",
+  "6_digit_code_has_been_sent":"6 digit code has been sent to\nyour mobile number.",
+  "verify":"Verify",
+  "resend_otp":"Resend OTP",
+  "did_not_receive_code":"Didn't receive the code? ",
+  "change_mobile_number": "Change Mobile Number"
+
 }

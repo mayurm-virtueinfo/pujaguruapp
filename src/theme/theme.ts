@@ -1,9 +1,13 @@
 import { StyleSheet } from 'react-native';
+import { moderateScale } from 'react-native-size-matters';
+import Fonts from './fonts';
 
 // Colors
 export const COLORS = {
-  primary: '#00BCD4', // The teal/turquoise color from your button
+  primary: '#F21825', // The teal/turquoise color from your button
   primaryDisabled: '#B2EAF1', // Lighter shade for disabled state
+  primaryBackgroundButton: '#FFB900', // Background color for primary button
+  primaryTextDark:'#191313', 
   white: '#FFFFFF',
   black: '#000000',
   gray: '#888888',
@@ -66,9 +70,10 @@ export const COMPONENT_STYLES = StyleSheet.create({
   },
   input: {
     backgroundColor: COLORS.lightGray,
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
+    borderRadius: moderateScale(8),
+    padding: moderateScale(15),
+    fontSize: moderateScale(16),
+    fontFamily:Fonts.Sen_Regular,
     // marginBottom: 20,
   },
   footerText: {

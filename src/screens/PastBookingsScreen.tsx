@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     validateButton: {
-        backgroundColor: '#00BCD4',
+        backgroundColor: COLORS.primaryBackgroundButton,
         padding: 10,
         borderRadius: 5,
         marginBottom: 10,

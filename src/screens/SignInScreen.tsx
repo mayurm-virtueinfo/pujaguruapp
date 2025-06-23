@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
+  ImageBackground,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
@@ -19,6 +21,12 @@ import { validatePhoneNumber } from '../helper/Validation';
 import Loader from '../components/Loader';
 import { moderateScale } from 'react-native-size-matters';
 import { useCommonToast } from '../common/CommonToast';
+import { COLORS } from '../theme/theme';
+import PrimaryButton from '../components/PrimaryButton';
+import { Images } from '../theme/Images';
+import Fonts from '../theme/fonts';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 // import { firebaseAuth } from '../../App';
 type SignInScreenNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -30,6 +38,8 @@ interface Props {
 }
 
 const SignInScreen: React.FC<Props> = ({ navigation }) => {
+  const { t, i18n } = useTranslation();
+  const inset = useSafeAreaInsets();
   const { showErrorToast, showSuccessToast } = useCommonToast();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isLoading, setLoading] = useState(false);
@@ -83,120 +93,118 @@ const SignInScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
-      <Loader loading={isLoading} />
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled">
-        <View style={styles.content}>
-          <Text style={styles.title}>Welcome to PanditApp</Text>
-          <Text style={styles.subtitle}>
-            Please enter your phone number to continue
-          </Text>
+    <ImageBackground source={Images.ic_splash_background} style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}>
+        <Loader loading={isLoading} />
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled">
+          <View style={[styles.content, { paddingTop: inset.top }]}>
+            <View style={styles.containerHeader}>
+              <Image source={Images.ic_app_logo} style={{ width: '33%', resizeMode: 'contain' }}></Image>
+              <Text style={styles.title}>{t('hi_welcome')}</Text>
+            </View>
 
-          {/* <View style={styles.inputContainer}>
-            <Text style={styles.label}>Phone Number</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your phone number"
-              value={phoneNumber}
-              onChangeText={setPhoneNumber}
-              keyboardType="phone-pad"
-              autoComplete="tel"
-              textContentType="telephoneNumber"
-              maxLength={15}
-            />
-          </View> */}
-          <ThemedInput
-            label="Phone Number"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            placeholder="Enter phone number"
-            keyboardType="phone-pad"
-            autoComplete="tel"
-            textContentType="telephoneNumber"
-            maxLength={10}
-            errors={errors}
-            errorField='phoneNumber'
-          />
+            <View style={[styles.containerBody, { paddingBottom: inset.bottom }]}>
+              <Text style={styles.mainTitle}>{t('sign_in')}</Text>
+              <Text style={styles.subtitle}>{t('please_enter_your_credential')}</Text>
 
-          <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
-            <Text style={styles.signInButtonText}>Get OTP</Text>
-          </TouchableOpacity>
+              <ThemedInput
+                label={t('mobile_number')}
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                placeholder={t('enter_mobile_number')}
+                keyboardType="phone-pad"
+                autoComplete="tel"
+                textContentType="telephoneNumber"
+                maxLength={10}
+                errors={errors}
+                errorField='phoneNumber'
+              />
 
-          <Text style={styles.termsText}>
-            By continuing, you agree to our Terms of Service and Privacy Policy
-          </Text>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+              <PrimaryButton onPress={handleSignIn} title={t('send_otp')} />
+
+              <Text style={styles.termsText}>
+                {t('by_signing_in_you_agree_to_our')}
+                <Text
+                  style={{ color: COLORS.primary, fontFamily: Fonts.Sen_Bold }}
+                  onPress={() => {
+                    Alert.alert(t('terms_of_service'), t('terms_of_service_content'));
+                  }}>
+                  {` ${t('terms_of_service')}`}
+                </Text>
+                {` ${t('and')}`}
+                <Text
+                  style={{ color: COLORS.primary, fontFamily: Fonts.Sen_Bold }}
+                  onPress={() => {
+                    Alert.alert(t('privacy_policy'), t('privacy_policy_content'));
+                  }}>
+                  {` ${t('privacy_policy')}`}
+                </Text>
+              </Text>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
   scrollContent: {
     flexGrow: 1,
   },
   content: {
     flex: 1,
-    padding: 20,
+    // padding: 20,
     justifyContent: 'center',
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 12,
+    fontSize: moderateScale(32),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.white,
+  },
+  mainTitle: {
+    fontSize: moderateScale(24),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+    marginBottom: moderateScale(24),
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginBottom: 32,
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
+    marginBottom: moderateScale(24),
     textAlign: 'center',
   },
   inputContainer: {
     marginBottom: 24,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  input: {
-    height: 48,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#111827',
-  },
-  signInButton: {
-    height: 48,
-    backgroundColor: '#00BCD4',
-    borderRadius: 8,
-    justifyContent: 'center',
+  containerHeader: {
+    height: moderateScale(220),
     alignItems: 'center',
-    marginBottom: moderateScale(16),
-    marginTop: moderateScale(10)
+    // justifyContent: 'center',
   },
-  signInButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+  containerBody: {
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    flex: 1,
+    padding: moderateScale(24),
+    // justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
   },
   termsText: {
-    fontSize: 12,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 16,
+    fontSize: moderateScale(12),
+    color: COLORS.primaryTextDark,
+    fontFamily: Fonts.Sen_Regular,
+    marginTop: moderateScale(16),
+    textAlign: 'center'
   },
   errorText: {
     color: '#ef4444',

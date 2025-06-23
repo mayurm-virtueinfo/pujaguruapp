@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,24 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ImageBackground,
+  Image,
 } from 'react-native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RouteProp} from '@react-navigation/native';
-import {AuthStackParamList} from '../navigation/AuthNavigator';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
+import { AuthStackParamList } from '../navigation/AuthNavigator';
 import Loader from '../components/Loader';
 import { getAuth, signInWithPhoneNumber } from '@react-native-firebase/auth';
 import { useCommonToast } from '../common/CommonToast';
+import { COLORS } from '../theme/theme';
+import { Images } from '../theme/Images';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { moderateScale } from 'react-native-size-matters';
+import Fonts from '../theme/fonts';
+import PrimaryButton from '../components/PrimaryButton';
+import PrimaryButtonLabeled from '../components/PrimaryButtonLabeled';
+import PrimaryButtonOutlined from '../components/PrimaryButtonOutlined';
 
 type OTPVerificationScreenNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -31,14 +42,16 @@ interface Props {
   route: OTPVerificationScreenRouteProp;
 }
 
-const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
+const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { t, i18n } = useTranslation();
+  const inset = useSafeAreaInsets();
   const { showErrorToast, showSuccessToast } = useCommonToast();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<Array<TextInput | null>>([]);
-  const {phoneNumber,confirmation} = route.params;
+  const { phoneNumber, confirmation } = route.params;
 
   const [otpConfirmation, setOtpConfirmation] = useState(confirmation)
-  const [isLoading,setLoading] = useState(false);
+  const [isLoading, setLoading] = useState(false);
 
   const handleOtpChange = (value: string, index: number) => {
     if (value.length <= 1) {
@@ -59,13 +72,13 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
     }
   };
 
-  const confirmCode = async (code:string) => {
+  const confirmCode = async (code: string) => {
     try {
       setLoading(true)
       await otpConfirmation.confirm(code);
       setLoading(false)
       navigation.navigate('PanditRegistration');
-    } catch (error:any) {
+    } catch (error: any) {
       console.log('Invalid code.');
       setLoading(false)
       // Alert.alert('','Invalid code');
@@ -86,7 +99,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
 
       confirmCode(otpValue);
       // Navigate to registration screen after successful verification
-      
+
     } catch (error) {
       console.error('Verification failed:', error);
       // Alert.alert('Error', 'OTP verification failed. Please try again.');
@@ -94,133 +107,156 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
     }
   };
 
-  const handleResendOTP = async() => {
+  const handleResendOTP = async () => {
     // Implement resend OTP logic here
     try {
-          // const confirmation = await auth().signInWithPhoneNumber(formattedPhone);
-          setLoading(true);
-          const confirmation = await signInWithPhoneNumber(getAuth(), phoneNumber);
-          setLoading(false);
-          // Alert.alert('Success', 'New OTP has been sent to your phone number');
-          showSuccessToast('New OTP has been sent to your phone number');
-          setOtpConfirmation(confirmation);
-        } catch (error: any) {
-          console.log('---8')
-          console.error(error);
-          setLoading(false);
-          // Alert.alert('Error', error?.message || 'Failed to Resend OTP. Please try again.');
-          showErrorToast(error?.message || 'Failed to Resend OTP. Please try again.')
-        }
-    
+      // const confirmation = await auth().signInWithPhoneNumber(formattedPhone);
+      setLoading(true);
+      const confirmation = await signInWithPhoneNumber(getAuth(), phoneNumber);
+      setLoading(false);
+      // Alert.alert('Success', 'New OTP has been sent to your phone number');
+      showSuccessToast('New OTP has been sent to your phone number');
+      setOtpConfirmation(confirmation);
+    } catch (error: any) {
+      console.log('---8')
+      console.error(error);
+      setLoading(false);
+      // Alert.alert('Error', error?.message || 'Failed to Resend OTP. Please try again.');
+      showErrorToast(error?.message || 'Failed to Resend OTP. Please try again.')
+    }
+
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
-      <Loader loading={isLoading}/>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled">
-        <View style={styles.content}>
-          <Text style={styles.title}>OTP Verification</Text>
-          <Text style={styles.subtitle}>
-            Enter the verification code we sent to
-          </Text>
-          <Text style={styles.phoneNumber}>{phoneNumber}</Text>
+    <ImageBackground source={Images.ic_splash_background} style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}>
+        <Loader loading={isLoading} />
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled">
+          <View style={[styles.content, { paddingTop: inset.top }]}>
+            <View style={styles.containerHeader}>
+              <Image source={Images.ic_app_logo} style={{ width: '33%', resizeMode: 'contain' }}></Image>
+              <Text style={styles.title}>{t('hi_welcome')}</Text>
+            </View>
+            <View style={[styles.containerBody, { paddingBottom: inset.bottom }]}>
+              <Text style={styles.mainTitle}>{t('otp_verification')}</Text>
+              <Text style={styles.subtitle}>{t('6_digit_code_has_been_sent')}</Text>
+              <Text style={styles.phoneNumber}>{phoneNumber}</Text>
 
-          <View style={styles.otpContainer}>
-            {otp.map((digit, index) => (
-              <TextInput
-                key={index}
-                ref={ref => (inputRefs.current[index] = ref)}
-                style={styles.otpInput}
-                value={digit}
-                onChangeText={value => handleOtpChange(value, index)}
-                onKeyPress={e => handleKeyPress(e, index)}
-                keyboardType="number-pad"
-                maxLength={1}
-                selectTextOnFocus
-                testID={`otp-input-${index}`}
-              />
-            ))}
+              <View style={styles.otpContainer}>
+                {otp.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={ref => (inputRefs.current[index] = ref)}
+                    style={styles.otpInput}
+                    value={digit}
+                    onChangeText={value => handleOtpChange(value, index)}
+                    onKeyPress={e => handleKeyPress(e, index)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    selectTextOnFocus
+                    testID={`otp-input-${index}`}
+                  />
+                ))}
+              </View>
+
+              <PrimaryButton onPress={handleVerification} title={t('verify')}/>
+
+              <View style={styles.resendContainer}>
+                <Text style={styles.resendText}>{t('did_not_receive_code')}</Text>
+                <PrimaryButtonLabeled onPress={handleResendOTP} title={t('resend_otp')}/>
+              </View>
+              <PrimaryButtonOutlined onPress={() => navigation.goBack()} title={t('change_mobile_number')}/> 
+            </View>
           </View>
-
-          <TouchableOpacity
-            style={styles.verifyButton}
-            onPress={handleVerification}>
-            <Text style={styles.verifyButtonText}>Verify</Text>
-          </TouchableOpacity>
-
-          <View style={styles.resendContainer}>
-            <Text style={styles.resendText}>Didn't receive the code? </Text>
-            <TouchableOpacity onPress={handleResendOTP}>
-              <Text style={styles.resendButton}>Resend OTP</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    // backgroundColor: '#ffffff',
+  },
+  containerHeader: {
+    height: moderateScale(220),
+    alignItems: 'center',
+    // justifyContent: 'center',
+  },
+  containerBody: {
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    flex: 1,
+    padding: moderateScale(24),
+    // justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  mainTitle: {
+    fontSize: moderateScale(24),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+    marginBottom: moderateScale(24),
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
+    marginBottom: moderateScale(24),
+    textAlign: 'center',
   },
   scrollContent: {
     flexGrow: 1,
   },
   content: {
     flex: 1,
-    padding: 20,
-    alignItems: 'center',
     justifyContent: 'center',
   },
+
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 16,
+    fontSize: moderateScale(32),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.white,
   },
-  subtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    marginBottom: 8,
-  },
+
   phoneNumber: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 32,
+    fontSize: moderateScale(16),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primaryTextDark,
+    marginBottom: moderateScale(24),
   },
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: moderateScale(10),
   },
   otpInput: {
-    width: 45,
-    height: 45,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    marginHorizontal: 5,
+    width: moderateScale(45),
+    height: moderateScale(45),
+    borderWidth: moderateScale(1),
+    borderColor: COLORS.primaryBackgroundButton,
+    borderRadius: moderateScale(8),
+    marginHorizontal: moderateScale(5),
     textAlign: 'center',
-    fontSize: 20,
-    color: '#111827',
-    backgroundColor: '#F9FAFB',
+    fontSize: moderateScale(20),
+    color: COLORS.primaryTextDark,
+    fontFamily: Fonts.Sen_Regular,
+    backgroundColor: COLORS.lightGray,
   },
   verifyButton: {
     width: '100%',
-    height: 48,
-    backgroundColor: '#00BCD4',
-    borderRadius: 8,
+    height: moderateScale(48),
+    backgroundColor: COLORS.primaryBackgroundButton,
+    borderRadius: moderateScale(8),
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: moderateScale(24),
   },
   verifyButtonText: {
     color: '#FFFFFF',
@@ -230,14 +266,16 @@ const styles = StyleSheet.create({
   resendContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop:moderateScale(16),
   },
   resendText: {
-    fontSize: 14,
-    color: '#6B7280',
+    fontSize: moderateScale(14),
+    color: COLORS.primaryTextDark,
+    fontFamily: Fonts.Sen_Regular,
   },
   resendButton: {
     fontSize: 14,
-    color: '#00BCD4',
+    color: COLORS.primaryBackgroundButton,
     fontWeight: '600',
   },
 });

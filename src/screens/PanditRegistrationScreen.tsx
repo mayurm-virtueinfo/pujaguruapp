@@ -19,6 +19,7 @@ import { AuthStackParamList } from '../navigation/AuthNavigator'; // Import your
 import {apiService, DropdownItem} from '../api/apiService';
 import CustomHeader from '../components/CustomHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { COLORS } from '../theme/theme';
 
 interface FormData {
   firstName: string;
@@ -539,7 +540,7 @@ const styles = StyleSheet.create({
   },
   button: {
     height: 48,
-    backgroundColor: '#00bcd4',
+    backgroundColor: COLORS.primaryBackgroundButton,
     borderRadius: 8,
     marginHorizontal: 20,
     justifyContent: 'center',
