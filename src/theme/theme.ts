@@ -1,5 +1,5 @@
-import { StyleSheet } from 'react-native';
-import { moderateScale } from 'react-native-size-matters';
+import {StyleSheet} from 'react-native';
+import {moderateScale} from 'react-native-size-matters';
 import Fonts from './fonts';
 
 // Colors
@@ -7,24 +7,26 @@ export const COLORS = {
   primary: '#F21825', // The teal/turquoise color from your button
   primaryDisabled: '#B2EAF1', // Lighter shade for disabled state
   primaryBackgroundButton: '#FFB900', // Background color for primary button
-  primaryTextDark:'#191313', 
+  primaryTextDark: '#191313',
   white: '#FFFFFF',
   black: '#000000',
   gray: '#888888',
   lightGray: '#F5F5F5',
   backgroundPrimary: '#FFFFFF',
-  backGroundSecondary:'#ebeded',
+  backGroundSecondary: '#ebeded',
   textPrimary: '#222222',
   textSecondary: '#888888',
-  success: '#32CD32',       // Green for "Completed"
-  warning: '#FF4500',       // Orange-Red for "Cancelled by User"
-  error: '#FF0000',         // Red for "Rejected"
-  textDark: '#1A1A1A',      // Primary dark text (e.g. pooja name)
-  textGray: '#7D7D7D',      // Secondary gray text (e.g. date, maharaj name)
-  background: '#F7F9FC',    // Light background color for screens
-  border: '#DDDDDD',        // Border/light separator if needed
+  success: '#32CD32', // Green for "Completed"
+  warning: '#FF4500', // Orange-Red for "Cancelled by User"
+  error: '#FF0000', // Red for "Rejected"
+  textDark: '#1A1A1A', // Primary dark text (e.g. pooja name)
+  textGray: '#7D7D7D', // Secondary gray text (e.g. date, maharaj name)
+  background: '#F7F9FC', // Light background color for screens
+  border: '#DDDDDD', // Border/light separator if needed
   darkText: '#1F2937',
   inputBg: '#ECEEF2',
+  inputLabelText: '#6C7278',
+  inputBoder: '#E4E8E9',
 };
 
 // Typography
@@ -73,7 +75,7 @@ export const COMPONENT_STYLES = StyleSheet.create({
     borderRadius: moderateScale(8),
     padding: moderateScale(15),
     fontSize: moderateScale(16),
-    fontFamily:Fonts.Sen_Regular,
+    fontFamily: Fonts.Sen_Regular,
     // marginBottom: 20,
   },
   footerText: {

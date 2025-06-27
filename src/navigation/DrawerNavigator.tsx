@@ -5,11 +5,16 @@ import {
   DrawerItemList,
   DrawerItem,
 } from '@react-navigation/drawer';
-import { getFocusedRouteNameFromRoute, NavigatorScreenParams } from '@react-navigation/native';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native'; // Added for custom content
+import {
+  getFocusedRouteNameFromRoute,
+  NavigatorScreenParams,
+} from '@react-navigation/native';
+import {View, StyleSheet, Text, TouchableOpacity} from 'react-native'; // Added for custom content
 
 // Navigators
-import AppBottomTabNavigator, { AppBottomTabParamList } from './BottomTabNavigator';
+import AppBottomTabNavigator, {
+  AppBottomTabParamList,
+} from './BottomTabNavigator';
 
 // Screens
 import ProfileScreen from '../screens/ProfileScreen';
@@ -22,14 +27,16 @@ import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
 import AboutUsScreen from '../screens/AboutUsScreen';
 import ContactUsScreen from '../screens/ContactUsScreen';
 // import { useAuth } from './RootNavigator'; // Import useAuth
-import { COLORS } from '../theme/theme';
+import {COLORS} from '../theme/theme';
 import CustomHeader from '../components/CustomHeader';
 import AstroRequestScreen from '../screens/AstroRequestScreen';
 import AstroRequestNavigator from './AstroRequestNavigator';
 import PastBookingsBottomTabNavigator from './PastBookingsBottomTabNavigator';
 import AvailabilityScreen from '../screens/AvailabilityScreen';
 import EarningsNavigator from './EarningsNavigator';
-import { useAuth } from '../provider/AuthProvider';
+import {useAuth} from '../provider/AuthProvider';
+import UserProfileScreen from '../screens/Users/ProfileScreen/UserProfileScreen';
+import UserPoojaDetails from '../screens/Users/PoojaDetailsScreen/PujaDetailsScreen';
 
 export type AppDrawerParamList = {
   MainApp: NavigatorScreenParams<AppBottomTabParamList>; // Main content with Bottom Tabs
@@ -37,7 +44,7 @@ export type AppDrawerParamList = {
   Profile: undefined;
   Settings: undefined;
   EarningsNavigator: undefined; // Naming it differently if it's a distinct screen from tab
-  Availabality:undefined;
+  Availabality: undefined;
   Ledgers: undefined;
   HelpAndSupport: undefined;
   PrivacyPolicy: undefined;
@@ -45,13 +52,16 @@ export type AppDrawerParamList = {
   AboutUs: undefined;
   ContactUs: undefined;
   AstroRequestNavigator: undefined;
+  UserProfile: undefined;
+  UserPoojaDetails: undefined;
+
   // Logout is handled via custom content, not a screen
 };
 
 const Drawer = createDrawerNavigator<AppDrawerParamList>();
 
 const CustomDrawerContent = (props: any) => {
-  const { signOutApp } = useAuth(); // Get signOut from context
+  const {signOutApp} = useAuth(); // Get signOut from context
 
   const handleLogoutPress = () => {
     signOutApp();
@@ -59,7 +69,7 @@ const CustomDrawerContent = (props: any) => {
   };
 
   return (
-    <DrawerContentScrollView {...props} contentContainerStyle={{ flex: 1 }}>
+    <DrawerContentScrollView {...props} contentContainerStyle={{flex: 1}}>
       <DrawerItemList {...props} />
       <View style={styles.logoutContainer}>
         <DrawerItem
@@ -76,7 +86,7 @@ const AppDrawerNavigator: React.FC = () => {
   // Utility function to get the title based on the current tab route name
   const getHeaderTitle = (route: any) => {
     const routeName = getFocusedRouteNameFromRoute(route) ?? 'PoojaRequest';
-    console.log('DrawerNavigator.tsx : routeName : ',routeName)
+    console.log('DrawerNavigator.tsx : routeName : ', routeName);
     switch (routeName) {
       case 'PoojaRequest':
         return 'Pooja Requests';
@@ -112,12 +122,11 @@ const AppDrawerNavigator: React.FC = () => {
         headerTintColor: COLORS.white,
         drawerActiveTintColor: COLORS.primary,
         drawerInactiveTintColor: COLORS.textPrimary,
-      }}
-    >
+      }}>
       <Drawer.Screen
         name="MainApp"
         component={AppBottomTabNavigator}
-        options={({ route }) => ({
+        options={({route}) => ({
           // title: getHeaderTitle(route), // <- dynamic title here
           drawerLabel: 'Home Dashboard', // static label in drawer
           headerTitle: getHeaderTitle(route), // dynamic title in screen header
@@ -126,7 +135,7 @@ const AppDrawerNavigator: React.FC = () => {
       <Drawer.Screen
         name="PastBooking"
         component={PastBookingsBottomTabNavigator}
-        options={({ route }) => ({
+        options={({route}) => ({
           // title: getHeaderTitle(route), // <- dynamic title here
           drawerLabel: 'Past Bookings', // static label in drawer
           headerTitle: getHeaderTitle(route), // dynamic title in screen header
@@ -134,15 +143,57 @@ const AppDrawerNavigator: React.FC = () => {
       />
       <Drawer.Screen name="Profile" component={ProfileScreen} />
       <Drawer.Screen name="Settings" component={SettingsScreen} />
-      <Drawer.Screen name="EarningsNavigator" component={EarningsNavigator} options={{ title: 'Earnings' }} />
-      <Drawer.Screen name="Availabality" component={AvailabilityScreen} options={{ title: 'Availabality' }} />
+      <Drawer.Screen
+        name="EarningsNavigator"
+        component={EarningsNavigator}
+        options={{title: 'Earnings'}}
+      />
+      <Drawer.Screen
+        name="Availabality"
+        component={AvailabilityScreen}
+        options={{title: 'Availabality'}}
+      />
       <Drawer.Screen name="Ledgers" component={LedgersScreen} />
-      <Drawer.Screen name="HelpAndSupport" component={HelpAndSupportScreen} options={{ title: 'Help & Support' }} />
-      <Drawer.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ title: 'Privacy Policy' }} />
-      <Drawer.Screen name="TermsAndConditions" component={TermsAndConditionsScreen} options={{ title: 'Terms & Conditions' }} />
-      <Drawer.Screen name="AboutUs" component={AboutUsScreen} options={{ title: 'About Us' }} />
-      <Drawer.Screen name="ContactUs" component={ContactUsScreen} options={{ title: 'Contact Us' }} />
-      <Drawer.Screen name="AstroRequestNavigator" component={AstroRequestNavigator} options={{ title: 'Astro Request' }} />
+      <Drawer.Screen
+        name="HelpAndSupport"
+        component={HelpAndSupportScreen}
+        options={{title: 'Help & Support'}}
+      />
+      <Drawer.Screen
+        name="PrivacyPolicy"
+        component={PrivacyPolicyScreen}
+        options={{title: 'Privacy Policy'}}
+      />
+      <Drawer.Screen
+        name="TermsAndConditions"
+        component={TermsAndConditionsScreen}
+        options={{title: 'Terms & Conditions'}}
+      />
+      <Drawer.Screen
+        name="AboutUs"
+        component={AboutUsScreen}
+        options={{title: 'About Us'}}
+      />
+      <Drawer.Screen
+        name="ContactUs"
+        component={ContactUsScreen}
+        options={{title: 'Contact Us'}}
+      />
+      <Drawer.Screen
+        name="AstroRequestNavigator"
+        component={AstroRequestNavigator}
+        options={{title: 'Astro Request'}}
+      />
+      <Drawer.Screen
+        name="UserProfile"
+        component={UserProfileScreen}
+        options={{title: 'User Profile'}}
+      />
+      <Drawer.Screen
+        name="UserPoojaDetails"
+        component={UserPoojaDetails}
+        options={{title: 'User Pooja Details'}}
+      />
     </Drawer.Navigator>
   );
 };

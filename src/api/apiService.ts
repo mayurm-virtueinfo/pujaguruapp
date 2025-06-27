@@ -7,24 +7,24 @@ export interface DropdownItem {
   subCastes: any[];
   id: string | number;
   name: string;
-  description?:string
+  description?: string;
 }
 // Types for pooja request data
 export interface PoojaRequestItem {
-  id:number;
-  title : string;
+  id: number;
+  title: string;
   scheduledDate: string;
-  imageUrl?:string,
-  subtitle?:string,
-  price?:number
+  imageUrl?: string;
+  subtitle?: string;
+  price?: number;
 }
 // Types for pooja request data
 export interface AstroServiceItem {
-  id:number;
-  title : string;
+  id: number;
+  title: string;
   pricePerMin: string;
-  imageUrl?:string,
-  description?:string
+  imageUrl?: string;
+  description?: string;
 }
 
 export interface ChatMessage {
@@ -60,8 +60,22 @@ export interface PastBookingItem {
   imageUrl: string;
 }
 
+export interface PoojaBookingPlace {
+  id: number;
+  name: string;
+}
 
+export interface PoojaBookingAddress {
+  id: number;
+  title: string;
+  subtitle: string;
+}
 
+export interface PoojaBookingTirthPlace {
+  id: number;
+  title: string;
+  subtitle: string;
+}
 
 export const apiService = {
   // Fetch cities based on pincode
@@ -86,61 +100,53 @@ export const apiService = {
   getCastes: async (): Promise<DropdownItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.CASTE_API);
-      return (
-        response?.data?.record || []
-      );
+      return response?.data?.record || [];
     } catch (error) {
       console.error('Error fetching castes:', error);
       return [];
     }
   },
 
-  // Fetch sub-castes based on caste 
+  // Fetch sub-castes based on caste
   getSubCastes: async (casteId: number): Promise<DropdownItem[]> => {
     try {
-      const response = await apiDev.get(`${ApiEndpoints.SUB_CASTE_API}?caste=${casteId}`);
-      return (
-        response.data?.record || []
+      const response = await apiDev.get(
+        `${ApiEndpoints.SUB_CASTE_API}?caste=${casteId}`,
       );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching sub-castes:', error);
       return [];
     }
   },
 
-  // Fetch gotras 
+  // Fetch gotras
   getGotras: async (): Promise<DropdownItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.GOTRA_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching gotras:', error);
       return [];
     }
   },
 
-    // Fetch getArea
+  // Fetch getArea
   getArea: async (): Promise<DropdownItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.AREA_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching gotras:', error);
       return [];
     }
   },
 
-   // Fetch getPoojaPerformed
+  // Fetch getPoojaPerformed
   getPoojaPerformed: async (): Promise<DropdownItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.POOJA_PERFORMED_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching gotras:', error);
       return [];
@@ -150,22 +156,20 @@ export const apiService = {
   // Fetch getPoojaPerformed
   getAstrologyConsulationPerformed: async (): Promise<DropdownItem[]> => {
     try {
-      const response = await apiDev.get(ApiEndpoints.ASTROLOGY_CONSLATION_PERFORMED_API);
-      return (
-        response.data?.record || []
+      const response = await apiDev.get(
+        ApiEndpoints.ASTROLOGY_CONSLATION_PERFORMED_API,
       );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching gotras:', error);
       return [];
     }
   },
-   // Fetch getLanguages
+  // Fetch getLanguages
   getLanguages: async (): Promise<DropdownItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.LANGUAGES_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching gotras:', error);
       return [];
@@ -175,9 +179,7 @@ export const apiService = {
   getPoojaRequests: async (): Promise<PoojaRequestItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.POOJA_REQUESTS_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching pooja requests:', error);
       return [];
@@ -187,9 +189,7 @@ export const apiService = {
   getAstroServices: async (): Promise<AstroServiceItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ASTRO_SERVICES_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching astro services:', error);
       return [];
@@ -199,21 +199,17 @@ export const apiService = {
   getMessages: async (): Promise<ChatMessage[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.MESSAGES_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching messages:', error);
       return [];
     }
   },
-    // Fetch getPoojaItems
+  // Fetch getPoojaItems
   getPoojaItems: async (): Promise<PoojaItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.POOJA_ITEMS_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching pooja items:', error);
       return [];
@@ -222,33 +218,57 @@ export const apiService = {
   getCancellationReason: async (): Promise<CancellationReason[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.CANCELLATION_REASON_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching cancellation reasons:', error);
       return [];
     }
   },
-    getCancellationPolicy: async (): Promise<CancellationPolicy[]> => {
+  getCancellationPolicy: async (): Promise<CancellationPolicy[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.CANCELLATION_POLICY_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching cancellation policies:', error);
       return [];
     }
   },
-   getPastBookings: async (): Promise<PastBookingItem[]> => {
+  getPastBookings: async (): Promise<PastBookingItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PAST_BOOKINGS_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
+      return [];
+    }
+  },
+
+  getBookingPlaces: async (): Promise<PoojaBookingPlace[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.POOJA_BOOKING_PLACE_API);
+      return response.data?.record || [];
+    } catch (error) {
+      console.error('Error fetching get booking places :', error);
+      return [];
+    }
+  },
+
+  getBookingAddress: async (): Promise<PoojaBookingAddress[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.POOJA_ADDRESS_PLACE_API);
+      return response.data?.record || [];
+    } catch (error) {
+      console.error('Error fetching get booking address :', error);
+      return [];
+    }
+  },
+
+  getBookingTirthPlaces: async (): Promise<PoojaBookingTirthPlace[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.POOJA_TIRTH_PLACE_API);
+      return response.data?.record || [];
+    } catch (error) {
+      console.error('Error fetching get booking tirth places :', error);
       return [];
     }
   },

@@ -1,0 +1,189 @@
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  StyleSheet,
+  Text,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  TouchableOpacity,
+} from 'react-native';
+import CustomHeader from '../../../components/CustomHeader';
+import {COLORS} from '../../../theme/theme';
+import Fonts from '../../../theme/fonts';
+import PrimaryButton from '../../../components/PrimaryButton';
+import Octicons from 'react-native-vector-icons/Octicons';
+import {apiService, PoojaBookingAddress} from '../../../api/apiService';
+import {useNavigation} from '@react-navigation/native';
+
+const AddressSelectionScreen: React.FC = () => {
+  const navigation = useNavigation();
+
+  const handleNextPress = () => {
+    navigation.navigate('TirthPlaceSelectionScreen');
+  };
+
+  const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
+    null,
+  );
+
+  useEffect(() => {
+    fetchAllPoojaAddresses();
+  }, []);
+
+  const fetchAllPoojaAddresses = async () => {
+    try {
+      const response = await apiService.getBookingAddress();
+      console.log('Fetched Pooja Address Requests:', response);
+      if (response && Array.isArray(response)) {
+        setPoojaPlaces(response);
+      }
+    } catch (error) {
+      console.error('Error fetching pooja places:', error);
+    }
+  };
+
+  console.log('Pooja Places:', poojaPlaces);
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" />
+      <CustomHeader
+        title="Puja Booking"
+        showBackButton={true}
+        showCirclePlusButton={true}
+      />
+      <ScrollView
+        style={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        bounces={false}>
+        <View style={styles.contentWrapper}>
+          <View style={styles.detailsContainer}>
+            <Text style={styles.sectionTitle}>Select Address</Text>
+            <Text style={styles.descriptionText}>
+              Choose where do you need to do this puja at your place?
+            </Text>
+            <View style={styles.pricingContainer}>
+              {poojaPlaces.map((place, index) => (
+                <React.Fragment key={place.id}>
+                  <TouchableOpacity
+                    style={styles.pricingOption}
+                    activeOpacity={0.7}
+                    onPress={() => setSelectedAddressId(place.id)}>
+                    <View>
+                      <Text style={styles.pricingText}>{place.title}</Text>
+                      <Text style={styles.subtitleText}>{place.subtitle}</Text>
+                    </View>
+                    <Octicons
+                      name={
+                        selectedAddressId === place.id
+                          ? 'check-circle'
+                          : 'circle'
+                      }
+                      size={24}
+                      color={
+                        selectedAddressId === place.id
+                          ? COLORS.primary
+                          : COLORS.inputBoder
+                      }
+                    />
+                  </TouchableOpacity>
+                  {index !== poojaPlaces.length - 1 && (
+                    <View style={styles.divider} />
+                  )}
+                </React.Fragment>
+              ))}
+            </View>
+            <PrimaryButton
+              title="NEXT"
+              onPress={handleNextPress}
+              style={styles.buttonContainer}
+              textStyle={styles.buttonText}
+              disabled={!selectedAddressId}
+            />
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+  },
+  scrollContainer: {
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: COLORS.white,
+  },
+  contentWrapper: {
+    width: '100%',
+    overflow: 'hidden',
+  },
+  detailsContainer: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+    marginTop: 20,
+  },
+  pricingContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    marginTop: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: COLORS.inputBoder,
+    marginBottom: 25,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 3,
+  },
+  pricingOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 44,
+    paddingVertical: 8,
+  },
+  pricingText: {
+    fontSize: 15,
+    fontFamily: Fonts.Sen_Medium,
+  },
+  subtitleText: {
+    fontSize: 13,
+    fontFamily: Fonts.Sen_Medium,
+    color: '#8A8A8A',
+  },
+  buttonContainer: {
+    height: 46,
+  },
+  buttonText: {
+    fontSize: 15,
+    fontFamily: Fonts.Sen_Medium,
+  },
+  divider: {
+    borderColor: COLORS.inputBoder,
+    borderWidth: 1,
+    marginVertical: 10,
+  },
+  descriptionText: {
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Medium,
+    marginTop: 10,
+    textAlign: 'justify',
+    color: '#6c7278',
+  },
+});
+
+export default AddressSelectionScreen;
