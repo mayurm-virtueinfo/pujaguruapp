@@ -1,30 +1,58 @@
-import { StyleSheet } from 'react-native';
-import { moderateScale } from 'react-native-size-matters';
+import {StyleSheet, Dimensions} from 'react-native';
+import {moderateScale} from 'react-native-size-matters';
 import Fonts from './fonts';
+
+// Get screen dimensions for responsive design
+export const SCREEN_WIDTH = Dimensions.get('window').width;
+export const SCREEN_HEIGHT = Dimensions.get('window').height;
+
+// Responsive helper functions
+export const wp = (percentage: number) => {
+  const value = (percentage * SCREEN_WIDTH) / 100;
+  return Math.round(value);
+};
+
+export const hp = (percentage: number) => {
+  const value = (percentage * SCREEN_HEIGHT) / 100;
+  return Math.round(value);
+};
 
 // Colors
 export const COLORS = {
   primary: '#F21825', // The teal/turquoise color from your button
   primaryDisabled: '#B2EAF1', // Lighter shade for disabled state
+  primaryBackground: '#FB3440',
   primaryBackgroundButton: '#FFB900', // Background color for primary button
-  primaryTextDark:'#191313', 
+  primaryTextDark: '#191313',
   white: '#FFFFFF',
   black: '#000000',
   gray: '#888888',
   lightGray: '#F5F5F5',
   backgroundPrimary: '#FFFFFF',
-  backGroundSecondary:'#ebeded',
+  backGroundSecondary: '#ebeded',
   textPrimary: '#222222',
   textSecondary: '#888888',
-  success: '#32CD32',       // Green for "Completed"
-  warning: '#FF4500',       // Orange-Red for "Cancelled by User"
-  error: '#FF0000',         // Red for "Rejected"
-  textDark: '#1A1A1A',      // Primary dark text (e.g. pooja name)
-  textGray: '#7D7D7D',      // Secondary gray text (e.g. date, maharaj name)
-  background: '#F7F9FC',    // Light background color for screens
-  border: '#DDDDDD',        // Border/light separator if needed
+  success: '#32CD32', // Green for "Completed"
+  warning: '#FF4500', // Orange-Red for "Cancelled by User"
+  error: '#FF0000', // Red for "Rejected"
+  textDark: '#1A1A1A', // Primary dark text (e.g. pooja name)
+  textGray: '#7D7D7D', // Secondary gray text (e.g. date, maharaj name)
+  background: '#F7F9FC', // Light background color for screens
+  border: '#DDDDDD', // Border/light separator if needed
   darkText: '#1F2937',
   inputBg: '#ECEEF2',
+  borderColor: '#E4E8E9',
+  // Puja List specific colors
+  pujaBackground: '#F9F7F7',
+  gradientStart: '#FB3440',
+  gradientEnd: '#FA1927',
+  pujaTextSecondary: '#6C7278',
+  pujaCardPrice: '#FA1927',
+  pujaCardSubtext: '#8A8A8A',
+  separatorColor: '#EBEBEB',
+  bottomNavBackground: '#F5F6F7',
+  bottomNavIcon: '#484C52',
+  bottomNavActive: '#FA1927',
 };
 
 // Typography
@@ -69,12 +97,14 @@ export const COMPONENT_STYLES = StyleSheet.create({
     fontWeight: '500',
   },
   input: {
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: COLORS.white,
     borderRadius: moderateScale(8),
     padding: moderateScale(15),
     fontSize: moderateScale(16),
-    fontFamily:Fonts.Sen_Regular,
+    fontFamily: Fonts.Sen_Regular,
     // marginBottom: 20,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
   },
   footerText: {
     textAlign: 'center',

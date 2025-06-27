@@ -7,24 +7,24 @@ export interface DropdownItem {
   subCastes: any[];
   id: string | number;
   name: string;
-  description?:string
+  description?: string
 }
 // Types for pooja request data
 export interface PoojaRequestItem {
-  id:number;
-  title : string;
+  id: number;
+  title: string;
   scheduledDate: string;
-  imageUrl?:string,
-  subtitle?:string,
-  price?:number
+  imageUrl?: string,
+  subtitle?: string,
+  price?: number
 }
 // Types for pooja request data
 export interface AstroServiceItem {
-  id:number;
-  title : string;
+  id: number;
+  title: string;
   pricePerMin: string;
-  imageUrl?:string,
-  description?:string
+  imageUrl?: string,
+  description?: string
 }
 
 export interface ChatMessage {
@@ -60,8 +60,21 @@ export interface PastBookingItem {
   imageUrl: string;
 }
 
+export interface PanditAndPujaItem {
+  id: number;
+  name: string;
+  Image: string;
+  rating: number;
+  time: string
+}
 
-
+export interface PujaListItem {
+  id: number;
+  name: string;
+  Image: string;
+  price: number
+  pujaPurpose: string
+}
 
 export const apiService = {
   // Fetch cities based on pincode
@@ -121,7 +134,7 @@ export const apiService = {
     }
   },
 
-    // Fetch getArea
+  // Fetch getArea
   getArea: async (): Promise<DropdownItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.AREA_API);
@@ -134,7 +147,7 @@ export const apiService = {
     }
   },
 
-   // Fetch getPoojaPerformed
+  // Fetch getPoojaPerformed
   getPoojaPerformed: async (): Promise<DropdownItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.POOJA_PERFORMED_API);
@@ -159,7 +172,7 @@ export const apiService = {
       return [];
     }
   },
-   // Fetch getLanguages
+  // Fetch getLanguages
   getLanguages: async (): Promise<DropdownItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.LANGUAGES_API);
@@ -207,7 +220,7 @@ export const apiService = {
       return [];
     }
   },
-    // Fetch getPoojaItems
+  // Fetch getPoojaItems
   getPoojaItems: async (): Promise<PoojaItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.POOJA_ITEMS_API);
@@ -230,7 +243,7 @@ export const apiService = {
       return [];
     }
   },
-    getCancellationPolicy: async (): Promise<CancellationPolicy[]> => {
+  getCancellationPolicy: async (): Promise<CancellationPolicy[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.CANCELLATION_POLICY_API);
       return (
@@ -241,9 +254,31 @@ export const apiService = {
       return [];
     }
   },
-   getPastBookings: async (): Promise<PastBookingItem[]> => {
+  getPastBookings: async (): Promise<PastBookingItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PAST_BOOKINGS_API);
+      return (
+        response.data?.record || []
+      );
+    } catch (error) {
+      console.error('Error fetching past bookings :', error);
+      return [];
+    }
+  },
+  getPanditAndPujaData: async (): Promise<PanditAndPujaItem[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.HOME_DATA_API);
+      return (
+        response.data?.record || []
+      );
+    } catch (error) {
+      console.error('Error fetching past bookings :', error);
+      return [];
+    }
+  },
+  getPujaListData: async (): Promise<PujaListItem[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
       return (
         response.data?.record || []
       );
