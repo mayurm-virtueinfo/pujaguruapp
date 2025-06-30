@@ -10,12 +10,11 @@ import PinVerificationScreen from '../screens/PinVerificationScreen';
 import CancellationReasonScreen from '../screens/CancellationReasonScreen';
 import CancellationPolicyScreen from '../screens/CancellationPolicyScreen';
 import RateYourExperienceScreen from '../screens/RateYourExperienceScreen';
-import PujaListScreen from '../screens/PujaListScreen';
-import PujaBookingScreen from '../screens/PujaBookingScreen';
+import PujaBookingScreen from '../screens/Users/PoojaBookingScreen/PujaBookingScreen';
 
 export type PoojaListParamList = {
-  PujaList: undefined;
-  PujaBooking: undefined;
+  PoojaList: undefined;
+  AddNewPooja: undefined;
   PoojaRequestDetail: {request: PoojaRequestItem};
   ChatMessages: undefined;
   PoojaItemList: undefined;
@@ -33,11 +32,8 @@ const PoojaListNavigator = () => {
       screenOptions={{
         headerShown: false,
       }}>
-      <Stack.Screen name="PujaList" component={PujaListScreen} />
-      <Stack.Screen
-        name="PujaBooking"
-        component={PujaBookingScreen} // Assuming you have an AddNewPoojaScreen component
-      />
+      <Stack.Screen name="PoojaList" component={PoojaListScreen} />
+      <Stack.Screen name="AddNewPooja" component={AddNewPoojaScreen} />
       <Stack.Screen
         name="PoojaRequestDetail"
         component={PoojaRequestDetailScreen}

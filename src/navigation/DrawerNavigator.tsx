@@ -36,7 +36,6 @@ import AvailabilityScreen from '../screens/AvailabilityScreen';
 import EarningsNavigator from './EarningsNavigator';
 import {useAuth} from '../provider/AuthProvider';
 import UserProfileScreen from '../screens/Users/ProfileScreen/UserProfileScreen';
-import UserPoojaDetails from '../screens/Users/PoojaDetailsScreen/PujaDetailsScreen';
 
 export type AppDrawerParamList = {
   MainApp: NavigatorScreenParams<AppBottomTabParamList>; // Main content with Bottom Tabs
@@ -53,7 +52,6 @@ export type AppDrawerParamList = {
   ContactUs: undefined;
   AstroRequestNavigator: undefined;
   UserProfile: undefined;
-  UserPoojaDetails: undefined;
 
   // Logout is handled via custom content, not a screen
 };
@@ -188,11 +186,6 @@ const AppDrawerNavigator: React.FC = () => {
         name="UserProfile"
         component={UserProfileScreen}
         options={{title: 'User Profile'}}
-      />
-      <Drawer.Screen
-        name="UserPoojaDetails"
-        component={UserPoojaDetails}
-        options={{title: 'User Pooja Details'}}
       />
     </Drawer.Navigator>
   );

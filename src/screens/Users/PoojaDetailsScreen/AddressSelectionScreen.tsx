@@ -15,9 +15,16 @@ import PrimaryButton from '../../../components/PrimaryButton';
 import Octicons from 'react-native-vector-icons/Octicons';
 import {apiService, PoojaBookingAddress} from '../../../api/apiService';
 import {useNavigation} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 
 const AddressSelectionScreen: React.FC = () => {
-  const navigation = useNavigation();
+  type ScreenNavigationProp = StackNavigationProp<
+    UserPoojaListParamList,
+    'TirthPlaceSelectionScreen'
+  >;
+
+  const navigation = useNavigation<ScreenNavigationProp>();
 
   const handleNextPress = () => {
     navigation.navigate('TirthPlaceSelectionScreen');

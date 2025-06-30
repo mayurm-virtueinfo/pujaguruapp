@@ -10,11 +10,11 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import {COLORS} from '../theme/theme';
-import Fonts from '../theme/fonts';
 import {moderateScale} from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {apiService} from '../api/apiService';
+import {apiService} from '../../../api/apiService';
+import {COLORS} from '../../../theme/theme';
+import Fonts from '../../../theme/fonts';
 
 type Pandit = {
   Id: number;
@@ -30,7 +30,7 @@ type Puja = {
   time: string;
 };
 
-const HomeScreen: React.FC = () => {
+const UserHomeScreen: React.FC = () => {
   const [pandits, setPandits] = useState<Pandit[]>([]);
   const [pujas, setPujas] = useState<Puja[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -377,4 +377,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen;
+export default UserHomeScreen;

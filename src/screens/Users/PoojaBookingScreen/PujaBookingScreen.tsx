@@ -12,10 +12,12 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {COLORS} from '../theme/theme';
-import Fonts from '../theme/fonts';
+import {COLORS} from '../../../theme/theme';
+import Fonts from '../../../theme/fonts';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import Calendar from '../components/Calendar';
+import Calendar from '../../../components/Calendar';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 
 interface MuhuratSlot {
   id: string;
@@ -25,7 +27,12 @@ interface MuhuratSlot {
 }
 
 const PujaBookingScreen: React.FC = () => {
-  const navigation = useNavigation();
+  type ScreenNavigationProp = StackNavigationProp<
+    UserPoojaListParamList,
+    'PaymentScreen'
+  >;
+
+  const navigation = useNavigation<ScreenNavigationProp>();
   const [selectedSlot, setSelectedSlot] = useState<string>('shubh');
   const [additionalNotes, setAdditionalNotes] = useState(
     'Please arrange for flowers.',
@@ -220,7 +227,9 @@ const PujaBookingScreen: React.FC = () => {
         </View>
 
         {/* Next Button */}
-        <TouchableOpacity style={styles.nextButton}>
+        <TouchableOpacity
+          style={styles.nextButton}
+          onPress={() => navigation.navigate('PaymentScreen')}>
           <Text style={styles.nextButtonText}>NEXT</Text>
         </TouchableOpacity>
       </ScrollView>

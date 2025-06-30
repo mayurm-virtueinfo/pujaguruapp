@@ -14,34 +14,41 @@ import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Octicons from 'react-native-vector-icons/Octicons';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import {PujaListItemType, RecommendedPuja} from '../../../api/apiService';
 
 const PujaDetailsScreen: React.FC = () => {
-  const navigation = useNavigation();
+  type ScreenNavigationProp = StackNavigationProp<
+    UserPoojaListParamList,
+    'PlaceSelectionScreen'
+  >;
+  const navigation = useNavigation<ScreenNavigationProp>();
+  const route = useRoute();
+
+  const {data} = route.params as {data: PujaListItemType | RecommendedPuja};
+
+  console.log('data in PujaDetailsScreen :: ', data);
 
   const handleBookNowPress = () => {
     console.log('Book Now pressed');
     navigation.navigate('PlaceSelectionScreen');
   };
 
-  const [isCheckedWithItems, setIsCheckedWithItems] = useState(false);
-  const [isCheckedWithoutItems, setIsCheckedWithoutItems] = useState(false);
+  const [selectedPricingId, setSelectedPricingId] = useState<number | null>(
+    null,
+  );
 
-  const handleCheckboxToggle = (option: 'withItems' | 'withoutItems') => {
-    if (option === 'withItems') {
-      setIsCheckedWithItems(!isCheckedWithItems);
-      setIsCheckedWithoutItems(false);
-    } else {
-      setIsCheckedWithoutItems(!isCheckedWithoutItems);
-      setIsCheckedWithItems(false);
-    }
+  const handleCheckboxToggle = (id: number) => {
+    setSelectedPricingId(id === selectedPricingId ? null : id);
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
       <CustomHeader
-        title="Ganesh Puja"
+        title={data.name}
         showBackButton={true}
         showBellButton={true}
       />
@@ -53,60 +60,47 @@ const PujaDetailsScreen: React.FC = () => {
           <View style={styles.imageContainer}>
             <Image
               source={{
-                uri: 'https://static.toiimg.com/thumb/msid-86058708,width-1280,height-720,resizemode-4/86058708.jpg',
+                uri: data.image,
               }}
               style={styles.heroImage}
               resizeMode="cover"
             />
           </View>
           <View style={styles.detailsContainer}>
-            <Text style={styles.descriptionText}>
-              Ganesh Puja is a significant Hindu festival celebrated to honor
-              Lord Ganesha, the remover of obstacles and the god of beginnings.
-              The puja involves various rituals including the chanting of
-              mantras, offering...
-            </Text>
+            <Text style={styles.descriptionText}>{data.description}</Text>
             <Text style={styles.sectionTitle}>Pricing Options</Text>
             <View style={styles.pricingContainer}>
-              <TouchableOpacity
-                style={styles.pricingOption}
-                activeOpacity={0.7}
-                onPress={() => handleCheckboxToggle('withItems')}>
-                <Text style={styles.pricingText}>
-                  With Puja Items - Rs. 5000
-                </Text>
-                <Octicons
-                  name={isCheckedWithItems ? 'check-circle' : 'circle'}
-                  size={24}
-                  color={
-                    isCheckedWithItems ? COLORS.primary : COLORS.inputBoder
-                  }
-                />
-              </TouchableOpacity>
-              <View style={styles.divider} />
-              <TouchableOpacity
-                style={styles.pricingOption}
-                activeOpacity={0.7}
-                onPress={() => handleCheckboxToggle('withoutItems')}>
-                <Text style={styles.pricingText}>
-                  Without Puja Items - Rs. 3000
-                </Text>
-                <Octicons
-                  name={isCheckedWithoutItems ? 'check-circle' : 'circle'}
-                  size={24}
-                  color={
-                    isCheckedWithoutItems ? COLORS.primary : COLORS.inputBoder
-                  }
-                />
-              </TouchableOpacity>
+              {data.pricing.map((option: any, idx: number) => (
+                <React.Fragment key={option.id}>
+                  <TouchableOpacity
+                    style={styles.pricingOption}
+                    activeOpacity={0.7}
+                    onPress={() => handleCheckboxToggle(option.id)}>
+                    <Text style={styles.pricingText}>
+                      {option.priceDes} - Rs. {option.price}
+                    </Text>
+                    <Octicons
+                      name={
+                        selectedPricingId === option.id
+                          ? 'check-circle'
+                          : 'circle'
+                      }
+                      size={24}
+                      color={
+                        selectedPricingId === option.id
+                          ? COLORS.primary
+                          : COLORS.inputBoder
+                      }
+                    />
+                  </TouchableOpacity>
+                  {idx < data.pricing.length - 1 && (
+                    <View style={styles.divider} />
+                  )}
+                </React.Fragment>
+              ))}
             </View>
             <Text style={styles.sectionTitle}>Visual Section</Text>
-            <Text style={styles.visualText}>
-              The images below showcase the various stages and items involved in
-              the Ganesh Puja. From the beautifully decorated altar to the
-              essential puja items, these visuals provide a clear idea of what
-              to expect...
-            </Text>
+            <Text style={styles.visualText}>{data.visualSection}</Text>
             <PrimaryButton
               title="BOOK NOW"
               onPress={handleBookNowPress}

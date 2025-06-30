@@ -81,15 +81,39 @@ export interface PanditAndPujaItem {
   name: string;
   Image: string;
   rating: number;
-  time: string
+  time: string;
+}
+export interface PricingOption {
+  id: number;
+  price: number;
+  priceDes: string;
 }
 
-export interface PujaListItem {
+export interface PujaListItemType {
   id: number;
   name: string;
-  Image: string;
-  price: number
-  pujaPurpose: string
+  pujaPurpose: string;
+  price: number;
+  image: string;
+  description: string;
+  pricing: PricingOption[];
+  visualSection: string;
+}
+
+export interface RecommendedPuja {
+  id: number;
+  name: string;
+  image: string;
+  description: string;
+  pujaPurpose: string;
+  price: number;
+  pricing: PricingOption[];
+  visualSection: string;
+}
+
+export interface PujaListDataResponse {
+  recommendedPuja: RecommendedPuja[];
+  pujaList: PujaListItemType[];
 }
 
 export const apiService = {
@@ -291,23 +315,19 @@ export const apiService = {
   getPanditAndPujaData: async (): Promise<PanditAndPujaItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.HOME_DATA_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
       return [];
     }
   },
-  getPujaListData: async (): Promise<PujaListItem[]> => {
+  getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || {recommendedPuja: [], pujaList: []};
     } catch (error) {
-      console.error('Error fetching past bookings :', error);
-      return [];
+      console.error('Error fetching puja list data:', error);
+      return {recommendedPuja: [], pujaList: []};
     }
   },
 };

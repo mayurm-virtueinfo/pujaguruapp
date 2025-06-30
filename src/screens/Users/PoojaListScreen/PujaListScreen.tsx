@@ -10,37 +10,33 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {COLORS} from '../theme/theme';
-import PujaCard from '../components/PujaCard';
-import PujaListItem from '../components/PujaListItem';
+import {COLORS} from '../../../theme/theme';
+import PujaCard from '../../../components/PujaCard';
+import PujaListItem from '../../../components/PujaListItem';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {apiService} from '../api/apiService';
-import Fonts from '../theme/fonts';
+import {
+  apiService,
+  PujaListItemType,
+  RecommendedPuja,
+} from '../../../api/apiService';
+import Fonts from '../../../theme/fonts';
 import {useNavigation} from '@react-navigation/native';
-import Calendar from '../components/Calendar';
-
-type RecommendedPuja = {
-  id: number;
-  name: string;
-  image: string;
-};
-
-type PujaListItemType = {
-  id: number;
-  name: string;
-  pujaPurpose: string;
-  price: number;
-  image: string;
-};
+import Calendar from '../../../components/Calendar';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 
 const PujaListScreen: React.FC = () => {
+  type ScreenNavigationProp = StackNavigationProp<
+    UserPoojaListParamList,
+    'UserPoojaDetails'
+  >;
+
   const [recommendedPuja, setRecommendedPuja] = useState<RecommendedPuja[]>([]);
   const [pujaList, setPujaList] = useState<PujaListItemType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const navigation = useNavigation();
+  const navigation = useNavigation<ScreenNavigationProp>();
 
-  // Calendar state
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState<number>(today.getDate());
   const [currentMonth, setCurrentMonth] = useState<string>(
@@ -57,34 +53,9 @@ const PujaListScreen: React.FC = () => {
     setLoading(true);
     try {
       const requests = await apiService.getPujaListData();
-      if (
-        requests &&
-        typeof requests === 'object' &&
-        !Array.isArray(requests) &&
-        'recommendedPuja' in requests &&
-        'pujaList' in requests
-      ) {
-        setRecommendedPuja(
-          Array.isArray((requests as any).recommendedPuja)
-            ? (requests as any).recommendedPuja
-            : [],
-        );
-        setPujaList(
-          Array.isArray((requests as any).pujaList)
-            ? (requests as any).pujaList
-            : [],
-        );
-      } else {
-        setRecommendedPuja([]);
-        setPujaList(
-          Array.isArray(requests)
-            ? requests.map(item => ({
-                ...item,
-                image: item.image ?? '',
-              }))
-            : [],
-        );
-      }
+      console.log('Fetched Puja List Data :: ', requests);
+      setRecommendedPuja(requests.recommendedPuja || []);
+      setPujaList(requests.pujaList || []);
     } catch {
       setRecommendedPuja([]);
       setPujaList([]);
@@ -149,7 +120,9 @@ const PujaListScreen: React.FC = () => {
                       image={puja.image}
                       title={puja.name}
                       onPress={() => {
-                        navigation.navigate('PujaBooking' as never);
+                        navigation.navigate('UserPoojaDetails', {
+                          data: puja,
+                        });
                       }}
                     />
                     {idx !== recommendedPuja.length - 1 && (
@@ -170,7 +143,11 @@ const PujaListScreen: React.FC = () => {
                     title={puja.name}
                     description={puja.pujaPurpose}
                     price={`₹ ${puja.price.toLocaleString()}`}
-                    onPress={() => {}}
+                    onPress={() => {
+                      navigation.navigate('UserPoojaDetails', {
+                        data: puja,
+                      });
+                    }}
                     showSeparator={idx !== pujaList.length - 1}
                   />
                 ))}

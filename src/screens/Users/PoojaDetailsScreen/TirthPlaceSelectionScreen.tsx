@@ -18,10 +18,20 @@ import {
   PoojaBookingAddress,
   PoojaBookingTirthPlace,
 } from '../../../api/apiService';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import {useNavigation} from '@react-navigation/native';
 
 const TirthPlaceSelectionScreen: React.FC = () => {
+  type ScreenNavigationProp = StackNavigationProp<
+    UserPoojaListParamList,
+    'PujaBooking'
+  >;
+
+  const navigation = useNavigation<ScreenNavigationProp>();
+
   const handleNextPress = () => {
-    console.log('Next pressed');
+    navigation.navigate('PujaBooking');
   };
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingTirthPlace[]>([]);

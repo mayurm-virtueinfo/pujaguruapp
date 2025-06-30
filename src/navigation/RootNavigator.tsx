@@ -14,17 +14,15 @@ import AuthNavigator from './AuthNavigator';
 import AppDrawerNavigator, {AppDrawerParamList} from './DrawerNavigator'; // Corrected import path
 import {COLORS} from '../theme/theme';
 import {useAuth} from '../provider/AuthProvider';
-import PlaceSelectionScreen from '../screens/Users/PoojaDetailsScreen/PlaceSelectionScreen';
-import AddressSelectionScreen from '../screens/Users/PoojaDetailsScreen/AddressSelectionScreen';
-import TirthPlaceSelectionScreen from '../screens/Users/PoojaDetailsScreen/TirthPlaceSelectionScreen';
+import UserAppBottomTabNavigator, {
+  UserAppBottomTabParamList,
+} from './User/UserBottomTabNavigator';
 
 // Root Stack Types
 // Define the param list for the stack that includes LanguagesScreen and AppDrawerNavigator
 export type MainAppStackParamList = {
   AppDrawer: NavigatorScreenParams<AppDrawerParamList>; // AppDrawerNavigator itself
-  PlaceSelectionScreen: undefined;
-  AddressSelectionScreen: undefined;
-  TirthPlaceSelectionScreen: undefined;
+  UserAppBottomTabNavigator: NavigatorScreenParams<UserAppBottomTabParamList>;
 };
 
 const MainApp = createStackNavigator<MainAppStackParamList>();
@@ -40,18 +38,10 @@ const MainAppStackNavigator = () => {
         headerTintColor: COLORS.white,
         cardStyle: {backgroundColor: COLORS.backgroundPrimary},
       }}>
-      <MainApp.Screen name="AppDrawer" component={AppDrawerNavigator} />
+      {/* <MainApp.Screen name="AppDrawer" component={AppDrawerNavigator} /> */}
       <MainApp.Screen
-        name="PlaceSelectionScreen"
-        component={PlaceSelectionScreen}
-      />
-      <MainApp.Screen
-        name="AddressSelectionScreen"
-        component={AddressSelectionScreen}
-      />
-      <MainApp.Screen
-        name="TirthPlaceSelectionScreen"
-        component={TirthPlaceSelectionScreen}
+        name="UserAppBottomTabNavigator"
+        component={UserAppBottomTabNavigator}
       />
     </MainApp.Navigator>
   );
