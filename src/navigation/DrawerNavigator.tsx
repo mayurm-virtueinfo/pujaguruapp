@@ -158,7 +158,7 @@ const AppDrawerNavigator: React.FC = () => {
         component={AvailabilityScreen}
         options={{title: 'Availabality'}}
       />
-      {/* <Drawer.Screen name="Ledgers" component={LedgersScreen} />
+      <Drawer.Screen name="Ledgers" component={LedgersScreen} />
       <Drawer.Screen
         name="HelpAndSupport"
         component={HelpAndSupportScreen}
@@ -198,8 +198,8 @@ const AppDrawerNavigator: React.FC = () => {
         name="UserPoojaDetails"
         component={UserPoojaDetails}
         options={{title: 'User Pooja Details'}}
-      /> */}
-      <Drawer.Screen
+      />
+      {/* <Drawer.Screen
         name="PujaBooking"
         component={PujaBookingScreen}
         options={{title: 'Puja Booking'}}
@@ -208,7 +208,7 @@ const AppDrawerNavigator: React.FC = () => {
         name="PujaCancellationScreen"
         component={PujaCancellationScreen}
         options={{title: 'Puja Cancellation'}}
-      />
+      /> */}
     </Drawer.Navigator>
   );
 };
