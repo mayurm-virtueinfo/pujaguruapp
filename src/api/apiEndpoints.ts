@@ -24,6 +24,8 @@ class ApiEndpoints {
   static readonly POOJA_BOOKING_PLACE_API = `${ApiEndpoints.API_VERSION}/685e997b8561e97a502cc47d`;
   static readonly POOJA_ADDRESS_PLACE_API = `${ApiEndpoints.API_VERSION}/685ea65c8960c979a5b26706`;
   static readonly POOJA_TIRTH_PLACE_API = `${ApiEndpoints.API_VERSION}/685eaa898561e97a502cce3a`;
+  static readonly HOME_DATA_API = `${ApiEndpoints.API_VERSION}/685e6f298960c979a5b24e1c`;
+  static readonly PUJA_LIST_API = `${ApiEndpoints.API_VERSION}/685e858d8561e97a502cbc73`;
 }
 
 export default ApiEndpoints;

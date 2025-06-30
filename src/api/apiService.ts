@@ -76,6 +76,21 @@ export interface PoojaBookingTirthPlace {
   title: string;
   subtitle: string;
 }
+export interface PanditAndPujaItem {
+  id: number;
+  name: string;
+  Image: string;
+  rating: number;
+  time: string
+}
+
+export interface PujaListItem {
+  id: number;
+  name: string;
+  Image: string;
+  price: number
+  pujaPurpose: string
+}
 
 export const apiService = {
   // Fetch cities based on pincode
@@ -269,6 +284,29 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching get booking tirth places :', error);
+      return [];
+    }
+  },
+
+  getPanditAndPujaData: async (): Promise<PanditAndPujaItem[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.HOME_DATA_API);
+      return (
+        response.data?.record || []
+      );
+    } catch (error) {
+      console.error('Error fetching past bookings :', error);
+      return [];
+    }
+  },
+  getPujaListData: async (): Promise<PujaListItem[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
+      return (
+        response.data?.record || []
+      );
+    } catch (error) {
+      console.error('Error fetching past bookings :', error);
       return [];
     }
   },

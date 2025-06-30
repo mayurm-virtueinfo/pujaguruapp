@@ -1,11 +1,27 @@
-import {StyleSheet} from 'react-native';
+import {StyleSheet, Dimensions} from 'react-native';
 import {moderateScale} from 'react-native-size-matters';
 import Fonts from './fonts';
+
+// Get screen dimensions for responsive design
+export const SCREEN_WIDTH = Dimensions.get('window').width;
+export const SCREEN_HEIGHT = Dimensions.get('window').height;
+
+// Responsive helper functions
+export const wp = (percentage: number) => {
+  const value = (percentage * SCREEN_WIDTH) / 100;
+  return Math.round(value);
+};
+
+export const hp = (percentage: number) => {
+  const value = (percentage * SCREEN_HEIGHT) / 100;
+  return Math.round(value);
+};
 
 // Colors
 export const COLORS = {
   primary: '#F21825', // The teal/turquoise color from your button
   primaryDisabled: '#B2EAF1', // Lighter shade for disabled state
+  primaryBackground: '#FB3440',
   primaryBackgroundButton: '#FFB900', // Background color for primary button
   primaryTextDark: '#191313',
   white: '#FFFFFF',
@@ -27,6 +43,18 @@ export const COLORS = {
   inputBg: '#ECEEF2',
   inputLabelText: '#6C7278',
   inputBoder: '#E4E8E9',
+  borderColor: '#E4E8E9',
+  // Puja List specific colors
+  pujaBackground: '#F9F7F7',
+  gradientStart: '#FB3440',
+  gradientEnd: '#FA1927',
+  pujaTextSecondary: '#6C7278',
+  pujaCardPrice: '#FA1927',
+  pujaCardSubtext: '#8A8A8A',
+  separatorColor: '#EBEBEB',
+  bottomNavBackground: '#F5F6F7',
+  bottomNavIcon: '#484C52',
+  bottomNavActive: '#FA1927',
 };
 
 // Typography
@@ -71,12 +99,14 @@ export const COMPONENT_STYLES = StyleSheet.create({
     fontWeight: '500',
   },
   input: {
-    backgroundColor: COLORS.lightGray,
+    backgroundColor: COLORS.white,
     borderRadius: moderateScale(8),
     padding: moderateScale(15),
     fontSize: moderateScale(16),
     fontFamily: Fonts.Sen_Regular,
     // marginBottom: 20,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
   },
   footerText: {
     textAlign: 'center',
