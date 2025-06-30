@@ -16,6 +16,7 @@ import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import Calendar from '../components/Calendar';
+import PanditjiSelectionModal from '../components/PanditjiSelectionModal';
 
 interface MuhuratSlot {
   id: string;
@@ -37,6 +38,10 @@ const PujaBookingScreen: React.FC = () => {
       month: 'long',
     })} ${today.getFullYear()}`,
   );
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [panditjiSelection, setPanditjiSelection] = useState<
+    'automatic' | 'manual'
+  >('automatic');
 
   const muhuratSlots: MuhuratSlot[] = [
     {
@@ -73,6 +78,20 @@ const PujaBookingScreen: React.FC = () => {
 
   const handleSlotSelect = (slotId: string) => {
     setSelectedSlot(slotId);
+  };
+
+  const handlePanditjiSelectionModalOpen = () => {
+    setModalVisible(true);
+  };
+
+  const handlePanditjiSelectionModalClose = () => {
+    setModalVisible(false);
+  };
+
+  const handlePanditjiSelectionConfirm = (
+    selection: 'automatic' | 'manual',
+  ) => {
+    setPanditjiSelection(selection);
   };
 
   const renderHeader = () => (
@@ -220,10 +239,20 @@ const PujaBookingScreen: React.FC = () => {
         </View>
 
         {/* Next Button */}
-        <TouchableOpacity style={styles.nextButton}>
+        <TouchableOpacity
+          style={styles.nextButton}
+          onPress={handlePanditjiSelectionModalOpen}>
           <Text style={styles.nextButtonText}>NEXT</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Panditji Selection Modal */}
+      <PanditjiSelectionModal
+        visible={modalVisible}
+        onClose={handlePanditjiSelectionModalClose}
+        onConfirm={handlePanditjiSelectionConfirm}
+        initialSelection={panditjiSelection}
+      />
     </View>
   );
 };

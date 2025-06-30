@@ -13,7 +13,7 @@ import RateYourExperienceScreen from '../screens/RateYourExperienceScreen';
 import HomeScreen from '../screens/HomeScreen';
 
 export type PoojaRequestParamList = {
-  Home: undefined;
+  PoojaRequest: undefined;
   PoojaRequestDetail: {request: PoojaRequestItem};
   ChatMessages: undefined;
   PoojaItemList: undefined;
@@ -32,7 +32,7 @@ const PoojaRequestNavigator = () => {
         headerShown: false,
         // cardStyle: { backgroundColor: COLORS.backgroundPrimary },
       }}>
-      <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="PoojaRequest" component={PoojaRequestScreen} />
       <Stack.Screen
         name="PoojaRequestDetail"
         component={PoojaRequestDetailScreen}

@@ -26,6 +26,9 @@ class ApiEndpoints {
   static readonly POOJA_TIRTH_PLACE_API = `${ApiEndpoints.API_VERSION}/685eaa898561e97a502cce3a`;
   static readonly HOME_DATA_API = `${ApiEndpoints.API_VERSION}/685e6f298960c979a5b24e1c`;
   static readonly PUJA_LIST_API = `${ApiEndpoints.API_VERSION}/685e858d8561e97a502cbc73`;
+  static readonly PANDIT_LIST_API = `${ApiEndpoints.API_VERSION}/686259e18960c979a5b45e33`;
+  static readonly PUJA_ITEMS_API = `${ApiEndpoints.API_VERSION}/6862805f8561e97a502edd41`;
+
 }
 
 export default ApiEndpoints;

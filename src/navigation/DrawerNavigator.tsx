@@ -37,6 +37,10 @@ import EarningsNavigator from './EarningsNavigator';
 import {useAuth} from '../provider/AuthProvider';
 import UserProfileScreen from '../screens/Users/ProfileScreen/UserProfileScreen';
 import UserPoojaDetails from '../screens/Users/PoojaDetailsScreen/PujaDetailsScreen';
+import PujaBookingScreen from '../screens/PujaBookingScreen';
+import SelectPanditjiScreen from '../screens/Users/PoojaDetailsScreen/SelectPanditjiScreen';
+import UserPujaDetailsScreen from '../screens/Users/UserPujaDetailsScreen';
+import PujaCancellationScreen from '../screens/Users/PujaCancellationScreen';
 
 export type AppDrawerParamList = {
   MainApp: NavigatorScreenParams<AppBottomTabParamList>; // Main content with Bottom Tabs
@@ -54,7 +58,8 @@ export type AppDrawerParamList = {
   AstroRequestNavigator: undefined;
   UserProfile: undefined;
   UserPoojaDetails: undefined;
-
+  PujaBooking: undefined;
+  PujaCancellationScreen: undefined;
   // Logout is handled via custom content, not a screen
 };
 
@@ -153,7 +158,7 @@ const AppDrawerNavigator: React.FC = () => {
         component={AvailabilityScreen}
         options={{title: 'Availabality'}}
       />
-      <Drawer.Screen name="Ledgers" component={LedgersScreen} />
+      {/* <Drawer.Screen name="Ledgers" component={LedgersScreen} />
       <Drawer.Screen
         name="HelpAndSupport"
         component={HelpAndSupportScreen}
@@ -193,6 +198,16 @@ const AppDrawerNavigator: React.FC = () => {
         name="UserPoojaDetails"
         component={UserPoojaDetails}
         options={{title: 'User Pooja Details'}}
+      /> */}
+      <Drawer.Screen
+        name="PujaBooking"
+        component={PujaBookingScreen}
+        options={{title: 'Puja Booking'}}
+      />
+      <Drawer.Screen
+        name="PujaCancellationScreen"
+        component={PujaCancellationScreen}
+        options={{title: 'Puja Cancellation'}}
       />
     </Drawer.Navigator>
   );
