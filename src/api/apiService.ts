@@ -116,6 +116,22 @@ export interface PujaListDataResponse {
   pujaList: PujaListItemType[];
 }
 
+export interface PanditListItem {
+  id: number;
+  name: string;
+  location: string,
+  languages: string,
+  image: string,
+  isSelected: boolean,
+  isVerified: boolean
+}
+
+
+export interface PujaItemsItem {
+  id: number;
+  item: string;
+}
+
 export const apiService = {
   // Fetch cities based on pincode
   getCities: async (pincode: string): Promise<DropdownItem[]> => {
@@ -328,6 +344,28 @@ export const apiService = {
     } catch (error) {
       console.error('Error fetching puja list data:', error);
       return {recommendedPuja: [], pujaList: []};
+    }
+  },
+  getPanditListData: async (): Promise<PanditListItem[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.PANDIT_LIST_API);
+      return (
+        response.data?.record || []
+      );
+    } catch (error) {
+      console.error('Error fetching past bookings :', error);
+      return [];
+    }
+  },
+  getPujaItemsData: async (): Promise<PujaItemsItem[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.PUJA_ITEMS_API);
+      return (
+        response.data?.record || []
+      );
+    } catch (error) {
+      console.error('Error fetching past bookings :', error);
+      return [];
     }
   },
 };

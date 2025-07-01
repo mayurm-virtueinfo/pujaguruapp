@@ -1,0 +1,293 @@
+import React, {useEffect, useState, useCallback} from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  TouchableOpacity,
+  ScrollView,
+  ModalProps,
+  ActivityIndicator,
+} from 'react-native';
+import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
+import {COLORS} from '../theme/theme';
+import Fonts from '../theme/fonts';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {apiService} from '../api/apiService';
+
+interface PujaItemsModalProps extends Partial<ModalProps> {
+  visible: boolean;
+  onClose: () => void;
+}
+
+interface PujaItemsApiItem {
+  id: number;
+  item: string;
+}
+
+interface PujaItemsApiResponse {
+  userItems: PujaItemsApiItem[];
+  panditjiItems: PujaItemsApiItem[];
+}
+
+const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
+  visible,
+  onClose,
+  ...modalProps
+}) => {
+  const [userItems, setUserItems] = useState<PujaItemsApiItem[]>([]);
+  const [panditjiItems, setPanditjiItems] = useState<PujaItemsApiItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Helper to fetch and set data
+  const fetchPujaItems = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      // The API now returns an object: { userItems: [...], panditjiItems: [...] }
+      const data: PujaItemsApiResponse = await apiService.getPujaItemsData();
+      console.log('Data', data);
+      if (
+        data &&
+        typeof data === 'object' &&
+        Array.isArray(data.userItems) &&
+        Array.isArray(data.panditjiItems)
+      ) {
+        setUserItems(data.userItems);
+        setPanditjiItems(data.panditjiItems);
+        if (data.userItems.length === 0 && data.panditjiItems.length === 0) {
+          setError('No puja items found.');
+        }
+      } else {
+        setUserItems([]);
+        setPanditjiItems([]);
+        setError('No puja items found.');
+      }
+    } catch (err) {
+      setUserItems([]);
+      setPanditjiItems([]);
+      setError('Failed to fetch puja items. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch puja items from API
+  useEffect(() => {
+    if (visible) {
+      fetchPujaItems();
+    } else {
+      // Reset data when modal is closed
+      setUserItems([]);
+      setPanditjiItems([]);
+      setError(null);
+      setLoading(false);
+    }
+  }, [visible, fetchPujaItems]);
+
+  const CloseIcon = () => (
+    <View style={styles.closeIconContainer}>
+      <View style={styles.closeXContainer}>
+        <TouchableOpacity onPress={onClose}>
+          <MaterialIcons name="close" size={20} color="#191313" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const ItemsList = ({items}: {items: PujaItemsApiItem[]}) => (
+    <View style={styles.itemsList}>
+      {items.map((item, index) => (
+        <Text key={item.id ?? index} style={styles.itemText}>
+          {index + 1}. {item.item}
+        </Text>
+      ))}
+    </View>
+  );
+
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      {...modalProps}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>List of Puja Items</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <CloseIcon />
+            </TouchableOpacity>
+          </View>
+
+          {/* Content */}
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}>
+            {loading ? (
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginTop: 40,
+                }}>
+                <ActivityIndicator
+                  size="large"
+                  color={COLORS.primaryTextDark}
+                />
+              </View>
+            ) : error ? (
+              <View style={{alignItems: 'center', marginTop: 40}}>
+                <Text
+                  style={{
+                    color: COLORS.primary || 'red',
+                    fontFamily: Fonts.Sen_Medium,
+                    fontSize: moderateScale(15),
+                  }}>
+                  {error}
+                </Text>
+              </View>
+            ) : (
+              <>
+                {/* Items to be Arranged by You */}
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>
+                    Items to be Arranged by You
+                  </Text>
+                  <Text style={styles.sectionDescription}>
+                    The following basic items are to be arranged and kept ready
+                    at your home before the pooja begins:
+                  </Text>
+                  <View style={styles.itemsContainer}>
+                    {userItems.length > 0 ? (
+                      <ItemsList items={userItems} />
+                    ) : (
+                      <Text style={styles.itemText}>No items found.</Text>
+                    )}
+                  </View>
+                </View>
+
+                {/* Items will be brought by the Panditji */}
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>
+                    Items will be brought by the Panditji
+                  </Text>
+                  <Text style={styles.sectionDescription}>
+                    The following items will be brought by the Panditji. You do
+                    not need to arrange these items yourself, as they will be
+                    provided for the rituals:
+                  </Text>
+                  <View style={styles.itemsContainer}>
+                    {panditjiItems.length > 0 ? (
+                      <ItemsList items={panditjiItems} />
+                    ) : (
+                      <Text style={styles.itemText}>No items found.</Text>
+                    )}
+                  </View>
+                </View>
+              </>
+            )}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: COLORS.pujaBackground,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    paddingTop: moderateScale(24),
+    paddingBottom: moderateScale(24),
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: moderateScale(24),
+    marginBottom: verticalScale(24),
+  },
+  headerTitle: {
+    fontSize: moderateScale(18),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+    textAlign: 'left',
+  },
+  closeButton: {
+    width: scale(30),
+    height: scale(30),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeIconContainer: {
+    width: scale(30),
+    height: scale(30),
+    position: 'relative',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeXContainer: {
+    position: 'absolute',
+    left: scale(5),
+    top: scale(5),
+    width: scale(20),
+    height: scale(20),
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: moderateScale(24),
+  },
+  section: {
+    marginBottom: verticalScale(24),
+  },
+  sectionTitle: {
+    fontSize: moderateScale(16),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+    marginBottom: verticalScale(8),
+  },
+  sectionDescription: {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.inputLabelText,
+    marginBottom: verticalScale(12),
+    lineHeight: moderateScale(20),
+  },
+  itemsContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(10),
+    paddingHorizontal: moderateScale(14),
+    paddingVertical: moderateScale(14),
+    // Shadow for iOS
+    shadowColor: COLORS.black,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    // Shadow for Android
+    elevation: 4,
+  },
+  itemsList: {
+    // gap: verticalScale(6),
+  },
+  itemText: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primaryTextDark,
+    lineHeight: moderateScale(24),
+  },
+});
+
+export default PujaItemsModal;
