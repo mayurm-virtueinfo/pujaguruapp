@@ -4,10 +4,16 @@ import {COLORS} from '../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserPoojaListNavigator from './UserPoojaListNavigator';
 import UserHomeScreen from '../../screens/Users/HomeScreen/UserHomeScreen';
+import BottomUserProfileScreen from '../../screens/Users/BottomProfileScreen/BottomUserProfileScreen';
+import PanditScreen from '../../screens/Users/PanditScreen/PanditScreen';
+import {Image} from 'react-native';
+import {Images} from '../../theme/Images';
 
 export type UserAppBottomTabParamList = {
   UserHomeScreen: undefined;
   UserPoojaListNavigator: undefined;
+  PanditScreen: undefined;
+  BottomUserProfileScreen: undefined;
 };
 
 const Tab = createBottomTabNavigator<UserAppBottomTabParamList>();
@@ -42,6 +48,30 @@ const UserAppBottomTabNavigator: React.FC = () => {
           title: 'Pooja List',
           tabBarIcon: ({color, size}) => (
             <Ionicons name="list-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="PanditScreen"
+        component={PanditScreen}
+        options={{
+          title: 'Panditji',
+          tabBarIcon: ({color, size}) => (
+            // <Ionicons name="list-outline" size={size} color={color} />
+            <Image
+              source={Images.ic_pandit_bottom_tab_icon}
+              style={{width: size, height: size, tintColor: color}}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="BottomUserProfileScreen"
+        component={BottomUserProfileScreen}
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({color, size}) => (
+            <Ionicons name="person-outline" size={size} color={color} />
           ),
         }}
       />

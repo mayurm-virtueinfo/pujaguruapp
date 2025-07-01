@@ -15,6 +15,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {apiService} from '../../../api/apiService';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 type Pandit = {
   Id: number;
@@ -34,6 +35,8 @@ const UserHomeScreen: React.FC = () => {
   const [pandits, setPandits] = useState<Pandit[]>([]);
   const [pujas, setPujas] = useState<Puja[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const inset = useSafeAreaInsets();
 
   useEffect(() => {
     fetchAllPanditAndPuja();
@@ -62,7 +65,7 @@ const UserHomeScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: inset.top}]}>
       <StatusBar
         backgroundColor={COLORS.primaryBackground}
         barStyle="light-content"
@@ -80,7 +83,7 @@ const UserHomeScreen: React.FC = () => {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={[styles.content]} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recomended Panditji</Text>
