@@ -28,7 +28,7 @@ class ApiEndpoints {
   static readonly PUJA_LIST_API = `${ApiEndpoints.API_VERSION}/685e858d8561e97a502cbc73`;
   static readonly PANDIT_LIST_API = `${ApiEndpoints.API_VERSION}/686259e18960c979a5b45e33`;
   static readonly PUJA_ITEMS_API = `${ApiEndpoints.API_VERSION}/6862805f8561e97a502edd41`;
-
+  static readonly COMMENT_DATA_API = `${ApiEndpoints.API_VERSION}/6863ca368960c979a5b53077`;
 }
 
 export default ApiEndpoints;

@@ -13,11 +13,11 @@ import {useNavigation} from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {COLORS} from '../../theme/theme';
-import Fonts from '../../theme/fonts';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import PrimaryButton from '../../components/PrimaryButton';
-import PujaItemsModal from '../../components/PujaItemsModal';
+import {COLORS} from '../../../theme/theme';
+import PrimaryButton from '../../../components/PrimaryButton';
+import PujaItemsModal from '../../../components/PujaItemsModal';
+import Fonts from '../../../theme/fonts';
 
 const UserPujaDetailsScreen: React.FC = () => {
   const navigation = useNavigation();

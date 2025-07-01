@@ -12,27 +12,16 @@ import {
 } from 'react-native';
 import {moderateScale} from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {apiService} from '../../../api/apiService';
+import {apiService, PanditItem, PujaItem} from '../../../api/apiService';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-
-type Pandit = {
-  Id: number;
-  image: string;
-  name: string;
-  rating: number;
-};
-
-type Puja = {
-  Id: number;
-  image: string;
-  name: string;
-  time: string;
-};
+import {useNavigation} from '@react-navigation/native';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 
 const UserHomeScreen: React.FC = () => {
-  const [pandits, setPandits] = useState<Pandit[]>([]);
-  const [pujas, setPujas] = useState<Puja[]>([]);
+  const navigation = useNavigation<UserPoojaListParamList>();
+  const [pandits, setPandits] = useState<PanditItem[]>([]);
+  const [pujas, setPujas] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -55,6 +44,7 @@ const UserHomeScreen: React.FC = () => {
 
   const handleBookPandit = (panditName: string) => {
     // Handle booking logic
+    navigation.navigate('PujaCancellationScreen');
   };
 
   const handleNavigation = (route: string) => {
@@ -108,7 +98,7 @@ const UserHomeScreen: React.FC = () => {
             <View style={styles.panditCardsContainer}>
               {pandits && pandits.length > 0 ? (
                 pandits.map(pandit => (
-                  <View style={styles.panditCard} key={pandit.Id}>
+                  <View style={styles.panditCard} key={pandit.id}>
                     <View style={styles.panditImageWrapper}>
                       <Image
                         source={{uri: pandit.image}}
@@ -151,7 +141,7 @@ const UserHomeScreen: React.FC = () => {
               </View>
             ) : pujas && pujas.length > 0 ? (
               pujas.map((puja, idx) => (
-                <View key={puja.Id}>
+                <View key={puja.id}>
                   <View style={styles.pujaCard}>
                     <Image
                       source={{uri: puja.image}}

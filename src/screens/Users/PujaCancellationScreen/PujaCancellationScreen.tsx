@@ -8,15 +8,16 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import {apiService} from '../../api/apiService';
-import PrimaryButton from '../../components/PrimaryButton';
-import CancellationPolicyModal from '../../components/CancellationPolicyModal';
-import {COLORS} from '../../theme/theme';
-import Fonts from '../../theme/fonts';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import LinearGradient from 'react-native-linear-gradient';
 import {useNavigation} from '@react-navigation/native';
+import {apiService} from '../../../api/apiService';
+import {COLORS} from '../../../theme/theme';
+import PrimaryButton from '../../../components/PrimaryButton';
+import CancellationPolicyModal from '../../../components/CancellationPolicyModal';
+import Fonts from '../../../theme/fonts';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 
 interface CancellationReason {
   id: number;
@@ -25,7 +26,7 @@ interface CancellationReason {
 }
 
 const PujaCancellationScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<UserPoojaListParamList>();
 
   const [cancellationReasons, setCancellationReasons] = useState<
     CancellationReason[]

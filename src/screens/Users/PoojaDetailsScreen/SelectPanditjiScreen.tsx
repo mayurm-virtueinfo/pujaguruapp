@@ -20,6 +20,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Octicons from 'react-native-vector-icons/Octicons';
 import {useNavigation} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {apiService} from '../../../api/apiService';
 
@@ -36,7 +38,9 @@ interface PanditjiItem {
 }
 
 const SelectPanditjiScreen: React.FC = () => {
-  const navigation = useNavigation();
+  // Set up navigation with correct type for stack navigation
+  const navigation =
+    useNavigation<StackNavigationProp<UserPoojaListParamList>>();
   const [searchText, setSearchText] = useState('');
   const [selectedPanditji, setSelectedPanditji] = useState<string | null>(null);
 
@@ -85,7 +89,8 @@ const SelectPanditjiScreen: React.FC = () => {
   const handleNextPress = () => {
     if (selectedPanditji) {
       console.log('Selected Panditji:', selectedPanditji);
-      navigation.goBack();
+      // Pass selectedPanditji as param if needed
+      navigation.navigate('PaymentScreen');
     }
   };
 
@@ -204,10 +209,6 @@ const SelectPanditjiScreen: React.FC = () => {
               title="NEXT"
               onPress={handleNextPress}
               disabled={!selectedPanditji}
-              style={[
-                styles.nextButton,
-                !selectedPanditji ? styles.disabledButton : null,
-              ]}
               textStyle={styles.buttonText}
             />
           </View>

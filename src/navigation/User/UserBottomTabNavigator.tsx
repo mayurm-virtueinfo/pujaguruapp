@@ -4,9 +4,10 @@ import {COLORS} from '../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserPoojaListNavigator from './UserPoojaListNavigator';
 import UserHomeScreen from '../../screens/Users/HomeScreen/UserHomeScreen';
+import UserHomeNavigator from './UsetHomeStack';
 
 export type UserAppBottomTabParamList = {
-  UserHomeScreen: undefined;
+  UserHomeNavigator: undefined;
   UserPoojaListNavigator: undefined;
 };
 
@@ -25,8 +26,8 @@ const UserAppBottomTabNavigator: React.FC = () => {
         tabBarInactiveTintColor: 'gray',
       }}>
       <Tab.Screen
-        name="UserHomeScreen"
-        component={UserHomeScreen}
+        name="UserHomeNavigator"
+        component={UserHomeNavigator}
         options={({route}) => ({
           title: 'Home',
           // headerTitle: getHeaderTitle(route), // dynamic title in screen header
