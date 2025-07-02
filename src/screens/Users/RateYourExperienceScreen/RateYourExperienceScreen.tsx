@@ -25,15 +25,22 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 const RateYourExperienceScreen: React.FC = () => {
   const [rating, setRating] = useState<number>(0);
   const [feedback, setFeedback] = useState<string>('');
-  const navigation =
-    useNavigation<StackNavigationProp<UserPoojaListParamList>>();
+
+  type ScreenNavigationProp = StackNavigationProp<
+    UserPoojaListParamList,
+    'BookedPujaDetailsScreen'
+  >;
+
+  const navigation = useNavigation<ScreenNavigationProp>();
+
   const handleStarPress = (starIndex: number) => {
     setRating(starIndex + 1);
   };
 
   const handleSubmit = () => {
-    console.log('Rating submitted:', rating);
-    console.log('Feedback:', feedback);
+    setRating(0);
+    setFeedback('');
+    navigation.navigate('BookedPujaDetailsScreen');
   };
 
   const renderStar = (index: number) => {

@@ -13,6 +13,8 @@ import RateYourExperienceScreen from '../../screens/Users/RateYourExperienceScre
 import SelectPanditjiScreen from '../../screens/Users/PoojaDetailsScreen/SelectPanditjiScreen';
 import PanditDetailsScreen from '../../screens/Users/PanditDetailsScreen/PanditDetailsScreen';
 import PujaCancellationScreen from '../../screens/Users/PujaCancellationScreen/PujaCancellationScreen';
+import BookedPujaDetailsScreen from '../../screens/Users/UserPujaDetailsScreen/UserPujaDetailsScreen';
+import UserChatScreen from '../../screens/Users/UserChatScreen/UserChatScreen';
 
 export type UserPoojaListParamList = {
   goBack(): void;
@@ -29,6 +31,8 @@ export type UserPoojaListParamList = {
   SelectPanditjiScreen: undefined;
   PanditDetailsScreen: undefined;
   PujaCancellationScreen: undefined;
+  BookedPujaDetailsScreen: undefined;
+  UserChatScreen: undefined;
 };
 
 const Stack = createStackNavigator<UserPoojaListParamList>();
@@ -79,6 +83,11 @@ const UserPoojaListNavigator = () => {
         name="PujaCancellationScreen"
         component={PujaCancellationScreen}
       />
+      <Stack.Screen
+        name="BookedPujaDetailsScreen"
+        component={BookedPujaDetailsScreen}
+      />
+      <Stack.Screen name="UserChatScreen" component={UserChatScreen} />
     </Stack.Navigator>
   );
 };

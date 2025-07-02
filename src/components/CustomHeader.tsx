@@ -10,6 +10,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS} from '../theme/theme';
 import Feather from 'react-native-vector-icons/Feather';
 import React from 'react';
+import Fonts from '../theme/fonts';
 
 interface CustomHeaderProps {
   title?: string;
@@ -18,6 +19,7 @@ interface CustomHeaderProps {
   showBellButton?: boolean;
   showCirclePlusButton?: boolean;
   showCallButton?: boolean;
+  backgroundColor?: string;
 }
 const CustomHeader: React.FC<CustomHeaderProps> = ({
   title = '',
@@ -26,6 +28,7 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({
   showBellButton = false,
   showCirclePlusButton = false,
   showCallButton = false,
+  backgroundColor = COLORS.primary,
 }) => {
   const headerHeight = 48;
   const navigation = useNavigation();
@@ -41,13 +44,13 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({
         barStyle="light-content"
       /> */}
 
-      <SafeAreaView edges={['top']} style={{backgroundColor: COLORS.primary}}>
+      <SafeAreaView edges={['top']} style={{backgroundColor: backgroundColor}}>
         <View
           style={{
             borderBottomColor: COLORS.gray,
             borderBottomWidth: 0,
             height: headerHeight,
-            backgroundColor: COLORS.primary,
+            // backgroundColor: COLORS.primary,
             flexDirection: 'row',
             alignItems: 'center',
             // marginTop:inset.top,
@@ -82,7 +85,14 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({
               alignItems: 'center',
               height: '100%',
             }}>
-            <Text style={{color: COLORS.white, fontSize: 18}}>{title}</Text>
+            <Text
+              style={{
+                color: COLORS.white,
+                fontSize: 18,
+                fontFamily: Fonts.Sen_Bold,
+              }}>
+              {title}
+            </Text>
           </View>
           {showBellButton && (
             <TouchableOpacity

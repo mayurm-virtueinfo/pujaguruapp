@@ -18,9 +18,17 @@ import {COLORS} from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
 import PujaItemsModal from '../../../components/PujaItemsModal';
 import Fonts from '../../../theme/fonts';
+import {Images} from '../../../theme/Images';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 
 const UserPujaDetailsScreen: React.FC = () => {
-  const navigation = useNavigation();
+  type ScreenNavigationProp = StackNavigationProp<
+    UserPoojaListParamList,
+    'PujaCancellationScreen' | 'UserChatScreen'
+  >;
+
+  const navigation = useNavigation<ScreenNavigationProp>();
   const [isPujaItemsModalVisible, setIsPujaItemsModalVisible] = useState(false);
 
   const handlePujaItemsPress = () => {
@@ -29,6 +37,10 @@ const UserPujaDetailsScreen: React.FC = () => {
 
   const handleModalClose = () => {
     setIsPujaItemsModalVisible(false);
+  };
+
+  const handleCancelBooking = () => {
+    navigation.navigate('PujaCancellationScreen');
   };
 
   const renderHeader = () => (
@@ -89,7 +101,6 @@ const UserPujaDetailsScreen: React.FC = () => {
                   uri: 'https://cdn.builder.io/api/v1/image/assets/TEMP/bc53826fa5e88773c79af40315fbcef0694d1da0?width=82',
                 }}
                 style={styles.pujaIcon}
-                defaultSource={require('../../assets/fonts/Sen-Bold.ttf')}
               />
               <Text style={styles.pujaTitle}>Ganpati Puja</Text>
             </View>
@@ -158,7 +169,7 @@ const UserPujaDetailsScreen: React.FC = () => {
           <View style={styles.separator} />
           <View style={styles.detailRow}>
             <Image
-              source={require('../../assets/images/PinIcon.png')}
+              source={Images.ic_pin}
               style={[styles.detailIcon, {width: scale(20), height: scale(16)}]}
               resizeMode="contain"
             />
@@ -200,17 +211,17 @@ const UserPujaDetailsScreen: React.FC = () => {
                 uri: 'https://cdn.builder.io/api/v1/image/assets/TEMP/96feb2dd36d383e6c73ee5b5d01ab81cd72a003a?width=104',
               }}
               style={styles.pujaIcon}
-              defaultSource={require('../../assets/fonts/Sen-Bold.ttf')}
             />
             <Text style={styles.totalSubtext}>Ramesh Purohit</Text>
           </View>
-          <View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('UserChatScreen')}>
             <Image
-              source={require('../../assets/images/MessageIcon.png')}
+              source={Images.ic_message}
               style={{width: scale(20), height: scale(20)}}
               resizeMode="contain"
             />
-          </View>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -240,7 +251,7 @@ const UserPujaDetailsScreen: React.FC = () => {
   const renderCancelButton = () => (
     <PrimaryButton
       title="Cancel Booking"
-      onPress={() => {}}
+      onPress={handleCancelBooking}
       style={styles.cancelButton}
       textStyle={styles.cancelButtonText}
     />

@@ -24,6 +24,8 @@ import {useNavigation} from '@react-navigation/native';
 import Calendar from '../../../components/Calendar';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import CustomeLoader from '../../../components/CustomeLoader';
+import CustomHeader from '../../../components/CustomHeader';
 
 const PujaListScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -70,27 +72,12 @@ const PujaListScreen: React.FC = () => {
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}
       />
-      <LinearGradient
-        colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-        style={styles.headerGradient}>
-        <SafeAreaView>
-          <View style={styles.headerContent}>
-            <View style={styles.headerTop}>
-              <View style={styles.headerIconPlaceholder} />
-              <Text style={styles.headerTitle}>Puja</Text>
-              <TouchableOpacity
-                style={styles.headerIconButton}
-                activeOpacity={0.7}>
-                <Ionicons
-                  name="notifications-outline"
-                  size={24}
-                  color={COLORS.white}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+      <CustomHeader
+        title="Puja"
+        showBellButton={true}
+        backgroundColor={COLORS.gradientStart}
+      />
+      <CustomeLoader loading={loading} />
       <View style={styles.mainContent}>
         {loading ? (
           <View
@@ -163,7 +150,7 @@ const PujaListScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.pujaBackground,
+    backgroundColor: COLORS.primary,
   },
   headerGradient: {
     height: 136,
