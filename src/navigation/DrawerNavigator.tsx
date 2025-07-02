@@ -37,12 +37,6 @@ import EarningsNavigator from './EarningsNavigator';
 import {useAuth} from '../provider/AuthProvider';
 import UserProfileScreen from '../screens/Users/ProfileScreen/UserProfileScreen';
 
-import UserPoojaDetails from '../screens/Users/PoojaDetailsScreen/PujaDetailsScreen';
-// import PujaBookingScreen from '../screens/PujaBookingScreen';
-import SelectPanditjiScreen from '../screens/Users/PoojaDetailsScreen/SelectPanditjiScreen';
-import UserPujaDetailsScreen from '../screens/Users/UserPujaDetailsScreen';
-import PujaCancellationScreen from '../screens/Users/PujaCancellationScreen';
-
 export type AppDrawerParamList = {
   MainApp: NavigatorScreenParams<AppBottomTabParamList>; // Main content with Bottom Tabs
   PastBooking: NavigatorScreenParams<AppBottomTabParamList>; // Main content with Bottom Tabs
@@ -195,22 +189,6 @@ const AppDrawerNavigator: React.FC = () => {
         component={UserProfileScreen}
         options={{title: 'User Profile'}}
       />
-
-      <Drawer.Screen
-        name="UserPoojaDetails"
-        component={UserPoojaDetails}
-        options={{title: 'User Pooja Details'}}
-      />
-      {/* <Drawer.Screen
-        name="PujaBooking"
-        component={PujaBookingScreen}
-        options={{title: 'Puja Booking'}}
-      />
-      <Drawer.Screen
-        name="PujaCancellationScreen"
-        component={PujaCancellationScreen}
-        options={{title: 'Puja Cancellation'}}
-      /> */}
     </Drawer.Navigator>
   );
 };

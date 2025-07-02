@@ -76,11 +76,22 @@ export interface PoojaBookingTirthPlace {
   title: string;
   subtitle: string;
 }
-export interface PanditAndPujaItem {
+
+export interface HomeData {
+  pandits: PanditItem[]
+  puja: PujaItem[]
+}
+export interface PanditItem {
   id: number;
   name: string;
-  Image: string;
+  image: string;
   rating: number;
+}
+
+export interface PujaItem {
+  id: number;
+  name: string;
+  image: string;
   time: string;
 }
 export interface PricingOption {
@@ -130,6 +141,17 @@ export interface PanditListItem {
 export interface PujaItemsItem {
   id: number;
   item: string;
+}
+
+export interface CommentData {
+  id: number;
+  commenterName: string;
+  date: string;
+  star: number,
+  comment: string,
+  like: number,
+  disLike: number,
+  image: string
 }
 
 export const apiService = {
@@ -328,22 +350,22 @@ export const apiService = {
     }
   },
 
-  getPanditAndPujaData: async (): Promise<PanditAndPujaItem[]> => {
+  getPanditAndPujaData: async (): Promise<HomeData> => {
     try {
       const response = await apiDev.get(ApiEndpoints.HOME_DATA_API);
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return [];
+      return { pandits: [], puja: [] };
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || {recommendedPuja: [], pujaList: []};
+      return response.data?.record || { recommendedPuja: [], pujaList: [] };
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return {recommendedPuja: [], pujaList: []};
+      return { recommendedPuja: [], pujaList: [] };
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -360,6 +382,17 @@ export const apiService = {
   getPujaItemsData: async (): Promise<PujaItemsItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_ITEMS_API);
+      return (
+        response.data?.record || []
+      );
+    } catch (error) {
+      console.error('Error fetching past bookings :', error);
+      return [];
+    }
+  },
+  getCommentData: async (): Promise<CommentData[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.COMMENT_DATA_API);
       return (
         response.data?.record || []
       );

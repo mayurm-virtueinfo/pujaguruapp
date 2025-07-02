@@ -9,6 +9,7 @@ import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS} from '../theme/theme';
 import Feather from 'react-native-vector-icons/Feather';
+import React from 'react';
 
 interface CustomHeaderProps {
   title?: string;
@@ -16,6 +17,7 @@ interface CustomHeaderProps {
   showMenuButton?: boolean;
   showBellButton?: boolean;
   showCirclePlusButton?: boolean;
+  showCallButton?: boolean;
 }
 const CustomHeader: React.FC<CustomHeaderProps> = ({
   title = '',
@@ -23,6 +25,7 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({
   showMenuButton = false,
   showBellButton = false,
   showCirclePlusButton = false,
+  showCallButton = false,
 }) => {
   const headerHeight = 48;
   const navigation = useNavigation();
@@ -32,11 +35,11 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({
 
   return (
     <>
-      <StatusBar
+      {/* <StatusBar
         translucent
         backgroundColor="transparent"
         barStyle="light-content"
-      />
+      /> */}
 
       <SafeAreaView edges={['top']} style={{backgroundColor: COLORS.primary}}>
         <View
@@ -99,7 +102,16 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({
               <Feather name="plus-circle" size={24} color={COLORS.white} />
             </TouchableOpacity>
           )}
-          {!showBellButton && !showCirclePlusButton && (
+          {showCallButton && (
+            <TouchableOpacity
+              style={{marginRight: 18}}
+              onPress={() => {
+                console.log('Plus Icon pressed');
+              }}>
+              <Ionicons name="call-outline" size={24} color={COLORS.white} />
+            </TouchableOpacity>
+          )}
+          {!showBellButton && !showCirclePlusButton && !showCallButton && (
             <View
               style={{
                 width: headerHeight,

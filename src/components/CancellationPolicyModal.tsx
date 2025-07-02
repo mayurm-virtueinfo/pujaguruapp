@@ -10,6 +10,7 @@ import {
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface CancellationPolicyModalProps extends Partial<ModalProps> {
   visible: boolean;
@@ -21,7 +22,6 @@ const CancellationPolicyModal: React.FC<CancellationPolicyModalProps> = ({
   onClose,
   ...modalProps
 }) => {
-  console.log('Modal visible:', visible);
   return (
     <Modal
       visible={visible}
@@ -51,7 +51,7 @@ const CancellationPolicyModal: React.FC<CancellationPolicyModalProps> = ({
           </View>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <View style={styles.closeButtonBg}>
-              <Text style={styles.closeIconText}>×</Text>
+              <Ionicons name="close" size={24} color={COLORS.primaryTextDark} />
             </View>
           </TouchableOpacity>
         </View>
@@ -68,9 +68,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContainer: {
-    // flex: 1,
     width: '90%',
-    height: '50%',
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
     padding: moderateScale(20),
@@ -82,17 +80,15 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: moderateScale(18),
-    fontFamily: Fonts.Sen_Bold,
-    color: '#191313',
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
     marginBottom: verticalScale(10),
   },
-  policyContent: {
-    marginBottom: verticalScale(20),
-  },
+  policyContent: {},
   policyText: {
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
-    color: '#191313',
+    color: COLORS.primaryTextDark,
     lineHeight: moderateScale(20),
     marginBottom: verticalScale(10),
   },
@@ -109,14 +105,14 @@ const styles = StyleSheet.create({
     width: scale(30),
     height: scale(30),
     borderRadius: scale(15),
-    backgroundColor: '#F9F7F7',
+    backgroundColor: COLORS.pujaBackground,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeIconText: {
     fontSize: moderateScale(16),
     fontFamily: Fonts.Sen_Bold,
-    color: '#191313',
+    color: COLORS.primaryTextDark,
   },
 });
 

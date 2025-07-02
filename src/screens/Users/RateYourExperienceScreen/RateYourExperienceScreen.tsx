@@ -18,11 +18,15 @@ import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import CustomHeader from '../../../components/CustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
+import {useNavigation} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 
 const RateYourExperienceScreen: React.FC = () => {
   const [rating, setRating] = useState<number>(0);
   const [feedback, setFeedback] = useState<string>('');
-
+  const navigation =
+    useNavigation<StackNavigationProp<UserPoojaListParamList>>();
   const handleStarPress = (starIndex: number) => {
     setRating(starIndex + 1);
   };
@@ -81,7 +85,7 @@ const RateYourExperienceScreen: React.FC = () => {
               <Text style={styles.panditPurpose}>For family well-being</Text>
               <PrimaryButton
                 title="VIEW DETAILS"
-                onPress={() => console.log('View Details Pressed')}
+                onPress={() => navigation.navigate('PanditDetailsScreen')}
                 style={styles.viewDetailsButton}
                 textStyle={styles.viewDetailsText}
               />

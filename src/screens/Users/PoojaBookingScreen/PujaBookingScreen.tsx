@@ -19,7 +19,6 @@ import Calendar from '../../../components/Calendar';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import PanditjiSelectionModal from '../../../components/PanditjiSelectionModal';
-// import PanditjiSelectionModal from '../components/PanditjiSelectionModal';
 
 interface MuhuratSlot {
   id: string;
@@ -34,7 +33,9 @@ const PujaBookingScreen: React.FC = () => {
     'PaymentScreen'
   >;
 
-  const navigation = useNavigation<ScreenNavigationProp>();
+  const navigation =
+    useNavigation<StackNavigationProp<UserPoojaListParamList>>();
+
   const [selectedSlot, setSelectedSlot] = useState<string>('shubh');
   const [additionalNotes, setAdditionalNotes] = useState(
     'Please arrange for flowers.',
@@ -96,10 +97,17 @@ const PujaBookingScreen: React.FC = () => {
     setModalVisible(false);
   };
 
+  // Modified: On confirm, navigate to PaymentScreen if automatic, else SelectPanditjiScreen
   const handlePanditjiSelectionConfirm = (
     selection: 'automatic' | 'manual',
   ) => {
     setPanditjiSelection(selection);
+    setModalVisible(false);
+    if (selection === 'automatic') {
+      navigation.navigate('PaymentScreen');
+    } else if (selection === 'manual') {
+      navigation.navigate('SelectPanditjiScreen');
+    }
   };
 
   const renderHeader = () => (
@@ -197,7 +205,6 @@ const PujaBookingScreen: React.FC = () => {
 
         {/* Calendar Section */}
         <Calendar
-          // Remove invalid prop 'selectedDate'
           date={selectedDate}
           onDateSelect={setSelectedDate}
           month={currentMonth}
@@ -249,7 +256,6 @@ const PujaBookingScreen: React.FC = () => {
         {/* Next Button */}
         <TouchableOpacity
           style={styles.nextButton}
-          // onPress={() => navigation.navigate('PaymentScreen')}>
           onPress={handlePanditjiSelectionModalOpen}>
           <Text style={styles.nextButtonText}>NEXT</Text>
         </TouchableOpacity>

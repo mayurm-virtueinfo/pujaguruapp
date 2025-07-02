@@ -8,9 +8,10 @@ import BottomUserProfileScreen from '../../screens/Users/BottomProfileScreen/Bot
 import PanditScreen from '../../screens/Users/PanditScreen/PanditScreen';
 import {Image} from 'react-native';
 import {Images} from '../../theme/Images';
+import UserHomeNavigator from './UsetHomeStack';
 
 export type UserAppBottomTabParamList = {
-  UserHomeScreen: undefined;
+  UserHomeNavigator: undefined;
   UserPoojaListNavigator: undefined;
   PanditScreen: undefined;
   BottomUserProfileScreen: undefined;
@@ -31,8 +32,8 @@ const UserAppBottomTabNavigator: React.FC = () => {
         tabBarInactiveTintColor: 'gray',
       }}>
       <Tab.Screen
-        name="UserHomeScreen"
-        component={UserHomeScreen}
+        name="UserHomeNavigator"
+        component={UserHomeNavigator}
         options={({route}) => ({
           title: 'Home',
           // headerTitle: getHeaderTitle(route), // dynamic title in screen header

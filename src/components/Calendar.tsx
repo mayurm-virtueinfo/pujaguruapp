@@ -9,6 +9,7 @@ interface CalendarProps {
   onDateSelect?: (date: number) => void;
   month?: string; // e.g. "September 2025"
   onMonthChange?: (direction: 'prev' | 'next') => void;
+  date: number;
 }
 
 function getMonthYearFromString(monthStr: string) {

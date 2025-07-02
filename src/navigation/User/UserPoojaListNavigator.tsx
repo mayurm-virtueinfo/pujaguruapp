@@ -10,8 +10,13 @@ import {PujaListItemType, RecommendedPuja} from '../../api/apiService';
 import PaymentScreen from '../../screens/Users/PaymentScreen/PaymentScreen';
 import BookingSuccessfullyScreen from '../../screens/Users/BookingSuccessfullyScreen/BookingSuccessfullyScreen';
 import RateYourExperienceScreen from '../../screens/Users/RateYourExperienceScreen/RateYourExperienceScreen';
+import SelectPanditjiScreen from '../../screens/Users/PoojaDetailsScreen/SelectPanditjiScreen';
+import PanditDetailsScreen from '../../screens/Users/PanditDetailsScreen/PanditDetailsScreen';
+import PujaCancellationScreen from '../../screens/Users/PujaCancellationScreen/PujaCancellationScreen';
 
 export type UserPoojaListParamList = {
+  goBack(): void;
+  navigate(arg0: string): unknown;
   PujaList: undefined;
   PujaBooking: undefined;
   UserPoojaDetails: {data: PujaListItemType | RecommendedPuja};
@@ -21,6 +26,9 @@ export type UserPoojaListParamList = {
   PaymentScreen: undefined;
   BookingSuccessfullyScreen: undefined;
   RateYourExperienceScreen: undefined;
+  SelectPanditjiScreen: undefined;
+  PanditDetailsScreen: undefined;
+  PujaCancellationScreen: undefined;
 };
 
 const Stack = createStackNavigator<UserPoojaListParamList>();
@@ -58,6 +66,18 @@ const UserPoojaListNavigator = () => {
       <Stack.Screen
         name="RateYourExperienceScreen"
         component={RateYourExperienceScreen}
+      />
+      <Stack.Screen
+        name="SelectPanditjiScreen"
+        component={SelectPanditjiScreen}
+      />
+      <Stack.Screen
+        name="PanditDetailsScreen"
+        component={PanditDetailsScreen}
+      />
+      <Stack.Screen
+        name="PujaCancellationScreen"
+        component={PujaCancellationScreen}
       />
     </Stack.Navigator>
   );
