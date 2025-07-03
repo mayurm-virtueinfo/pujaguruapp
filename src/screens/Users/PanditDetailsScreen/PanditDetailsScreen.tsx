@@ -24,10 +24,13 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const {width: screenWidth} = Dimensions.get('window');
 
 const PanditDetailsScreen: React.FC = () => {
+  const inset = useSafeAreaInsets();
+
   const [recommendedPuja, setRecommendedPuja] = useState<RecommendedPuja[]>([]);
   const [pujaList, setPujaList] = useState<PujaListItemType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -118,7 +121,7 @@ const PanditDetailsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title="Panditji Details" showBackButton={true} />
 

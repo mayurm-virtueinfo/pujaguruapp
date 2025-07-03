@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import {moderateScale} from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -57,7 +58,7 @@ const UserHomeScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container]}>
+    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <StatusBar
         backgroundColor={COLORS.primaryBackground}
         barStyle="light-content"
@@ -158,7 +159,7 @@ const UserHomeScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

@@ -23,6 +23,7 @@ import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const RateYourExperienceScreen: React.FC = () => {
   const [rating, setRating] = useState<number>(0);
@@ -32,6 +33,7 @@ const RateYourExperienceScreen: React.FC = () => {
     UserPoojaListParamList,
     'BookedPujaDetailsScreen'
   >;
+  const inset = useSafeAreaInsets();
 
   const navigation = useNavigation<ScreenNavigationProp>();
 
@@ -64,7 +66,7 @@ const RateYourExperienceScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
 
       <UserCustomHeader title="Rate Your Experience" showBackButton={true} />
@@ -101,7 +103,13 @@ const RateYourExperienceScreen: React.FC = () => {
           {/* Dakshina Section */}
           <View style={styles.dakshinaCard}>
             <Text style={styles.dakshinaText}>Dakshina to panditji?</Text>
-            <AntDesign name="wallet" size={24} color={COLORS.primary} />
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => {
+                navigation.navigate('PaymentScreen');
+              }}>
+              <AntDesign name="wallet" size={24} color={COLORS.primary} />
+            </TouchableOpacity>
           </View>
 
           {/* Rating Section */}

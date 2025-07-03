@@ -25,6 +25,7 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {apiService} from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
@@ -40,6 +41,7 @@ interface PanditjiItem {
 
 const SelectPanditjiScreen: React.FC = () => {
   // Set up navigation with correct type for stack navigation
+  const inset = useSafeAreaInsets();
   const navigation =
     useNavigation<StackNavigationProp<UserPoojaListParamList>>();
   const [searchText, setSearchText] = useState('');
@@ -98,18 +100,6 @@ const SelectPanditjiScreen: React.FC = () => {
   const handleBackPress = () => {
     navigation.goBack();
   };
-
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={handleBackPress}
-        activeOpacity={0.7}>
-        <Ionicons name="chevron-back" size={24} color={COLORS.white} />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Select Panditji</Text>
-    </View>
-  );
 
   const renderSearchInput = () => (
     <View style={styles.searchContainer}>
@@ -185,7 +175,7 @@ const SelectPanditjiScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar
         barStyle="light-content"
         // backgroundColor={COLORS.gradientStart}

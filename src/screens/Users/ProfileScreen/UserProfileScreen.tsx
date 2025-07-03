@@ -14,18 +14,19 @@ import PrimaryButton from '../../../components/PrimaryButton';
 import CustomTextInput from '../../../components/CustomTextInput';
 import {MainAppStackParamList} from '../../../navigation/RootNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import LinearGradient from 'react-native-linear-gradient';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient'
 
 type CompleteProfileScreenRouteProp = RouteProp<
   MainAppStackParamList,
   'UserAppBottomTabNavigator'
 >;
 
-interface Props {
-  navigation: CompleteProfileScreenRouteProp;
-}
+interface Props {}
 
-const UserProfileScreen: React.FC<Props> = ({navigation}) => {
+const UserProfileScreen: React.FC = () => {
+  const inset = useSafeAreaInsets();
+  const navigation = useNavigation();
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -37,7 +38,7 @@ const UserProfileScreen: React.FC<Props> = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <StatusBar
         translucent
         backgroundColor="transparent"

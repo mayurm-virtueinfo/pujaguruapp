@@ -1,8 +1,8 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {moderateScale} from 'react-native-size-matters';
-import Fonts from '../../../../theme/fonts';
-import {COLORS, wp} from '../../../../theme/theme';
+import Fonts from '../theme/fonts';
+import {COLORS, wp} from '../theme/theme';
 
 interface ChatBubbleProps {
   text: string;
@@ -56,14 +56,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   ownBubble: {
-    backgroundColor: '#FFD1D4',
+    backgroundColor: COLORS.chatUserBackground,
     borderTopRightRadius: moderateScale(10),
     borderTopLeftRadius: moderateScale(10),
     borderBottomLeftRadius: moderateScale(10),
     borderBottomRightRadius: 0,
   },
   otherBubble: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: COLORS.chatColor,
     borderTopRightRadius: moderateScale(10),
     borderTopLeftRadius: moderateScale(10),
     borderBottomRightRadius: moderateScale(10),
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   timeText: {
     fontSize: moderateScale(12),
     fontFamily: Fonts.Sen_Regular,
-    color: '#8A8A8A',
+    color: COLORS.pujaCardSubtext,
     marginTop: moderateScale(5),
     lineHeight: moderateScale(15),
   },

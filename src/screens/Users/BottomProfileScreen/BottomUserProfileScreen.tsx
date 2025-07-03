@@ -12,7 +12,7 @@ import Fonts from '../../../theme/fonts';
 import {COLORS} from '../../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import LinearGradient from 'react-native-linear-gradient';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 interface ProfileFieldProps {
   label: string;
@@ -27,6 +27,7 @@ const ProfileField: React.FC<ProfileFieldProps> = ({label, value}) => (
 );
 
 const BottomUserProfileScreen: React.FC = () => {
+  const inset = useSafeAreaInsets();
   const navigation = useNavigation();
 
   const userData = {
@@ -37,12 +38,8 @@ const BottomUserProfileScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* <View style={styles.headerGradient} /> */}
-      <LinearGradient
-        colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-        style={[styles.headerGradient]}
-      />
+    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+      <View style={styles.headerGradient} />
       <UserCustomHeader title="Profile" showBackButton={true} />
 
       <View style={styles.profileImageContainer}>
@@ -103,6 +100,17 @@ const BottomUserProfileScreen: React.FC = () => {
               />
             </View>
           </View>
+
+          <View style={styles.editSection}>
+            <View style={styles.editFieldContainer}>
+              <Text style={styles.logoutLabel}>Logout</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.primaryTextDark}
+              />
+            </View>
+          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -151,7 +159,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoSection: {
-    borderRadius: 20,
+    borderRadius: 10,
     padding: 14,
     marginHorizontal: 24,
     marginBottom: 24,
@@ -162,7 +170,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   editSection: {
-    borderRadius: 20,
+    borderRadius: 10,
     padding: 14,
     marginHorizontal: 24,
     marginBottom: 24,
@@ -204,6 +212,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
     paddingVertical: 5,
+  },
+  logoutLabel: {
+    color: COLORS.gradientEnd,
+    fontSize: 15,
+    fontFamily: Fonts.Sen_Medium,
   },
   divider: {
     width: '100%',

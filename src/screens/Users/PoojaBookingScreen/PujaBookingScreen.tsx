@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
@@ -149,11 +148,8 @@ const PujaBookingScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar
-        backgroundColor={COLORS.primaryBackground}
-        barStyle="light-content"
-      />
+    <SafeAreaView style={[styles.container]}>
+      <StatusBar barStyle="light-content" />
       <UserCustomHeader title="Puja Booking" showBackButton={true} />
 
       <ScrollView

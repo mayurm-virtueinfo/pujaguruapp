@@ -1,5 +1,5 @@
-import {StyleSheet, Dimensions} from 'react-native';
-import {moderateScale} from 'react-native-size-matters';
+import { StyleSheet, Dimensions } from 'react-native';
+import { moderateScale } from 'react-native-size-matters';
 import Fonts from './fonts';
 
 // Get screen dimensions for responsive design
@@ -55,6 +55,8 @@ export const COLORS = {
   bottomNavBackground: '#F5F6F7',
   bottomNavIcon: '#484C52',
   bottomNavActive: '#FA1927',
+  chatColor: '#F0F0F0',
+  chatUserBackground: "#FFD1D4"
 };
 
 // Typography

@@ -18,17 +18,19 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {useNavigation} from '@react-navigation/native';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const BookingSuccessfullyScreen: React.FC = () => {
   type ScreenNavigationProps = StackNavigationProp<
     UserPoojaListParamList,
     'RateYourExperienceScreen'
   >;
+  const inset = useSafeAreaInsets();
 
   const navigation = useNavigation<ScreenNavigationProps>();
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title="Booking Successfully" />
       <ScrollView
