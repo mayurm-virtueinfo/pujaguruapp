@@ -18,13 +18,14 @@ import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const PlaceSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'AddressSelectionScreen' | 'TirthPlaceSelectionScreen'
   >;
-
+  const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingPlace[]>([]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
@@ -58,7 +59,7 @@ const PlaceSelectionScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title="Puja Booking" showBackButton={true} />
       <ScrollView

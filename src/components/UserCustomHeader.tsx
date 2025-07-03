@@ -73,8 +73,8 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
         colors={[COLORS.gradientStart, COLORS.gradientEnd]}
         style={[
           styles.gradientContainer,
-          {paddingTop: Platform.OS === 'android' ? inset.top : 0},
-          {height: Platform.OS === 'ios' ? 50 : 100},
+          // {paddingTop: Platform.OS === 'android' ? inset.top : 0},
+          // {height: Platform.OS === 'ios' ? 50 : 100},
         ]}>
         {/* Header Content */}
         <View style={styles.headerContainer}>

@@ -26,12 +26,14 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {moderateScale} from 'react-native-size-matters';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const PujaListScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'UserPoojaDetails'
   >;
+  const inset = useSafeAreaInsets();
 
   const [recommendedPuja, setRecommendedPuja] = useState<RecommendedPuja[]>([]);
   const [pujaList, setPujaList] = useState<PujaListItemType[]>([]);
@@ -67,7 +69,7 @@ const PujaListScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}

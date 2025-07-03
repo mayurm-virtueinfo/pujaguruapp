@@ -7,11 +7,10 @@ import {
   TouchableOpacity,
   StatusBar,
   Image,
-  GestureResponderEvent,
+  Platform,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {COLORS} from '../../../theme/theme';
@@ -19,16 +18,15 @@ import PrimaryButton from '../../../components/PrimaryButton';
 import PujaItemsModal from '../../../components/PujaItemsModal';
 import Fonts from '../../../theme/fonts';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import { Images } from '../../../theme/Images';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
+import {Images} from '../../../theme/Images';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 
 const UserPujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'PujaCancellationScreen' | 'UserChatScreen'
   >;
-
   const navigation = useNavigation<ScreenNavigationProp>();
   const [isPujaItemsModalVisible, setIsPujaItemsModalVisible] = useState(false);
 
@@ -39,27 +37,6 @@ const UserPujaDetailsScreen: React.FC = () => {
   const handleModalClose = () => {
     setIsPujaItemsModalVisible(false);
   };
-
-  const renderStatusBar = () => (
-    <View style={styles.statusBarContainer}>
-      <Text style={styles.statusBarTime}>9:41</Text>
-      <View style={styles.statusBarIcons}>
-        <View style={styles.signalBars}>
-          {[...Array(4)].map((_, index) => (
-            <View
-              key={index}
-              style={[styles.signalBar, {height: scale(3 + index * 2)}]}
-            />
-          ))}
-        </View>
-        <Ionicons name="wifi" size={scale(15)} color="#fff" />
-        <View style={styles.batteryContainer}>
-          <View style={styles.battery} />
-          <View style={styles.batteryTip} />
-        </View>
-      </View>
-    </View>
-  );
 
   const renderPujaDetails = () => (
     <View style={styles.detailsContainer}>
@@ -232,26 +209,41 @@ const UserPujaDetailsScreen: React.FC = () => {
     />
   );
 
+  // Show modal outside SafeAreaView for iOS, inside for others
   return (
-    <SafeAreaView style={styles.container}>
-      <UserCustomHeader title="Puja Details" showBackButton={true} />
-
-      <ScrollView
-        style={styles.content}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}>
-        {renderPujaDetails()}
-        {renderTotalAmount()}
-        {renderPanditDetails()}
-        {renderPanditjiSection()}
-        {renderCancelButton()}
-      </ScrollView>
-
-      <PujaItemsModal
-        visible={isPujaItemsModalVisible}
-        onClose={handleModalClose}
-      />
-    </SafeAreaView>
+    <>
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor={COLORS.primaryBackground}
+        />
+        <UserCustomHeader title="Puja Details" showBackButton={true} />
+        <View style={styles.flexGrow}>
+          <ScrollView
+            style={styles.content}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.contentContainer}>
+            {renderPujaDetails()}
+            {renderTotalAmount()}
+            {renderPanditDetails()}
+            {renderPanditjiSection()}
+            {renderCancelButton()}
+          </ScrollView>
+        </View>
+        {Platform.OS !== 'ios' && (
+          <PujaItemsModal
+            visible={isPujaItemsModalVisible}
+            onClose={handleModalClose}
+          />
+        )}
+      </SafeAreaView>
+      {Platform.OS === 'ios' && (
+        <PujaItemsModal
+          visible={isPujaItemsModalVisible}
+          onClose={handleModalClose}
+        />
+      )}
+    </>
   );
 };
 
@@ -260,64 +252,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
-  statusBarContainer: {
-    position: 'absolute',
-    top: verticalScale(12),
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: scale(30),
-    height: verticalScale(20),
-  },
-  statusBarTime: {
-    color: COLORS.white,
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_Regular,
-    letterSpacing: -0.23,
-  },
-  statusBarIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: scale(5),
-  },
-  signalBars: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: scale(1),
-    marginRight: scale(5),
-  },
-  signalBar: {
-    width: scale(2),
-    backgroundColor: COLORS.white,
-    borderRadius: scale(1),
-  },
-  batteryContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  battery: {
-    width: scale(24),
-    height: scale(12),
-    borderWidth: 1,
-    borderColor: COLORS.white,
-    borderRadius: scale(2),
-    backgroundColor: COLORS.white,
-  },
-  batteryTip: {
-    width: scale(1),
-    height: scale(4),
-    backgroundColor: COLORS.white,
-    marginLeft: scale(1),
-  },
   content: {
     flex: 1,
     backgroundColor: COLORS.pujaBackground,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
   },
+  flexGrow: {
+    flexGrow: 1,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    // overflow: 'hidden',
+  },
   contentContainer: {
+    flexGrow: 1,
     padding: moderateScale(24),
     // paddingBottom: verticalScale(100),
   },
@@ -474,57 +423,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: -0.15,
   },
-  bottomNavContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: verticalScale(66),
-    backgroundColor: COLORS.bottomNavBackground,
-  },
-  bottomNavContent: {
-    flex: 1,
-    paddingHorizontal: scale(4),
-    paddingVertical: verticalScale(6),
-  },
-  navIndicator: {
-    width: scale(56),
-    height: verticalScale(2),
-    backgroundColor: COLORS.bottomNavActive,
-    alignSelf: 'center',
-    marginBottom: verticalScale(4),
-    position: 'absolute',
-    top: 0,
-    left: scale(108),
-  },
-  navItems: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    flex: 1,
-    paddingTop: verticalScale(6),
-  },
-  navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: verticalScale(6),
-    flex: 1,
-  },
-  navItemActive: {
-    // Additional styling for active state if needed
-  },
-  navItemText: {
-    fontSize: moderateScale(12),
-    fontFamily: Fonts.Sen_Regular,
-    color: COLORS.bottomNavIcon,
-    textAlign: 'center',
-  },
-  navItemActiveText: {
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.bottomNavActive,
-  },
 });
 
 export default UserPujaDetailsScreen;
-
-

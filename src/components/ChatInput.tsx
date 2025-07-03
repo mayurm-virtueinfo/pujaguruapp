@@ -10,8 +10,8 @@ import {
 import {moderateScale} from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {COLORS, wp} from '../../../../theme/theme';
-import Fonts from '../../../../theme/fonts';
+import {COLORS, wp} from '../theme/theme';
+import Fonts from '../theme/fonts';
 
 interface ChatInputProps {
   onSendMessage: (text: string) => void;
@@ -40,7 +40,7 @@ const ChatInput: React.FC<ChatInputProps> = ({onSendMessage}) => {
           style={styles.emojiButton}
           onPress={handleEmojiPress}
           hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
-          <MaterialIcons name="emoji-emotions" size={20} color="#BAB8B8" />
+          <MaterialIcons name="emoji-emotions" size={24} color="#BAB8B8" />
         </TouchableOpacity>
 
         <TextInput
@@ -84,19 +84,17 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: '#F0F0F0',
+    alignItems: 'center',
+    backgroundColor: COLORS.chatColor,
     borderRadius: moderateScale(23),
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(8),
     minHeight: moderateScale(46),
     maxWidth: wp(95),
-    alignSelf: 'center',
+    alignContent: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
   },
   emojiButton: {
-    marginRight: moderateScale(12),
-    marginBottom: moderateScale(3),
-    padding: moderateScale(4),
+    paddingHorizontal: moderateScale(16),
   },
   textInput: {
     flex: 1,
@@ -110,13 +108,13 @@ const styles = StyleSheet.create({
     textAlignVertical: 'center',
   },
   sendButton: {
-    backgroundColor: '#FFBE12',
+    backgroundColor: COLORS.primaryBackgroundButton,
     borderRadius: moderateScale(19),
     width: moderateScale(38),
     height: moderateScale(38),
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: moderateScale(8),
+    marginHorizontal: moderateScale(8),
   },
 });
 

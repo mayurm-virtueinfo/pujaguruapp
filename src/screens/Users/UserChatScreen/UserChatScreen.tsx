@@ -9,8 +9,8 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {moderateScale} from 'react-native-size-matters';
 import {COLORS, SCREEN_HEIGHT} from '../../../theme/theme';
-import ChatMessages from './components/ChatMessages';
-import ChatInput from './components/ChatInput';
+import ChatMessages from '../../../components/ChatMessages';
+import ChatInput from '../../../components/ChatInput';
 import CustomHeader from '../../../components/CustomHeader';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 
@@ -51,31 +51,32 @@ const UserChatScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" />
-      <UserCustomHeader
-        title="Ramesh Purohit"
-        showBackButton={true}
-        showCallButton={true}
+    <View style={{flex: 1}}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={COLORS.primaryBackground}
+        translucent
       />
-      <KeyboardAvoidingView
-        style={styles.flex1}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+      <SafeAreaView style={styles.safeArea}>
+        <UserCustomHeader
+          title="Ramesh Purohit"
+          showBackButton={true}
+          showCallButton={true}
+        />
         <View style={styles.chatContainer}>
           <View style={styles.messagesContainer}>
             <ChatMessages messages={messages} />
           </View>
           <ChatInput onSendMessage={handleSendMessage} />
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
-    flex: 1,
+    // flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
   flex1: {
@@ -87,8 +88,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
     paddingTop: moderateScale(24),
-    minHeight: SCREEN_HEIGHT * 0.7,
-    overflow: 'hidden',
+    minHeight: '100%',
+    paddingBottom: Platform.OS === 'ios' ? 90 : 100,
   },
   messagesContainer: {
     flex: 1,

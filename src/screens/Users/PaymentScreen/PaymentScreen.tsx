@@ -23,6 +23,7 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 import {useNavigation} from '@react-navigation/native';
 import {useCommonToast} from '../../../common/CommonToast';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 interface PaymentMethod {
   id: string;
@@ -52,6 +53,7 @@ const PaymentScreen: React.FC = () => {
     'BookingSuccessfullyScreen'
   >;
 
+  const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const {showErrorToast, showSuccessToast} = useCommonToast();
@@ -190,7 +192,7 @@ const PaymentScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <View style={styles.contentContainer}>
         <UserCustomHeader title="Payment" showBackButton={true} />

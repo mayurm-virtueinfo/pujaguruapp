@@ -23,6 +23,7 @@ import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {apiService} from '../../../api/apiService';
 import CustomHeader from '../../../components/CustomHeader';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 interface PanditjiItem {
   id: string;
@@ -35,6 +36,8 @@ interface PanditjiItem {
 }
 
 const PanditjiScreen: React.FC = () => {
+  const inset = useSafeAreaInsets();
+
   const navigation =
     useNavigation<StackNavigationProp<UserPoojaListParamList>>();
   const [searchText, setSearchText] = useState('');
@@ -141,7 +144,7 @@ const PanditjiScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}

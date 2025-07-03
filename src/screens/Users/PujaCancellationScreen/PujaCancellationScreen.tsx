@@ -19,6 +19,7 @@ import CancellationPolicyModal from '../../../components/CancellationPolicyModal
 import Fonts from '../../../theme/fonts';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 interface CancellationReason {
   id: number;
@@ -27,6 +28,7 @@ interface CancellationReason {
 }
 
 const PujaCancellationScreen = () => {
+  const inset = useSafeAreaInsets();
   const navigation = useNavigation<UserPoojaListParamList>();
 
   const [cancellationReasons, setCancellationReasons] = useState<
@@ -92,28 +94,6 @@ const PujaCancellationScreen = () => {
     r => r.id === selectedReasonId,
   )?.requiresSpecification;
 
-  const renderHeader = () => (
-    <LinearGradient
-      colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-      style={styles.headerGradient}>
-      <View style={styles.headerContainer}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}>
-            <Ionicons
-              name="chevron-back"
-              size={moderateScale(24)}
-              color={COLORS.white}
-            />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Puja Cancellation</Text>
-          <View style={styles.headerSpacer} />
-        </View>
-      </View>
-    </LinearGradient>
-  );
-
   const renderReasonOption = (reason: CancellationReason, index: number) => (
     <View key={reason.id}>
       <TouchableOpacity
@@ -142,7 +122,7 @@ const PujaCancellationScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, {paddingTop: inset.top}]}>
       <UserCustomHeader title="Puja Cancellation" showBackButton={true} />
       <ScrollView
         style={styles.scrollView}
@@ -201,7 +181,7 @@ export default PujaCancellationScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryBackground,
   },
   scrollView: {
     flex: 1,

@@ -17,7 +17,7 @@ import {useAuth} from '../provider/AuthProvider';
 import UserAppBottomTabNavigator, {
   UserAppBottomTabParamList,
 } from './User/UserBottomTabNavigator';
-import CompleteProfileScreen from '../screens/CompleteProfileScreen';
+import CompleteProfileScreen from '../screens/Users/CompleteProfileScreen/CompleteProfileScreen';
 import UserProfileScreen from '../screens/Users/ProfileScreen/UserProfileScreen';
 
 // Root Stack Types

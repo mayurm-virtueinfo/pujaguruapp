@@ -15,6 +15,7 @@ import PrimaryButton from '../../../components/PrimaryButton';
 import CustomTextInput from '../../../components/CustomTextInput';
 import {MainAppStackParamList} from '../../../navigation/RootNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 type CompleteProfileScreenRouteProp = RouteProp<
   MainAppStackParamList,
@@ -26,6 +27,7 @@ interface Props {
 }
 
 const UserProfileScreen: React.FC<Props> = ({navigation}) => {
+  const inset = useSafeAreaInsets();
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -37,7 +39,7 @@ const UserProfileScreen: React.FC<Props> = ({navigation}) => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <StatusBar
         translucent
         backgroundColor="transparent"

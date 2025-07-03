@@ -19,12 +19,14 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {PujaListItemType, RecommendedPuja} from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const PujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'PlaceSelectionScreen'
   >;
+  const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute();
 
@@ -46,7 +48,7 @@ const PujaDetailsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
       <UserCustomHeader
         title={data.name}

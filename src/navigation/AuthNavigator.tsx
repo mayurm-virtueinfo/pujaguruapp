@@ -9,7 +9,7 @@ import PoojaAndAstrologyPerformedScreen from '../screens/PoojaAndAstrologyPerfor
 import LanguagesScreen from '../screens/LanguagesScreen'; // Import new screen
 import {COLORS} from '../theme/theme';
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
-import CompleteProfileScreen from '../screens/CompleteProfileScreen';
+import CompleteProfileScreen from '../screens/Users/CompleteProfileScreen/CompleteProfileScreen';
 
 export type AuthStackParamList = {
   SignIn: undefined;
