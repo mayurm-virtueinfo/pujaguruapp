@@ -10,11 +10,11 @@ import {
 import {RouteProp, useNavigation} from '@react-navigation/native';
 import Fonts from '../../../theme/fonts';
 import {COLORS} from '../../../theme/theme';
-import CustomHeader from '../../../components/CustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import CustomTextInput from '../../../components/CustomTextInput';
 import {MainAppStackParamList} from '../../../navigation/RootNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import LinearGradient from 'react-native-linear-gradient';
 
 type CompleteProfileScreenRouteProp = RouteProp<
   MainAppStackParamList,
@@ -43,7 +43,11 @@ const UserProfileScreen: React.FC<Props> = ({navigation}) => {
         backgroundColor="transparent"
         barStyle="light-content"
       />
-      <View style={styles.headerGradient} />
+      {/* <View style={styles.headerGradient} /> */}
+      <LinearGradient
+        colors={[COLORS.gradientStart, COLORS.gradientEnd]}
+        style={[styles.headerGradient]}
+      />
       <UserCustomHeader title="Profile" showBackButton={true} />
 
       <View style={styles.profileImageContainer}>

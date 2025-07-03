@@ -150,6 +150,10 @@ const PujaBookingScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar
+        backgroundColor={COLORS.primaryBackground}
+        barStyle="light-content"
+      />
       <UserCustomHeader title="Puja Booking" showBackButton={true} />
 
       <ScrollView
