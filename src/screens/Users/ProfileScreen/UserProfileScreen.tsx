@@ -1,15 +1,31 @@
 import React, {useState} from 'react';
-import {StyleSheet, View, StatusBar, Image, ScrollView} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {
+  StyleSheet,
+  View,
+  StatusBar,
+  Image,
+  ScrollView,
+  SafeAreaView,
+} from 'react-native';
+import {RouteProp, useNavigation} from '@react-navigation/native';
 import Fonts from '../../../theme/fonts';
 import {COLORS} from '../../../theme/theme';
 import CustomHeader from '../../../components/CustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import CustomTextInput from '../../../components/CustomTextInput';
+import {MainAppStackParamList} from '../../../navigation/RootNavigator';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
-const UserProfileScreen: React.FC = () => {
-  const navigation = useNavigation();
+type CompleteProfileScreenRouteProp = RouteProp<
+  MainAppStackParamList,
+  'UserAppBottomTabNavigator'
+>;
 
+interface Props {
+  navigation: CompleteProfileScreenRouteProp;
+}
+
+const UserProfileScreen: React.FC<Props> = ({navigation}) => {
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -17,17 +33,18 @@ const UserProfileScreen: React.FC = () => {
 
   const handleSaveChanges = () => {
     console.log('Save changes pressed');
+    navigation.navigate('UserAppBottomTabNavigator');
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar
         translucent
         backgroundColor="transparent"
         barStyle="light-content"
       />
       <View style={styles.headerGradient} />
-      <CustomHeader title="Profile" showBackButton={true} />
+      <UserCustomHeader title="Profile" showBackButton={true} />
 
       <View style={styles.profileImageContainer}>
         <Image
@@ -75,14 +92,14 @@ const UserProfileScreen: React.FC = () => {
           </View>
         </ScrollView>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.backgroundPrimary,
+    backgroundColor: COLORS.primaryBackground,
   },
   headerGradient: {
     position: 'absolute',
@@ -90,7 +107,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 184,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryBackground,
   },
   profileImageContainer: {
     position: 'absolute',

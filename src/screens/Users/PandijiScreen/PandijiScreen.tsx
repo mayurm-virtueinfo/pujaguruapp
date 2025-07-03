@@ -9,24 +9,20 @@ import {
   TextInput,
   FlatList,
   Image,
-  Dimensions,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {COLORS, hp, wp} from '../../../theme/theme';
+import {COLORS, wp} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import PrimaryButton from '../../../components/PrimaryButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import Octicons from 'react-native-vector-icons/Octicons';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {apiService} from '../../../api/apiService';
+import CustomHeader from '../../../components/CustomHeader';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-
-const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
 interface PanditjiItem {
   id: string;
@@ -38,23 +34,16 @@ interface PanditjiItem {
   isVerified: boolean;
 }
 
-const SelectPanditjiScreen: React.FC = () => {
-  // Set up navigation with correct type for stack navigation
+const PanditjiScreen: React.FC = () => {
   const navigation =
     useNavigation<StackNavigationProp<UserPoojaListParamList>>();
   const [searchText, setSearchText] = useState('');
-  const [selectedPanditji, setSelectedPanditji] = useState<string | null>(null);
-
   const [panditjiData, setPanditjiData] = useState<PanditjiItem[]>([]);
 
-  // Fetch Panditji data from API
   useEffect(() => {
     const fetchPanditjiData = async () => {
       try {
         const data = await apiService.getPanditListData();
-        // Map API data to PanditjiItem shape if needed
-        // Assuming API returns array of objects with id, name, location, languages, image, isVerified
-        // If not, adjust mapping accordingly
         const mappedData: PanditjiItem[] = data.map(
           (item: any, idx: number) => ({
             id: item.id?.toString() ?? `${idx + 1}`,
@@ -70,7 +59,6 @@ const SelectPanditjiScreen: React.FC = () => {
         );
         setPanditjiData(mappedData);
       } catch (error) {
-        // Optionally handle error
         setPanditjiData([]);
       }
     };
@@ -78,45 +66,21 @@ const SelectPanditjiScreen: React.FC = () => {
   }, []);
 
   const handlePanditjiSelect = (id: string) => {
-    setSelectedPanditji(id);
     setPanditjiData(prev =>
       prev.map(item => ({
         ...item,
         isSelected: item.id === id,
       })),
     );
+    navigation.navigate('PanditDetailsScreen');
   };
-
-  const handleNextPress = () => {
-    if (selectedPanditji) {
-      console.log('Selected Panditji:', selectedPanditji);
-      // Pass selectedPanditji as param if needed
-      navigation.navigate('PaymentScreen');
-    }
-  };
-
-  const handleBackPress = () => {
-    navigation.goBack();
-  };
-
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={handleBackPress}
-        activeOpacity={0.7}>
-        <Ionicons name="chevron-back" size={24} color={COLORS.white} />
-      </TouchableOpacity>
-      <Text style={styles.headerTitle}>Select Panditji</Text>
-    </View>
-  );
 
   const renderSearchInput = () => (
     <View style={styles.searchContainer}>
       <View style={styles.searchInputContainer}>
         <Ionicons
           name="search"
-          size={16}
+          size={18}
           color={COLORS.pujaTextSecondary}
           style={styles.searchIcon}
         />
@@ -164,19 +128,11 @@ const SelectPanditjiScreen: React.FC = () => {
           <TouchableOpacity
             style={styles.selectionButton}
             onPress={() => handlePanditjiSelect(item.id)}>
-            {item.isSelected ? (
-              <Octicons
-                name={'check-circle'}
-                size={24}
-                color={item.isSelected ? COLORS.primary : COLORS.inputBoder}
-              />
-            ) : (
-              <MaterialIcons
-                name={'radio-button-unchecked'}
-                size={24}
-                color={item.isSelected ? COLORS.primary : COLORS.inputBoder}
-              />
-            )}
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color={COLORS.pujaTextSecondary}
+            />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -188,29 +144,34 @@ const SelectPanditjiScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar
         barStyle="light-content"
-        // backgroundColor={COLORS.gradientStart}
+        backgroundColor={COLORS.gradientStart}
       />
-      <UserCustomHeader title="Select Panditji" showBackButton={true} />
+      <UserCustomHeader title="Panditji" showBellButton={true} />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={verticalScale(90)}>
         <View style={styles.absoluteMainContainer}>
-          {renderSearchInput()}
-          <FlatList
-            data={panditjiData}
-            renderItem={renderPanditjiItem}
-            keyExtractor={item => item.id}
-            showsVerticalScrollIndicator={true}
-            contentContainerStyle={styles.listContent}
-            keyboardShouldPersistTaps="handled"
-          />
-          <View style={styles.absoluteButtonContainer}>
-            <PrimaryButton
-              title="NEXT"
-              onPress={handleNextPress}
-              disabled={!selectedPanditji}
-              textStyle={styles.buttonText}
+          <View
+            style={{
+              backgroundColor: COLORS.white,
+              margin: 24,
+              shadowColor: '#000',
+              shadowOffset: {width: 0, height: 2},
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 4,
+              borderRadius: 10,
+              overflow: 'hidden',
+            }}>
+            {renderSearchInput()}
+            <FlatList
+              data={panditjiData}
+              renderItem={renderPanditjiItem}
+              keyExtractor={item => item.id}
+              showsVerticalScrollIndicator={true}
+              contentContainerStyle={styles.listContent}
+              keyboardShouldPersistTaps="handled"
             />
           </View>
         </View>
@@ -222,29 +183,7 @@ const SelectPanditjiScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.gradientStart,
-  },
-  headerBackground: {
-    backgroundColor: COLORS.gradientStart,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: scale(14),
-    height: verticalScale(136),
-  },
-  backButton: {
-    padding: scale(5),
-    marginRight: scale(10),
-  },
-  headerTitle: {
-    color: COLORS.white,
-    textAlign: 'center',
-    fontFamily: Fonts.Sen_Bold,
-    fontSize: moderateScale(18),
-    fontWeight: '700',
-    flex: 1,
-    marginRight: scale(39),
+    backgroundColor: COLORS.primaryBackground,
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -254,46 +193,27 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.pujaBackground,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
-    overflow: 'hidden',
   },
-  searchContainer: {
-    paddingHorizontal: scale(24),
-    paddingTop: verticalScale(24),
-    paddingBottom: verticalScale(12),
-    backgroundColor: COLORS.pujaBackground,
-  },
+  searchContainer: {},
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.white,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderBottomWidth: 1,
     borderColor: COLORS.inputBoder,
-    paddingHorizontal: 16,
-    height: 40,
+    paddingHorizontal: 14,
+    height: 48,
   },
   searchIcon: {
     marginRight: scale(12),
   },
   searchInput: {
-    flex: 1,
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(16),
+    fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
-    padding: 0,
   },
-  listContent: {
-    backgroundColor: COLORS.white, // White background
-    borderRadius: moderateScale(20), // Border radius
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4, // Shadow for Android
-    marginHorizontal: scale(24),
-  },
+  listContent: {},
   panditjiContainer: {
-    // marginBottom: verticalScale(8),
     borderRadius: moderateScale(10),
     overflow: 'hidden',
   },
@@ -361,25 +281,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.separatorColor,
     marginHorizontal: scale(14),
   },
-  absoluteButtonContainer: {
-    paddingHorizontal: scale(24),
-    paddingBottom: verticalScale(20),
-    backgroundColor: COLORS.pujaBackground,
-  },
-  nextButton: {
-    backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: moderateScale(10),
-  },
-  disabledButton: {
-    backgroundColor: COLORS.inputBoder,
-  },
-  buttonText: {
-    color: COLORS.primaryTextDark,
-    textAlign: 'center',
-    fontFamily: Fonts.Sen_Regular,
-    fontSize: moderateScale(15),
-    textTransform: 'uppercase',
-  },
 });
 
-export default SelectPanditjiScreen;
+export default PanditjiScreen;

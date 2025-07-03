@@ -148,7 +148,7 @@ export interface CommentData {
   commenterName: string;
   date: string;
   star: number,
-  comment: string,
+  Comment: string,
   like: number,
   disLike: number,
   image: string

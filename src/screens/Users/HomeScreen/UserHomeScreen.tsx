@@ -19,6 +19,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {useNavigation} from '@react-navigation/native';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 const UserHomeScreen: React.FC = () => {
   const navigation = useNavigation<UserPoojaListParamList>();
@@ -62,17 +63,7 @@ const UserHomeScreen: React.FC = () => {
         barStyle="light-content"
       />
 
-      <View style={styles.header}>
-        <View style={styles.headerTitleContainer}>
-          <Text style={{width: 24, height: 24}} />
-          <Text style={styles.headerTitle}>Home</Text>
-          <Ionicons
-            name="notifications-outline"
-            size={24}
-            color={COLORS.white}
-          />
-        </View>
-      </View>
+      <UserCustomHeader title="Home" showBellButton={true} />
 
       <ScrollView style={[styles.content]} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
@@ -174,7 +165,7 @@ const UserHomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.primaryBackground,
   },
   header: {
     backgroundColor: COLORS.primaryBackground,
@@ -197,7 +188,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
-    marginTop: moderateScale(-48),
     zIndex: 10,
     paddingHorizontal: moderateScale(24),
     paddingTop: moderateScale(24),

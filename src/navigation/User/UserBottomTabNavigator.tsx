@@ -9,12 +9,14 @@ import PanditScreen from '../../screens/Users/PanditScreen/PanditScreen';
 import {Image} from 'react-native';
 import {Images} from '../../theme/Images';
 import UserHomeNavigator from './UsetHomeStack';
+import UserPanditjiNavigator from './UserPanditjiNavigator';
 
 export type UserAppBottomTabParamList = {
   UserHomeNavigator: undefined;
   UserPoojaListNavigator: undefined;
   PanditScreen: undefined;
   BottomUserProfileScreen: undefined;
+  UserPanditjiNavigator: undefined;
 };
 
 const Tab = createBottomTabNavigator<UserAppBottomTabParamList>();
@@ -53,8 +55,8 @@ const UserAppBottomTabNavigator: React.FC = () => {
         }}
       />
       <Tab.Screen
-        name="PanditScreen"
-        component={PanditScreen}
+        name="UserPanditjiNavigator"
+        component={UserPanditjiNavigator}
         options={{
           title: 'Panditji',
           tabBarIcon: ({color, size}) => (

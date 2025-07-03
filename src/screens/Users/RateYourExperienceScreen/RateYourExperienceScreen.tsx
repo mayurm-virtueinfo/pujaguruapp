@@ -10,6 +10,7 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
@@ -21,6 +22,7 @@ import PrimaryButton from '../../../components/PrimaryButton';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 const RateYourExperienceScreen: React.FC = () => {
   const [rating, setRating] = useState<number>(0);
@@ -62,13 +64,10 @@ const RateYourExperienceScreen: React.FC = () => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={0}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
 
-      <CustomHeader title="Rate Your Experience" showBackButton={true} />
+      <UserCustomHeader title="Rate Your Experience" showBackButton={true} />
 
       <ScrollView
         style={styles.scrollContainer}
@@ -136,14 +135,14 @@ const RateYourExperienceScreen: React.FC = () => {
           />
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryBackground,
   },
   safeArea: {
     flex: 1,

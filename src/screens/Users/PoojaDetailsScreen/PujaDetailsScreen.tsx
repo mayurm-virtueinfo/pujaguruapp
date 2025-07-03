@@ -18,6 +18,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {PujaListItemType, RecommendedPuja} from '../../../api/apiService';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 const PujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -46,11 +47,8 @@ const PujaDetailsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={COLORS.gradientStart}
-      />
-      <CustomHeader
+      <StatusBar barStyle="light-content" />
+      <UserCustomHeader
         title={data.name}
         showBackButton={true}
         showBellButton={true}
@@ -120,7 +118,7 @@ const PujaDetailsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryBackground,
   },
   scrollContainer: {
     borderTopLeftRadius: 30,

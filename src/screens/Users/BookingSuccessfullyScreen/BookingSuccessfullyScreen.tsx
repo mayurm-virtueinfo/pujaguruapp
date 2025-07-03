@@ -17,6 +17,7 @@ import {Images} from '../../../theme/Images';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {useNavigation} from '@react-navigation/native';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 const BookingSuccessfullyScreen: React.FC = () => {
   type ScreenNavigationProps = StackNavigationProp<
@@ -29,7 +30,7 @@ const BookingSuccessfullyScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
-      <CustomHeader title="Booking Successfully" />
+      <UserCustomHeader title="Booking Successfully" />
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
@@ -63,7 +64,7 @@ export default BookingSuccessfullyScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryBackground,
   },
   scrollContainer: {
     flexGrow: 1,

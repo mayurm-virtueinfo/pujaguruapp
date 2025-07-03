@@ -17,6 +17,7 @@ import {apiService, PoojaBookingAddress} from '../../../api/apiService';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 import CustomeLoader from '../../../components/CustomeLoader';
 
 const AddressSelectionScreen: React.FC = () => {
@@ -61,7 +62,7 @@ const AddressSelectionScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
-      <CustomHeader
+      <UserCustomHeader
         title="Puja Booking"
         showBackButton={true}
         showCirclePlusButton={true}
@@ -129,7 +130,7 @@ const AddressSelectionScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryBackground,
   },
   scrollContainer: {
     borderTopLeftRadius: 30,

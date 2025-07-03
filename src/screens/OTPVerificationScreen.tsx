@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, {useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -11,17 +11,17 @@ import {
   ImageBackground,
   Image,
 } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { RouteProp } from '@react-navigation/native';
-import { AuthStackParamList } from '../navigation/AuthNavigator';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {RouteProp} from '@react-navigation/native';
+import {AuthStackParamList} from '../navigation/AuthNavigator';
 import Loader from '../components/Loader';
-import { getAuth, signInWithPhoneNumber } from '@react-native-firebase/auth';
-import { useCommonToast } from '../common/CommonToast';
-import { COLORS } from '../theme/theme';
-import { Images } from '../theme/Images';
-import { useTranslation } from 'react-i18next';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { moderateScale } from 'react-native-size-matters';
+import {getAuth, signInWithPhoneNumber} from '@react-native-firebase/auth';
+import {useCommonToast} from '../common/CommonToast';
+import {COLORS} from '../theme/theme';
+import {Images} from '../theme/Images';
+import {useTranslation} from 'react-i18next';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {moderateScale} from 'react-native-size-matters';
 import Fonts from '../theme/fonts';
 import PrimaryButton from '../components/PrimaryButton';
 import PrimaryButtonLabeled from '../components/PrimaryButtonLabeled';
@@ -42,15 +42,15 @@ interface Props {
   route: OTPVerificationScreenRouteProp;
 }
 
-const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { t, i18n } = useTranslation();
+const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
-  const { showErrorToast, showSuccessToast } = useCommonToast();
+  const {showErrorToast, showSuccessToast} = useCommonToast();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const inputRefs = useRef<Array<TextInput | null>>([]);
-  const { phoneNumber, confirmation } = route.params;
+  const {phoneNumber, confirmation} = route.params;
 
-  const [otpConfirmation, setOtpConfirmation] = useState(confirmation)
+  const [otpConfirmation, setOtpConfirmation] = useState(confirmation);
   const [isLoading, setLoading] = useState(false);
 
   const handleOtpChange = (value: string, index: number) => {
@@ -74,23 +74,25 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const confirmCode = async (code: string) => {
     try {
-      setLoading(true)
+      setLoading(true);
       await otpConfirmation.confirm(code);
-      setLoading(false)
-      navigation.navigate('PanditRegistration');
+      setLoading(false);
+      navigation.navigate('CompleteProfileScreen');
     } catch (error: any) {
       console.log('Invalid code.');
-      setLoading(false)
+      setLoading(false);
       // Alert.alert('','Invalid code');
-      showErrorToast(error?.message || 'Failed to Resend OTP. Please try again.')
+      showErrorToast(
+        error?.message || 'Failed to Resend OTP. Please try again.',
+      );
     }
-  }
+  };
   const handleVerification = async () => {
     try {
       const otpValue = otp.join('');
       if (otpValue.length !== 6) {
         // Alert.alert('Error', 'Please enter a valid 6-digit OTP');
-        showErrorToast('Please enter a valid 6-digit OTP')
+        showErrorToast('Please enter a valid 6-digit OTP');
         return;
       }
 
@@ -99,11 +101,10 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
 
       confirmCode(otpValue);
       // Navigate to registration screen after successful verification
-
     } catch (error) {
       console.error('Verification failed:', error);
       // Alert.alert('Error', 'OTP verification failed. Please try again.');
-      showErrorToast('OTP verification failed. Please try again.')
+      showErrorToast('OTP verification failed. Please try again.');
     }
   };
 
@@ -118,17 +119,20 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
       showSuccessToast('New OTP has been sent to your phone number');
       setOtpConfirmation(confirmation);
     } catch (error: any) {
-      console.log('---8')
+      console.log('---8');
       console.error(error);
       setLoading(false);
       // Alert.alert('Error', error?.message || 'Failed to Resend OTP. Please try again.');
-      showErrorToast(error?.message || 'Failed to Resend OTP. Please try again.')
+      showErrorToast(
+        error?.message || 'Failed to Resend OTP. Please try again.',
+      );
     }
-
   };
 
   return (
-    <ImageBackground source={Images.ic_splash_background} style={styles.container}>
+    <ImageBackground
+      source={Images.ic_splash_background}
+      style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.container}>
@@ -136,14 +140,18 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
-          <View style={[styles.content, { paddingTop: inset.top }]}>
+          <View style={[styles.content, {paddingTop: inset.top}]}>
             <View style={styles.containerHeader}>
-              <Image source={Images.ic_app_logo} style={{ width: '33%', resizeMode: 'contain' }}></Image>
+              <Image
+                source={Images.ic_app_logo}
+                style={{width: '33%', resizeMode: 'contain'}}></Image>
               <Text style={styles.title}>{t('hi_welcome')}</Text>
             </View>
-            <View style={[styles.containerBody, { paddingBottom: inset.bottom }]}>
+            <View style={[styles.containerBody, {paddingBottom: inset.bottom}]}>
               <Text style={styles.mainTitle}>{t('otp_verification')}</Text>
-              <Text style={styles.subtitle}>{t('6_digit_code_has_been_sent')}</Text>
+              <Text style={styles.subtitle}>
+                {t('6_digit_code_has_been_sent')}
+              </Text>
               <Text style={styles.phoneNumber}>{phoneNumber}</Text>
 
               <View style={styles.otpContainer}>
@@ -163,13 +171,21 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
                 ))}
               </View>
 
-              <PrimaryButton onPress={handleVerification} title={t('verify')}/>
+              <PrimaryButton onPress={handleVerification} title={t('verify')} />
 
               <View style={styles.resendContainer}>
-                <Text style={styles.resendText}>{t('did_not_receive_code')}</Text>
-                <PrimaryButtonLabeled onPress={handleResendOTP} title={t('resend_otp')}/>
+                <Text style={styles.resendText}>
+                  {t('did_not_receive_code')}
+                </Text>
+                <PrimaryButtonLabeled
+                  onPress={handleResendOTP}
+                  title={t('resend_otp')}
+                />
               </View>
-              <PrimaryButtonOutlined onPress={() => navigation.goBack()} title={t('change_mobile_number')}/> 
+              <PrimaryButtonOutlined
+                onPress={() => navigation.goBack()}
+                title={t('change_mobile_number')}
+              />
             </View>
           </View>
         </ScrollView>
@@ -266,7 +282,7 @@ const styles = StyleSheet.create({
   resendContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop:moderateScale(16),
+    marginTop: moderateScale(16),
   },
   resendText: {
     fontSize: moderateScale(14),
