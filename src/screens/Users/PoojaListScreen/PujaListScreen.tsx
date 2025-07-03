@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   StatusBar,
   ActivityIndicator,
+  KeyboardAvoidingView,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {COLORS} from '../../../theme/theme';
@@ -24,6 +25,8 @@ import {useNavigation} from '@react-navigation/native';
 import Calendar from '../../../components/Calendar';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import UserCustomHeader from '../../../components/UserCustomHeader';
+import {moderateScale} from 'react-native-size-matters';
 
 const PujaListScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -65,32 +68,13 @@ const PujaListScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}
       />
-      <LinearGradient
-        colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-        style={styles.headerGradient}>
-        <SafeAreaView>
-          <View style={styles.headerContent}>
-            <View style={styles.headerTop}>
-              <View style={styles.headerIconPlaceholder} />
-              <Text style={styles.headerTitle}>Puja</Text>
-              <TouchableOpacity
-                style={styles.headerIconButton}
-                activeOpacity={0.7}>
-                <Ionicons
-                  name="notifications-outline"
-                  size={24}
-                  color={COLORS.white}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+      <UserCustomHeader title="Puja" showBellButton={true} />
+
       <View style={styles.mainContent}>
         {loading ? (
           <View
@@ -156,63 +140,21 @@ const PujaListScreen: React.FC = () => {
           </ScrollView>
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.pujaBackground,
-  },
-  headerGradient: {
-    height: 136,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    overflow: 'hidden',
-  },
-  headerContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerIconPlaceholder: {
-    width: 24,
-    height: 24,
-  },
-  headerIconButton: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    color: COLORS.white,
-    textAlign: 'center',
-    fontFamily: Fonts.Sen_Bold,
-    fontSize: 20,
-    lineHeight: 24,
-    letterSpacing: 0.2,
+    backgroundColor: COLORS.primaryBackground,
   },
   mainContent: {
-    position: 'absolute',
-    top: 50,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     backgroundColor: COLORS.pujaBackground,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    zIndex: 2,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: -4},
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 8,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    overflow: 'hidden',
   },
   scrollView: {
     flex: 1,

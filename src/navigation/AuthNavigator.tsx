@@ -7,12 +7,17 @@ import SelectCityAreaScreen from '../screens/SelectCityAreaScreen';
 import DocumentsScreen from '../screens/DocumentsScreen';
 import PoojaAndAstrologyPerformedScreen from '../screens/PoojaAndAstrologyPerformedScreen';
 import LanguagesScreen from '../screens/LanguagesScreen'; // Import new screen
-import { COLORS } from '../theme/theme';
-import { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import {COLORS} from '../theme/theme';
+import {FirebaseAuthTypes} from '@react-native-firebase/auth';
+import CompleteProfileScreen from '../screens/CompleteProfileScreen';
 
 export type AuthStackParamList = {
   SignIn: undefined;
-  OTPVerification: {phoneNumber: string, confirmation:FirebaseAuthTypes.ConfirmationResult};
+  OTPVerification: {
+    phoneNumber: string;
+    confirmation: FirebaseAuthTypes.ConfirmationResult;
+  };
+  CompleteProfileScreen: undefined;
   PanditRegistration: undefined;
   SelectCityArea: undefined;
   Documents: undefined;
@@ -25,10 +30,10 @@ const Stack = createStackNavigator<AuthStackParamList>();
 const AuthNavigator = () => {
   return (
     <Stack.Navigator
-      initialRouteName='SignIn'
+      initialRouteName="SignIn"
       screenOptions={{
         headerShown: false,
-        cardStyle: { backgroundColor: COLORS.backgroundPrimary },
+        cardStyle: {backgroundColor: COLORS.backgroundPrimary},
       }}>
       <Stack.Screen name="SignIn" component={SignInScreen} />
       <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />

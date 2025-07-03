@@ -18,6 +18,7 @@ import PrimaryButton from '../../../components/PrimaryButton';
 import CancellationPolicyModal from '../../../components/CancellationPolicyModal';
 import Fonts from '../../../theme/fonts';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 interface CancellationReason {
   id: number;
@@ -142,7 +143,7 @@ const PujaCancellationScreen = () => {
 
   return (
     <View style={styles.container}>
-      {renderHeader()}
+      <UserCustomHeader title="Puja Cancellation" showBackButton={true} />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -207,7 +208,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
-    marginTop: verticalScale(-15),
   },
   scrollContent: {
     flexGrow: 1,

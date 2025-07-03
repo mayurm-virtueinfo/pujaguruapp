@@ -22,6 +22,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {useNavigation} from '@react-navigation/native';
 import {useCommonToast} from '../../../common/CommonToast';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 interface PaymentMethod {
   id: string;
@@ -131,20 +132,59 @@ const PaymentScreen: React.FC = () => {
   ) => (
     <View key={`${item.address}-${index}`} style={styles.bookingDataItem}>
       <View style={styles.textContainer}>
-        <Octicons name="location" size={20} color={COLORS.pujaCardSubtext} />
-        <Text style={styles.bookingDataText}>Address: {item.address}</Text>
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            justifyContent: 'center',
+            alignItems: 'center',
+
+            marginRight: scale(14),
+          }}>
+          <Octicons name="location" size={20} color={COLORS.pujaCardSubtext} />
+        </View>
+        <View>
+          <Text style={styles.bookingDataText}>{item.address}</Text>
+        </View>
       </View>
       <View style={styles.textContainer}>
-        <Octicons name="calendar" size={20} color={COLORS.pujaCardSubtext} />
-        <Text style={styles.bookingDataText}>Date: {item.date}</Text>
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: scale(14),
+          }}>
+          <Octicons name="calendar" size={20} color={COLORS.pujaCardSubtext} />
+        </View>
+        <View>
+          <Text style={styles.bookingDataText}>{item.date}</Text>
+        </View>
       </View>
       <View style={styles.textContainer}>
-        <Octicons name="clock" size={20} color={COLORS.pujaCardSubtext} />
-        <Text style={styles.bookingDataText}>Time: {item.time}</Text>
+        <View
+          style={{
+            width: 40,
+            height: 40,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: scale(14),
+          }}>
+          <Octicons name="clock" size={20} color={COLORS.pujaCardSubtext} />
+        </View>
+        <View>
+          <Text style={styles.bookingDataText}>{item.time}</Text>
+        </View>
       </View>
-      <View style={{flexDirection: 'row', alignItems: 'center', padding: 8}}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingTop: 12,
+        }}>
         <Image source={{uri: item.pandit.image}} style={styles.panditImage} />
-        <Text style={styles.bookingDataText}>Pandit: {item.pandit.name}</Text>
+        <Text style={styles.bookingDataText}>{item.pandit.name}</Text>
       </View>
     </View>
   );
@@ -153,7 +193,7 @@ const PaymentScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <View style={styles.contentContainer}>
-        <CustomHeader title="Payment" showBackButton={true} />
+        <UserCustomHeader title="Payment" showBackButton={true} />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContentContainer}
@@ -225,11 +265,19 @@ const PaymentScreen: React.FC = () => {
                   {suggestedPuja.name}
                 </Text>
               </View>
-              <Octicons
-                name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                size={24}
-                color={COLORS.pujaCardSubtext}
-              />
+              <View
+                style={{
+                  height: 24,
+                  width: 24,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}>
+                <Octicons
+                  name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color={COLORS.pujaCardSubtext}
+                />
+              </View>
             </TouchableOpacity>
             {isExpanded && (
               <View style={styles.bookingDataContainer}>
@@ -269,6 +317,7 @@ const PaymentScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: COLORS.primaryBackground,
   },
   contentContainer: {
     flex: 1,
@@ -440,22 +489,19 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
   },
   bookingDataContainer: {
-    padding: 8,
     borderTopWidth: 1,
     borderTopColor: COLORS.separatorColor,
-    marginTop: 10,
+    marginTop: 12,
   },
   bookingDataItem: {
-    marginBottom: verticalScale(8),
+    flex: 1,
   },
   textContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: verticalScale(4),
-    gap: 25,
-    padding: 8,
     borderBottomColor: COLORS.separatorColor,
     borderBottomWidth: 1,
+    paddingVertical: 6,
   },
   bookingDataText: {
     fontSize: 15,
@@ -463,10 +509,10 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
   },
   panditImage: {
-    width: 30,
-    height: 30,
+    width: 40,
+    height: 40,
     borderRadius: 25,
-    marginRight: 15,
+    marginRight: scale(14),
   },
   termsSection: {
     backgroundColor: COLORS.white,

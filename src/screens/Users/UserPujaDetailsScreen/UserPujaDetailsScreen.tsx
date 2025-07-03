@@ -18,6 +18,7 @@ import {COLORS} from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
 import PujaItemsModal from '../../../components/PujaItemsModal';
 import Fonts from '../../../theme/fonts';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 const UserPujaDetailsScreen: React.FC = () => {
   const navigation = useNavigation();
@@ -30,31 +31,6 @@ const UserPujaDetailsScreen: React.FC = () => {
   const handleModalClose = () => {
     setIsPujaItemsModalVisible(false);
   };
-
-  const renderHeader = () => (
-    <LinearGradient
-      colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-      style={styles.headerGradient}>
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle="light-content"
-      />
-      <SafeAreaView edges={['top']}>
-        <View style={styles.headerContainer}>
-          <View style={styles.headerContent}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}>
-              <Ionicons name="chevron-back" size={scale(24)} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Puja Details</Text>
-            <View style={styles.headerSpacer} />
-          </View>
-        </View>
-      </SafeAreaView>
-    </LinearGradient>
-  );
 
   const renderStatusBar = () => (
     <View style={styles.statusBarContainer}>
@@ -247,8 +223,8 @@ const UserPujaDetailsScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
-      {renderHeader()}
+    <SafeAreaView style={styles.container}>
+      <UserCustomHeader title="Puja Details" showBackButton={true} />
 
       <ScrollView
         style={styles.content}
@@ -265,41 +241,14 @@ const UserPujaDetailsScreen: React.FC = () => {
         visible={isPujaItemsModalVisible}
         onClose={handleModalClose}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.pujaBackground,
-  },
-  headerGradient: {
-    paddingBottom: verticalScale(20),
-  },
-  headerContainer: {
-    paddingHorizontal: scale(14),
-  },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    height: verticalScale(44),
-  },
-  backButton: {
-    width: scale(44),
-    height: scale(44),
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-  },
-  headerTitle: {
-    color: COLORS.white,
-    fontSize: moderateScale(18),
-    fontFamily: Fonts.Sen_Bold,
-    textAlign: 'center',
-  },
-  headerSpacer: {
-    width: scale(44),
+    backgroundColor: COLORS.primaryBackground,
   },
   statusBarContainer: {
     position: 'absolute',
@@ -357,7 +306,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.pujaBackground,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
-    marginTop: verticalScale(-20),
   },
   contentContainer: {
     padding: moderateScale(24),

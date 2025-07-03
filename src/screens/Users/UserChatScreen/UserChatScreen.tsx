@@ -12,6 +12,7 @@ import {COLORS, SCREEN_HEIGHT} from '../../../theme/theme';
 import ChatMessages from './components/ChatMessages';
 import ChatInput from './components/ChatInput';
 import CustomHeader from '../../../components/CustomHeader';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 export interface Message {
   id: string;
@@ -52,7 +53,7 @@ const UserChatScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
-      <CustomHeader
+      <UserCustomHeader
         title="Ramesh Purohit"
         showBackButton={true}
         showCallButton={true}
@@ -75,7 +76,7 @@ const UserChatScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryBackground,
   },
   flex1: {
     flex: 1,

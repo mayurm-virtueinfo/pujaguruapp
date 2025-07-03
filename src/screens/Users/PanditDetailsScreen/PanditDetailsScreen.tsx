@@ -23,6 +23,7 @@ import {
 } from '../../../api/apiService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -32,7 +33,7 @@ const PanditDetailsScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedPandit, setSelectedPandit] = useState<any>(null);
   const [commentData, setCommentData] = useState<CommentData[]>([]);
-  // console.log('commentData', commentData);
+  console.log('commentData', commentData);
   useEffect(() => {
     fetchPujaData();
     fetchAllPanditAndPuja();
@@ -119,7 +120,7 @@ const PanditDetailsScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      <CustomHeader title="Panditji Details" showBackButton={true} />
+      <UserCustomHeader title="Panditji Details" showBackButton={true} />
 
       <ScrollView
         style={styles.scrollContainer}
@@ -160,17 +161,6 @@ const PanditDetailsScreen: React.FC = () => {
 
           {/* Recommended Section */}
           <View style={styles.recommendedSection}>
-            <View style={styles.recommendedHeader}>
-              <Text style={styles.sectionTitle}>Recommended Panditji</Text>
-              <TouchableOpacity style={styles.seeAllRow}>
-                <Text style={styles.seeAllText}>See all </Text>
-                <Ionicons
-                  name="chevron-forward"
-                  size={moderateScale(20)}
-                  color={COLORS.primary}
-                />
-              </TouchableOpacity>
-            </View>
             <Text style={styles.descriptionText}>
               {panditName
                 ? `Pandit ${panditName} is highly experienced and well-versed in Hindu rituals and ceremonies.`
@@ -262,7 +252,7 @@ const PanditDetailsScreen: React.FC = () => {
                           {renderStars(review.star)}
                         </View>
                       </View>
-                      <Text style={styles.reviewText}>{review.comment}</Text>
+                      <Text style={styles.reviewText}>{review.Comment}</Text>
                       <View style={styles.reviewActions}>
                         <TouchableOpacity style={styles.actionItem}>
                           <Feather
@@ -312,7 +302,7 @@ const PanditDetailsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryBackground,
   },
   scrollContainer: {
     flex: 1,
@@ -560,10 +550,10 @@ const styles = StyleSheet.create({
   },
   reviewText: {
     fontSize: moderateScale(12),
-    color: COLORS.textSecondary,
+    color: COLORS.pujaCardSubtext,
     fontFamily: Fonts.Sen_Regular,
     lineHeight: moderateScale(18),
-    marginBottom: moderateScale(12),
+    marginBottom: moderateScale(8),
   },
   reviewActions: {
     flexDirection: 'row',

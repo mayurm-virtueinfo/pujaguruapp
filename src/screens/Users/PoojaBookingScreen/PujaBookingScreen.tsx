@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   StatusBar,
+  Platform,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
@@ -19,6 +20,7 @@ import Calendar from '../../../components/Calendar';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import PanditjiSelectionModal from '../../../components/PanditjiSelectionModal';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 interface MuhuratSlot {
   id: string;
@@ -110,31 +112,6 @@ const PujaBookingScreen: React.FC = () => {
     }
   };
 
-  const renderHeader = () => (
-    <LinearGradient
-      colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-      style={styles.headerGradient}>
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle="light-content"
-      />
-      <SafeAreaView edges={['top']}>
-        <View style={styles.headerContainer}>
-          <View style={styles.headerContent}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}>
-              <Ionicons name="chevron-back" size={24} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Puja Booking</Text>
-            <View style={styles.headerSpacer} />
-          </View>
-        </View>
-      </SafeAreaView>
-    </LinearGradient>
-  );
-
   const renderMuhuratSlots = () => (
     <View style={styles.slotsContainer}>
       <Text style={styles.slotsTitle}>Select Muhurat Time Slot</Text>
@@ -172,8 +149,8 @@ const PujaBookingScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
-      {renderHeader()}
+    <SafeAreaView style={styles.container}>
+      <UserCustomHeader title="Puja Booking" showBackButton={true} />
 
       <ScrollView
         style={styles.content}
@@ -268,48 +245,24 @@ const PujaBookingScreen: React.FC = () => {
         onConfirm={handlePanditjiSelectionConfirm}
         initialSelection={panditjiSelection}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.pujaBackground,
-  },
-  headerGradient: {
-    paddingBottom: verticalScale(20),
-  },
-  headerContainer: {},
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  backButton: {
-    width: scale(44),
-    height: scale(44),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: moderateScale(18),
-    fontFamily: Fonts.Sen_Bold,
-  },
-  headerSpacer: {
-    width: scale(44),
+    backgroundColor: COLORS.primaryBackground,
   },
   content: {
     flex: 1,
     backgroundColor: COLORS.pujaBackground,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
-    marginTop: verticalScale(-20),
+    marginBottom: Platform.OS === 'ios' ? -40 : 0,
   },
   contentContainer: {
     padding: moderateScale(24),
-    paddingBottom: verticalScale(100),
   },
   description: {
     fontSize: moderateScale(14),

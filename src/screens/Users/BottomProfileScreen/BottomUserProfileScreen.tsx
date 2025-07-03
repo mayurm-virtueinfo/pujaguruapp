@@ -1,9 +1,18 @@
 import React from 'react';
-import {StyleSheet, View, Image, ScrollView, Text} from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Image,
+  ScrollView,
+  Text,
+  SafeAreaView,
+} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import Fonts from '../../../theme/fonts';
 import {COLORS} from '../../../theme/theme';
 import CustomHeader from '../../../components/CustomHeader';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 interface ProfileFieldProps {
   label: string;
@@ -28,9 +37,9 @@ const BottomUserProfileScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.headerGradient} />
-      <CustomHeader title="Profile" showBackButton={true} />
+      <UserCustomHeader title="Profile" showBackButton={true} />
 
       <View style={styles.profileImageContainer}>
         <Image
@@ -56,23 +65,43 @@ const BottomUserProfileScreen: React.FC = () => {
           <View style={styles.editSection}>
             <View style={styles.editFieldContainer}>
               <Text style={styles.editFieldLabel}>Edit Profile</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.primaryTextDark}
+              />
             </View>
             <View style={styles.divider} />
             <View style={styles.editFieldContainer}>
-              <Text style={styles.editFieldLabel}>Email</Text>
+              <Text style={styles.editFieldLabel}>Upcoming Puja</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.primaryTextDark}
+              />
             </View>
             <View style={styles.divider} />
             <View style={styles.editFieldContainer}>
-              <Text style={styles.editFieldLabel}>Phone</Text>
+              <Text style={styles.editFieldLabel}>Past Puja</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.primaryTextDark}
+              />
             </View>
             <View style={styles.divider} />
             <View style={styles.editFieldContainer}>
-              <Text style={styles.editFieldLabel}>Location</Text>
+              <Text style={styles.editFieldLabel}>Notifications</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.primaryTextDark}
+              />
             </View>
           </View>
         </ScrollView>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -86,7 +115,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 184,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryBackground,
   },
   profileImageContainer: {
     position: 'absolute',
@@ -111,7 +140,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingTop: 64,
-    paddingHorizontal: 24,
     paddingBottom: 24,
     zIndex: 1,
   },
@@ -121,25 +149,23 @@ const styles = StyleSheet.create({
   infoSection: {
     borderRadius: 20,
     padding: 14,
+    marginHorizontal: 24,
     marginBottom: 24,
     backgroundColor: COLORS.white,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     elevation: 3,
-    borderWidth: 1,
-    borderColor: COLORS.borderColor,
     marginTop: 10,
   },
   editSection: {
     borderRadius: 20,
     padding: 14,
+    marginHorizontal: 24,
     marginBottom: 24,
     backgroundColor: COLORS.white,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.1,
     elevation: 3,
-    borderWidth: 1,
-    borderColor: COLORS.borderColor,
   },
   fieldContainer: {
     flexDirection: 'row',
@@ -164,7 +190,8 @@ const styles = StyleSheet.create({
   },
   editFieldContainer: {
     minHeight: 34,
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    flexDirection: 'row',
     paddingVertical: 5,
     paddingHorizontal: 10,
   },

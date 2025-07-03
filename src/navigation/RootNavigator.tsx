@@ -10,19 +10,23 @@ import {
   StackNavigationOptions,
 } from '@react-navigation/stack';
 import {NavigatorScreenParams} from '@react-navigation/native'; // Import NavigatorScreenParams
-import AuthNavigator from './AuthNavigator';
+import AuthNavigator, {AuthStackParamList} from './AuthNavigator';
 import AppDrawerNavigator, {AppDrawerParamList} from './DrawerNavigator'; // Corrected import path
 import {COLORS} from '../theme/theme';
 import {useAuth} from '../provider/AuthProvider';
 import UserAppBottomTabNavigator, {
   UserAppBottomTabParamList,
 } from './User/UserBottomTabNavigator';
+import CompleteProfileScreen from '../screens/CompleteProfileScreen';
+import UserProfileScreen from '../screens/Users/ProfileScreen/UserProfileScreen';
 
 // Root Stack Types
 // Define the param list for the stack that includes LanguagesScreen and AppDrawerNavigator
 export type MainAppStackParamList = {
   AppDrawer: NavigatorScreenParams<AppDrawerParamList>; // AppDrawerNavigator itself
   UserAppBottomTabNavigator: NavigatorScreenParams<UserAppBottomTabParamList>;
+  CompleteProfileScreen: {navigtion: undefined};
+  UserProfileScreen: undefined;
 };
 
 const MainApp = createStackNavigator<MainAppStackParamList>();
@@ -38,7 +42,11 @@ const MainAppStackNavigator = () => {
         headerTintColor: COLORS.white,
         cardStyle: {backgroundColor: COLORS.backgroundPrimary},
       }}>
-      {/* <MainApp.Screen name="AppDrawer" component={AppDrawerNavigator} /> */}
+      <MainApp.Screen
+        name="CompleteProfileScreen"
+        component={CompleteProfileScreen}
+      />
+      <MainApp.Screen name="UserProfileScreen" component={UserProfileScreen} />
       <MainApp.Screen
         name="UserAppBottomTabNavigator"
         component={UserAppBottomTabNavigator}

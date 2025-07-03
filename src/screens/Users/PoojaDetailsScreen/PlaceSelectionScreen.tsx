@@ -17,6 +17,7 @@ import {apiService, PoojaBookingPlace} from '../../../api/apiService';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 
 const PlaceSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -54,7 +55,7 @@ const PlaceSelectionScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
-      <CustomHeader title="Puja Booking" showBackButton={true} />
+      <UserCustomHeader title="Puja Booking" showBackButton={true} />
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
@@ -109,7 +110,7 @@ const PlaceSelectionScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryBackground,
   },
   scrollContainer: {
     borderTopLeftRadius: 30,

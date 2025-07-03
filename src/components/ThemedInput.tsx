@@ -1,7 +1,15 @@
 import React from 'react';
-import { TextInput, View, Text, StyleSheet, KeyboardTypeOptions, TextInputProps } from 'react-native';
-import { COLORS, COMPONENT_STYLES } from '../theme/theme';
-import { moderateScale } from 'react-native-size-matters';
+import {
+  TextInput,
+  View,
+  Text,
+  StyleSheet,
+  KeyboardTypeOptions,
+  TextInputProps,
+  TextStyle,
+} from 'react-native';
+import {COLORS, COMPONENT_STYLES} from '../theme/theme';
+import {moderateScale} from 'react-native-size-matters';
 import Fonts from '../theme/fonts';
 
 interface ThemedInputProps {
@@ -9,13 +17,14 @@ interface ThemedInputProps {
   onChangeText: (text: string) => void;
   placeholder: string;
   label?: string;
-  autoComplete?: TextInputProps['autoComplete']; // Change this line
-  textContentType?: TextInputProps['textContentType']; // Change this line
+  labelStyle?: TextStyle;
+  autoComplete?: TextInputProps['autoComplete'];
+  textContentType?: TextInputProps['textContentType'];
   secureTextEntry?: boolean;
-  keyboardType?: KeyboardTypeOptions; // Change this line
-  maxLength?: number; // Optional prop for maximum length
-  errors?: any
-  errorField?: string
+  keyboardType?: KeyboardTypeOptions;
+  maxLength?: number;
+  errors?: any;
+  errorField?: string;
 }
 
 const ThemedInput: React.FC<ThemedInputProps> = ({
@@ -23,19 +32,23 @@ const ThemedInput: React.FC<ThemedInputProps> = ({
   onChangeText,
   placeholder,
   label,
+  labelStyle,
   secureTextEntry = false,
   keyboardType = 'default',
-  autoComplete = 'off', // Default to 'off' for autoComplete
-  textContentType = 'none', // Default to 'none' for textContentType
+  autoComplete = 'off',
+  textContentType = 'none',
   maxLength,
   errors,
-  errorField
+  errorField,
 }) => {
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
       <TextInput
-        style={[COMPONENT_STYLES.input, errorField && errors[`${errorField}`] && styles.errorField]}
+        style={[
+          COMPONENT_STYLES.input,
+          errorField && errors?.[`${errorField}`] && styles.errorField,
+        ]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
@@ -46,8 +59,8 @@ const ThemedInput: React.FC<ThemedInputProps> = ({
         textContentType={textContentType}
         maxLength={maxLength}
       />
-      {errorField && errors[`${errorField}`] && (
-        <Text style={styles.errorText}>{errors.phoneNumber}</Text>
+      {errorField && errors?.[`${errorField}`] && (
+        <Text style={styles.errorText}>{errors[errorField]}</Text>
       )}
     </View>
   );
@@ -63,7 +76,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     marginTop: moderateScale(5),
     fontFamily: Fonts.Sen_Regular,
-
   },
   container: {
     marginBottom: 0,

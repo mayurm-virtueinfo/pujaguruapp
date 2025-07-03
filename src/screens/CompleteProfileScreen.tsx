@@ -25,6 +25,8 @@ import {
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import PrimaryButton from '../components/PrimaryButton';
 import ThemedInput from '../components/ThemedInput';
+import {MainAppStackParamList} from '../navigation/RootNavigator';
+import UserCustomHeader from '../components/UserCustomHeader';
 
 interface FormData {
   phoneNumber: string;
@@ -39,13 +41,13 @@ interface ScreenDimensions {
 }
 
 type CompleteProfileScreenNavigationProp = StackNavigationProp<
-  AuthStackParamList,
-  'CreateProfile'
+  MainAppStackParamList,
+  'CompleteProfileScreen' | 'UserProfileScreen'
 >;
 
 type CompleteProfileScreenRouteProp = RouteProp<
-  AuthStackParamList,
-  'CreateProfile'
+  MainAppStackParamList,
+  'CompleteProfileScreen' | 'UserProfileScreen'
 >;
 
 interface Props {
@@ -105,13 +107,13 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   const handleNext = () => {
     console.log('Proceeding to next screen...', formData);
     // Navigate to PanditRegistration or next screen in the flow
-    navigation.navigate('PanditRegistration');
+    navigation.navigate('UserProfileScreen');
   };
 
   const handleSkip = () => {
     console.log('Skip pressed');
     // Navigate to next screen, skipping profile completion
-    navigation.navigate('PanditRegistration');
+    navigation.navigate('UserProfileScreen');
   };
 
   const handleBack = () => {
@@ -149,6 +151,14 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
     alignSelf: 'center' as const,
   });
 
+  // Custom label style to pass to ThemedInput
+  const themedInputLabelStyle = {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.inputLabelText,
+    marginBottom: 4,
+  };
+
   const renderMainContent = () => (
     <View style={[styles.mainContent]}>
       <ScrollView
@@ -167,6 +177,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
             autoComplete="tel"
             textContentType="telephoneNumber"
             maxLength={15}
+            labelStyle={themedInputLabelStyle}
           />
         </View>
 
@@ -179,6 +190,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
             autoComplete="name"
             textContentType="givenName"
             maxLength={30}
+            labelStyle={themedInputLabelStyle}
           />
         </View>
 
@@ -191,6 +203,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
             autoComplete="name"
             textContentType="familyName"
             maxLength={30}
+            labelStyle={themedInputLabelStyle}
           />
         </View>
 
@@ -203,6 +216,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
             autoComplete="street-address"
             textContentType="fullStreetAddress"
             maxLength={100}
+            labelStyle={themedInputLabelStyle}
           />
         </View>
 
@@ -234,14 +248,19 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar
-        backgroundColor={COLORS.primaryBackground}
+        translucent
+        backgroundColor="transparent"
         barStyle="light-content"
+      />
+      <UserCustomHeader
+        title="Complete Your Profile"
+        showBackButton={true}
+        showSkipButton={true}
       />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
-        {renderHeader()}
         {renderMainContent()}
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -251,7 +270,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.primaryBackground,
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -355,10 +374,9 @@ const styles = StyleSheet.create({
   },
   mainContent: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
-    marginTop: moderateScale(-30),
     paddingHorizontal: moderateScale(24),
     paddingTop: moderateScale(24),
     shadowColor: COLORS.black,
@@ -389,7 +407,7 @@ const styles = StyleSheet.create({
   gpsButtonText: {
     color: COLORS.primaryTextDark,
     textAlign: 'center',
-    fontFamily: Fonts.Sen_Regular,
+    fontFamily: Fonts.Sen_Medium,
     fontSize: moderateScale(15),
     fontWeight: '400',
     lineHeight: moderateScale(21),
@@ -417,7 +435,7 @@ const styles = StyleSheet.create({
   nextButtonText: {
     color: COLORS.primaryTextDark,
     textAlign: 'center',
-    fontFamily: Fonts.Sen_Regular,
+    fontFamily: Fonts.Sen_Medium,
     fontSize: moderateScale(15),
     fontWeight: '400',
     lineHeight: moderateScale(21),
