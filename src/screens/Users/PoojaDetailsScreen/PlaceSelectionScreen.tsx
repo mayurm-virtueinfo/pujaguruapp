@@ -19,12 +19,14 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 const PlaceSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'AddressSelectionScreen' | 'TirthPlaceSelectionScreen'
   >;
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingPlace[]>([]);
@@ -61,18 +63,17 @@ const PlaceSelectionScreen: React.FC = () => {
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
-      <UserCustomHeader title="Puja Booking" showBackButton={true} />
+      <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         bounces={false}>
         <View style={styles.contentWrapper}>
           <View style={styles.detailsContainer}>
-            <Text style={styles.sectionTitle}>Select Your Preference</Text>
-            <Text style={styles.descriptionText}>
-              Choose where do you need to do this puja at your place or tirth
-              place?
+            <Text style={styles.sectionTitle}>
+              {t('select_your_preference')}
             </Text>
+            <Text style={styles.descriptionText}>{t('choose_puja')}</Text>
             {!isLoading && (
               <View style={styles.pricingContainer}>
                 {poojaPlaces.map((place, index) => (
@@ -105,7 +106,7 @@ const PlaceSelectionScreen: React.FC = () => {
             )}
 
             <PrimaryButton
-              title="NEXT"
+              title={t('next')}
               onPress={handleNextPress}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}

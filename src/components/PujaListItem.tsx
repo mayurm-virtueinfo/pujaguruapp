@@ -2,6 +2,7 @@ import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
+import {useTranslation} from 'react-i18next';
 
 interface PujaListItemProps {
   image: string;
@@ -19,30 +20,34 @@ const PujaListItem: React.FC<PujaListItemProps> = ({
   price,
   onPress,
   showSeparator = true,
-}) => (
-  <View style={styles.container}>
-    <TouchableOpacity style={styles.item} onPress={onPress}>
-      <View style={styles.imageContainer}>
-        <Image source={{uri: image}} style={styles.image} />
-      </View>
-      <View style={{flex: 1, marginLeft: 14}}>
-        <View style={styles.content}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.description}>{description}</Text>
+}) => {
+  const {t, i18n} = useTranslation();
+
+  return (
+    <View style={styles.container}>
+      <TouchableOpacity style={styles.item} onPress={onPress}>
+        <View style={styles.imageContainer}>
+          <Image source={{uri: image}} style={styles.image} />
         </View>
-        <View style={styles.row}>
-          <Text style={styles.price}>{price}</Text>
-          <TouchableOpacity style={styles.button} onPress={onPress}>
-            <Text style={styles.buttonText}>BOOK</Text>
-          </TouchableOpacity>
+        <View style={{flex: 1, marginLeft: 14}}>
+          <View style={styles.content}>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.description}>{description}</Text>
+          </View>
+          <View style={styles.row}>
+            <Text style={styles.price}>{price}</Text>
+            <TouchableOpacity style={styles.button} onPress={onPress}>
+              <Text style={styles.buttonText}>{t('book')}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
+      </TouchableOpacity>
+      <View style={{marginHorizontal: 12}}>
+        {showSeparator && <View style={styles.separator} />}
       </View>
-    </TouchableOpacity>
-    <View style={{marginHorizontal: 12}}>
-      {showSeparator && <View style={styles.separator} />}
     </View>
-  </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   container: {

@@ -28,6 +28,7 @@ import ThemedInput from '../../../components/ThemedInput';
 import {MainAppStackParamList} from '../../../navigation/RootNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 interface FormData {
   phoneNumber: string;
@@ -58,6 +59,7 @@ interface Props {
 
 const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   const inset = useSafeAreaInsets();
+  const {t, i18n} = useTranslation();
 
   const [formData, setFormData] = useState<FormData>({
     phoneNumber: '',
@@ -145,8 +147,8 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
     <View style={[styles.mainContent]}>
       <View style={styles.inputField}>
         <ThemedInput
-          label="Phone Number"
-          placeholder="Enter phone number"
+          label={t('phone_number')}
+          placeholder={t('enter_phone_number')}
           value={formData.phoneNumber}
           onChangeText={text => handleInputChange('phoneNumber', text)}
           keyboardType="phone-pad"
@@ -159,8 +161,8 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
 
       <View style={styles.inputField}>
         <ThemedInput
-          label="First Name"
-          placeholder="Enter first name"
+          label={t('first_name')}
+          placeholder={t('enter_first_name')}
           value={formData.firstName}
           onChangeText={text => handleInputChange('firstName', text)}
           autoComplete="name"
@@ -172,8 +174,8 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
 
       <View style={styles.inputField}>
         <ThemedInput
-          label="Last Name"
-          placeholder="Enter last name"
+          label={t('last_name')}
+          placeholder={t('enter_last_name')}
           value={formData.lastName}
           onChangeText={text => handleInputChange('lastName', text)}
           autoComplete="name"
@@ -185,8 +187,8 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
 
       <View style={styles.inputField}>
         <ThemedInput
-          label="Address"
-          placeholder="1234 Elm Street, Springfield"
+          label={t('address')}
+          placeholder={t('enter_address')}
           value={formData.address}
           onChangeText={text => handleInputChange('address', text)}
           autoComplete="street-address"
@@ -204,12 +206,12 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
         accessibilityHint="Tap to get your current location automatically"
         accessibilityRole="button">
         <Text style={styles.gpsButtonText}>
-          {isLoadingLocation ? 'FETCHING LOCATION...' : 'FETCH GPS LOCATION'}
+          {isLoadingLocation ? t('fetching_location') : t('fetch_gps_location')}
         </Text>
       </TouchableOpacity>
 
       <PrimaryButton
-        title="NEXT"
+        title={t('next')}
         onPress={handleNext}
         style={styles.nextButton}
         textStyle={styles.nextButtonText}
@@ -231,7 +233,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
       />
       <SafeAreaView style={{backgroundColor: COLORS.primaryBackground}}>
         <UserCustomHeader
-          title="Complete Your Profile"
+          title={t('complete_your_profile')}
           showBackButton={true}
           showSkipButton={true}
         />

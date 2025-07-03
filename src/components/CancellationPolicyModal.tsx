@@ -11,6 +11,7 @@ import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {useTranslation} from 'react-i18next';
 
 interface CancellationPolicyModalProps extends Partial<ModalProps> {
   visible: boolean;
@@ -22,6 +23,8 @@ const CancellationPolicyModal: React.FC<CancellationPolicyModalProps> = ({
   onClose,
   ...modalProps
 }) => {
+  const {t, i18n} = useTranslation();
+
   return (
     <Modal
       visible={visible}
@@ -31,7 +34,7 @@ const CancellationPolicyModal: React.FC<CancellationPolicyModalProps> = ({
       {...modalProps}>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
-          <Text style={styles.headerTitle}>Cancellation Policy</Text>
+          <Text style={styles.headerTitle}>{t('cancellation_policy')}</Text>
           <View style={styles.policyContent}>
             <Text style={styles.policyText}>
               1. Cancellation is subject to management and can change policy

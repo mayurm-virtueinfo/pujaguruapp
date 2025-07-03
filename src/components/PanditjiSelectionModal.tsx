@@ -12,6 +12,7 @@ import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
 import RadioButton from './RadioButton';
+import {useTranslation} from 'react-i18next';
 
 interface PanditjiSelectionModalProps extends Partial<ModalProps> {
   visible: boolean;
@@ -27,6 +28,8 @@ const PanditjiSelectionModal: React.FC<PanditjiSelectionModalProps> = ({
   initialSelection = 'automatic',
   ...modalProps
 }) => {
+  const {t, i18n} = useTranslation();
+
   const [selectedOption, setSelectedOption] = useState<'automatic' | 'manual'>(
     initialSelection,
   );
@@ -74,7 +77,9 @@ const PanditjiSelectionModal: React.FC<PanditjiSelectionModalProps> = ({
         <View style={styles.modalContainer}>
           {/* Header */}
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select option for Panditji</Text>
+            <Text style={styles.modalTitle}>
+              {t('select_option_for_panditji')}
+            </Text>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <View style={styles.closeIconContainer}>
                 <Ionicons name="close" size={20} color="#191313" />
@@ -84,11 +89,7 @@ const PanditjiSelectionModal: React.FC<PanditjiSelectionModalProps> = ({
 
           {/* Description */}
           <Text style={styles.description}>
-            Select the method that best suits your preference for assigning a
-            Panditji. You can allow the system to automatically assign the most
-            suitable Panditji for your needs, or browse and choose from a list
-            manually. This flexibility ensures a smooth and personalized
-            experience.
+            {t('description_for_select_pandit_type')}
           </Text>
 
           {/* Options Container */}
@@ -99,10 +100,9 @@ const PanditjiSelectionModal: React.FC<PanditjiSelectionModalProps> = ({
               onPress={() => setSelectedOption('automatic')}>
               <View style={styles.optionContent}>
                 <View style={styles.optionTextContainer}>
-                  <Text style={styles.optionTitle}>Automatic</Text>
+                  <Text style={styles.optionTitle}>{t('automatic')}</Text>
                   <Text style={styles.optionDescription}>
-                    Let the system auto-assign the best available Panditji for
-                    you.
+                    {t('description_for_automatic')}
                   </Text>
                 </View>
                 <View style={styles.radioButtonRightIconContainer}>
@@ -120,9 +120,9 @@ const PanditjiSelectionModal: React.FC<PanditjiSelectionModalProps> = ({
               onPress={() => setSelectedOption('manual')}>
               <View style={styles.optionContent}>
                 <View style={styles.optionTextContainer}>
-                  <Text style={styles.optionTitle}>Manual</Text>
+                  <Text style={styles.optionTitle}>{t('manual')}</Text>
                   <Text style={styles.optionDescription}>
-                    Browse the list and select a Panditji of your choice.
+                    {t('description_for_manual')}
                   </Text>
                 </View>
                 <View style={styles.radioButtonRightIconContainer}>
@@ -137,12 +137,12 @@ const PanditjiSelectionModal: React.FC<PanditjiSelectionModalProps> = ({
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={handleCancel}>
-              <Text style={styles.cancelButtonText}>CANCEL</Text>
+              <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.confirmButton}
               onPress={handleConfirm}>
-              <Text style={styles.confirmButtonText}>CONFIRM</Text>
+              <Text style={styles.confirmButtonText}>{t('confirm')}</Text>
             </TouchableOpacity>
           </View>
         </View>

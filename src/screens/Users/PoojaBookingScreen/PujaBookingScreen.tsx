@@ -20,6 +20,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import PanditjiSelectionModal from '../../../components/PanditjiSelectionModal';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useTranslation} from 'react-i18next';
 
 interface MuhuratSlot {
   id: string;
@@ -33,14 +34,12 @@ const PujaBookingScreen: React.FC = () => {
     UserPoojaListParamList,
     'PaymentScreen'
   >;
-
+  const {t, i18n} = useTranslation();
   const navigation =
     useNavigation<StackNavigationProp<UserPoojaListParamList>>();
 
   const [selectedSlot, setSelectedSlot] = useState<string>('shubh');
-  const [additionalNotes, setAdditionalNotes] = useState(
-    'Please arrange for flowers.',
-  );
+  const [additionalNotes, setAdditionalNotes] = useState<string>('');
   const today = new Date();
   const [selectedDate, setSelectedDate] = useState<number>(today.getDate());
   const [currentMonth, setCurrentMonth] = useState<string>(
@@ -113,7 +112,7 @@ const PujaBookingScreen: React.FC = () => {
 
   const renderMuhuratSlots = () => (
     <View style={styles.slotsContainer}>
-      <Text style={styles.slotsTitle}>Select Muhurat Time Slot</Text>
+      <Text style={styles.slotsTitle}>{t('select_muhurat_time_slot')}</Text>
       <View style={styles.slotsListContainer}>
         {muhuratSlots.map((slot, index) => (
           <View key={slot.id}>
@@ -150,7 +149,7 @@ const PujaBookingScreen: React.FC = () => {
   return (
     <SafeAreaView style={[styles.container]}>
       <StatusBar barStyle="light-content" />
-      <UserCustomHeader title="Puja Booking" showBackButton={true} />
+      <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
 
       <ScrollView
         style={styles.content}
@@ -167,7 +166,7 @@ const PujaBookingScreen: React.FC = () => {
         <View style={styles.pujaPlaceContainer}>
           <View style={styles.pujaPlaceContent}>
             <View style={styles.pujaPlaceTextContainer}>
-              <Text style={styles.pujaPlaceLabel}>Puja Place</Text>
+              <Text style={styles.pujaPlaceLabel}>{t('puja_place')}</Text>
               <Text style={styles.pujaPlaceValue}>Home: Primary residence</Text>
             </View>
             <TouchableOpacity style={styles.editButton}>
@@ -218,13 +217,13 @@ const PujaBookingScreen: React.FC = () => {
 
         {/* Additional Notes Section */}
         <View style={styles.notesContainer}>
-          <Text style={styles.notesLabel}>Additional Notes</Text>
+          <Text style={styles.notesLabel}>{t('additional_notes')}</Text>
           <TextInput
             style={styles.notesInput}
             value={additionalNotes}
             onChangeText={setAdditionalNotes}
-            placeholder="Please arrange for flowers."
-            placeholderTextColor="#191313"
+            placeholder={t('please_arrange_for_flowers')}
+            placeholderTextColor={COLORS.inputLabelText}
             multiline
             textAlignVertical="top"
           />
@@ -234,7 +233,7 @@ const PujaBookingScreen: React.FC = () => {
         <TouchableOpacity
           style={styles.nextButton}
           onPress={handlePanditjiSelectionModalOpen}>
-          <Text style={styles.nextButtonText}>NEXT</Text>
+          <Text style={styles.nextButtonText}>{t('next')}</Text>
         </TouchableOpacity>
       </ScrollView>
 

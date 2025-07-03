@@ -20,6 +20,7 @@ import Fonts from '../../../theme/fonts';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 interface CancellationReason {
   id: number;
@@ -30,6 +31,7 @@ interface CancellationReason {
 const PujaCancellationScreen = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<UserPoojaListParamList>();
+  const {t, i18n} = useTranslation();
 
   const [cancellationReasons, setCancellationReasons] = useState<
     CancellationReason[]
@@ -123,18 +125,15 @@ const PujaCancellationScreen = () => {
 
   return (
     <View style={[styles.container, {paddingTop: inset.top}]}>
-      <UserCustomHeader title="Puja Cancellation" showBackButton={true} />
+      <UserCustomHeader title={t('puja_cancellation')} showBackButton={true} />
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          <Text style={styles.heading}>Cancellation Reason</Text>
+          <Text style={styles.heading}>{t('cancellation_reason')}</Text>
           <Text style={styles.warningText}>
-            Please note that cancellations are only applicable if made 24 hours
-            prior to the scheduled Pooja. If you cancel within this period, you
-            will not be eligible for a refund. We appreciate your understanding
-            and cooperation.
+            {t('descriprion_for_cancel_puja')}
           </Text>
           <View style={styles.reasonsContainer}>
             {cancellationReasons.map((reason, index) =>
@@ -145,7 +144,7 @@ const PujaCancellationScreen = () => {
             <View style={styles.customInputContainer}>
               <TextInput
                 style={styles.customInput}
-                placeholder="Enter your cancellation reason"
+                placeholder={t('enter_your_cancellation_reason')}
                 placeholderTextColor={COLORS.inputLabelText}
                 value={customReason}
                 onChangeText={setCustomReason}
@@ -157,10 +156,12 @@ const PujaCancellationScreen = () => {
           <TouchableOpacity
             onPress={handleOpenPolicy}
             style={styles.policyLinkContainer}>
-            <Text style={styles.policyLinkText}>Cancellation Policy</Text>
+            <Text style={styles.policyLinkText}>
+              {t('cancellation_policy')}
+            </Text>
           </TouchableOpacity>
           <PrimaryButton
-            title="SUBMIT CANCELLATION"
+            title={t('submit_cancellation')}
             onPress={handleSubmit}
             style={styles.submitButton}
             textStyle={styles.submitButtonText}

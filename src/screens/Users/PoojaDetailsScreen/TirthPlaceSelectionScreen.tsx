@@ -23,12 +23,14 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 import {useNavigation} from '@react-navigation/native';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 const TirthPlaceSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'PujaBooking'
   >;
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
@@ -64,16 +66,16 @@ const TirthPlaceSelectionScreen: React.FC = () => {
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
-      <UserCustomHeader title="Puja Booking" showBackButton={true} />
+      <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         bounces={false}>
         <View style={styles.contentWrapper}>
           <View style={styles.detailsContainer}>
-            <Text style={styles.sectionTitle}>Select Tirth Place</Text>
+            <Text style={styles.sectionTitle}>{t('select_tirth_place')}</Text>
             <Text style={styles.descriptionText}>
-              Choose where do you need to do this puja at tirth place?
+              {t('choose_tirth_place')}
             </Text>
             {!isLoading && (
               <View style={styles.pricingContainer}>
@@ -111,7 +113,7 @@ const TirthPlaceSelectionScreen: React.FC = () => {
               </View>
             )}
             <PrimaryButton
-              title="NEXT"
+              title={t('next')}
               onPress={handleNextPress}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}

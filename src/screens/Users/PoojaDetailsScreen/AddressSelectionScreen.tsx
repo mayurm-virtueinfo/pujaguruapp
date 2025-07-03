@@ -20,12 +20,14 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 const AddressSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'PujaBooking'
   >;
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
@@ -64,7 +66,7 @@ const AddressSelectionScreen: React.FC = () => {
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
       <UserCustomHeader
-        title="Puja Booking"
+        title={t('puja_booking')}
         showBackButton={true}
         showCirclePlusButton={true}
       />
@@ -75,10 +77,8 @@ const AddressSelectionScreen: React.FC = () => {
         bounces={false}>
         <View style={styles.contentWrapper}>
           <View style={styles.detailsContainer}>
-             <Text style={styles.sectionTitle}>Select Address</Text>
-            <Text style={styles.descriptionText}>
-              Choose where do you need to do this puja at your place?
-            </Text>
+            <Text style={styles.sectionTitle}>{t('select_address')}</Text>
+            <Text style={styles.descriptionText}>{t('choose_puja_place')}</Text>
             {!isLoading && (
               <View style={styles.pricingContainer}>
                 {poojaPlaces.map((place, index) => (
@@ -115,7 +115,7 @@ const AddressSelectionScreen: React.FC = () => {
               </View>
             )}
             <PrimaryButton
-              title="NEXT"
+              title={t('next')}
               onPress={handleNextPress}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}

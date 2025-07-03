@@ -24,7 +24,7 @@ import UserProfileScreen from '../screens/Users/ProfileScreen/UserProfileScreen'
 // Define the param list for the stack that includes LanguagesScreen and AppDrawerNavigator
 export type MainAppStackParamList = {
   AppDrawer: NavigatorScreenParams<AppDrawerParamList>; // AppDrawerNavigator itself
-  UserAppBottomTabNavigator: NavigatorScreenParams<UserAppBottomTabParamList>;
+  UserAppBottomTabNavigator: undefined;
   CompleteProfileScreen: {navigtion: undefined};
   UserProfileScreen: undefined;
 };

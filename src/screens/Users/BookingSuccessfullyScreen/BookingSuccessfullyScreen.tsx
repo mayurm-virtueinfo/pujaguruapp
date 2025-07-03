@@ -19,12 +19,15 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 import {useNavigation} from '@react-navigation/native';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 const BookingSuccessfullyScreen: React.FC = () => {
   type ScreenNavigationProps = StackNavigationProp<
     UserPoojaListParamList,
     'RateYourExperienceScreen'
   >;
+  const {t, i18n} = useTranslation();
+
   const inset = useSafeAreaInsets();
 
   const navigation = useNavigation<ScreenNavigationProps>();
@@ -32,7 +35,7 @@ const BookingSuccessfullyScreen: React.FC = () => {
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
-      <UserCustomHeader title="Booking Successfully" />
+      <UserCustomHeader title={t('booking_successfully')} />
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
@@ -46,10 +49,10 @@ const BookingSuccessfullyScreen: React.FC = () => {
               resizeMode="contain"
             />
             <Text style={styles.successText}>
-              Booking Completed Successfully
+              {t('booking_completed_successfully')}
             </Text>
             <PrimaryButton
-              title="RATE YOUR EXPERIENCE"
+              title={t('rate_your_experience')}
               onPress={() => navigation.navigate('RateYourExperienceScreen')}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}

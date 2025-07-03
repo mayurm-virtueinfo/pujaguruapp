@@ -27,6 +27,7 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {moderateScale} from 'react-native-size-matters';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 const PujaListScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -34,6 +35,7 @@ const PujaListScreen: React.FC = () => {
     'UserPoojaDetails'
   >;
   const inset = useSafeAreaInsets();
+  const {t, i18n} = useTranslation();
 
   const [recommendedPuja, setRecommendedPuja] = useState<RecommendedPuja[]>([]);
   const [pujaList, setPujaList] = useState<PujaListItemType[]>([]);
@@ -74,7 +76,7 @@ const PujaListScreen: React.FC = () => {
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}
       />
-      <UserCustomHeader title="Puja" showBellButton={true} />
+      <UserCustomHeader title={t('puja')} showBellButton={true} />
 
       <View style={styles.mainContent}>
         {loading ? (
@@ -89,9 +91,9 @@ const PujaListScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}>
             <View style={styles.recommendedSection}>
               <View style={{paddingHorizontal: 24, paddingTop: 24, gap: 8}}>
-                <Text style={styles.sectionTitle}>Recommended Puja</Text>
+                <Text style={styles.sectionTitle}>{t('recomended_puja')}</Text>
                 <Text style={styles.sectionSubtitle}>
-                  Today is Kartik Shukla Paksha, Trayodashi
+                  {t('today_is_kartik_shukla_paksha')}
                 </Text>
               </View>
               <ScrollView
@@ -119,7 +121,7 @@ const PujaListScreen: React.FC = () => {
             </View>
 
             <View style={styles.pujaListSection}>
-              <Text style={styles.sectionTitle}>Puja List</Text>
+              <Text style={styles.sectionTitle}>{t('puja_list')}</Text>
               <View style={styles.pujaListContainer}>
                 {pujaList.map((puja, idx) => (
                   <PujaListItem

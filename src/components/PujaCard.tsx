@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
+import {useTranslation} from 'react-i18next';
 
 interface PujaCardProps {
   image: string;
@@ -16,26 +17,30 @@ interface PujaCardProps {
   onPress?: () => void;
 }
 
-const PujaCard: React.FC<PujaCardProps> = ({image, title, onPress}) => (
-  <View style={styles.shadowWrapper}>
-    <View style={styles.card}>
-      <Image
-        source={image ? {uri: image} : undefined}
-        style={styles.image}
-        resizeMode="cover"
-      />
-      <Text style={styles.title} numberOfLines={2}>
-        {title}
-      </Text>
-      <TouchableOpacity
-        style={styles.button}
-        onPress={onPress}
-        activeOpacity={0.8}>
-        <Text style={styles.buttonText}>BOOK</Text>
-      </TouchableOpacity>
+const PujaCard: React.FC<PujaCardProps> = ({image, title, onPress}) => {
+  const {t, i18n} = useTranslation();
+
+  return (
+    <View style={styles.shadowWrapper}>
+      <View style={styles.card}>
+        <Image
+          source={image ? {uri: image} : undefined}
+          style={styles.image}
+          resizeMode="cover"
+        />
+        <Text style={styles.title} numberOfLines={2}>
+          {title}
+        </Text>
+        <TouchableOpacity
+          style={styles.button}
+          onPress={onPress}
+          activeOpacity={0.8}>
+          <Text style={styles.buttonText}>{t('book')}</Text>
+        </TouchableOpacity>
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   shadowWrapper: {

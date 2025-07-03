@@ -5,16 +5,15 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserPoojaListNavigator from './UserPoojaListNavigator';
 import UserHomeScreen from '../../screens/Users/HomeScreen/UserHomeScreen';
 import BottomUserProfileScreen from '../../screens/Users/BottomProfileScreen/BottomUserProfileScreen';
-import PanditScreen from '../../screens/Users/PanditScreen/PanditScreen';
 import {Image} from 'react-native';
 import {Images} from '../../theme/Images';
 import UserHomeNavigator from './UsetHomeStack';
 import UserPanditjiNavigator from './UserPanditjiNavigator';
+import {useTranslation} from 'react-i18next';
 
 export type UserAppBottomTabParamList = {
   UserHomeNavigator: undefined;
   UserPoojaListNavigator: undefined;
-  PanditScreen: undefined;
   BottomUserProfileScreen: undefined;
   UserPanditjiNavigator: undefined;
 };
@@ -22,6 +21,8 @@ export type UserAppBottomTabParamList = {
 const Tab = createBottomTabNavigator<UserAppBottomTabParamList>();
 
 const UserAppBottomTabNavigator: React.FC = () => {
+  const {t, i18n} = useTranslation();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -37,7 +38,7 @@ const UserAppBottomTabNavigator: React.FC = () => {
         name="UserHomeNavigator"
         component={UserHomeNavigator}
         options={({route}) => ({
-          title: 'Home',
+          title: t('home'),
           // headerTitle: getHeaderTitle(route), // dynamic title in screen header
           tabBarIcon: ({color, size}) => (
             <Ionicons name="home-outline" size={size} color={color} />
@@ -48,7 +49,7 @@ const UserAppBottomTabNavigator: React.FC = () => {
         name="UserPoojaListNavigator"
         component={UserPoojaListNavigator}
         options={{
-          title: 'Pooja List',
+          title: t('pooja_list'),
           tabBarIcon: ({color, size}) => (
             <Ionicons name="list-outline" size={size} color={color} />
           ),
@@ -58,7 +59,7 @@ const UserAppBottomTabNavigator: React.FC = () => {
         name="UserPanditjiNavigator"
         component={UserPanditjiNavigator}
         options={{
-          title: 'Panditji',
+          title: t('panditji'),
           tabBarIcon: ({color, size}) => (
             // <Ionicons name="list-outline" size={size} color={color} />
             <Image
@@ -72,7 +73,7 @@ const UserAppBottomTabNavigator: React.FC = () => {
         name="BottomUserProfileScreen"
         component={BottomUserProfileScreen}
         options={{
-          title: 'Profile',
+          title: t('profile'),
           tabBarIcon: ({color, size}) => (
             <Ionicons name="person-outline" size={size} color={color} />
           ),

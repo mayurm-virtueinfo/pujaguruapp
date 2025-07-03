@@ -24,6 +24,7 @@ import {apiService} from '../../../api/apiService';
 import CustomHeader from '../../../components/CustomHeader';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 interface PanditjiItem {
   id: string;
@@ -37,6 +38,7 @@ interface PanditjiItem {
 
 const PanditjiScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
+  const {t, i18n} = useTranslation();
 
   const navigation =
     useNavigation<StackNavigationProp<UserPoojaListParamList>>();
@@ -89,7 +91,7 @@ const PanditjiScreen: React.FC = () => {
         />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search Panditji"
+          placeholder={t('search_panditji')}
           placeholderTextColor={COLORS.pujaTextSecondary}
           value={searchText}
           onChangeText={setSearchText}
@@ -149,7 +151,7 @@ const PanditjiScreen: React.FC = () => {
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}
       />
-      <UserCustomHeader title="Panditji" showBellButton={true} />
+      <UserCustomHeader title={t('panditji')} showBellButton={true} />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

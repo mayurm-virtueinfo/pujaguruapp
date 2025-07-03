@@ -24,11 +24,12 @@ import {useNavigation} from '@react-navigation/native';
 import {useCommonToast} from '../../../common/CommonToast';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 interface PaymentMethod {
   id: string;
   name: string;
-  type: 'credit' | 'debit';
+  type: 'credit' | 'debit' | 'upi';
 }
 
 interface PujaItem {
@@ -52,7 +53,7 @@ const PaymentScreen: React.FC = () => {
     UserPoojaListParamList,
     'BookingSuccessfullyScreen'
   >;
-
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
@@ -65,9 +66,9 @@ const PaymentScreen: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const paymentMethods: PaymentMethod[] = [
-    {id: 'credit', name: 'Credit Card', type: 'credit'},
-    {id: 'debit1', name: 'Debit Card', type: 'debit'},
-    {id: 'debit2', name: 'Debit Card', type: 'debit'},
+    {id: 'credit', name: t('credit_card'), type: 'credit'},
+    {id: 'debit1', name: t('debit_card'), type: 'debit'},
+    {id: 'upt', name: t('upi'), type: 'upi'},
   ];
 
   const suggestedPuja: PujaItem = {
@@ -195,7 +196,7 @@ const PaymentScreen: React.FC = () => {
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <View style={styles.contentContainer}>
-        <UserCustomHeader title="Payment" showBackButton={true} />
+        <UserCustomHeader title={t('payment')} showBackButton={true} />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContentContainer}
@@ -208,7 +209,7 @@ const PaymentScreen: React.FC = () => {
           <View style={styles.totalSection}>
             <View style={styles.totalRow}>
               <View style={styles.totalInfo}>
-                <Text style={styles.totalAmountLabel}>Total Amount</Text>
+                <Text style={styles.totalAmountLabel}>{t('total_amount')}</Text>
                 <Text style={styles.pujaName}>Ganesh Chaturthi Pooja</Text>
               </View>
               <View style={styles.amoutContainer}>
@@ -234,7 +235,9 @@ const PaymentScreen: React.FC = () => {
                     )}
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.pointsLabel}>Use Available Points</Text>
+                <Text style={styles.pointsLabel}>
+                  {t('use_available_points')}
+                </Text>
               </View>
               <View style={styles.pointsRight}>
                 <Image source={Images.ic_coin} style={styles.pointsIcon} />
@@ -299,12 +302,14 @@ const PaymentScreen: React.FC = () => {
                 color={acceptTerms ? COLORS.primary : COLORS.borderColor}
                 onPress={() => setAcceptTerms(!acceptTerms)}
               />
-              <Text style={styles.termsText}>Accept Terms and Conditions</Text>
+              <Text style={styles.termsText}>
+                {t('accept_terms_and_conditions')}
+              </Text>
             </View>
           </View>
 
           <PrimaryButton
-            title="CONFIRM BOOKING"
+            title={t('confirm_booking')}
             onPress={handleConfirmBooking}
             style={styles.buttonContainer}
             textStyle={styles.buttonText}

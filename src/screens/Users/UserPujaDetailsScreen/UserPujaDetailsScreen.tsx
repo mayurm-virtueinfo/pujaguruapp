@@ -21,12 +21,14 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import {Images} from '../../../theme/Images';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import {useTranslation} from 'react-i18next';
 
 const UserPujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'PujaCancellationScreen' | 'UserChatScreen'
   >;
+  const {t, i18n} = useTranslation();
   const navigation = useNavigation<ScreenNavigationProp>();
   const [isPujaItemsModalVisible, setIsPujaItemsModalVisible] = useState(false);
 
@@ -134,7 +136,7 @@ const UserPujaDetailsScreen: React.FC = () => {
       <View style={styles.totalCard}>
         <View style={styles.totalContent}>
           <View style={{gap: 6}}>
-            <Text style={styles.totalLabel}>Total Amount</Text>
+            <Text style={styles.totalLabel}>{t('total_amount')}</Text>
             <Text style={styles.totalSubtext}>Ganesh Chaturthi Pooja</Text>
           </View>
           <View>
@@ -190,7 +192,7 @@ const UserPujaDetailsScreen: React.FC = () => {
             </View>
           </View>
           <Text style={styles.panditjiText}>
-            Panditji will be assigned soon...
+            {t('panditji_will_be_assigned_soon')}
           </Text>
         </View>
       </View>
@@ -202,7 +204,7 @@ const UserPujaDetailsScreen: React.FC = () => {
   };
   const renderCancelButton = () => (
     <PrimaryButton
-      title="Cancel Booking"
+      title={t('cancel_booking')}
       onPress={handleCancelBooking}
       style={styles.cancelButton}
       textStyle={styles.cancelButtonText}
@@ -217,7 +219,7 @@ const UserPujaDetailsScreen: React.FC = () => {
           barStyle="light-content"
           backgroundColor={COLORS.primaryBackground}
         />
-        <UserCustomHeader title="Puja Details" showBackButton={true} />
+        <UserCustomHeader title={t('puja_details')} showBackButton={true} />
         <View style={styles.flexGrow}>
           <ScrollView
             style={styles.content}

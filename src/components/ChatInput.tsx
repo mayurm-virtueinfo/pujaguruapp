@@ -12,6 +12,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {COLORS, wp} from '../theme/theme';
 import Fonts from '../theme/fonts';
+import {useTranslation} from 'react-i18next';
 
 interface ChatInputProps {
   onSendMessage: (text: string) => void;
@@ -19,6 +20,7 @@ interface ChatInputProps {
 
 const ChatInput: React.FC<ChatInputProps> = ({onSendMessage}) => {
   const [message, setMessage] = useState('');
+  const {t, i18n} = useTranslation();
 
   const handleSend = () => {
     if (message.trim()) {
@@ -45,7 +47,7 @@ const ChatInput: React.FC<ChatInputProps> = ({onSendMessage}) => {
 
         <TextInput
           style={styles.textInput}
-          placeholder="Message..."
+          placeholder={t('message')}
           placeholderTextColor="rgba(25, 19, 19, 0.3)"
           value={message}
           onChangeText={setMessage}

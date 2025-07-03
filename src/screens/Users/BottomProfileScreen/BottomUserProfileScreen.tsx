@@ -13,6 +13,8 @@ import {COLORS} from '../../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
+import {useTranslation} from 'react-i18next';
 
 interface ProfileFieldProps {
   label: string;
@@ -29,6 +31,7 @@ const ProfileField: React.FC<ProfileFieldProps> = ({label, value}) => (
 const BottomUserProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation();
+  const {t, i18n} = useTranslation();
 
   const userData = {
     name: 'John Smith',
@@ -39,8 +42,11 @@ const BottomUserProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
-      <View style={styles.headerGradient} />
-      <UserCustomHeader title="Profile" showBackButton={true} />
+      <LinearGradient
+        colors={[COLORS.gradientStart, COLORS.gradientEnd]}
+        style={[styles.headerGradient]}
+      />
+      <UserCustomHeader title={t('profile')} showBackButton={true} />
 
       <View style={styles.profileImageContainer}>
         <Image
@@ -55,17 +61,17 @@ const BottomUserProfileScreen: React.FC = () => {
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}>
           <View style={styles.infoSection}>
-            <ProfileField label="Name" value={userData.name} />
+            <ProfileField label={t('name')} value={userData.name} />
             <View style={styles.divider} />
-            <ProfileField label="Email" value={userData.email} />
+            <ProfileField label={t('email')} value={userData.email} />
             <View style={styles.divider} />
-            <ProfileField label="Phone" value={userData.phone} />
+            <ProfileField label={t('phone')} value={userData.phone} />
             <View style={styles.divider} />
-            <ProfileField label="Location" value={userData.location} />
+            <ProfileField label={t('location')} value={userData.location} />
           </View>
           <View style={styles.editSection}>
             <View style={styles.editFieldContainer}>
-              <Text style={styles.editFieldLabel}>Edit Profile</Text>
+              <Text style={styles.editFieldLabel}>{t('edit_profile')} </Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
@@ -74,7 +80,7 @@ const BottomUserProfileScreen: React.FC = () => {
             </View>
             <View style={styles.divider} />
             <View style={styles.editFieldContainer}>
-              <Text style={styles.editFieldLabel}>Upcoming Puja</Text>
+              <Text style={styles.editFieldLabel}>{t('upcoming_puja')} </Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
@@ -83,7 +89,7 @@ const BottomUserProfileScreen: React.FC = () => {
             </View>
             <View style={styles.divider} />
             <View style={styles.editFieldContainer}>
-              <Text style={styles.editFieldLabel}>Past Puja</Text>
+              <Text style={styles.editFieldLabel}>{t('past_puja')} </Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
@@ -92,7 +98,7 @@ const BottomUserProfileScreen: React.FC = () => {
             </View>
             <View style={styles.divider} />
             <View style={styles.editFieldContainer}>
-              <Text style={styles.editFieldLabel}>Notifications</Text>
+              <Text style={styles.editFieldLabel}>{t('notifications')} </Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
@@ -103,7 +109,7 @@ const BottomUserProfileScreen: React.FC = () => {
 
           <View style={styles.editSection}>
             <View style={styles.editFieldContainer}>
-              <Text style={styles.logoutLabel}>Logout</Text>
+              <Text style={styles.logoutLabel}>{t('logout')}</Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
@@ -120,6 +126,7 @@ const BottomUserProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: COLORS.primaryBackground,
   },
   headerGradient: {
     position: 'absolute',

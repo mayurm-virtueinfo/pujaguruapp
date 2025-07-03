@@ -21,6 +21,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import {useTranslation} from 'react-i18next';
 
 const UserHomeScreen: React.FC = () => {
   const navigation = useNavigation<UserPoojaListParamList>();
@@ -29,6 +30,7 @@ const UserHomeScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const inset = useSafeAreaInsets();
+  const {t, i18n} = useTranslation();
 
   useEffect(() => {
     fetchAllPanditAndPuja();
@@ -64,16 +66,16 @@ const UserHomeScreen: React.FC = () => {
         barStyle="light-content"
       />
 
-      <UserCustomHeader title="Home" showBellButton={true} />
+      <UserCustomHeader title={t('home')} showBellButton={true} />
 
       <ScrollView style={[styles.content]} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recomended Panditji</Text>
+            <Text style={styles.sectionTitle}>{t('recomended_panditji')}</Text>
             <TouchableOpacity
               style={styles.seeAllContainer}
               onPress={() => handleNavigation('PanditList')}>
-              <Text style={styles.seeAllText}>See all </Text>
+              <Text style={styles.seeAllText}>{t('see_all')} </Text>
               <Ionicons
                 name="chevron-forward-outline"
                 size={20}
@@ -83,7 +85,7 @@ const UserHomeScreen: React.FC = () => {
           </View>
 
           <Text style={styles.subtitle}>
-            Today is Kartik Shukla Paksha, Trayodashi
+            {t('today_is_kartik_shukla_paksha')}
           </Text>
 
           {loading ? (
@@ -114,13 +116,13 @@ const UserHomeScreen: React.FC = () => {
                     <TouchableOpacity
                       style={styles.bookButton}
                       onPress={() => handleBookPandit(pandit.name)}>
-                      <Text style={styles.bookButtonText}>BOOK</Text>
+                      <Text style={styles.bookButtonText}>{t('book')}</Text>
                     </TouchableOpacity>
                   </View>
                 ))
               ) : (
                 <Text style={{color: '#888', marginTop: 10}}>
-                  No Panditji found.
+                  {t('no_panditji_found')}
                 </Text>
               )}
             </View>
@@ -128,7 +130,7 @@ const UserHomeScreen: React.FC = () => {
         </View>
 
         <View style={styles.pujaSection}>
-          <Text style={styles.sectionTitle}>Upcoming Puja's</Text>
+          <Text style={styles.sectionTitle}>{t('upcoming_pujas')}</Text>
 
           <View style={styles.pujaCardsContainer}>
             {loading ? (
@@ -153,7 +155,7 @@ const UserHomeScreen: React.FC = () => {
               ))
             ) : (
               <Text style={{color: '#888', marginTop: 10}}>
-                No upcoming pujas.
+                {t('no_upcoming_pujas')}
               </Text>
             )}
           </View>

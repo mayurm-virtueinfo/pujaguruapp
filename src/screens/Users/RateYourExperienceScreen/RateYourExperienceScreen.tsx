@@ -24,6 +24,7 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 const RateYourExperienceScreen: React.FC = () => {
   const [rating, setRating] = useState<number>(0);
@@ -33,6 +34,8 @@ const RateYourExperienceScreen: React.FC = () => {
     UserPoojaListParamList,
     'BookedPujaDetailsScreen'
   >;
+  const {t, i18n} = useTranslation();
+
   const inset = useSafeAreaInsets();
 
   const navigation = useNavigation<ScreenNavigationProp>();
@@ -69,7 +72,7 @@ const RateYourExperienceScreen: React.FC = () => {
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
 
-      <UserCustomHeader title="Rate Your Experience" showBackButton={true} />
+      <UserCustomHeader title={t('rate_experience')} showBackButton={true} />
 
       <ScrollView
         style={styles.scrollContainer}
@@ -92,7 +95,7 @@ const RateYourExperienceScreen: React.FC = () => {
               <Text style={styles.panditName}>Rajesh Sharma</Text>
               <Text style={styles.panditPurpose}>For family well-being</Text>
               <PrimaryButton
-                title="VIEW DETAILS"
+                title={t('view_details')}
                 onPress={() => navigation.navigate('PanditDetailsScreen')}
                 style={styles.viewDetailsButton}
                 textStyle={styles.viewDetailsText}
@@ -102,7 +105,7 @@ const RateYourExperienceScreen: React.FC = () => {
 
           {/* Dakshina Section */}
           <View style={styles.dakshinaCard}>
-            <Text style={styles.dakshinaText}>Dakshina to panditji?</Text>
+            <Text style={styles.dakshinaText}>{t('dakshina_to_panditji')}</Text>
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
@@ -114,7 +117,9 @@ const RateYourExperienceScreen: React.FC = () => {
 
           {/* Rating Section */}
           <View style={styles.ratingSection}>
-            <Text style={styles.ratingTitle}>How was your experience?</Text>
+            <Text style={styles.ratingTitle}>
+              {t('how_was_your_experience')}
+            </Text>
             <View style={styles.ratingCard}>
               <View style={styles.starsContainer}>
                 {[0, 1, 2, 3, 4].map(renderStar)}
@@ -126,7 +131,7 @@ const RateYourExperienceScreen: React.FC = () => {
           <View>
             <TextInput
               style={styles.feedbackInput}
-              placeholder="Tell us more about your experience..."
+              placeholder={t('tell_us_more_about_your_experience')}
               placeholderTextColor="rgba(25, 19, 19, 0.3)"
               multiline
               numberOfLines={4}
@@ -136,7 +141,7 @@ const RateYourExperienceScreen: React.FC = () => {
             />
           </View>
           <PrimaryButton
-            title="SUBMIT RATING"
+            title={t('submtt_rating')}
             onPress={handleSubmit}
             style={styles.buttonContainer}
             textStyle={styles.buttonText}

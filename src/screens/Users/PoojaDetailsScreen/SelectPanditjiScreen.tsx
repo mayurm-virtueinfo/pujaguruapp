@@ -26,6 +26,7 @@ import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {apiService} from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
@@ -41,6 +42,7 @@ interface PanditjiItem {
 
 const SelectPanditjiScreen: React.FC = () => {
   // Set up navigation with correct type for stack navigation
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation =
     useNavigation<StackNavigationProp<UserPoojaListParamList>>();
@@ -112,7 +114,7 @@ const SelectPanditjiScreen: React.FC = () => {
         />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search Panditji"
+          placeholder={t('search_panditji')}
           placeholderTextColor={COLORS.pujaTextSecondary}
           value={searchText}
           onChangeText={setSearchText}
@@ -180,7 +182,7 @@ const SelectPanditjiScreen: React.FC = () => {
         barStyle="light-content"
         // backgroundColor={COLORS.gradientStart}
       />
-      <UserCustomHeader title="Select Panditji" showBackButton={true} />
+      <UserCustomHeader title={t('select_panditji')} showBackButton={true} />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -197,7 +199,7 @@ const SelectPanditjiScreen: React.FC = () => {
           />
           <View style={styles.absoluteButtonContainer}>
             <PrimaryButton
-              title="NEXT"
+              title={t('next')}
               onPress={handleNextPress}
               disabled={!selectedPanditji}
               textStyle={styles.buttonText}

@@ -19,6 +19,7 @@ import React from 'react';
 import LinearGradient from 'react-native-linear-gradient';
 import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
+import {useTranslation} from 'react-i18next';
 
 interface UserCustomHeaderProps {
   title?: string;
@@ -43,6 +44,7 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
   onBackPress,
   onNotificationPress,
 }) => {
+  const {t, i18n} = useTranslation();
   const navigation = useNavigation();
   const inset = useSafeAreaInsets();
 
@@ -135,7 +137,7 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
               <TouchableOpacity
                 onPress={() => console.log('Call Icon pressed')}
                 style={styles.iconButton}>
-                <Text style={styles.skipButton}>skip</Text>
+                <Text style={styles.skipButton}>{t('skip')}</Text>
               </TouchableOpacity>
             )}
           </View>

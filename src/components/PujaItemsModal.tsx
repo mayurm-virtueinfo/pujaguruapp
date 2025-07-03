@@ -14,6 +14,7 @@ import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {apiService} from '../api/apiService';
+import {useTranslation} from 'react-i18next';
 
 interface PujaItemsModalProps extends Partial<ModalProps> {
   visible: boolean;
@@ -39,6 +40,7 @@ const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
   const [panditjiItems, setPanditjiItems] = useState<PujaItemsApiItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const {t, i18n} = useTranslation();
 
   // Helper to fetch and set data
   const fetchPujaItems = useCallback(async () => {
@@ -117,7 +119,7 @@ const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
         <View style={styles.modalContainer}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>List of Puja Items</Text>
+            <Text style={styles.headerTitle}>{t('list_of_puja_items')}</Text>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <CloseIcon />
             </TouchableOpacity>
@@ -156,17 +158,16 @@ const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
                 {/* Items to be Arranged by You */}
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
-                    Items to be Arranged by You
+                    {t('items_to_be_arranged_by_you')}
                   </Text>
                   <Text style={styles.sectionDescription}>
-                    The following basic items are to be arranged and kept ready
-                    at your home before the pooja begins:
+                    {t('arrenged_item_by_you')}
                   </Text>
                   <View style={styles.itemsContainer}>
                     {userItems.length > 0 ? (
                       <ItemsList items={userItems} />
                     ) : (
-                      <Text style={styles.itemText}>No items found.</Text>
+                      <Text style={styles.itemText}>{t('no_items_found')}</Text>
                     )}
                   </View>
                 </View>
@@ -174,18 +175,16 @@ const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
                 {/* Items will be brought by the Panditji */}
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
-                    Items will be brought by the Panditji
+                    {t('items_will_be_brought_by_the_panditji')}
                   </Text>
                   <Text style={styles.sectionDescription}>
-                    The following items will be brought by the Panditji. You do
-                    not need to arrange these items yourself, as they will be
-                    provided for the rituals:
+                    {t('arrenged_item_by_panditji')}
                   </Text>
                   <View style={styles.itemsContainer}>
                     {panditjiItems.length > 0 ? (
                       <ItemsList items={panditjiItems} />
                     ) : (
-                      <Text style={styles.itemText}>No items found.</Text>
+                      <Text style={styles.itemText}>{t('no_items_found')}</Text>
                     )}
                   </View>
                 </View>

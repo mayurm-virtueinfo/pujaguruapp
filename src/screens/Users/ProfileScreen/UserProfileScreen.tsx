@@ -7,7 +7,11 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
-import {RouteProp, useNavigation} from '@react-navigation/native';
+import {
+  NavigationProp,
+  RouteProp,
+  useNavigation,
+} from '@react-navigation/native';
 import Fonts from '../../../theme/fonts';
 import {COLORS} from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
@@ -15,9 +19,10 @@ import CustomTextInput from '../../../components/CustomTextInput';
 import {MainAppStackParamList} from '../../../navigation/RootNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import LinearGradient from 'react-native-linear-gradient'
+import LinearGradient from 'react-native-linear-gradient';
+import {useTranslation} from 'react-i18next';
 
-type CompleteProfileScreenRouteProp = RouteProp<
+type CompleteProfileScreenRouteProp = NavigationProp<
   MainAppStackParamList,
   'UserAppBottomTabNavigator'
 >;
@@ -25,8 +30,9 @@ type CompleteProfileScreenRouteProp = RouteProp<
 interface Props {}
 
 const UserProfileScreen: React.FC = () => {
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<CompleteProfileScreenRouteProp>();
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -49,7 +55,7 @@ const UserProfileScreen: React.FC = () => {
         colors={[COLORS.gradientStart, COLORS.gradientEnd]}
         style={[styles.headerGradient]}
       />
-      <UserCustomHeader title="Profile" showBackButton={true} />
+      <UserCustomHeader title={t('profile')} showBackButton={true} />
 
       <View style={styles.profileImageContainer}>
         <Image
@@ -63,33 +69,33 @@ const UserProfileScreen: React.FC = () => {
         <ScrollView showsVerticalScrollIndicator={false}>
           <View style={styles.inputContainer}>
             <CustomTextInput
-              label="User Name"
+              label={t('user_name')}
               value={userName}
               onChangeText={setUserName}
-              placeholder="Enter your name"
+              placeholder={t('enter_your_name')}
             />
             <CustomTextInput
-              label="Email"
+              label={t('email')}
               value={email}
               onChangeText={setEmail}
-              placeholder="Enter your email"
+              placeholder={t('enter_your_email')}
               keyboardType="email-address"
             />
             <CustomTextInput
-              label="Phone"
+              label={t('phone')}
               value={phone}
               onChangeText={setPhone}
-              placeholder="Enter your phone"
+              placeholder={t('enter_your_phone')}
               keyboardType="phone-pad"
             />
             <CustomTextInput
-              label="Location"
+              label={t('location')}
               value={location}
               onChangeText={setLocation}
-              placeholder="Enter your location"
+              placeholder={t('enter_your_location')}
             />
             <PrimaryButton
-              title="SAVE CHANGES"
+              title={t('save_changes')}
               onPress={handleSaveChanges}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}

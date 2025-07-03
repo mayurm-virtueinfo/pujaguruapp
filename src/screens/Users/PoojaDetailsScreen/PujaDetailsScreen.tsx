@@ -20,12 +20,14 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 import {PujaListItemType, RecommendedPuja} from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
 
 const PujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'PlaceSelectionScreen'
   >;
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute();
@@ -71,7 +73,7 @@ const PujaDetailsScreen: React.FC = () => {
           </View>
           <View style={styles.detailsContainer}>
             <Text style={styles.descriptionText}>{data.description}</Text>
-            <Text style={styles.sectionTitle}>Pricing Options</Text>
+            <Text style={styles.sectionTitle}>{t('pricing_options')}</Text>
             <View style={styles.pricingContainer}>
               {data.pricing.map((option: any, idx: number) => (
                 <React.Fragment key={option.id}>
@@ -102,10 +104,10 @@ const PujaDetailsScreen: React.FC = () => {
                 </React.Fragment>
               ))}
             </View>
-            <Text style={styles.sectionTitle}>Visual Section</Text>
+            <Text style={styles.sectionTitle}>{t('visual_section')}</Text>
             <Text style={styles.visualText}>{data.visualSection}</Text>
             <PrimaryButton
-              title="BOOK NOW"
+              title={t('book_now')}
               onPress={handleBookNowPress}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}
