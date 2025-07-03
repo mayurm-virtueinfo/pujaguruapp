@@ -74,7 +74,7 @@ const AddressSelectionScreen: React.FC = () => {
         bounces={false}>
         <View style={styles.contentWrapper}>
           <View style={styles.detailsContainer}>
-            <Text style={styles.sectionTitle}>Select Address</Text>
+             <Text style={styles.sectionTitle}>Select Address</Text>
             <Text style={styles.descriptionText}>
               Choose where do you need to do this puja at your place?
             </Text>
