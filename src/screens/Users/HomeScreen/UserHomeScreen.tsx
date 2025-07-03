@@ -57,7 +57,7 @@ const UserHomeScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, {paddingTop: inset.top}]}>
+    <View style={[styles.container]}>
       <StatusBar
         backgroundColor={COLORS.primaryBackground}
         barStyle="light-content"

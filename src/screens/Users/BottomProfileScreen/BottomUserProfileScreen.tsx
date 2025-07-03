@@ -10,9 +10,9 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import Fonts from '../../../theme/fonts';
 import {COLORS} from '../../../theme/theme';
-import CustomHeader from '../../../components/CustomHeader';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
+import LinearGradient from 'react-native-linear-gradient';
 
 interface ProfileFieldProps {
   label: string;
@@ -38,7 +38,11 @@ const BottomUserProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerGradient} />
+      {/* <View style={styles.headerGradient} /> */}
+      <LinearGradient
+        colors={[COLORS.gradientStart, COLORS.gradientEnd]}
+        style={[styles.headerGradient]}
+      />
       <UserCustomHeader title="Profile" showBackButton={true} />
 
       <View style={styles.profileImageContainer}>
@@ -115,7 +119,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 184,
-    backgroundColor: COLORS.primaryBackground,
+    // backgroundColor: COLORS.primaryBackground,
   },
   profileImageContainer: {
     position: 'absolute',
