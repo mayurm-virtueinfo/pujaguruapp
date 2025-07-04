@@ -28,6 +28,7 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import {moderateScale} from 'react-native-size-matters';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 const PujaListScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -72,6 +73,7 @@ const PujaListScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+      <CustomeLoader loading={loading} />
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}
@@ -79,69 +81,62 @@ const PujaListScreen: React.FC = () => {
       <UserCustomHeader title={t('puja')} showBellButton={true} />
 
       <View style={styles.mainContent}>
-        {loading ? (
-          <View
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <ActivityIndicator size="large" color={COLORS.primaryBackground} />
-          </View>
-        ) : (
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollViewContent}
-            showsVerticalScrollIndicator={false}>
-            <View style={styles.recommendedSection}>
-              <View style={{paddingHorizontal: 24, paddingTop: 24, gap: 8}}>
-                <Text style={styles.sectionTitle}>{t('recomended_puja')}</Text>
-                <Text style={styles.sectionSubtitle}>
-                  {t('today_is_kartik_shukla_paksha')}
-                </Text>
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.horizontalScrollContent}
-                style={styles.horizontalScroll}>
-                {recommendedPuja.map((puja, idx) => (
-                  <React.Fragment key={puja.id}>
-                    <PujaCard
-                      image={puja.image}
-                      title={puja.name}
-                      onPress={() => {
-                        navigation.navigate('UserPoojaDetails', {
-                          data: puja,
-                        });
-                      }}
-                    />
-                    {idx !== recommendedPuja.length - 1 && (
-                      <View style={styles.horizontalCardSpacer} />
-                    )}
-                  </React.Fragment>
-                ))}
-              </ScrollView>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
+          showsVerticalScrollIndicator={false}>
+          <View style={styles.recommendedSection}>
+            <View style={{paddingHorizontal: 24, paddingTop: 24, gap: 8}}>
+              <Text style={styles.sectionTitle}>{t('recomended_puja')}</Text>
+              <Text style={styles.sectionSubtitle}>
+                {t('today_is_kartik_shukla_paksha')}
+              </Text>
             </View>
-
-            <View style={styles.pujaListSection}>
-              <Text style={styles.sectionTitle}>{t('puja_list')}</Text>
-              <View style={styles.pujaListContainer}>
-                {pujaList.map((puja, idx) => (
-                  <PujaListItem
-                    key={puja.id}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScrollContent}
+              style={styles.horizontalScroll}>
+              {recommendedPuja.map((puja, idx) => (
+                <React.Fragment key={puja.id}>
+                  <PujaCard
                     image={puja.image}
                     title={puja.name}
-                    description={puja.pujaPurpose}
-                    price={`₹ ${puja.price.toLocaleString()}`}
                     onPress={() => {
                       navigation.navigate('UserPoojaDetails', {
                         data: puja,
                       });
                     }}
-                    showSeparator={idx !== pujaList.length - 1}
                   />
-                ))}
-              </View>
+                  {idx !== recommendedPuja.length - 1 && (
+                    <View style={styles.horizontalCardSpacer} />
+                  )}
+                </React.Fragment>
+              ))}
+            </ScrollView>
+          </View>
+
+          <View style={styles.pujaListSection}>
+            <Text style={styles.sectionTitle}>{t('puja_list')}</Text>
+            <View style={styles.pujaListContainer}>
+              {pujaList.map((puja, idx) => (
+                <PujaListItem
+                  key={puja.id}
+                  image={puja.image}
+                  title={puja.name}
+                  description={puja.pujaPurpose}
+                  price={`₹ ${puja.price.toLocaleString()}`}
+                  onPress={() => {
+                    navigation.navigate('UserPoojaDetails', {
+                      data: puja,
+                    });
+                  }}
+                  showSeparator={idx !== pujaList.length - 1}
+                />
+              ))}
             </View>
-          </ScrollView>
-        )}
+          </View>
+        </ScrollView>
       </View>
     </SafeAreaView>
   );

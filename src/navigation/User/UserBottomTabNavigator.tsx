@@ -10,12 +10,14 @@ import {Images} from '../../theme/Images';
 import UserHomeNavigator from './UsetHomeStack';
 import UserPanditjiNavigator from './UserPanditjiNavigator';
 import {useTranslation} from 'react-i18next';
+import AddressesScreen from '../../screens/Users/AddressesScreen/AddressesScreen';
 
 export type UserAppBottomTabParamList = {
   UserHomeNavigator: undefined;
   UserPoojaListNavigator: undefined;
   BottomUserProfileScreen: undefined;
   UserPanditjiNavigator: undefined;
+  AddressesScreen: undefined;
 };
 
 const Tab = createBottomTabNavigator<UserAppBottomTabParamList>();
@@ -45,6 +47,17 @@ const UserAppBottomTabNavigator: React.FC = () => {
           ),
         })}
       />
+      {/* <Tab.Screen
+        name="AddressesScreen"
+        component={AddressesScreen}
+        options={({route}) => ({
+          title: t('home'),
+          // headerTitle: getHeaderTitle(route), // dynamic title in screen header
+          tabBarIcon: ({color, size}) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
+        })}
+      /> */}
       <Tab.Screen
         name="UserPoojaListNavigator"
         component={UserPoojaListNavigator}

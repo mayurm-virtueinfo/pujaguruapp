@@ -9,7 +9,6 @@ import {
   TextInput,
   FlatList,
   Image,
-  Dimensions,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
@@ -27,8 +26,7 @@ import {apiService} from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
-
-const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
+import CustomeLoader from '../../../components/CustomeLoader';
 
 interface PanditjiItem {
   id: string;
@@ -50,11 +48,13 @@ const SelectPanditjiScreen: React.FC = () => {
   const [selectedPanditji, setSelectedPanditji] = useState<string | null>(null);
 
   const [panditjiData, setPanditjiData] = useState<PanditjiItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Fetch Panditji data from API
   useEffect(() => {
     const fetchPanditjiData = async () => {
       try {
+        setIsLoading(true);
         const data = await apiService.getPanditListData();
         // Map API data to PanditjiItem shape if needed
         // Assuming API returns array of objects with id, name, location, languages, image, isVerified
@@ -74,8 +74,9 @@ const SelectPanditjiScreen: React.FC = () => {
         );
         setPanditjiData(mappedData);
       } catch (error) {
-        // Optionally handle error
         setPanditjiData([]);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchPanditjiData();
@@ -178,6 +179,7 @@ const SelectPanditjiScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+      <CustomeLoader loading={isLoading} />
       <StatusBar
         barStyle="light-content"
         // backgroundColor={COLORS.gradientStart}

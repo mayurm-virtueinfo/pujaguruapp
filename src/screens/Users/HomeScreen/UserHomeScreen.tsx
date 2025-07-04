@@ -7,7 +7,6 @@ import {
   StatusBar,
   Image,
   TouchableOpacity,
-  ActivityIndicator,
   Platform,
   SafeAreaView,
 } from 'react-native';
@@ -22,6 +21,7 @@ import {useNavigation} from '@react-navigation/native';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 const UserHomeScreen: React.FC = () => {
   const navigation = useNavigation<UserPoojaListParamList>();
@@ -51,16 +51,14 @@ const UserHomeScreen: React.FC = () => {
   };
 
   const handleBookPandit = (panditName: string) => {
-    // Handle booking logic
     navigation.navigate('PujaCancellationScreen');
   };
 
-  const handleNavigation = (route: string) => {
-    // Handle navigation logic
-  };
+  const handleNavigation = (route: string) => {};
 
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+      <CustomeLoader loading={loading} />
       <StatusBar
         backgroundColor={COLORS.primaryBackground}
         barStyle="light-content"
@@ -88,56 +86,46 @@ const UserHomeScreen: React.FC = () => {
             {t('today_is_kartik_shukla_paksha')}
           </Text>
 
-          {loading ? (
-            <View style={{alignItems: 'center', marginVertical: 20}}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
-          ) : (
-            <View style={styles.panditCardsContainer}>
-              {pandits && pandits.length > 0 ? (
-                pandits.map(pandit => (
-                  <View style={styles.panditCard} key={pandit.id}>
-                    <View style={styles.panditImageWrapper}>
-                      <Image
-                        source={{uri: pandit.image}}
-                        style={styles.panditImage}
+          <View style={styles.panditCardsContainer}>
+            {pandits && pandits.length > 0 ? (
+              pandits.map(pandit => (
+                <View style={styles.panditCard} key={pandit.id}>
+                  <View style={styles.panditImageWrapper}>
+                    <Image
+                      source={{uri: pandit.image}}
+                      style={styles.panditImage}
+                    />
+                    <View style={styles.ratingContainerAbsolute}>
+                      <Ionicons
+                        name="star"
+                        size={16}
+                        color={COLORS.primaryBackgroundButton}
+                        style={{marginRight: 5}}
                       />
-                      <View style={styles.ratingContainerAbsolute}>
-                        <Ionicons
-                          name="star"
-                          size={16}
-                          color={COLORS.primaryBackgroundButton}
-                          style={{marginRight: 5}}
-                        />
-                        <Text style={styles.ratingText}>{pandit.rating}</Text>
-                      </View>
+                      <Text style={styles.ratingText}>{pandit.rating}</Text>
                     </View>
-                    <Text style={styles.panditName}>{pandit.name}</Text>
-                    <TouchableOpacity
-                      style={styles.bookButton}
-                      onPress={() => handleBookPandit(pandit.name)}>
-                      <Text style={styles.bookButtonText}>{t('book')}</Text>
-                    </TouchableOpacity>
                   </View>
-                ))
-              ) : (
-                <Text style={{color: '#888', marginTop: 10}}>
-                  {t('no_panditji_found')}
-                </Text>
-              )}
-            </View>
-          )}
+                  <Text style={styles.panditName}>{pandit.name}</Text>
+                  <TouchableOpacity
+                    style={styles.bookButton}
+                    onPress={() => handleBookPandit(pandit.name)}>
+                    <Text style={styles.bookButtonText}>{t('book')}</Text>
+                  </TouchableOpacity>
+                </View>
+              ))
+            ) : (
+              <Text style={{color: '#888', marginTop: 10}}>
+                {t('no_panditji_found')}
+              </Text>
+            )}
+          </View>
         </View>
 
         <View style={styles.pujaSection}>
           <Text style={styles.sectionTitle}>{t('upcoming_pujas')}</Text>
 
           <View style={styles.pujaCardsContainer}>
-            {loading ? (
-              <View style={{alignItems: 'center', marginVertical: 20}}>
-                <ActivityIndicator size="small" color={COLORS.primary} />
-              </View>
-            ) : pujas && pujas.length > 0 ? (
+            {pujas && pujas.length > 0 ? (
               pujas.map((puja, idx) => (
                 <View key={puja.id}>
                   <View style={styles.pujaCard}>

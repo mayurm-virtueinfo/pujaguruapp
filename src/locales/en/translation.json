@@ -115,5 +115,9 @@
   "enter_your_cancellation_reason": "Enter your cancellation reason",
   "cancellation_policy": "Cancellation Policy",
   "submit_cancellation": "SUBMIT CANCELLATION",
-  "pooja_list": "Pooja List"
+  "pooja_list": "Pooja List",
+  "my_addresses": "My Addresses",
+  "saved_addresses": "Saved Addresses",
+  "edit": "Edit",
+  "delete": "Delete"
 }
