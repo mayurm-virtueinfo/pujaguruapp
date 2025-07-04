@@ -41,6 +41,10 @@ const PujaDetailsScreen: React.FC = () => {
     navigation.navigate('PlaceSelectionScreen');
   };
 
+  const handleNotificationPress = () => {
+    navigation.navigate('NotificationScreen');
+  };
+
   const [selectedPricingId, setSelectedPricingId] = useState<number | null>(
     null,
   );
@@ -56,6 +60,7 @@ const PujaDetailsScreen: React.FC = () => {
         title={data.name}
         showBackButton={true}
         showBellButton={true}
+        onNotificationPress={handleNotificationPress}
       />
       <ScrollView
         style={styles.scrollContainer}

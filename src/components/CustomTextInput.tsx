@@ -40,7 +40,7 @@ export default CustomTextInput;
 const styles = StyleSheet.create({
   inputField: {
     width: '100%',
-    gap: 2,
+    gap: 5,
   },
   inputTitle: {
     color: COLORS.inputLabelText,
@@ -55,6 +55,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.inputBoder,
     justifyContent: 'center',
+    backgroundColor: COLORS.white,
   },
   inputText: {
     color: '#191313',

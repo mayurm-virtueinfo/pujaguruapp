@@ -20,6 +20,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
 import {useTranslation} from 'react-i18next';
+import Feather from 'react-native-vector-icons/Feather';
 
 interface UserCustomHeaderProps {
   title?: string;
@@ -28,6 +29,7 @@ interface UserCustomHeaderProps {
   showBellButton?: boolean;
   showCirclePlusButton?: boolean;
   showCallButton?: boolean;
+  showSliderButton?: boolean;
   showSkipButton?: boolean;
   onBackPress?: () => void;
   onNotificationPress?: () => void;
@@ -40,6 +42,7 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
   showBellButton = false,
   showCirclePlusButton = false,
   showCallButton = false,
+  showSliderButton = false,
   showSkipButton = false,
   onBackPress,
   onNotificationPress,
@@ -131,6 +134,18 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
                 onPress={() => console.log('Call Icon pressed')}
                 style={styles.iconButton}>
                 <Ionicons name="call-outline" size={24} color={COLORS.white} />
+              </TouchableOpacity>
+            )}
+            {showSliderButton && (
+              <TouchableOpacity
+                onPress={() => console.log('Slider Icon pressed')}
+                style={styles.iconButton}>
+                <Feather
+                  name="sliders"
+                  size={24}
+                  color={COLORS.white}
+                  style={{transform: [{rotate: '270deg'}]}}
+                />
               </TouchableOpacity>
             )}
             {showSkipButton && (

@@ -6,15 +6,18 @@ import {
   ScrollView,
   Text,
   SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import {StackNavigationProp} from '@react-navigation/stack';
 import Fonts from '../../../theme/fonts';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import {useTranslation} from 'react-i18next';
+import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
 
 interface ProfileFieldProps {
   label: string;
@@ -28,11 +31,22 @@ const ProfileField: React.FC<ProfileFieldProps> = ({label, value}) => (
   </View>
 );
 
+type ProfileNavigationProp = StackNavigationProp<UserProfileParamList>;
+
 const BottomUserProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<ProfileNavigationProp>();
   const {t, i18n} = useTranslation();
 
+  const handleWalletNavigation = () => {
+    navigation.navigate('WalletScreen');
+  };
+  const handleNotificationNavigation = () => {
+    navigation.navigate('NotificationScreen');
+  };
+  const handleEditNavigation = () => {
+    navigation.navigate('AddAddressScreen');
+  };
   const userData = {
     name: 'John Smith',
     email: 'johnsmith@gmail.com',
@@ -60,7 +74,7 @@ const BottomUserProfileScreen: React.FC = () => {
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}>
-          <View style={styles.infoSection}>
+          <View style={[styles.infoSection, THEMESHADOW.shadow]}>
             <ProfileField label={t('name')} value={userData.name} />
             <View style={styles.divider} />
             <ProfileField label={t('email')} value={userData.email} />
@@ -69,15 +83,18 @@ const BottomUserProfileScreen: React.FC = () => {
             <View style={styles.divider} />
             <ProfileField label={t('location')} value={userData.location} />
           </View>
-          <View style={styles.editSection}>
-            <View style={styles.editFieldContainer}>
+          <View style={[styles.editSection, THEMESHADOW.shadow]}>
+            <TouchableOpacity
+              style={styles.editFieldContainer}
+              onPress={handleEditNavigation}
+              activeOpacity={0.7}>
               <Text style={styles.editFieldLabel}>{t('edit_profile')} </Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
                 color={COLORS.primaryTextDark}
               />
-            </View>
+            </TouchableOpacity>
             <View style={styles.divider} />
             <View style={styles.editFieldContainer}>
               <Text style={styles.editFieldLabel}>{t('upcoming_puja')} </Text>
@@ -97,17 +114,32 @@ const BottomUserProfileScreen: React.FC = () => {
               />
             </View>
             <View style={styles.divider} />
-            <View style={styles.editFieldContainer}>
+            <TouchableOpacity
+              style={styles.editFieldContainer}
+              onPress={handleWalletNavigation}
+              activeOpacity={0.7}>
+              <Text style={styles.editFieldLabel}>{t('wallet')}</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.primaryTextDark}
+              />
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity
+              style={styles.editFieldContainer}
+              onPress={handleNotificationNavigation}
+              activeOpacity={0.7}>
               <Text style={styles.editFieldLabel}>{t('notifications')} </Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
                 color={COLORS.primaryTextDark}
               />
-            </View>
+            </TouchableOpacity>
           </View>
 
-          <View style={styles.editSection}>
+          <View style={[styles.editSection, THEMESHADOW.shadow]}>
             <View style={styles.editFieldContainer}>
               <Text style={styles.logoutLabel}>{t('logout')}</Text>
               <Ionicons
@@ -171,10 +203,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 24,
     marginBottom: 24,
     backgroundColor: COLORS.white,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    elevation: 3,
     marginTop: 10,
+    // shadow styles removed, now handled by THEMESHADOW
   },
   editSection: {
     borderRadius: 10,
@@ -182,9 +212,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 24,
     marginBottom: 24,
     backgroundColor: COLORS.white,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    elevation: 3,
+    // shadow styles removed, now handled by THEMESHADOW
   },
   fieldContainer: {
     flexDirection: 'row',

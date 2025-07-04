@@ -10,11 +10,12 @@ import {Images} from '../../theme/Images';
 import UserHomeNavigator from './UsetHomeStack';
 import UserPanditjiNavigator from './UserPanditjiNavigator';
 import {useTranslation} from 'react-i18next';
+import UserProfileNavigator from './userProfileNavigator';
 
 export type UserAppBottomTabParamList = {
   UserHomeNavigator: undefined;
   UserPoojaListNavigator: undefined;
-  BottomUserProfileScreen: undefined;
+  UserProfileNavigator: undefined;
   UserPanditjiNavigator: undefined;
 };
 
@@ -70,8 +71,8 @@ const UserAppBottomTabNavigator: React.FC = () => {
         }}
       />
       <Tab.Screen
-        name="BottomUserProfileScreen"
-        component={BottomUserProfileScreen}
+        name="UserProfileNavigator"
+        component={UserProfileNavigator}
         options={{
           title: t('profile'),
           tabBarIcon: ({color, size}) => (

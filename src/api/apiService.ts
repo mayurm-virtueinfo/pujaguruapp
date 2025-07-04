@@ -154,6 +154,22 @@ export interface CommentData {
   image: string
 }
 
+export interface NotificationData {
+  id: number;
+  title: string,
+  message: string,
+  timestamp: string,
+  isRead: boolean
+}
+
+export interface TransactioData {
+  id: number;
+  title: string,
+  amount: string,
+  date: string,
+  type: string
+}
+
 export const apiService = {
   // Fetch cities based on pincode
   getCities: async (pincode: string): Promise<DropdownItem[]> => {
@@ -393,6 +409,28 @@ export const apiService = {
   getCommentData: async (): Promise<CommentData[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.COMMENT_DATA_API);
+      return (
+        response.data?.record || []
+      );
+    } catch (error) {
+      console.error('Error fetching past bookings :', error);
+      return [];
+    }
+  },
+  getNotificationData: async (): Promise<NotificationData[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.NOTIFICATION_DATA_API);
+      return (
+        response.data?.record || []
+      );
+    } catch (error) {
+      console.error('Error fetching past bookings :', error);
+      return [];
+    }
+  },
+  getTransactionData: async (): Promise<TransactioData[]> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.TRANSACTION_DATA_API);
       return (
         response.data?.record || []
       );

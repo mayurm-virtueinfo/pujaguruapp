@@ -1,5 +1,5 @@
 import { StyleSheet, Dimensions } from 'react-native';
-import { moderateScale } from 'react-native-size-matters';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
 import Fonts from './fonts';
 
 // Get screen dimensions for responsive design
@@ -17,6 +17,19 @@ export const hp = (percentage: number) => {
   return Math.round(value);
 };
 
+export const THEMESHADOW = {
+  shadow: {
+    borderRadius: moderateScale(10),
+    elevation: 7, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: {
+      width: 0,
+      height: 5, // iOS shadow
+    },
+    shadowOpacity: 0.2, // iOS shadow
+    shadowRadius: 7, // iOS shadow
+  }
+}
 // Colors
 export const COLORS = {
   primary: '#F21825', // The teal/turquoise color from your button

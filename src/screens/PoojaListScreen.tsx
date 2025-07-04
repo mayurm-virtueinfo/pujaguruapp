@@ -16,7 +16,7 @@ import {PoojaRequestParamList} from '../navigation/PoojaRequestNavigator';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS} from '../theme/theme';
 import CustomHeader from '../components/CustomHeader';
-import {PoojaListParamList} from '../navigation/User/UserPoojaListNavigator';
+import {PoojaListParamList} from '../navigation/PoojaListNavigator';
 
 // Navigation type
 type ScreenNavigationProp = StackNavigationProp<

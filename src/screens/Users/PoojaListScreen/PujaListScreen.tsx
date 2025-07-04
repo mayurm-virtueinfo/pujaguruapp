@@ -70,13 +70,21 @@ const PujaListScreen: React.FC = () => {
     }
   };
 
+  const handleNotificationPress = () => {
+    navigation.navigate('NotificationScreen');
+  };
+
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}
       />
-      <UserCustomHeader title={t('puja')} showBellButton={true} />
+      <UserCustomHeader
+        title={t('puja')}
+        showBellButton={true}
+        onNotificationPress={handleNotificationPress}
+      />
 
       <View style={styles.mainContent}>
         {loading ? (

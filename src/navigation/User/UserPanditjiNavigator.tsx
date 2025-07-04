@@ -6,12 +6,14 @@ import UserChatScreen from '../../screens/Users/UserChatScreen/UserChatScreen';
 import SelectPanditjiScreen from '../../screens/Users/PoojaDetailsScreen/SelectPanditjiScreen';
 import PanditjiScreen from '../../screens/Users/PandijiScreen/PandijiScreen';
 import PanditDetailsScreen from '../../screens/Users/PanditDetailsScreen/PanditDetailsScreen';
+import NotificationScreen from '../../screens/Users/NotificationScreen/NotificationScreen';
 
 export type UserPanditjiParamList = {
   goBack(): void;
   navigate(arg0: string): unknown;
   PanditjiScreen: undefined;
   PanditDetailsScreen: undefined;
+  NotificationScreen: undefined;
 };
 
 const Stack = createStackNavigator<UserPanditjiParamList>();
@@ -27,6 +29,7 @@ const UserPanditjiNavigator = () => {
         name="PanditDetailsScreen"
         component={PanditDetailsScreen}
       />
+      <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
     </Stack.Navigator>
   );
 };

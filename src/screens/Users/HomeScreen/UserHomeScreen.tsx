@@ -20,11 +20,12 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 import {useNavigation} from '@react-navigation/native';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
 
 const UserHomeScreen: React.FC = () => {
-  const navigation = useNavigation<UserPoojaListParamList>();
+  const navigation = useNavigation<UserHomeParamList>();
   const [pandits, setPandits] = useState<PanditItem[]>([]);
   const [pujas, setPujas] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -59,6 +60,10 @@ const UserHomeScreen: React.FC = () => {
     // Handle navigation logic
   };
 
+  const handleNotificationPress = () => {
+    navigation.navigate('NotificationScreen');
+  };
+
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <StatusBar
@@ -66,7 +71,11 @@ const UserHomeScreen: React.FC = () => {
         barStyle="light-content"
       />
 
-      <UserCustomHeader title={t('home')} showBellButton={true} />
+      <UserCustomHeader
+        title={t('home')}
+        showBellButton={true}
+        onNotificationPress={handleNotificationPress}
+      />
 
       <ScrollView style={[styles.content]} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>

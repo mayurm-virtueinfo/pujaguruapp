@@ -19,6 +19,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import {UserPanditjiParamList} from '../../../navigation/User/UserPanditjiNavigator';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {apiService} from '../../../api/apiService';
 import CustomHeader from '../../../components/CustomHeader';
@@ -41,9 +42,13 @@ const PanditjiScreen: React.FC = () => {
   const {t, i18n} = useTranslation();
 
   const navigation =
-    useNavigation<StackNavigationProp<UserPoojaListParamList>>();
+    useNavigation<StackNavigationProp<UserPanditjiParamList>>();
   const [searchText, setSearchText] = useState('');
   const [panditjiData, setPanditjiData] = useState<PanditjiItem[]>([]);
+
+  const handleNotificationPress = () => {
+    navigation.navigate('NotificationScreen');
+  };
 
   useEffect(() => {
     const fetchPanditjiData = async () => {
@@ -151,7 +156,11 @@ const PanditjiScreen: React.FC = () => {
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}
       />
-      <UserCustomHeader title={t('panditji')} showBellButton={true} />
+      <UserCustomHeader
+        title={t('panditji')}
+        showBellButton={true}
+        onNotificationPress={handleNotificationPress}
+      />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
