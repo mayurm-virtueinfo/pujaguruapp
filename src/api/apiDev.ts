@@ -1,16 +1,15 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiEndpoints from './apiEndpoints';
-import { apiService } from './apiService';
+import {apiService} from './apiService';
 import AppConstant from '../utils/appConstant';
 
 // Create an axios instance
 
 const apiDev = axios.create({
   // baseURL: Config.BASE_URL,
-  baseURL:
-    // 'https://stagcms.laggitgolf.com',
-    ApiEndpoints.BASE_URL,
+  baseURL: 'https://31b1-103-125-235-23.ngrok-free.app',
+  // baseURL: ApiEndpoints.BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -68,26 +67,29 @@ apiDev.interceptors.response.use(
         isRefreshing = true;
 
         isRefreshing = true;
-        console.log("---Accesstoken---refreshing---apiDev");
+        console.log('---Accesstoken---refreshing---apiDev');
         try {
-          console.log("---refreshing----apiDev-1");
+          console.log('---refreshing----apiDev-1');
           const response: any = await apiService.postUserRefreshTokenApi();
-          console.log("---refreshing----apiDev-2 : ", response);
+          console.log('---refreshing----apiDev-2 : ', response);
           const data = response?.data?.data;
           const tokens = data?.tokens;
-          console.log("---refreshing----apiDev-3 : ");
+          console.log('---refreshing----apiDev-3 : ');
           const newAccessToken = tokens.accessToken;
           const newRefreshToken = tokens.refreshToken;
-          console.log("---refreshing----apiDev-4");
+          console.log('---refreshing----apiDev-4');
           // Store the new access token
           await AsyncStorage.setItem(AppConstant.ACCESS_TOKEN, newAccessToken);
-          await AsyncStorage.setItem(AppConstant.REFRESH_TOKEN, newRefreshToken);
-          console.log("---refreshing----apiDev-5");
+          await AsyncStorage.setItem(
+            AppConstant.REFRESH_TOKEN,
+            newRefreshToken,
+          );
+          console.log('---refreshing----apiDev-5');
           isRefreshing = false;
           onRefreshed(newAccessToken);
-          console.log("---refreshing----apiDev-6");
+          console.log('---refreshing----apiDev-6');
           // Retry the original request with the new token
-          console.log("---Accesstoken---refreshing---apiDev-done-success");
+          console.log('---Accesstoken---refreshing---apiDev-done-success');
           return apiDev(originalRequest);
         } catch (error: any) {
           // Need to apply this code if neccesary
@@ -114,8 +116,8 @@ apiDev.interceptors.response.use(
           //   navigateToLoginScreen();
           // }
           console.log(
-            "---Accesstoken---refreshing---apiDev--failure : ",
-            error
+            '---Accesstoken---refreshing---apiDev--failure : ',
+            error,
           );
           // Handle refresh token failure (e.g., log out the user)
           return Promise.reject(error);

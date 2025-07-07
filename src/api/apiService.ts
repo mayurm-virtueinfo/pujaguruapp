@@ -1,7 +1,7 @@
 // import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiDev from './apiDev';
-import ApiEndpoints from './apiEndpoints';
+import ApiEndpoints, {POST_SIGNIN} from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
 // Types for dropdown data
@@ -172,18 +172,43 @@ export interface UserRefreshTokenDataResponse {
 
 export interface NotificationData {
   id: number;
-  title: string,
-  message: string,
-  timestamp: string,
-  isRead: boolean
+  title: string;
+  message: string;
+  timestamp: string;
+  isRead: boolean;
 }
 
 export interface TransactioData {
   id: number;
-  title: string,
-  amount: string,
-  date: string,
-  type: string
+  title: string;
+  amount: string;
+  date: string;
+  type: string;
+}
+
+export interface User {
+  mobile: string;
+  firebase_uid: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: number;
+  gender: number;
+  profile_img: string;
+  pandit_details: string;
+}
+
+export interface SignInResponse {
+  message: string;
+  access_token: string;
+  refresh_token: string;
+  is_register: boolean;
+  user: User;
+}
+
+export interface SignInRequest {
+  mobile: string;
+  firebase_uid: string;
 }
 
 export const apiService = {
@@ -430,9 +455,7 @@ export const apiService = {
   getNotificationData: async (): Promise<NotificationData[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.NOTIFICATION_DATA_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
       return [];
@@ -441,9 +464,7 @@ export const apiService = {
   getTransactionData: async (): Promise<TransactioData[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.TRANSACTION_DATA_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
       return [];
@@ -459,15 +480,14 @@ export const apiService = {
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
-    
     console.log(
-      "---refreshing----apiConversation--1-postUserRefreshTokenApi-1"
+      '---refreshing----apiConversation--1-postUserRefreshTokenApi-1',
     );
     let refreshToken = await AsyncStorage.getItem(AppConstant.REFRESH_TOKEN); // retrieve the refresh token
     // This is testing refresh token to handle 403 ( Refresh token expired )
     // refreshToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlY2QxOTIyMC04NmZkLTExZWYtOTQwOS03YmY0Y2VlYWU3MWUiLCJlbnYiOiJERVYiLCJjcmVhdGVkRGF0ZSI6MTcyODU2MTA2MzA1MCwiaWF0IjoxNzI4NTYxMDYzLCJleHAiOjE3Mjg2NDc0NjN9.GMBBfjsygnWrXa_mxyUc-SflGBaP0oBUn1ENHjXi2nc";
     console.log(
-      "---refreshing----apiConversation--1-postUserRefreshTokenApi-2"
+      '---refreshing----apiConversation--1-postUserRefreshTokenApi-2',
     );
     const rawData: any = {
       data: {
@@ -475,19 +495,45 @@ export const apiService = {
       },
     };
     console.log(
-      "---refreshing----apiConversation--1-postUserRefreshTokenApi-3 : rawData : ",
-      rawData
+      '---refreshing----apiConversation--1-postUserRefreshTokenApi-3 : rawData : ',
+      rawData,
     );
     let apiUrl = ApiEndpoints.REFRESH_TOKEN_API;
     console.log(
-      "---refreshing----apiConversation--1-postUserRefreshTokenApi-4"
+      '---refreshing----apiConversation--1-postUserRefreshTokenApi-4',
     );
-     try {
-      const response = await apiDev.post(apiUrl, rawData)
+    try {
+      const response = await apiDev.post(apiUrl, rawData);
       return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
       return {address: []};
     }
   },
+
+  // postSignIn: async (data: SignInRequest): Promise<SignInResponse> => {
+  //   try {
+  //     const response = await apiDev.post(POST_SIGNIN, data);
+  //     return response.data as SignInResponse;
+  //   } catch (error) {
+  //     console.error('Error fetching sign in data:', JSON.stringify(error));
+  //     return error as SignInResponse;
+  //   }
+  // },
+};
+
+export const postSignIn = (data: SignInRequest): Promise<SignInResponse> => {
+  console.log('params data ::', data);
+  let apiUrl = POST_SIGNIN;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching sign in data:', error);
+        reject(error);
+      });
+  });
 };

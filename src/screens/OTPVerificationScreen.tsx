@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -26,6 +25,8 @@ import Fonts from '../theme/fonts';
 import PrimaryButton from '../components/PrimaryButton';
 import PrimaryButtonLabeled from '../components/PrimaryButtonLabeled';
 import PrimaryButtonOutlined from '../components/PrimaryButtonOutlined';
+import {apiService, postSignIn} from '../api/apiService';
+import {useAuth} from '../provider/AuthProvider';
 
 type OTPVerificationScreenNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -43,89 +44,88 @@ interface Props {
 }
 
 const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
-  const {t, i18n} = useTranslation();
-  const inset = useSafeAreaInsets();
+  const {t} = useTranslation();
   const {showErrorToast, showSuccessToast} = useCommonToast();
+  const {signIn} = useAuth();
+  const inset = useSafeAreaInsets();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const inputRefs = useRef<Array<TextInput | null>>([]);
-  const {phoneNumber, confirmation} = route.params;
-
-  const [otpConfirmation, setOtpConfirmation] = useState(confirmation);
   const [isLoading, setLoading] = useState(false);
+  const [otpConfirmation, setOtpConfirmation] = useState(
+    route.params.confirmation,
+  );
+  const {phoneNumber} = route.params;
+  const inputRefs = useRef<Array<TextInput | null>>([]);
 
   const handleOtpChange = (value: string, index: number) => {
     if (value.length <= 1) {
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);
-
-      // Move to next input if value is entered
-      if (value !== '' && index < 5) {
+      if (value && index < 5) {
         inputRefs.current[index + 1]?.focus();
       }
     }
   };
 
   const handleKeyPress = (e: any, index: number) => {
-    if (e.nativeEvent.key === 'Backspace' && index > 0 && otp[index] === '') {
+    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
-  const confirmCode = async (code: string) => {
+  const handleSignIn = async (phoneNumber: string, uid: string) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      await otpConfirmation.confirm(code);
-      setLoading(false);
-      navigation.navigate('CompleteProfileScreen');
+      const params = {
+        mobile: phoneNumber,
+        firebase_uid: uid,
+      };
+      const response = await postSignIn(params);
+      if (response) {
+        console.log('response :: ', response);
+        signIn();
+        // navigation.navigate('CompleteProfileScreen');
+      }
     } catch (error: any) {
-      console.log('Invalid code.');
+      showErrorToast(error?.message);
+    } finally {
       setLoading(false);
-      // Alert.alert('','Invalid code');
-      showErrorToast(
-        error?.message || 'Failed to Resend OTP. Please try again.',
-      );
     }
   };
-  const handleVerification = async () => {
+
+  const verifyOtp = async (code: string) => {
     try {
-      const otpValue = otp.join('');
-      if (otpValue.length !== 6) {
-        // Alert.alert('Error', 'Please enter a valid 6-digit OTP');
-        showErrorToast('Please enter a valid 6-digit OTP');
-        return;
+      setLoading(true);
+      const userCredential = await otpConfirmation.confirm(code);
+      if (userCredential?.user) {
+        await handleSignIn(phoneNumber, userCredential.user.uid);
       }
-
-      // Here you would typically make an API call to verify the OTP
-      // For now, we'll simulate a successful verification
-
-      confirmCode(otpValue);
-      // Navigate to registration screen after successful verification
-    } catch (error) {
-      console.error('Verification failed:', error);
-      // Alert.alert('Error', 'OTP verification failed. Please try again.');
-      showErrorToast('OTP verification failed. Please try again.');
+    } catch (error: any) {
+      showErrorToast(error?.message);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const handleVerification = async () => {
+    const otpValue = otp.join('');
+    if (otpValue.length !== 6) {
+      showErrorToast(t('invalid_otp_length'));
+      return;
+    }
+    await verifyOtp(otpValue);
   };
 
   const handleResendOTP = async () => {
-    // Implement resend OTP logic here
     try {
-      // const confirmation = await auth().signInWithPhoneNumber(formattedPhone);
       setLoading(true);
       const confirmation = await signInWithPhoneNumber(getAuth(), phoneNumber);
-      setLoading(false);
-      // Alert.alert('Success', 'New OTP has been sent to your phone number');
-      showSuccessToast('New OTP has been sent to your phone number');
       setOtpConfirmation(confirmation);
+      showSuccessToast(t('otp_resent'));
     } catch (error: any) {
-      console.log('---8');
-      console.error(error);
+      showErrorToast(error?.message || t('resend_otp_failed'));
+    } finally {
       setLoading(false);
-      // Alert.alert('Error', error?.message || 'Failed to Resend OTP. Please try again.');
-      showErrorToast(
-        error?.message || 'Failed to Resend OTP. Please try again.',
-      );
     }
   };
 
@@ -141,19 +141,16 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
           <View style={[styles.content, {paddingTop: inset.top}]}>
-            <View style={styles.containerHeader}>
-              <Image
-                source={Images.ic_app_logo}
-                style={{width: '33%', resizeMode: 'contain'}}></Image>
+            <View style={styles.header}>
+              <Image source={Images.ic_app_logo} style={styles.logo} />
               <Text style={styles.title}>{t('hi_welcome')}</Text>
             </View>
-            <View style={[styles.containerBody, {paddingBottom: inset.bottom}]}>
+            <View style={[styles.body, {paddingBottom: inset.bottom}]}>
               <Text style={styles.mainTitle}>{t('otp_verification')}</Text>
               <Text style={styles.subtitle}>
                 {t('6_digit_code_has_been_sent')}
               </Text>
               <Text style={styles.phoneNumber}>{phoneNumber}</Text>
-
               <View style={styles.otpContainer}>
                 {otp.map((digit, index) => (
                   <TextInput
@@ -170,9 +167,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
                   />
                 ))}
               </View>
-
               <PrimaryButton onPress={handleVerification} title={t('verify')} />
-
               <View style={styles.resendContainer}>
                 <Text style={styles.resendText}>
                   {t('did_not_receive_code')}
@@ -197,102 +192,84 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    // backgroundColor: '#ffffff',
-  },
-  containerHeader: {
-    height: moderateScale(220),
-    alignItems: 'center',
-    // justifyContent: 'center',
-  },
-  containerBody: {
-    borderTopLeftRadius: moderateScale(30),
-    borderTopRightRadius: moderateScale(30),
-    flex: 1,
-    padding: moderateScale(24),
-    // justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  mainTitle: {
-    fontSize: moderateScale(24),
-    fontFamily: Fonts.Sen_Bold,
-    color: COLORS.primaryTextDark,
-    marginBottom: moderateScale(24),
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_Regular,
-    color: COLORS.primaryTextDark,
-    marginBottom: moderateScale(24),
-    textAlign: 'center',
   },
   scrollContent: {
     flexGrow: 1,
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
   },
-
+  header: {
+    height: moderateScale(220),
+    alignItems: 'center',
+  },
+  body: {
+    flex: 1,
+    padding: moderateScale(24),
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+  },
+  logo: {
+    width: '33%',
+    resizeMode: 'contain',
+  },
   title: {
     fontSize: moderateScale(32),
     fontFamily: Fonts.Sen_Bold,
     color: COLORS.white,
   },
-
+  mainTitle: {
+    fontSize: moderateScale(24),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+    textAlign: 'center',
+    marginBottom: moderateScale(24),
+  },
+  subtitle: {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
+    textAlign: 'center',
+    marginBottom: moderateScale(24),
+  },
   phoneNumber: {
     fontSize: moderateScale(16),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
+    textAlign: 'center',
     marginBottom: moderateScale(24),
   },
   otpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: moderateScale(10),
   },
   otpInput: {
     width: moderateScale(45),
     height: moderateScale(45),
-    borderWidth: moderateScale(1),
+    borderWidth: 1,
     borderColor: COLORS.primaryBackgroundButton,
     borderRadius: moderateScale(8),
     marginHorizontal: moderateScale(5),
     textAlign: 'center',
     fontSize: moderateScale(20),
-    color: COLORS.primaryTextDark,
     fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
     backgroundColor: COLORS.lightGray,
-  },
-  verifyButton: {
-    width: '100%',
-    height: moderateScale(48),
-    backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: moderateScale(8),
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: moderateScale(24),
-  },
-  verifyButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
   resendContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginTop: moderateScale(16),
+    marginBottom: moderateScale(24),
   },
   resendText: {
     fontSize: moderateScale(14),
-    color: COLORS.primaryTextDark,
     fontFamily: Fonts.Sen_Regular,
-  },
-  resendButton: {
-    fontSize: 14,
-    color: COLORS.primaryBackgroundButton,
-    fontWeight: '600',
+    color: COLORS.primaryTextDark,
+    marginRight: moderateScale(5),
   },
 });
 
