@@ -6,8 +6,8 @@ import en from './locales/en/translation.json';
 import hi from './locales/hi/translation.json';
 
 const resources = {
-  en: { translation: en },
-  hi: { translation: hi },
+  en: {translation: en},
+  hi: {translation: hi},
 };
 
 const LANGUAGE_KEY = 'appLanguage';

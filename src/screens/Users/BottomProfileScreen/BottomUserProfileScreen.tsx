@@ -19,6 +19,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import {useTranslation} from 'react-i18next';
 import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
 import {useAuth} from '../../../provider/AuthProvider';
+import LanguageSwitcher from '../../../components/LanguageSwitcher';
 
 interface ProfileFieldProps {
   label: string;
@@ -144,6 +145,7 @@ const BottomUserProfileScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
+          <LanguageSwitcher />
           <TouchableOpacity
             style={[styles.editSection, THEMESHADOW.shadow]}
             onPress={handleLogout}>

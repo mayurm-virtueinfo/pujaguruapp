@@ -46,7 +46,7 @@ interface Props {
 const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   const {t} = useTranslation();
   const {showErrorToast, showSuccessToast} = useCommonToast();
-  const {signIn} = useAuth();
+  const {setIsAuthenticated} = useAuth();
   const inset = useSafeAreaInsets();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setLoading] = useState(false);
@@ -83,7 +83,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       const response = await postSignIn(params);
       if (response) {
         console.log('response :: ', response);
-        signIn();
+        setIsAuthenticated(true);
         // navigation.navigate('CompleteProfileScreen');
       }
     } catch (error: any) {
