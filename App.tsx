@@ -27,6 +27,7 @@ LogBox.ignoreLogs([
 
 // export const firebaseAuth = initializeAuth(app);
 import { getAuth } from '@react-native-firebase/auth';
+import { initializeI18n } from './src/i18n';
 
 // Connect to emulator (do this ONCE at app startup)
 const auth = getAuth();
@@ -36,7 +37,9 @@ if (__DEV__) {
 const App = () => {
   useEffect(() => {
     // Hide splash screen after a delay
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async() => {
+      // Initializing app local ( en | hi )
+      await initializeI18n();
       SplashScreen.hide();
     }, 2500); // Show splash for 2.5 seconds
 
