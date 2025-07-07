@@ -1,6 +1,8 @@
 // import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiDev from './apiDev';
 import ApiEndpoints from './apiEndpoints';
+import AppConstant from '../utils/appConstant';
 
 // Types for dropdown data
 export interface DropdownItem {
@@ -162,6 +164,9 @@ export interface address {
 }
 
 export interface AddressDataResponse {
+  address: address[];
+}
+export interface UserRefreshTokenDataResponse {
   address: address[];
 }
 
@@ -447,6 +452,38 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
+      return response.data?.record || {address: []};
+    } catch (error) {
+      console.error('Error fetching address data:', error);
+      return {address: []};
+    }
+  },
+  postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
+    
+    console.log(
+      "---refreshing----apiConversation--1-postUserRefreshTokenApi-1"
+    );
+    let refreshToken = await AsyncStorage.getItem(AppConstant.REFRESH_TOKEN); // retrieve the refresh token
+    // This is testing refresh token to handle 403 ( Refresh token expired )
+    // refreshToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlY2QxOTIyMC04NmZkLTExZWYtOTQwOS03YmY0Y2VlYWU3MWUiLCJlbnYiOiJERVYiLCJjcmVhdGVkRGF0ZSI6MTcyODU2MTA2MzA1MCwiaWF0IjoxNzI4NTYxMDYzLCJleHAiOjE3Mjg2NDc0NjN9.GMBBfjsygnWrXa_mxyUc-SflGBaP0oBUn1ENHjXi2nc";
+    console.log(
+      "---refreshing----apiConversation--1-postUserRefreshTokenApi-2"
+    );
+    const rawData: any = {
+      data: {
+        refreshToken: refreshToken,
+      },
+    };
+    console.log(
+      "---refreshing----apiConversation--1-postUserRefreshTokenApi-3 : rawData : ",
+      rawData
+    );
+    let apiUrl = ApiEndpoints.REFRESH_TOKEN_API;
+    console.log(
+      "---refreshing----apiConversation--1-postUserRefreshTokenApi-4"
+    );
+     try {
+      const response = await apiDev.post(apiUrl, rawData)
       return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
