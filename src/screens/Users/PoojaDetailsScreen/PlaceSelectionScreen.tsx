@@ -20,6 +20,7 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 const PlaceSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -62,6 +63,7 @@ const PlaceSelectionScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+      <CustomeLoader loading={isLoading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
       <ScrollView

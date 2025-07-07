@@ -69,7 +69,8 @@ export const COLORS = {
   bottomNavIcon: '#484C52',
   bottomNavActive: '#FA1927',
   chatColor: '#F0F0F0',
-  chatUserBackground: "#FFD1D4"
+  chatUserBackground: '#FFD1D4',
+  badgeBackground: '#EAEAEA',
 };
 
 // Typography

@@ -64,13 +64,13 @@ const AddressSelectionScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+      <CustomeLoader loading={isLoading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader
         title={t('puja_booking')}
         showBackButton={true}
         showCirclePlusButton={true}
       />
-      <CustomeLoader loading={isLoading} />
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}

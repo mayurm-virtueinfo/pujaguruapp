@@ -137,5 +137,9 @@
   "Home": "HOME",
   "office": "OFFICE",
   "my_location": "MY LOCATION",
-  "save_address": "SAVE ADDRESS"
+  "save_address": "SAVE ADDRESS",
+  "my_addresses": "My Addresses",
+  "saved_addresses": "Saved Addresses",
+  "edit": "Edit",
+  "delete": "Delete"
 }

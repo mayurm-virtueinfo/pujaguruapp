@@ -25,6 +25,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 const {width: screenWidth} = Dimensions.get('window');
 
@@ -122,6 +123,7 @@ const PanditDetailsScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+      <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title="Panditji Details" showBackButton={true} />
 

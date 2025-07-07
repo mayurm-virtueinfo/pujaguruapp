@@ -31,6 +31,7 @@ class ApiEndpoints {
   static readonly COMMENT_DATA_API = `${ApiEndpoints.API_VERSION}/6863ca368960c979a5b53077`;
   static readonly NOTIFICATION_DATA_API = `${ApiEndpoints.API_VERSION}/6867ade78561e97a50315d3b`
   static readonly TRANSACTION_DATA_API = `${ApiEndpoints.API_VERSION}/6867afe08a456b7966bb3290`
+  static readonly ADDRESS_DATA_API = `${ApiEndpoints.API_VERSION}/6867a99d8960c979a5b6f38f`;
 }
 
 export default ApiEndpoints;

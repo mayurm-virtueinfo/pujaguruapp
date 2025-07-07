@@ -1,6 +1,7 @@
 import React from 'react';
 import {ActivityIndicator, StyleSheet, View} from 'react-native';
 import {COLORS} from '../theme/theme';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 type CustomeLoaderProps = {
   loading: boolean;
@@ -9,8 +10,10 @@ type CustomeLoaderProps = {
 
 const CustomeLoader: React.FC<CustomeLoaderProps> = ({
   loading,
-  backgroundColor = '#00000040',
+  backgroundColor = '#00000010',
 }) => {
+  const insets = useSafeAreaInsets();
+
   return (
     <>
       {loading && (
@@ -20,6 +23,7 @@ const CustomeLoader: React.FC<CustomeLoaderProps> = ({
             height: '100%',
             width: '100%',
             zIndex: 9999,
+            top: insets.top,
           }}>
           <View style={[styles.modalBackground, {backgroundColor}]}>
             <View style={styles.activityIndicatorWrapper}>
@@ -41,7 +45,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'column',
     justifyContent: 'space-around',
-    backgroundColor: '#00000040',
   },
   activityIndicatorWrapper: {
     backgroundColor: COLORS.white,

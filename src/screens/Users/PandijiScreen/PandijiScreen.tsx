@@ -26,6 +26,7 @@ import CustomHeader from '../../../components/CustomHeader';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 interface PanditjiItem {
   id: string;
@@ -45,6 +46,7 @@ const PanditjiScreen: React.FC = () => {
     useNavigation<StackNavigationProp<UserPanditjiParamList>>();
   const [searchText, setSearchText] = useState('');
   const [panditjiData, setPanditjiData] = useState<PanditjiItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleNotificationPress = () => {
     navigation.navigate('NotificationScreen');
@@ -53,6 +55,7 @@ const PanditjiScreen: React.FC = () => {
   useEffect(() => {
     const fetchPanditjiData = async () => {
       try {
+        setIsLoading(true);
         const data = await apiService.getPanditListData();
         const mappedData: PanditjiItem[] = data.map(
           (item: any, idx: number) => ({
@@ -70,6 +73,8 @@ const PanditjiScreen: React.FC = () => {
         setPanditjiData(mappedData);
       } catch (error) {
         setPanditjiData([]);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchPanditjiData();
@@ -152,6 +157,7 @@ const PanditjiScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+      <CustomeLoader loading={isLoading} />
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}

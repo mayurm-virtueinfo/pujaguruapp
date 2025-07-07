@@ -78,8 +78,8 @@ export interface PoojaBookingTirthPlace {
 }
 
 export interface HomeData {
-  pandits: PanditItem[]
-  puja: PujaItem[]
+  pandits: PanditItem[];
+  puja: PujaItem[];
 }
 export interface PanditItem {
   id: number;
@@ -130,13 +130,12 @@ export interface PujaListDataResponse {
 export interface PanditListItem {
   id: number;
   name: string;
-  location: string,
-  languages: string,
-  image: string,
-  isSelected: boolean,
-  isVerified: boolean
+  location: string;
+  languages: string;
+  image: string;
+  isSelected: boolean;
+  isVerified: boolean;
 }
-
 
 export interface PujaItemsItem {
   id: number;
@@ -147,11 +146,23 @@ export interface CommentData {
   id: number;
   commenterName: string;
   date: string;
-  star: number,
-  Comment: string,
-  like: number,
-  disLike: number,
-  image: string
+  star: number;
+  Comment: string;
+  like: number;
+  disLike: number;
+  image: string;
+}
+
+export interface address {
+  id: string;
+  name: string;
+  type?: string;
+  address: string;
+  phone: string;
+}
+
+export interface AddressDataResponse {
+  address: address[];
 }
 
 export interface NotificationData {
@@ -372,24 +383,22 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return { pandits: [], puja: [] };
+      return {pandits: [], puja: []};
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || { recommendedPuja: [], pujaList: [] };
+      return response.data?.record || {recommendedPuja: [], pujaList: []};
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return { recommendedPuja: [], pujaList: [] };
+      return {recommendedPuja: [], pujaList: []};
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PANDIT_LIST_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
       return [];
@@ -398,9 +407,7 @@ export const apiService = {
   getPujaItemsData: async (): Promise<PujaItemsItem[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_ITEMS_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
       return [];
@@ -409,9 +416,7 @@ export const apiService = {
   getCommentData: async (): Promise<CommentData[]> => {
     try {
       const response = await apiDev.get(ApiEndpoints.COMMENT_DATA_API);
-      return (
-        response.data?.record || []
-      );
+      return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
       return [];
@@ -437,6 +442,15 @@ export const apiService = {
     } catch (error) {
       console.error('Error fetching past bookings :', error);
       return [];
+    }
+  },
+  getAddressData: async (): Promise<AddressDataResponse> => {
+    try {
+      const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
+      return response.data?.record || {address: []};
+    } catch (error) {
+      console.error('Error fetching address data:', error);
+      return {address: []};
     }
   },
 };
