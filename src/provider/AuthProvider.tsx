@@ -1,67 +1,65 @@
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
-import { FirebaseAuthTypes, getAuth, signOut, onAuthStateChanged, signInWithPhoneNumber } from '@react-native-firebase/auth';
-// Authentication Context
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut,
+} from '@react-native-firebase/auth';
+
 interface AuthContextType {
-    isAuthenticated: boolean;
-    signIn: () => void;
-    signOutApp: () => void;
+  isAuthenticated: boolean;
+  setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+  signIn: () => void;
+  signOutApp: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Auth Provider Component
 interface AuthProviderProps {
-    children: ReactNode;
+  children: ReactNode;
 }
 
+export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-    const [user, setUser] = useState<FirebaseAuthTypes.User | null>(null);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      setIsAuthenticated(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
 
-    useEffect(() => {
-        const subscriber = onAuthStateChanged(getAuth(), (user) => {
-            setUser(user);
-        });
-        return subscriber;
-    }, []);
+  const signIn = () => {
+    setIsAuthenticated(true);
+  };
 
-    useEffect(() => {
-        setIsAuthenticated(!!user);
-        console.log("user changed, updated isAuthenticated to", !!user);
-    }, [user]);
+  const signOutApp = async () => {
+    try {
+      await signOut(getAuth());
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
 
-    const signIn = () => {
-        setIsAuthenticated(true);
-    };
-
-    const signOutApp = () => {
-        handleSignOut();
-    };
-    const handleSignOut = async () => {
-        try {
-            const auth = getAuth();
-            await signOut(auth);
-            console.log('User signed out!');
-        } catch (error) {
-            console.error('Sign out error:', error);
-        }
-    };
-
-    const value = {
-        user,
-        isAuthenticated,
-        signIn,
-        signOutApp,
-    };
-
-    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{isAuthenticated, setIsAuthenticated, signIn, signOutApp}}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

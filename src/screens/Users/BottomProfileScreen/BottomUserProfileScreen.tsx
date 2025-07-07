@@ -18,6 +18,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import {useTranslation} from 'react-i18next';
 import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
+import {useAuth} from '../../../provider/AuthProvider';
 
 interface ProfileFieldProps {
   label: string;
@@ -37,6 +38,7 @@ const BottomUserProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ProfileNavigationProp>();
   const {t, i18n} = useTranslation();
+  const {signOutApp} = useAuth();
 
   const handleWalletNavigation = () => {
     navigation.navigate('WalletScreen');
@@ -46,6 +48,9 @@ const BottomUserProfileScreen: React.FC = () => {
   };
   const handleEditNavigation = () => {
     navigation.navigate('AddAddressScreen');
+  };
+  const handleLogout = () => {
+    signOutApp();
   };
   const userData = {
     name: 'John Smith',
@@ -139,7 +144,9 @@ const BottomUserProfileScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <View style={[styles.editSection, THEMESHADOW.shadow]}>
+          <TouchableOpacity
+            style={[styles.editSection, THEMESHADOW.shadow]}
+            onPress={handleLogout}>
             <View style={styles.editFieldContainer}>
               <Text style={styles.logoutLabel}>{t('logout')}</Text>
               <Ionicons
@@ -148,7 +155,7 @@ const BottomUserProfileScreen: React.FC = () => {
                 color={COLORS.primaryTextDark}
               />
             </View>
-          </View>
+          </TouchableOpacity>
         </ScrollView>
       </View>
     </SafeAreaView>

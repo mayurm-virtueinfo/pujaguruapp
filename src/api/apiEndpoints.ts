@@ -29,10 +29,12 @@ class ApiEndpoints {
   static readonly PANDIT_LIST_API = `${ApiEndpoints.API_VERSION}/686259e18960c979a5b45e33`;
   static readonly PUJA_ITEMS_API = `${ApiEndpoints.API_VERSION}/6862805f8561e97a502edd41`;
   static readonly COMMENT_DATA_API = `${ApiEndpoints.API_VERSION}/6863ca368960c979a5b53077`;
-  static readonly NOTIFICATION_DATA_API = `${ApiEndpoints.API_VERSION}/6867ade78561e97a50315d3b`
-  static readonly TRANSACTION_DATA_API = `${ApiEndpoints.API_VERSION}/6867afe08a456b7966bb3290`
+  static readonly NOTIFICATION_DATA_API = `${ApiEndpoints.API_VERSION}/6867ade78561e97a50315d3b`;
+  static readonly TRANSACTION_DATA_API = `${ApiEndpoints.API_VERSION}/6867afe08a456b7966bb3290`;
   static readonly ADDRESS_DATA_API = `${ApiEndpoints.API_VERSION}/6867a99d8960c979a5b6f38f`;
   static readonly REFRESH_TOKEN_API = `${ApiEndpoints.API_VERSION}/6867a99d8960c979a5b6f38f`;
 }
 
 export default ApiEndpoints;
+
+export const POST_SIGNIN = '/auth/signin/';
