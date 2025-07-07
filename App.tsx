@@ -1,4 +1,4 @@
-import './src/i18n'; // ✅ import BEFORE anything else
+import './src/i18n';
 import React, {useEffect} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import SplashScreen from 'react-native-splash-screen';
@@ -7,11 +7,14 @@ import {LogBox} from 'react-native';
 
 // It's good practice to import gesture handler at the top
 import 'react-native-gesture-handler';
-import { AuthProvider } from './src/provider/AuthProvider';
-import { ToastProvider } from 'react-native-toast-notifications';
-import { moderateScale } from 'react-native-size-matters';
-import { COLORS } from './src/theme/theme';
-import { registerNotificationListeners, requestUserPermission } from './src/configuration/firebaseMessaging';
+import {AuthProvider} from './src/provider/AuthProvider';
+import {ToastProvider} from 'react-native-toast-notifications';
+import {moderateScale} from 'react-native-size-matters';
+import {COLORS} from './src/theme/theme';
+import {
+  registerNotificationListeners,
+  requestUserPermission,
+} from './src/configuration/firebaseMessaging';
 
 // Ignore specific warnings if necessary, for example, from reanimated
 LogBox.ignoreLogs([
@@ -26,7 +29,7 @@ LogBox.ignoreLogs([
 // const app = getApp();
 
 // export const firebaseAuth = initializeAuth(app);
-import { getAuth } from '@react-native-firebase/auth';
+import {getAuth} from '@react-native-firebase/auth';
 
 // Connect to emulator (do this ONCE at app startup)
 const auth = getAuth();
@@ -48,24 +51,24 @@ const App = () => {
 
   return (
     <ToastProvider
-          style={{
-            // borderRadius: 20,
-            backgroundColor: COLORS.primary,
-            // borderWidth: 1,
-            // borderColor: Colors.tertiaryGrey,
-          }}
-          textStyle={{
-            // fontFamily: fonts.nunitoRegular,
-            fontSize: moderateScale(16),
-            color: COLORS.textPrimary,
-          }}
-          // icon={<SVGIcon iconType={SvgIconTypes.IcTick} />}
-        >
-    <AuthProvider>
-      <NavigationContainer>
-        <RootNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+      style={{
+        // borderRadius: 20,
+        backgroundColor: COLORS.primary,
+        // borderWidth: 1,
+        // borderColor: Colors.tertiaryGrey,
+      }}
+      textStyle={{
+        // fontFamily: fonts.nunitoRegular,
+        fontSize: moderateScale(16),
+        color: COLORS.textPrimary,
+      }}
+      // icon={<SVGIcon iconType={SvgIconTypes.IcTick} />}
+    >
+      <AuthProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </AuthProvider>
     </ToastProvider>
   );
 };
