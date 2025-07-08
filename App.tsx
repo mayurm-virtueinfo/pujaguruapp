@@ -29,8 +29,9 @@ LogBox.ignoreLogs([
 // const app = getApp();
 
 // export const firebaseAuth = initializeAuth(app);
-import { getAuth } from '@react-native-firebase/auth';
-import { initializeI18n } from './src/i18n';
+import {getAuth} from '@react-native-firebase/auth';
+import i18n, {initializeI18n} from './src/i18n';
+import {I18nextProvider} from 'react-i18next';
 
 // Connect to emulator (do this ONCE at app startup)
 const auth = getAuth();
@@ -40,7 +41,7 @@ if (__DEV__) {
 const App = () => {
   useEffect(() => {
     // Hide splash screen after a delay
-    const timer = setTimeout(async() => {
+    const timer = setTimeout(async () => {
       // Initializing app local ( en | hi )
       await initializeI18n();
       SplashScreen.hide();
@@ -53,26 +54,28 @@ const App = () => {
   }, []);
 
   return (
-    <ToastProvider
-      style={{
-        // borderRadius: 20,
-        backgroundColor: COLORS.primary,
-        // borderWidth: 1,
-        // borderColor: Colors.tertiaryGrey,
-      }}
-      textStyle={{
-        // fontFamily: fonts.nunitoRegular,
-        fontSize: moderateScale(16),
-        color: COLORS.textPrimary,
-      }}
-      // icon={<SVGIcon iconType={SvgIconTypes.IcTick} />}
-    >
-      <AuthProvider>
-        <NavigationContainer>
-          <RootNavigator />
-        </NavigationContainer>
-      </AuthProvider>
-    </ToastProvider>
+    <I18nextProvider i18n={i18n}>
+      <ToastProvider
+        style={{
+          // borderRadius: 20,
+          backgroundColor: COLORS.primary,
+          // borderWidth: 1,
+          // borderColor: Colors.tertiaryGrey,
+        }}
+        textStyle={{
+          // fontFamily: fonts.nunitoRegular,
+          fontSize: moderateScale(16),
+          color: COLORS.textPrimary,
+        }}
+        // icon={<SVGIcon iconType={SvgIconTypes.IcTick} />}
+      >
+        <AuthProvider>
+          <NavigationContainer>
+            <RootNavigator />
+          </NavigationContainer>
+        </AuthProvider>
+      </ToastProvider>
+    </I18nextProvider>
   );
 };
 

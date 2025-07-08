@@ -23,8 +23,7 @@ interface ThemedInputProps {
   secureTextEntry?: boolean;
   keyboardType?: KeyboardTypeOptions;
   maxLength?: number;
-  errors?: any;
-  errorField?: string;
+  error?: string;
 }
 
 const ThemedInput: React.FC<ThemedInputProps> = ({
@@ -38,30 +37,24 @@ const ThemedInput: React.FC<ThemedInputProps> = ({
   autoComplete = 'off',
   textContentType = 'none',
   maxLength,
-  errors,
-  errorField,
+  error,
 }) => {
   return (
     <View style={styles.container}>
       {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
       <TextInput
-        style={[
-          COMPONENT_STYLES.input,
-          errorField && errors?.[`${errorField}`] && styles.errorField,
-        ]}
+        style={[COMPONENT_STYLES.input, error && styles.errorField]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={COLORS.gray}
+        placeholderTextColor={COLORS.textSecondary}
         secureTextEntry={secureTextEntry}
         keyboardType={keyboardType}
         autoComplete={autoComplete}
         textContentType={textContentType}
         maxLength={maxLength}
       />
-      {errorField && errors?.[`${errorField}`] && (
-        <Text style={styles.errorText}>{errors[errorField]}</Text>
-      )}
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };
@@ -69,16 +62,16 @@ const ThemedInput: React.FC<ThemedInputProps> = ({
 const styles = StyleSheet.create({
   errorField: {
     borderWidth: 1,
-    borderColor: '#ef4444',
+    borderColor: COLORS.error,
   },
   errorText: {
-    color: '#ef4444',
+    color: COLORS.error,
     fontSize: moderateScale(14),
     marginTop: moderateScale(5),
     fontFamily: Fonts.Sen_Regular,
   },
   container: {
-    marginBottom: 0,
+    marginBottom: moderateScale(16),
   },
   label: {
     fontSize: moderateScale(12),

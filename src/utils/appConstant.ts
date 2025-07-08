@@ -1,8 +1,7 @@
-// src/theme/fonts.ts
-
 const AppConstant = {
   ACCESS_TOKEN: 'accessToken',
-  REFRESH_TOKEN: 'refreshToken'
+  REFRESH_TOKEN: 'refreshToken',
+  FIREBASE_UID: 'uid',
 };
 
 export default AppConstant;

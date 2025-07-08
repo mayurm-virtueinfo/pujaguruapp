@@ -3,22 +3,18 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {COLORS} from '../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserPoojaListNavigator from './UserPoojaListNavigator';
-import UserHomeScreen from '../../screens/Users/HomeScreen/UserHomeScreen';
-import BottomUserProfileScreen from '../../screens/Users/BottomProfileScreen/BottomUserProfileScreen';
 import {Image} from 'react-native';
 import {Images} from '../../theme/Images';
 import UserHomeNavigator from './UsetHomeStack';
 import UserPanditjiNavigator from './UserPanditjiNavigator';
 import {useTranslation} from 'react-i18next';
 import UserProfileNavigator from './userProfileNavigator';
-import AddressesScreen from '../../screens/Users/AddressesScreen/AddressesScreen';
 
 export type UserAppBottomTabParamList = {
   UserHomeNavigator: undefined;
   UserPoojaListNavigator: undefined;
   UserProfileNavigator: undefined;
   UserPanditjiNavigator: undefined;
-  AddressesScreen: undefined;
 };
 
 const Tab = createBottomTabNavigator<UserAppBottomTabParamList>();
@@ -48,17 +44,6 @@ const UserAppBottomTabNavigator: React.FC = () => {
           ),
         })}
       />
-      {/* <Tab.Screen
-        name="AddressesScreen"
-        component={AddressesScreen}
-        options={({route}) => ({
-          title: t('home'),
-          // headerTitle: getHeaderTitle(route), // dynamic title in screen header
-          tabBarIcon: ({color, size}) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
-        })}
-      /> */}
       <Tab.Screen
         name="UserPoojaListNavigator"
         component={UserPoojaListNavigator}

@@ -27,16 +27,27 @@ import PrimaryButtonLabeled from '../components/PrimaryButtonLabeled';
 import PrimaryButtonOutlined from '../components/PrimaryButtonOutlined';
 import {apiService, postSignIn} from '../api/apiService';
 import {useAuth} from '../provider/AuthProvider';
+import {MainAppStackParamList} from '../navigation/RootNavigator';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from '../utils/appConstant';
 
-type OTPVerificationScreenNavigationProp = StackNavigationProp<
+type AuthNavigationProp = StackNavigationProp<
   AuthStackParamList,
-  'OTPVerification'
+  'OTPVerification' | 'CompleteProfileScreen' | 'UserAppBottomTabNavigator'
 >;
+
+// type MainAppNavigationProp = StackNavigationProp<
+//   MainAppStackParamList,
+//   'UserAppBottomTabNavigator'
+// >;
 
 type OTPVerificationScreenRouteProp = RouteProp<
   AuthStackParamList,
   'OTPVerification'
 >;
+
+type OTPVerificationScreenNavigationProp = AuthNavigationProp;
+// | MainAppNavigationProp;
 
 interface Props {
   navigation: OTPVerificationScreenNavigationProp;
@@ -46,7 +57,7 @@ interface Props {
 const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   const {t} = useTranslation();
   const {showErrorToast, showSuccessToast} = useCommonToast();
-  const {setIsAuthenticated} = useAuth();
+  const {signIn} = useAuth();
   const inset = useSafeAreaInsets();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setLoading] = useState(false);
@@ -83,8 +94,16 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       const response = await postSignIn(params);
       if (response) {
         console.log('response :: ', response);
-        setIsAuthenticated(true);
-        // navigation.navigate('CompleteProfileScreen');
+        if (response?.is_register === false) {
+          navigation.navigate('CompleteProfileScreen');
+        } else {
+          signIn(response.access_token);
+          await AsyncStorage.setItem(
+            AppConstant.REFRESH_TOKEN,
+            response.refresh_token,
+          );
+          navigation.navigate('UserAppBottomTabNavigator');
+        }
       }
     } catch (error: any) {
       showErrorToast(error?.message);
@@ -99,6 +118,10 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       const userCredential = await otpConfirmation.confirm(code);
       if (userCredential?.user) {
         await handleSignIn(phoneNumber, userCredential.user.uid);
+        await AsyncStorage.setItem(
+          AppConstant.FIREBASE_UID,
+          userCredential.user.uid,
+        );
       }
     } catch (error: any) {
       showErrorToast(error?.message);

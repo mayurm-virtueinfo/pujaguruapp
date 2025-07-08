@@ -6,29 +6,27 @@ import {
   StyleSheet,
   StatusBar,
   Dimensions,
-  Platform,
   SafeAreaView,
-  KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {RouteProp} from '@react-navigation/native';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import {moderateScale, verticalScale} from 'react-native-size-matters';
+import {moderateScale} from 'react-native-size-matters';
 import {AuthStackParamList} from '../../../navigation/AuthNavigator';
 import {
   getCurrentLocation,
   requestLocationPermission,
   LocationData,
 } from '../../../utils/locationUtils';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import PrimaryButton from '../../../components/PrimaryButton';
 import ThemedInput from '../../../components/ThemedInput';
-import {MainAppStackParamList} from '../../../navigation/RootNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from '../../../utils/appConstant';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 interface FormData {
   phoneNumber: string;
@@ -37,55 +35,98 @@ interface FormData {
   address: string;
 }
 
+interface FormErrors {
+  phoneNumber?: string;
+  firstName?: string;
+  lastName?: string;
+  address?: string;
+}
+
 interface ScreenDimensions {
   width: number;
   height: number;
 }
 
 type CompleteProfileScreenNavigationProp = StackNavigationProp<
-  MainAppStackParamList,
-  'CompleteProfileScreen' | 'UserProfileScreen'
->;
-
-type CompleteProfileScreenRouteProp = RouteProp<
-  MainAppStackParamList,
-  'CompleteProfileScreen' | 'UserProfileScreen'
+  AuthStackParamList,
+  'UserProfileScreen'
 >;
 
 interface Props {
   navigation: CompleteProfileScreenNavigationProp;
-  route: CompleteProfileScreenRouteProp;
 }
 
 const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   const inset = useSafeAreaInsets();
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
 
+  const [uid, setUid] = useState<string | null>('');
   const [formData, setFormData] = useState<FormData>({
     phoneNumber: '',
     firstName: '',
     lastName: '',
-    address: '1234 Elm Street, Springfield',
+    address: '',
   });
-
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [screenData, setScreenData] = useState<ScreenDimensions>(
     Dimensions.get('window'),
   );
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   useEffect(() => {
+    fetchUID();
     const onChange = (result: {window: ScreenDimensions}) => {
       setScreenData(result.window);
     };
-
     const subscription = Dimensions.addEventListener('change', onChange);
     return () => subscription?.remove();
   }, []);
+
+  console.log('uid in complete profile screen :: ', uid);
+
+  const fetchUID = async () => {
+    try {
+      const uid = await AsyncStorage.getItem(AppConstant.FIREBASE_UID);
+      setUid(uid);
+    } catch (error) {
+      console.error('Error fetching UID:', error);
+    }
+  };
+
+  const validateForm = (): boolean => {
+    const errors: FormErrors = {};
+    const phoneRegex = /^\+?[\d\s-]{10,15}$/;
+    const nameRegex = /^[a-zA-Z\s]{2,30}$/;
+
+    if (!formData.phoneNumber || !phoneRegex.test(formData.phoneNumber)) {
+      errors.phoneNumber = t('invalid_phone_number');
+    }
+
+    if (!formData.firstName || !nameRegex.test(formData.firstName)) {
+      errors.firstName = t('invalid_first_name');
+    }
+
+    if (!formData.lastName || !nameRegex.test(formData.lastName)) {
+      errors.lastName = t('invalid_last_name');
+    }
+
+    if (!formData.address || formData.address.length < 2) {
+      errors.address = t('invalid_address');
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
+    }));
+    setFormErrors(prev => ({
+      ...prev,
+      [field]: undefined,
     }));
   };
 
@@ -97,45 +138,36 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
         console.log('Location permission denied');
         return;
       }
-
       const location: LocationData = await getCurrentLocation();
       handleInputChange('address', location.address || 'Location found');
-      console.log('GPS location fetched:', location);
     } catch (error) {
       console.error('Error fetching GPS location:', error);
-      // Handle error appropriately in production
     } finally {
       setIsLoadingLocation(false);
     }
   };
 
   const handleNext = () => {
-    console.log('Proceeding to next screen...', formData);
-    // Navigate to PanditRegistration or next screen in the flow
-    navigation.navigate('UserProfileScreen');
-  };
-
-  const handleSkip = () => {
-    console.log('Skip pressed');
-    // Navigate to next screen, skipping profile completion
-    navigation.navigate('UserProfileScreen');
-  };
-
-  const handleBack = () => {
-    console.log('Back pressed');
-    // Navigate back to previous screen
-    navigation.goBack();
+    if (validateForm()) {
+      setIsLoading(true);
+      navigation.navigate('UserProfileScreen', {
+        phoneNumber: formData.phoneNumber,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        address: formData.address,
+        uid: uid || '',
+      });
+      setIsLoading(false);
+    }
   };
 
   const isTablet = screenData.width >= 768;
-  const isLandscape = screenData.width > screenData.height;
 
   const getResponsiveStyle = () => ({
     maxWidth: isTablet ? moderateScale(600) : screenData.width,
     alignSelf: 'center' as const,
   });
 
-  // Custom label style to pass to ThemedInput
   const themedInputLabelStyle = {
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Medium,
@@ -144,10 +176,37 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   };
 
   const renderMainContent = () => (
-    <View style={[styles.mainContent]}>
+    <View style={[styles.container]}>
       <View style={styles.inputField}>
         <ThemedInput
-          label={t('phone_number')}
+          label={t('First name')}
+          placeholder={t('enter_first_name')}
+          value={formData.firstName}
+          onChangeText={text => handleInputChange('firstName', text)}
+          autoComplete="name"
+          textContentType="givenName"
+          maxLength={30}
+          labelStyle={themedInputLabelStyle}
+          error={formErrors.firstName}
+        />
+      </View>
+
+      <View style={styles.inputField}>
+        <ThemedInput
+          label={t('Last name')}
+          placeholder={t('enter_last_name')}
+          value={formData.lastName}
+          onChangeText={text => handleInputChange('lastName', text)}
+          autoComplete="name"
+          textContentType="familyName"
+          maxLength={30}
+          labelStyle={themedInputLabelStyle}
+          error={formErrors.lastName}
+        />
+      </View>
+      <View style={styles.inputField}>
+        <ThemedInput
+          label={t('Phone number')}
           placeholder={t('enter_phone_number')}
           value={formData.phoneNumber}
           onChangeText={text => handleInputChange('phoneNumber', text)}
@@ -156,38 +215,13 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
           textContentType="telephoneNumber"
           maxLength={15}
           labelStyle={themedInputLabelStyle}
+          error={formErrors.phoneNumber}
         />
       </View>
 
       <View style={styles.inputField}>
         <ThemedInput
-          label={t('first_name')}
-          placeholder={t('enter_first_name')}
-          value={formData.firstName}
-          onChangeText={text => handleInputChange('firstName', text)}
-          autoComplete="name"
-          textContentType="givenName"
-          maxLength={30}
-          labelStyle={themedInputLabelStyle}
-        />
-      </View>
-
-      <View style={styles.inputField}>
-        <ThemedInput
-          label={t('last_name')}
-          placeholder={t('enter_last_name')}
-          value={formData.lastName}
-          onChangeText={text => handleInputChange('lastName', text)}
-          autoComplete="name"
-          textContentType="familyName"
-          maxLength={30}
-          labelStyle={themedInputLabelStyle}
-        />
-      </View>
-
-      <View style={styles.inputField}>
-        <ThemedInput
-          label={t('address')}
+          label={t('Address')}
           placeholder={t('enter_address')}
           value={formData.address}
           onChangeText={text => handleInputChange('address', text)}
@@ -195,6 +229,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
           textContentType="fullStreetAddress"
           maxLength={100}
           labelStyle={themedInputLabelStyle}
+          error={formErrors.address}
         />
       </View>
 
@@ -215,6 +250,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
         onPress={handleNext}
         style={styles.nextButton}
         textStyle={styles.nextButtonText}
+        disabled={isLoading}
       />
     </View>
   );
@@ -226,6 +262,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
         backgroundColor: COLORS.primaryBackground,
         paddingTop: inset.top,
       }}>
+      <CustomeLoader loading={isLoading} />
       <StatusBar
         translucent
         backgroundColor={COLORS.primaryBackground}
@@ -260,10 +297,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    // backgroundColor: COLORS.primaryBackground, // No longer needed here
-  },
-  keyboardAvoidingView: {
-    flex: 1,
+    padding: moderateScale(24),
   },
   mainContent: {
     flex: 1,
@@ -340,9 +374,6 @@ const styles = StyleSheet.create({
     lineHeight: moderateScale(21),
     letterSpacing: -0.15,
     textTransform: 'uppercase',
-  },
-  landscapeContent: {
-    paddingBottom: moderateScale(40),
   },
 });
 

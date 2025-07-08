@@ -8,8 +8,8 @@ import AppConstant from '../utils/appConstant';
 
 const apiDev = axios.create({
   // baseURL: Config.BASE_URL,
-  // baseURL: 'https://31b1-103-125-235-23.ngrok-free.app',
-  baseURL: ApiEndpoints.BASE_URL,
+  baseURL: 'https://29ec27d2da26.ngrok-free.app',
+  // baseURL: ApiEndpoints.BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -24,7 +24,7 @@ apiDev.interceptors.request.use(
     // const userId = await AsyncStorage.getItem(USER_DATA_KEY.userId); // get the access token from AsyncStorage
 
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      // config.headers['Authorization'] = `Bearer ${token}`;
       // Only set multipart/form-data for specific requests (e.g., file uploads)
     }
     config.headers['X-Master-Key'] = ApiEndpoints.XMasterKey;

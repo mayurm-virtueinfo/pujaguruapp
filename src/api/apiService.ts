@@ -1,7 +1,7 @@
 // import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiDev from './apiDev';
-import ApiEndpoints, {POST_SIGNIN} from './apiEndpoints';
+import ApiEndpoints, {GET_CITY, POST_SIGNIN, POST_SIGNUP} from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
 // Types for dropdown data
@@ -209,6 +209,35 @@ export interface SignInResponse {
 export interface SignInRequest {
   mobile: string;
   firebase_uid: string;
+}
+
+export interface SignupRequest {
+  mobile: string;
+  firebase_uid: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: number;
+  address: string;
+}
+
+export interface CreateUserResponse {
+  mobile: string;
+  firebase_uid: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  role: number;
+  gender: number;
+  profile_img: string;
+  pandit_detail: string;
+}
+
+export interface SignUpResponse {
+  message: string;
+  access_token: string;
+  refresh_token: string;
+  user: CreateUserResponse;
 }
 
 export const apiService = {
@@ -533,6 +562,37 @@ export const postSignIn = (data: SignInRequest): Promise<SignInResponse> => {
       })
       .catch(error => {
         console.error('Error fetching sign in data:', error);
+        reject(error);
+      });
+  });
+};
+
+export const postSignUp = (data: SignupRequest): Promise<SignUpResponse> => {
+  console.log('params data ::', data);
+  let apiUrl = POST_SIGNUP;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .postForm(apiUrl, data)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching sign up data:', JSON.stringify(error));
+        reject(error);
+      });
+  });
+};
+
+export const getCity = () => {
+  let apiUrl = GET_CITY;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching city data:', error);
         reject(error);
       });
   });

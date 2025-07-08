@@ -38,3 +38,5 @@ class ApiEndpoints {
 export default ApiEndpoints;
 
 export const POST_SIGNIN = '/auth/signin/';
+export const POST_SIGNUP = '/auth/register/';
+export const GET_CITY = '/auth/areas/';

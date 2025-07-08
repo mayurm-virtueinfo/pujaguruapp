@@ -6,10 +6,12 @@ import PanditRegistrationScreen from '../screens/PanditRegistrationScreen';
 import SelectCityAreaScreen from '../screens/SelectCityAreaScreen';
 import DocumentsScreen from '../screens/DocumentsScreen';
 import PoojaAndAstrologyPerformedScreen from '../screens/PoojaAndAstrologyPerformedScreen';
-import LanguagesScreen from '../screens/LanguagesScreen'; // Import new screen
+import LanguagesScreen from '../screens/LanguagesScreen';
 import {COLORS} from '../theme/theme';
 import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import CompleteProfileScreen from '../screens/Users/CompleteProfileScreen/CompleteProfileScreen';
+import UserProfileScreen from '../screens/Users/ProfileScreen/UserProfileScreen';
+import UserAppBottomTabNavigator from './User/UserBottomTabNavigator';
 
 export type AuthStackParamList = {
   SignIn: undefined;
@@ -22,7 +24,15 @@ export type AuthStackParamList = {
   SelectCityArea: undefined;
   Documents: undefined;
   PoojaAndAstrologyPerformed: undefined;
-  Languages: undefined; // Added for new screen
+  Languages: undefined;
+  UserProfileScreen: {
+    phoneNumber: string;
+    firstName: string;
+    lastName: string;
+    address: string;
+    uid: string;
+  };
+  UserAppBottomTabNavigator: undefined;
 };
 
 const Stack = createStackNavigator<AuthStackParamList>();
@@ -37,6 +47,11 @@ const AuthNavigator = () => {
       }}>
       <Stack.Screen name="SignIn" component={SignInScreen} />
       <Stack.Screen name="OTPVerification" component={OTPVerificationScreen} />
+      <Stack.Screen
+        name="CompleteProfileScreen"
+        component={CompleteProfileScreen}
+      />
+      <Stack.Screen name="UserProfileScreen" component={UserProfileScreen} />
       <Stack.Screen
         name="PanditRegistration"
         component={PanditRegistrationScreen}
@@ -69,7 +84,14 @@ const AuthNavigator = () => {
         name="Languages"
         component={LanguagesScreen}
         options={{
-          headerShown: false, // Assuming no header based on screenshot
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="UserAppBottomTabNavigator"
+        component={UserAppBottomTabNavigator}
+        options={{
+          headerShown: false,
         }}
       />
     </Stack.Navigator>
