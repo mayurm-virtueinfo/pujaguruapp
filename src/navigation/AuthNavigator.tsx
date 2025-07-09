@@ -19,7 +19,9 @@ export type AuthStackParamList = {
     phoneNumber: string;
     confirmation: FirebaseAuthTypes.ConfirmationResult;
   };
-  CompleteProfileScreen: undefined;
+  CompleteProfileScreen: {
+    phoneNumber: string;
+  };
   PanditRegistration: undefined;
   SelectCityArea: undefined;
   Documents: undefined;

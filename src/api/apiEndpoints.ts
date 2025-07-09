@@ -40,3 +40,5 @@ export default ApiEndpoints;
 export const POST_SIGNIN = '/auth/signin/';
 export const POST_SIGNUP = '/auth/register/';
 export const GET_CITY = '/auth/areas/';
+export const POST_LOGOUT = '/auth/logout/';
+export const POST_REFRESH_TOKEN = '/auth/refresh-token/';

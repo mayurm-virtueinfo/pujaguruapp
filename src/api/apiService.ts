@@ -1,7 +1,13 @@
 // import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiDev from './apiDev';
-import ApiEndpoints, {GET_CITY, POST_SIGNIN, POST_SIGNUP} from './apiEndpoints';
+import ApiEndpoints, {
+  GET_CITY,
+  POST_LOGOUT,
+  POST_REFRESH_TOKEN,
+  POST_SIGNIN,
+  POST_SIGNUP,
+} from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
 // Types for dropdown data
@@ -238,6 +244,14 @@ export interface SignUpResponse {
   access_token: string;
   refresh_token: string;
   user: CreateUserResponse;
+}
+
+export interface LogoutRequest {
+  refresh_token: string;
+}
+
+export interface RefreshTokenRequest {
+  refresh_token: string;
 }
 
 export const apiService = {
@@ -539,16 +553,6 @@ export const apiService = {
       return {address: []};
     }
   },
-
-  // postSignIn: async (data: SignInRequest): Promise<SignInResponse> => {
-  //   try {
-  //     const response = await apiDev.post(POST_SIGNIN, data);
-  //     return response.data as SignInResponse;
-  //   } catch (error) {
-  //     console.error('Error fetching sign in data:', JSON.stringify(error));
-  //     return error as SignInResponse;
-  //   }
-  // },
 };
 
 export const postSignIn = (data: SignInRequest): Promise<SignInResponse> => {
@@ -593,6 +597,36 @@ export const getCity = () => {
       })
       .catch(error => {
         console.error('Error fetching city data:', error);
+        reject(error);
+      });
+  });
+};
+
+export const postLogout = (data: LogoutRequest) => {
+  let apiUrl = POST_LOGOUT;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error logout', error);
+        reject(error);
+      });
+  });
+};
+
+export const postRefreshToken = (data: RefreshTokenRequest) => {
+  let apiUrl = POST_REFRESH_TOKEN;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error refreshing token', error);
         reject(error);
       });
   });

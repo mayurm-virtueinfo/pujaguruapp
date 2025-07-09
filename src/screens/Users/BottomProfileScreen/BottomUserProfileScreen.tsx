@@ -20,6 +20,9 @@ import {useTranslation} from 'react-i18next';
 import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
 import {useAuth} from '../../../provider/AuthProvider';
 import LanguageSwitcher from '../../../components/LanguageSwitcher';
+import {postLogout} from '../../../api/apiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from '../../../utils/appConstant';
 
 interface ProfileFieldProps {
   label: string;
@@ -39,7 +42,24 @@ const BottomUserProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ProfileNavigationProp>();
   const {t, i18n} = useTranslation();
+
   const {signOutApp} = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      const refreshToken =
+        (await AsyncStorage.getItem(AppConstant.REFRESH_TOKEN)) || '';
+      const params = {
+        refresh_token: refreshToken,
+      };
+      const response: any = await postLogout(params);
+      if (response.data.success) {
+        signOutApp();
+      }
+    } catch (error: any) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const handleWalletNavigation = () => {
     navigation.navigate('WalletScreen');
@@ -50,9 +70,7 @@ const BottomUserProfileScreen: React.FC = () => {
   const handleEditNavigation = () => {
     navigation.navigate('AddAddressScreen');
   };
-  const handleLogout = () => {
-    signOutApp();
-  };
+
   const userData = {
     name: 'John Smith',
     email: 'johnsmith@gmail.com',

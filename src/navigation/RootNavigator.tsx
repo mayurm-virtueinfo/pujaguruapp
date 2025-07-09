@@ -55,19 +55,14 @@ const RootNavigator = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
-    console.log('RootNavigator.tsx : ', isAuthenticated);
+    console.log('RootNavigator.tsx : isAuthenticated =', isAuthenticated);
 
-    if (isAuthenticated) {
+    navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{name: 'Main'}],
-      });
-    } else {
-      CommonActions.reset({
-        index: 0,
-        routes: [{name: 'Auth'}],
-      });
-    }
+        routes: [{name: isAuthenticated ? 'Main' : 'Auth'}],
+      }),
+    );
   }, [isAuthenticated, navigation]);
 
   return (

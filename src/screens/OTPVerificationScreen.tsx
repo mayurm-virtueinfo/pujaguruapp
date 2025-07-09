@@ -95,7 +95,9 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       if (response) {
         console.log('response :: ', response);
         if (response?.is_register === false) {
-          navigation.navigate('CompleteProfileScreen');
+          navigation.navigate('CompleteProfileScreen', {
+            phoneNumber: phoneNumber,
+          });
         } else {
           signIn(response.access_token);
           await AsyncStorage.setItem(

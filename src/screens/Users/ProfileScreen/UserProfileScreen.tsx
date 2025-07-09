@@ -144,7 +144,7 @@ const UserProfileScreen: React.FC = () => {
       params.append('address', address);
       params.append('role', 1);
       params.append('email', email);
-      params.append('city', String(location));
+      params.append('city', location);
 
       if (profileImage) {
         params.append('profile_img', {

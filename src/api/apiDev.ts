@@ -8,7 +8,7 @@ import AppConstant from '../utils/appConstant';
 
 const apiDev = axios.create({
   // baseURL: Config.BASE_URL,
-  baseURL: 'https://29ec27d2da26.ngrok-free.app',
+  baseURL: 'https://b0a97cd05d66.ngrok-free.app',
   // baseURL: ApiEndpoints.BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -19,6 +19,7 @@ const apiDev = axios.create({
 apiDev.interceptors.request.use(
   async config => {
     const token = await AsyncStorage.getItem(AppConstant.ACCESS_TOKEN);
+    console.log('Access token :: ', token);
     // This is testing access token to handle 403 ( Refresh token expired )
     // token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlY2QxOTIyMC04NmZkLTExZWYtOTQwOS03YmY0Y2VlYWU3MWUiLCJlbnYiOiJERVYiLCJjcmVhdGVkRGF0ZSI6MTcyODU2MTA2MzA1MiwiaWF0IjoxNzI4NTYxMDYzLCJleHAiOjE3Mjg1NzE4NjN9.tHh-DOvvWInIN0FRH56ydTgAWTQsx1qkgbwKIpvRuQY";
     // const userId = await AsyncStorage.getItem(USER_DATA_KEY.userId); // get the access token from AsyncStorage
@@ -59,7 +60,6 @@ apiDev.interceptors.response.use(
   async error => {
     const originalRequest = error.config;
 
-    // Check if the error is due to an expired token
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 

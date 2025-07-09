@@ -141,5 +141,7 @@
   "my_addresses": "My Addresses",
   "saved_addresses": "Saved Addresses",
   "edit": "Edit",
-  "delete": "Delete"
+  "delete": "Delete",
+  "enter_the_top_up_amount": "Enter The Top Up Amount",
+  "enter_amount": " Enter amount"
 }

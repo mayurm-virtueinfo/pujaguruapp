@@ -17,6 +17,7 @@ import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import PrimaryButton from '../../../components/PrimaryButton';
 import {useNavigation} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import ThemedInput from '../../../components/ThemedInput';
 
 const paymentMethods = [
   {
@@ -41,6 +42,14 @@ const WalletTopUpScreen: React.FC = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('card');
+  const [amount, setAmount] = useState('');
+
+  const themedInputLabelStyle = {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.inputLabelText,
+    marginBottom: 4,
+  };
 
   return (
     <View style={[styles.container, {paddingTop: insets.top}]}>
@@ -66,6 +75,19 @@ const WalletTopUpScreen: React.FC = () => {
                 ? insets.bottom + verticalScale(32)
                 : verticalScale(32),
           }}>
+          <View style={styles.inputField}>
+            <ThemedInput
+              label={t('enter_the_top_up_amount')}
+              placeholder={t('enter_amount')}
+              value={amount}
+              onChangeText={text => setAmount(text)}
+              keyboardType="numeric"
+              autoComplete="off"
+              textContentType="telephoneNumber"
+              maxLength={15}
+              labelStyle={themedInputLabelStyle}
+            />
+          </View>
           <View style={[styles.paymentMethodsCard, THEMESHADOW.shadow]}>
             <View style={styles.paymentMethodsList}>
               {paymentMethods.map((method, idx) => {
@@ -164,6 +186,9 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
+  },
+  inputField: {
+    marginBottom: moderateScale(5),
   },
   buttonText: {
     fontSize: moderateScale(15),

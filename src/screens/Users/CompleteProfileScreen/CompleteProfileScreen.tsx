@@ -27,6 +27,7 @@ import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomeLoader from '../../../components/CustomeLoader';
+import {useRoute} from '@react-navigation/native';
 
 interface FormData {
   phoneNumber: string;
@@ -60,9 +61,12 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
 
+  const route = useRoute();
+  const {phoneNumber} = route.params as {phoneNumber: string};
+
   const [uid, setUid] = useState<string | null>('');
   const [formData, setFormData] = useState<FormData>({
-    phoneNumber: '',
+    phoneNumber: phoneNumber || '',
     firstName: '',
     lastName: '',
     address: '',
@@ -96,10 +100,9 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
 
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
-    const phoneRegex = /^\+?[\d\s-]{10,15}$/;
     const nameRegex = /^[a-zA-Z\s]{2,30}$/;
 
-    if (!formData.phoneNumber || !phoneRegex.test(formData.phoneNumber)) {
+    if (!formData.phoneNumber) {
       errors.phoneNumber = t('invalid_phone_number');
     }
 
@@ -160,13 +163,6 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
       setIsLoading(false);
     }
   };
-
-  const isTablet = screenData.width >= 768;
-
-  const getResponsiveStyle = () => ({
-    maxWidth: isTablet ? moderateScale(600) : screenData.width,
-    alignSelf: 'center' as const,
-  });
 
   const themedInputLabelStyle = {
     fontSize: moderateScale(14),
