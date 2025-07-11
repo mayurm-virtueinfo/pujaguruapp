@@ -19,6 +19,8 @@ interface AddAddressScreenProps {
   navigation?: any;
 }
 
+//comment for test
+
 //component to add a new address
 const AddAddressScreen: React.FC<AddAddressScreenProps> = ({navigation}) => {
   const {t} = useTranslation();
