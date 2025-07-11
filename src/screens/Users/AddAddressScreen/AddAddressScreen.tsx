@@ -19,6 +19,7 @@ interface AddAddressScreenProps {
   navigation?: any;
 }
 
+//component to add a new address
 const AddAddressScreen: React.FC<AddAddressScreenProps> = ({navigation}) => {
   const {t} = useTranslation();
   const insets = useSafeAreaInsets();
