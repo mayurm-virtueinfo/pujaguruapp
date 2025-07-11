@@ -15,7 +15,7 @@ import AppConstant from '../utils/appConstant';
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  signIn: (token: string) => Promise<void>;
+  signIn: (accessToken: string, refreshToken: string) => Promise<void>;
   signOutApp: () => Promise<void>;
 }
 
@@ -53,9 +53,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     return () => unsubscribe();
   }, []);
 
-  const signIn = async (token: string) => {
+  const signIn = async (accessToken: string, refreshToken: string) => {
     try {
-      await AsyncStorage.setItem(AppConstant.ACCESS_TOKEN, token);
+      await AsyncStorage.setItem(AppConstant.ACCESS_TOKEN, accessToken);
+      await AsyncStorage.setItem(AppConstant.REFRESH_TOKEN, refreshToken);
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Sign in error:', error);

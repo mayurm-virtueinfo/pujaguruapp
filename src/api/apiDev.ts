@@ -1,14 +1,14 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiEndpoints from './apiEndpoints';
-import {apiService} from './apiService';
+import {apiService, postRefreshToken} from './apiService';
 import AppConstant from '../utils/appConstant';
 
 // Create an axios instance
 
 const apiDev = axios.create({
   // baseURL: Config.BASE_URL,
-  baseURL: 'https://b0a97cd05d66.ngrok-free.app',
+  baseURL: 'https://81aceddf025e.ngrok-free.app',
   // baseURL: ApiEndpoints.BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -20,13 +20,9 @@ apiDev.interceptors.request.use(
   async config => {
     const token = await AsyncStorage.getItem(AppConstant.ACCESS_TOKEN);
     console.log('Access token :: ', token);
-    // This is testing access token to handle 403 ( Refresh token expired )
-    // token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJlY2QxOTIyMC04NmZkLTExZWYtOTQwOS03YmY0Y2VlYWU3MWUiLCJlbnYiOiJERVYiLCJjcmVhdGVkRGF0ZSI6MTcyODU2MTA2MzA1MiwiaWF0IjoxNzI4NTYxMDYzLCJleHAiOjE3Mjg1NzE4NjN9.tHh-DOvvWInIN0FRH56ydTgAWTQsx1qkgbwKIpvRuQY";
-    // const userId = await AsyncStorage.getItem(USER_DATA_KEY.userId); // get the access token from AsyncStorage
 
     if (token) {
-      // config.headers['Authorization'] = `Bearer ${token}`;
-      // Only set multipart/form-data for specific requests (e.g., file uploads)
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     config.headers['X-Master-Key'] = ApiEndpoints.XMasterKey;
     console.log('------------------------------------------------');
@@ -42,7 +38,6 @@ apiDev.interceptors.request.use(
     return Promise.reject(error);
   },
 );
-// Response Intercepter
 
 let isRefreshing = false;
 let refreshSubscribers: any = [];
@@ -56,7 +51,7 @@ const onRefreshed = (newAccessToken: string) => {
 };
 
 apiDev.interceptors.response.use(
-  response => response, // pass through the response if it's successful
+  response => response,
   async error => {
     const originalRequest = error.config;
 
@@ -65,29 +60,31 @@ apiDev.interceptors.response.use(
 
       if (!isRefreshing) {
         isRefreshing = true;
-
+        const refresh_token = await AsyncStorage.getItem(
+          AppConstant.REFRESH_TOKEN,
+        );
+        const params = {
+          refresh_token: refresh_token || '',
+        };
         isRefreshing = true;
         console.log('---Accesstoken---refreshing---apiDev');
         try {
           console.log('---refreshing----apiDev-1');
-          const response: any = await apiService.postUserRefreshTokenApi();
+          const response: any = await postRefreshToken(params);
           console.log('---refreshing----apiDev-2 : ', response);
-          const data = response?.data?.data;
-          const tokens = data?.tokens;
+          const tokens = response?.data?.access_token;
           console.log('---refreshing----apiDev-3 : ');
-          const newAccessToken = tokens.accessToken;
-          const newRefreshToken = tokens.refreshToken;
+          // const newAccessToken = tokens.accessToken;
+          // const newRefreshToken = tokens.refreshToken;
+          await AsyncStorage.setItem(AppConstant.ACCESS_TOKEN, tokens);
+          // await AsyncStorage.setItem(
+          //   AppConstant.REFRESH_TOKEN,
+          //   newRefreshToken,
+          // );
           console.log('---refreshing----apiDev-4');
-          // Store the new access token
-          await AsyncStorage.setItem(AppConstant.ACCESS_TOKEN, newAccessToken);
-          await AsyncStorage.setItem(
-            AppConstant.REFRESH_TOKEN,
-            newRefreshToken,
-          );
-          console.log('---refreshing----apiDev-5');
           isRefreshing = false;
-          onRefreshed(newAccessToken);
-          console.log('---refreshing----apiDev-6');
+          onRefreshed(tokens);
+          console.log('---refreshing----apiDev-5');
           // Retry the original request with the new token
           console.log('---Accesstoken---refreshing---apiDev-done-success');
           return apiDev(originalRequest);
