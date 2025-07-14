@@ -4,6 +4,7 @@ import apiDev from './apiDev';
 import ApiEndpoints, {
   GET_CITY,
   GET_PUJALIST,
+  GET_RECOMMENDED_PANDIT,
   POST_LOGOUT,
   POST_REFRESH_TOKEN,
   POST_SIGNIN,
@@ -96,7 +97,12 @@ export interface PanditItem {
   image: string;
   rating: number;
 }
-
+export interface RecommendedPandit {
+  id: number;
+  full_name: string;
+  profile_img: string;
+  city: number;
+}
 export interface PujaItem {
   id: number;
   name: string;
@@ -205,17 +211,24 @@ export interface User {
   pandit_details: string;
 }
 
+export interface location {
+  latitude: number;
+  longitude: number;
+}
+
 export interface SignInResponse {
   message: string;
   access_token: string;
   refresh_token: string;
   is_register: boolean;
   user: User;
+  location: location;
 }
 
 export interface SignInRequest {
   mobile: string;
   firebase_uid: string;
+  role: number;
 }
 
 export interface SignupRequest {
@@ -240,11 +253,17 @@ export interface CreateUserResponse {
   pandit_detail: string;
 }
 
+export interface CreateUserLocation {
+  latitude: number;
+  longitude: number;
+}
+
 export interface SignUpResponse {
   message: string;
   access_token: string;
   refresh_token: string;
   user: CreateUserResponse;
+  location: CreateUserLocation;
 }
 
 export interface LogoutRequest {
@@ -457,16 +476,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return { pandits: [], puja: [] };
+      return {pandits: [], puja: []};
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || { recommendedPuja: [], pujaList: [] };
+      return response.data?.record || {recommendedPuja: [], pujaList: []};
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return { recommendedPuja: [], pujaList: [] };
+      return {recommendedPuja: [], pujaList: []};
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -517,10 +536,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -548,10 +567,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
 };
@@ -643,6 +662,27 @@ export const getPujaList = () => {
       })
       .catch(error => {
         console.error('Error fetching PujaList data:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getRecommendedPandit = (
+  latitude: string,
+  longitude: string,
+): Promise<any> => {
+  const apiUrl = GET_RECOMMENDED_PANDIT.replace('{latitude}', latitude).replace(
+    '{longitude}',
+    longitude,
+  );
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching recommended pandit:', error);
         reject(error);
       });
   });

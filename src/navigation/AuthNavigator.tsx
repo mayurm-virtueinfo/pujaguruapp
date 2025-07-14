@@ -33,6 +33,8 @@ export type AuthStackParamList = {
     lastName: string;
     address: string;
     uid: string;
+    latitude?: number;
+    longitude?: number;
   };
   UserAppBottomTabNavigator: undefined;
 };

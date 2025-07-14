@@ -90,6 +90,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       const params = {
         mobile: phoneNumber,
         firebase_uid: uid,
+        role: 1,
       };
       const response = await postSignIn(params);
       if (response) {
@@ -100,6 +101,14 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
           });
         } else {
           signIn(response.access_token, response.refresh_token);
+          await AsyncStorage.setItem(
+            AppConstant.USER,
+            JSON.stringify(response.user),
+          );
+          await AsyncStorage.setItem(
+            AppConstant.LOCATION,
+            JSON.stringify(response.location),
+          );
           navigation.navigate('UserAppBottomTabNavigator');
         }
       }

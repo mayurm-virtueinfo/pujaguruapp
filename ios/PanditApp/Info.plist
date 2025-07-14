@@ -20,6 +20,8 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We need your location to provide personalized services.</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
