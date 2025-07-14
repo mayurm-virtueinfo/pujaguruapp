@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiDev from './apiDev';
 import ApiEndpoints, {
   GET_CITY,
+  GET_PUJALIST,
   POST_LOGOUT,
   POST_REFRESH_TOKEN,
   POST_SIGNIN,
@@ -456,16 +457,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return {pandits: [], puja: []};
+      return { pandits: [], puja: [] };
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || {recommendedPuja: [], pujaList: []};
+      return response.data?.record || { recommendedPuja: [], pujaList: [] };
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return {recommendedPuja: [], pujaList: []};
+      return { recommendedPuja: [], pujaList: [] };
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -516,10 +517,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -547,10 +548,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
 };
@@ -627,6 +628,21 @@ export const postRefreshToken = (data: RefreshTokenRequest) => {
       })
       .catch(error => {
         console.error('Error refreshing token', error);
+        reject(error);
+      });
+  });
+};
+
+export const getPujaList = () => {
+  let apiUrl = GET_PUJALIST;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching PujaList data:', error);
         reject(error);
       });
   });

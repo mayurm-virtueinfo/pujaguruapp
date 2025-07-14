@@ -1,20 +1,21 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiEndpoints from './apiEndpoints';
-import {apiService, postRefreshToken} from './apiService';
 import AppConstant from '../utils/appConstant';
+import { postRefreshToken } from './apiService';
 
 // Create an axios instance
 
 const apiDev = axios.create({
   // baseURL: Config.BASE_URL,
-  baseURL: 'https://81aceddf025e.ngrok-free.app',
+  baseURL: 'https://2d5129cf14ce.ngrok-free.app',
   // baseURL: ApiEndpoints.BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
 });
+
 // Request interceptors
 apiDev.interceptors.request.use(
   async config => {
@@ -50,84 +51,79 @@ const onRefreshed = (newAccessToken: string) => {
   refreshSubscribers.map((cb: any) => cb(newAccessToken));
 };
 
+// Custom refresh token logic (since postRefreshToken has issues)
+const refreshAccessToken = async (refreshToken: string) => {
+  try {
+    // Use axios directly to avoid circular dependency and issues with postRefreshToken
+    const response = await axios.post(
+      'https://2d5129cf14ce.ngrok-free.app/auth/refresh-token/',
+      { refresh_token: refreshToken },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error refreshing token (custom logic)', error);
+    throw error;
+  }
+};
+
 apiDev.interceptors.response.use(
   response => response,
   async error => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Fix: Use || instead of && for status check, and check for _retry
+    if (
+      (error.response?.status === 401 || error.response?.status === 403) &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
 
       if (!isRefreshing) {
         isRefreshing = true;
-        const refresh_token = await AsyncStorage.getItem(
-          AppConstant.REFRESH_TOKEN,
-        );
-        const params = {
-          refresh_token: refresh_token || '',
-        };
-        isRefreshing = true;
-        console.log('---Accesstoken---refreshing---apiDev');
         try {
-          console.log('---refreshing----apiDev-1');
-          const response: any = await postRefreshToken(params);
-          console.log('---refreshing----apiDev-2 : ', response);
-          const tokens = response?.data?.access_token;
-          console.log('---refreshing----apiDev-3 : ');
-          // const newAccessToken = tokens.accessToken;
-          // const newRefreshToken = tokens.refreshToken;
-          await AsyncStorage.setItem(AppConstant.ACCESS_TOKEN, tokens);
-          // await AsyncStorage.setItem(
-          //   AppConstant.REFRESH_TOKEN,
-          //   newRefreshToken,
-          // );
-          console.log('---refreshing----apiDev-4');
+          const refresh_token = await AsyncStorage.getItem(AppConstant.REFRESH_TOKEN);
+          if (!refresh_token) {
+            isRefreshing = false;
+            return Promise.reject(error);
+          }
+          console.log('---Accesstoken---refreshing---apiDev (custom logic)');
+          const data = await refreshAccessToken(refresh_token);
+          const newAccessToken = data?.access_token;
+          // Optionally, handle new refresh token if returned
+          // const newRefreshToken = data?.refresh_token;
+
+          if (newAccessToken) {
+            await AsyncStorage.setItem(AppConstant.ACCESS_TOKEN, newAccessToken);
+            // Optionally, update refresh token
+            // if (newRefreshToken) {
+            //   await AsyncStorage.setItem(AppConstant.REFRESH_TOKEN, newRefreshToken);
+            // }
+            isRefreshing = false;
+            onRefreshed(newAccessToken);
+            // Retry the original request with the new token
+            originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+            return apiDev(originalRequest);
+          } else {
+            isRefreshing = false;
+            return Promise.reject(error);
+          }
+        } catch (refreshError) {
           isRefreshing = false;
-          onRefreshed(tokens);
-          console.log('---refreshing----apiDev-5');
-          // Retry the original request with the new token
-          console.log('---Accesstoken---refreshing---apiDev-done-success');
-          return apiDev(originalRequest);
-        } catch (error: any) {
-          // Need to apply this code if neccesary
-          // setTimeout(() => {
-          //   signOutAp();
-          // }, 500);
-          isRefreshing = false;
-          // if (error.status == 403) {
-          //   console.log("Refresh token has expired : Please redirect to login");
-
-          //   try {
-          //     clearAsyncStorageExceptKey("isOnboarding");
-          //   } catch (error: any) {
-          //     console.log("Logout Error AsyncStorage : ", error.toString());
-          //   }
-
-          //   try {
-          //     await GoogleSignin.revokeAccess();
-          //     await GoogleSignin.signOut();
-          //   } catch (error: any) {
-          //     console.log("Logout Error Google : ", error.toString());
-          //   }
-
-          //   navigateToLoginScreen();
-          // }
-          console.log(
-            '---Accesstoken---refreshing---apiDev--failure : ',
-            error,
-          );
-          // Handle refresh token failure (e.g., log out the user)
-          return Promise.reject(error);
+          console.log('---Accesstoken---refreshing---apiDev--failure (custom logic): ', refreshError);
+          return Promise.reject(refreshError);
         }
       }
 
+      // If already refreshing, queue the request
       return new Promise(resolve => {
         subscribeTokenRefresh(async (newAccessToken: string) => {
-          // const userId = await AsyncStorage.getItem(USER_DATA_KEY.userId);
-          // originalRequest.headers['Content-Type'] = 'multipart/form-data';
-          // originalRequest.headers['Accept'] = 'application/json';
-          originalRequest.headers['x-access-token'] = `${newAccessToken}`;
-          // originalRequest.headers['x-user-id'] = `${userId}`;
+          originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
           resolve(apiDev(originalRequest));
         });
       });

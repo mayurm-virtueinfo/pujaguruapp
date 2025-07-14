@@ -4,24 +4,19 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  ActivityIndicator,
-  KeyboardAvoidingView,
 } from 'react-native';
 import {COLORS} from '../../../theme/theme';
 import PujaCard from '../../../components/PujaCard';
 import PujaListItem from '../../../components/PujaListItem';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
-  apiService,
+  getPujaList,
   PujaListItemType,
   RecommendedPuja,
 } from '../../../api/apiService';
 import Fonts from '../../../theme/fonts';
 import {useNavigation} from '@react-navigation/native';
-import Calendar from '../../../components/Calendar';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
@@ -30,41 +25,49 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
 
+type PujaItem = {
+  id: any;
+  title: any;
+  image_url: any;
+  base_price: number;
+  description: any;
+};
+
 const PujaListScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'UserPoojaDetails'
   >;
   const inset = useSafeAreaInsets();
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
 
-  const [recommendedPuja, setRecommendedPuja] = useState<RecommendedPuja[]>([]);
-  const [pujaList, setPujaList] = useState<PujaListItemType[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  // Only use pujaList, since API only returns puja list data
+  const [pujaList, setPujaList] = useState<PujaItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const navigation = useNavigation<ScreenNavigationProp>();
 
-  const today = new Date();
-  const [selectedDate, setSelectedDate] = useState<number>(today.getDate());
-  const [currentMonth, setCurrentMonth] = useState<string>(
-    `${today.toLocaleString('default', {
-      month: 'long',
-    })} ${today.getFullYear()}`,
-  );
-
   useEffect(() => {
-    fetchPujaData();
+    fetchPujaList();
   }, []);
 
-  const fetchPujaData = async () => {
+  const fetchPujaList = async () => {
     setLoading(true);
     try {
-      const requests = await apiService.getPujaListData();
-      console.log('Fetched Puja List Data :: ', requests);
-      setRecommendedPuja(requests.recommendedPuja || []);
-      setPujaList(requests.pujaList || []);
-    } catch {
-      setRecommendedPuja([]);
+      const data: any = await getPujaList();
+      if (Array.isArray(data)) {
+        const pujaItems = data.map(item => ({
+          id: item.id,
+          title: item.title,
+          image_url: item.image_url,
+          base_price: parseFloat(item.base_price),
+          description: item.description,
+        }));
+        setPujaList(pujaItems);
+      } else {
+        setPujaList([]);
+      }
+    } catch (error) {
       setPujaList([]);
     } finally {
       setLoading(false);
@@ -72,7 +75,7 @@ const PujaListScreen: React.FC = () => {
   };
 
   const handleNotificationPress = () => {
-    navigation.navigate('NotificationScreen');
+    navigation.navigate('NotificationScreen' as any);
   };
 
   return (
@@ -93,6 +96,7 @@ const PujaListScreen: React.FC = () => {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
           showsVerticalScrollIndicator={false}>
+          {/* Optionally, you can show a recommended section by picking a few from pujaList */}
           <View style={styles.recommendedSection}>
             <View style={{paddingHorizontal: 24, paddingTop: 24, gap: 8}}>
               <Text style={styles.sectionTitle}>{t('recomended_puja')}</Text>
@@ -105,18 +109,18 @@ const PujaListScreen: React.FC = () => {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalScrollContent}
               style={styles.horizontalScroll}>
-              {recommendedPuja.map((puja, idx) => (
+              {pujaList.slice(0, 3).map((puja, idx) => (
                 <React.Fragment key={puja.id}>
                   <PujaCard
-                    image={puja.image}
-                    title={puja.name}
+                    image={puja.image_url}
+                    title={puja.title}
                     onPress={() => {
                       navigation.navigate('UserPoojaDetails', {
                         data: puja,
                       });
                     }}
                   />
-                  {idx !== recommendedPuja.length - 1 && (
+                  {idx !== Math.min(2, pujaList.length - 1) && (
                     <View style={styles.horizontalCardSpacer} />
                   )}
                 </React.Fragment>
@@ -130,10 +134,10 @@ const PujaListScreen: React.FC = () => {
               {pujaList.map((puja, idx) => (
                 <PujaListItem
                   key={puja.id}
-                  image={puja.image}
-                  title={puja.name}
-                  description={puja.pujaPurpose}
-                  price={`₹ ${puja.price.toLocaleString()}`}
+                  image={puja.image_url}
+                  title={puja.title}
+                  description={puja.description}
+                  price={`₹ ${puja.base_price}`}
                   onPress={() => {
                     navigation.navigate('UserPoojaDetails', {
                       data: puja,
