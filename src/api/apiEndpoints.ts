@@ -37,8 +37,10 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const POST_SIGNIN = '/auth/signin/';
-export const POST_SIGNUP = '/auth/register/';
-export const GET_CITY = '/auth/areas/';
-export const POST_LOGOUT = '/auth/logout/';
-export const POST_REFRESH_TOKEN = '/auth/refresh-token/';
+export const POST_SIGNIN = '/app/auth/signin/';
+export const POST_SIGNUP = '/app/auth/register/';
+export const GET_CITY = '/app/areas/';
+export const POST_LOGOUT = '/app/auth/logout/';
+export const POST_REFRESH_TOKEN = '/app/auth/refresh-token/';
+export const GET_RECOMMENDED_PANDIT =
+  '/app/recommended-panditji?latitude={latitude}&longitude={longitude}';

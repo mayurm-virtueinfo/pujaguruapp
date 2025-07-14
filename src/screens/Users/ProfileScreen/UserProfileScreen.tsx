@@ -59,7 +59,8 @@ const UserProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<CompleteProfileScreenRouteProp>();
   const route = useRoute<CompleteProfileScreenRouteProps>();
-  const {phoneNumber, firstName, lastName, address, uid} = route.params;
+  const {phoneNumber, firstName, lastName, address, uid, latitude, longitude} =
+    route.params;
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState(phoneNumber);
@@ -73,7 +74,7 @@ const UserProfileScreen: React.FC = () => {
     type: string;
   } | null>(null);
 
-  console.log(firstName, lastName, address, uid);
+  console.log(firstName, lastName, address, uid, latitude, longitude);
 
   useEffect(() => {
     const getCityData = async () => {
@@ -145,6 +146,8 @@ const UserProfileScreen: React.FC = () => {
       params.append('role', 1);
       params.append('email', email);
       params.append('city', location);
+      params.append('latitude', latitude?.toString() || '0');
+      params.append('longitude', longitude?.toString() || '0');
 
       if (profileImage) {
         params.append('profile_img', {
@@ -163,6 +166,14 @@ const UserProfileScreen: React.FC = () => {
         await AsyncStorage.setItem(
           AppConstant.REFRESH_TOKEN,
           response.refresh_token,
+        );
+        await AsyncStorage.setItem(
+          AppConstant.USER,
+          JSON.stringify(response.user),
+        );
+        await AsyncStorage.setItem(
+          AppConstant.LOCATION,
+          JSON.stringify(response.location),
         );
         navigation.navigate('UserAppBottomTabNavigator');
       }

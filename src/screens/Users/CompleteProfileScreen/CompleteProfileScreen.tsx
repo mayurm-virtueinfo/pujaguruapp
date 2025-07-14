@@ -28,6 +28,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {useRoute} from '@react-navigation/native';
+import Geolocation from '@react-native-community/geolocation';
+import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
 
 interface FormData {
   phoneNumber: string;
@@ -73,21 +75,27 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   });
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [screenData, setScreenData] = useState<ScreenDimensions>(
     Dimensions.get('window'),
   );
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
+
+  console.log('uid :: ', uid);
+
+  console.log('location :: ', location);
 
   useEffect(() => {
     fetchUID();
+    handleFetchGPS();
     const onChange = (result: {window: ScreenDimensions}) => {
       setScreenData(result.window);
     };
     const subscription = Dimensions.addEventListener('change', onChange);
     return () => subscription?.remove();
   }, []);
-
-  console.log('uid in complete profile screen :: ', uid);
 
   const fetchUID = async () => {
     try {
@@ -134,24 +142,29 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   };
 
   const handleFetchGPS = async () => {
-    setIsLoadingLocation(true);
-    try {
-      const hasPermission = await requestLocationPermission();
-      if (!hasPermission) {
-        console.log('Location permission denied');
-        return;
-      }
-      const location: LocationData = await getCurrentLocation();
-      handleInputChange('address', location.address || 'Location found');
-    } catch (error) {
-      console.error('Error fetching GPS location:', error);
-    } finally {
-      setIsLoadingLocation(false);
+    setIsLoading(true);
+    const hasPermission = await requestLocationPermission();
+    if (hasPermission) {
+      Geolocation.getCurrentPosition(
+        position => {
+          const {latitude, longitude} = position.coords;
+          setLocation({latitude, longitude});
+          setIsLoading(false);
+        },
+        error => {
+          console.warn('Error getting location:', error.message);
+          setIsLoading(false);
+        },
+        {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+      );
+    } else {
+      console.warn('Location permission denied');
+      setIsLoading(false);
     }
   };
 
   const handleNext = () => {
-    if (validateForm()) {
+    if (validateForm() && uid && location) {
       setIsLoading(true);
       navigation.navigate('UserProfileScreen', {
         phoneNumber: formData.phoneNumber,
@@ -159,8 +172,9 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
         lastName: formData.lastName,
         address: formData.address,
         uid: uid || '',
+        latitude: location?.latitude || 0,
+        longitude: location?.longitude || 0,
       });
-      setIsLoading(false);
     }
   };
 
@@ -229,17 +243,19 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
         />
       </View>
 
-      <TouchableOpacity
-        style={[styles.gpsButton, isLoadingLocation && styles.gpsButtonLoading]}
+      {/* <TouchableOpacity
+        style={[styles.gpsButton]}
         onPress={handleFetchGPS}
-        disabled={isLoadingLocation}
+        disabled={isLoading}
         accessibilityLabel="Fetch GPS location button"
         accessibilityHint="Tap to get your current location automatically"
-        accessibilityRole="button">
-        <Text style={styles.gpsButtonText}>
-          {isLoadingLocation ? t('fetching_location') : t('fetch_gps_location')}
-        </Text>
-      </TouchableOpacity>
+        accessibilityRole="button"></TouchableOpacity> */}
+
+      <PrimaryButtonOutlined
+        title={t('fetch_gps_location')}
+        onPress={handleFetchGPS}
+        disabled={isLoading}
+      />
 
       <PrimaryButton
         title={t('next')}

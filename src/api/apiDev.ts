@@ -8,7 +8,7 @@ import AppConstant from '../utils/appConstant';
 
 const apiDev = axios.create({
   // baseURL: Config.BASE_URL,
-  baseURL: 'https://81aceddf025e.ngrok-free.app',
+  baseURL: 'https://2d5129cf14ce.ngrok-free.app',
   // baseURL: ApiEndpoints.BASE_URL,
   headers: {
     'Content-Type': 'application/json',

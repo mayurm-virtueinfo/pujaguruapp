@@ -12,7 +12,13 @@ import {
 } from 'react-native';
 import {moderateScale} from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {apiService, PanditItem, PujaItem} from '../../../api/apiService';
+import {
+  apiService,
+  getRecommendedPandit,
+  PanditItem,
+  PujaItem,
+  RecommendedPandit,
+} from '../../../api/apiService';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -23,19 +29,50 @@ import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from '../../../utils/appConstant';
 
 const UserHomeScreen: React.FC = () => {
   const navigation = useNavigation<UserHomeParamList>();
   const [pandits, setPandits] = useState<PanditItem[]>([]);
   const [pujas, setPujas] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [user, setUser] = useState<string | null>(null);
+  const [location, setLocation] = useState<string | null>(null);
+  const [recomendedPandits, setRecomendedPandits] = useState<
+    RecommendedPandit[]
+  >([]);
 
   const inset = useSafeAreaInsets();
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
+
+  useEffect(() => {
+    fetchUserAndLocation();
+  }, []);
 
   useEffect(() => {
     fetchAllPanditAndPuja();
   }, []);
+
+  useEffect(() => {
+    if (location) {
+      fetchRecommendedPandits();
+    }
+  }, [location]);
+
+  const fetchUserAndLocation = async () => {
+    try {
+      const user = await AsyncStorage.getItem(AppConstant.USER);
+      const location = await AsyncStorage.getItem(AppConstant.LOCATION);
+      setUser(user);
+      if (location) {
+        const parsedLocation = JSON.parse(location);
+        setLocation(parsedLocation);
+      }
+    } catch (error) {
+      console.error('Error fetching user and location ::', error);
+    }
+  };
 
   const fetchAllPanditAndPuja = async () => {
     setLoading(true);
@@ -46,6 +83,24 @@ const UserHomeScreen: React.FC = () => {
     } catch (error) {
       setPandits([]);
       setPujas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRecommendedPandits = async () => {
+    try {
+      setLoading(true);
+      const response = await getRecommendedPandit(
+        location.latitude,
+        location.longitude,
+      );
+      console.log('Fetched Recommended Pandits:', response);
+      if (response && Array.isArray(response)) {
+        setRecomendedPandits(response);
+      }
+    } catch (error) {
+      console.error('Error fetching recommended pandits:', error);
     } finally {
       setLoading(false);
     }
@@ -96,12 +151,12 @@ const UserHomeScreen: React.FC = () => {
           </Text>
 
           <View style={styles.panditCardsContainer}>
-            {pandits && pandits.length > 0 ? (
-              pandits.map(pandit => (
+            {recomendedPandits && recomendedPandits.length > 0 ? (
+              recomendedPandits.map(pandit => (
                 <View style={styles.panditCard} key={pandit.id}>
                   <View style={styles.panditImageWrapper}>
                     <Image
-                      source={{uri: pandit.image}}
+                      source={{uri: pandit.profile_img}}
                       style={styles.panditImage}
                     />
                     <View style={styles.ratingContainerAbsolute}>
@@ -111,13 +166,13 @@ const UserHomeScreen: React.FC = () => {
                         color={COLORS.primaryBackgroundButton}
                         style={{marginRight: 5}}
                       />
-                      <Text style={styles.ratingText}>{pandit.rating}</Text>
+                      <Text style={styles.ratingText}>4</Text>
                     </View>
                   </View>
-                  <Text style={styles.panditName}>{pandit.name}</Text>
+                  <Text style={styles.panditName}>{pandit.full_name}</Text>
                   <TouchableOpacity
                     style={styles.bookButton}
-                    onPress={() => handleBookPandit(pandit.name)}>
+                    onPress={() => handleBookPandit(pandit.full_name)}>
                     <Text style={styles.bookButtonText}>{t('book')}</Text>
                   </TouchableOpacity>
                 </View>
