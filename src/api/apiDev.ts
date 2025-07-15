@@ -1,14 +1,14 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ApiEndpoints from './apiEndpoints';
+import ApiEndpoints, {APP_URL, POST_REFRESH_TOKEN} from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
-import { postRefreshToken } from './apiService';
+import {postRefreshToken} from './apiService';
 
 // Create an axios instance
 
 const apiDev = axios.create({
   // baseURL: Config.BASE_URL,
-  baseURL: 'https://2d5129cf14ce.ngrok-free.app',
+  baseURL: APP_URL,
   // baseURL: ApiEndpoints.BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -51,19 +51,17 @@ const onRefreshed = (newAccessToken: string) => {
   refreshSubscribers.map((cb: any) => cb(newAccessToken));
 };
 
-// Custom refresh token logic (since postRefreshToken has issues)
 const refreshAccessToken = async (refreshToken: string) => {
   try {
-    // Use axios directly to avoid circular dependency and issues with postRefreshToken
     const response = await axios.post(
-      'https://2d5129cf14ce.ngrok-free.app/auth/refresh-token/',
-      { refresh_token: refreshToken },
+      `${APP_URL}${POST_REFRESH_TOKEN}`,
+      {refresh_token: refreshToken},
       {
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-      }
+      },
     );
     return response.data;
   } catch (error) {
@@ -87,7 +85,9 @@ apiDev.interceptors.response.use(
       if (!isRefreshing) {
         isRefreshing = true;
         try {
-          const refresh_token = await AsyncStorage.getItem(AppConstant.REFRESH_TOKEN);
+          const refresh_token = await AsyncStorage.getItem(
+            AppConstant.REFRESH_TOKEN,
+          );
           if (!refresh_token) {
             isRefreshing = false;
             return Promise.reject(error);
@@ -99,7 +99,10 @@ apiDev.interceptors.response.use(
           // const newRefreshToken = data?.refresh_token;
 
           if (newAccessToken) {
-            await AsyncStorage.setItem(AppConstant.ACCESS_TOKEN, newAccessToken);
+            await AsyncStorage.setItem(
+              AppConstant.ACCESS_TOKEN,
+              newAccessToken,
+            );
             // Optionally, update refresh token
             // if (newRefreshToken) {
             //   await AsyncStorage.setItem(AppConstant.REFRESH_TOKEN, newRefreshToken);
@@ -107,7 +110,9 @@ apiDev.interceptors.response.use(
             isRefreshing = false;
             onRefreshed(newAccessToken);
             // Retry the original request with the new token
-            originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
+            originalRequest.headers[
+              'Authorization'
+            ] = `Bearer ${newAccessToken}`;
             return apiDev(originalRequest);
           } else {
             isRefreshing = false;
@@ -115,7 +120,10 @@ apiDev.interceptors.response.use(
           }
         } catch (refreshError) {
           isRefreshing = false;
-          console.log('---Accesstoken---refreshing---apiDev--failure (custom logic): ', refreshError);
+          console.log(
+            '---Accesstoken---refreshing---apiDev--failure (custom logic): ',
+            refreshError,
+          );
           return Promise.reject(refreshError);
         }
       }

@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       await AsyncStorage.removeItem(AppConstant.ACCESS_TOKEN);
       await AsyncStorage.removeItem(AppConstant.REFRESH_TOKEN);
       await AsyncStorage.removeItem(AppConstant.FIREBASE_UID);
-      await AsyncStorage.removeItem(AppConstant.USER);
+      await AsyncStorage.removeItem(AppConstant.USER_ID);
       await AsyncStorage.removeItem(AppConstant.LOCATION);
       setIsAuthenticated(false);
     } catch (error) {

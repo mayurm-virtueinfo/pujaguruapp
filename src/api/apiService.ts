@@ -200,6 +200,7 @@ export interface TransactioData {
 }
 
 export interface User {
+  id: string;
   mobile: string;
   firebase_uid: string;
   first_name: string;
@@ -242,6 +243,7 @@ export interface SignupRequest {
 }
 
 export interface CreateUserResponse {
+  id: string;
   mobile: string;
   firebase_uid: string;
   first_name: string;

@@ -101,10 +101,8 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
           });
         } else {
           signIn(response.access_token, response.refresh_token);
-          await AsyncStorage.setItem(
-            AppConstant.USER,
-            JSON.stringify(response.user),
-          );
+          const userID = response.user?.id;
+          await AsyncStorage.setItem(AppConstant.USER_ID, String(userID));
           await AsyncStorage.setItem(
             AppConstant.LOCATION,
             JSON.stringify(response.location),

@@ -22,15 +22,14 @@ import {
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-
 import {useNavigation} from '@react-navigation/native';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
+import PrimaryButton from '../../../components/PrimaryButton';
 
 const UserHomeScreen: React.FC = () => {
   const navigation = useNavigation<UserHomeParamList>();
@@ -38,7 +37,7 @@ const UserHomeScreen: React.FC = () => {
   const [pujas, setPujas] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<string | null>(null);
-  const [location, setLocation] = useState<string | null>(null);
+  const [location, setLocation] = useState<any | null>(null);
   const [recomendedPandits, setRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
@@ -60,9 +59,12 @@ const UserHomeScreen: React.FC = () => {
     }
   }, [location]);
 
+  console.log('user id ::', user);
+  console.log('location ::', location);
+
   const fetchUserAndLocation = async () => {
     try {
-      const user = await AsyncStorage.getItem(AppConstant.USER);
+      const user = await AsyncStorage.getItem(AppConstant.USER_ID);
       const location = await AsyncStorage.getItem(AppConstant.LOCATION);
       setUser(user);
       if (location) {
@@ -81,6 +83,7 @@ const UserHomeScreen: React.FC = () => {
       setPandits(requests?.pandits || []);
       setPujas(requests?.puja || []);
     } catch (error) {
+      console.error('Error fetching pandit and puja data:', error);
       setPandits([]);
       setPujas([]);
     } finally {
@@ -110,7 +113,9 @@ const UserHomeScreen: React.FC = () => {
     navigation.navigate('PujaCancellationScreen');
   };
 
-  const handleNavigation = (route: string) => {};
+  const handleNavigation = (route: string) => {
+    // Implement navigation logic if needed
+  };
 
   const handleNotificationPress = () => {
     navigation.navigate('NotificationScreen');
@@ -130,14 +135,14 @@ const UserHomeScreen: React.FC = () => {
         onNotificationPress={handleNotificationPress}
       />
 
-      <ScrollView style={[styles.content]} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t('recomended_panditji')}</Text>
             <TouchableOpacity
               style={styles.seeAllContainer}
               onPress={() => handleNavigation('PanditList')}>
-              <Text style={styles.seeAllText}>{t('see_all')} </Text>
+              <Text style={styles.seeAllText}>{t('see_all')}</Text>
               <Ionicons
                 name="chevron-forward-outline"
                 size={20}
@@ -150,14 +155,21 @@ const UserHomeScreen: React.FC = () => {
             {t('today_is_kartik_shukla_paksha')}
           </Text>
 
-          <View style={styles.panditCardsContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.panditCardsContainer}
+            contentContainerStyle={styles.panditCardsContentContainer}>
             {recomendedPandits && recomendedPandits.length > 0 ? (
               recomendedPandits.map(pandit => (
                 <View style={styles.panditCard} key={pandit.id}>
                   <View style={styles.panditImageWrapper}>
                     <Image
-                      source={{uri: pandit.profile_img}}
+                      source={{
+                        uri: 'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg',
+                      }}
                       style={styles.panditImage}
+                      accessibilityLabel={`Profile image of ${pandit.full_name}`}
                     />
                     <View style={styles.ratingContainerAbsolute}>
                       <Ionicons
@@ -169,20 +181,34 @@ const UserHomeScreen: React.FC = () => {
                       <Text style={styles.ratingText}>4</Text>
                     </View>
                   </View>
-                  <Text style={styles.panditName}>{pandit.full_name}</Text>
-                  <TouchableOpacity
-                    style={styles.bookButton}
-                    onPress={() => handleBookPandit(pandit.full_name)}>
-                    <Text style={styles.bookButtonText}>{t('book')}</Text>
-                  </TouchableOpacity>
+                  <Text
+                    style={styles.panditName}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {pandit.full_name}
+                  </Text>
+                  <View style={{alignSelf: 'center'}}>
+                    <PrimaryButton
+                      title={t('book')}
+                      onPress={() => handleBookPandit(pandit.full_name)}
+                      style={{
+                        maxWidth: 90,
+                        maxHeight: 40,
+                      }}
+                      textStyle={{
+                        paddingHorizontal: 12,
+                        textAlign: 'center',
+                        fontSize: 15,
+                        fontFamily: Fonts.Sen_Medium,
+                      }}
+                    />
+                  </View>
                 </View>
               ))
             ) : (
-              <Text style={{color: '#888', marginTop: 10}}>
-                {t('no_panditji_found')}
-              </Text>
+              <Text style={styles.noPanditText}>{t('no_panditji_found')}</Text>
             )}
-          </View>
+          </ScrollView>
         </View>
 
         <View style={styles.pujaSection}>
@@ -206,7 +232,12 @@ const UserHomeScreen: React.FC = () => {
                 </View>
               ))
             ) : (
-              <Text style={{color: '#888', marginTop: 10}}>
+              <Text
+                style={{
+                  color: '#888',
+                  marginTop: 10,
+                  textAlign: 'center',
+                }}>
                 {t('no_upcoming_pujas')}
               </Text>
             )}
@@ -221,22 +252,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
-  },
-  header: {
-    backgroundColor: COLORS.primaryBackground,
-    paddingHorizontal: moderateScale(22),
-    paddingBottom: moderateScale(70),
-  },
-  headerTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerTitle: {
-    color: COLORS.white,
-    fontFamily: Fonts.Sen_Bold,
-    fontSize: moderateScale(18),
-    fontWeight: '700',
   },
   content: {
     flex: 1,
@@ -280,47 +295,49 @@ const styles = StyleSheet.create({
     marginBottom: moderateScale(12),
   },
   panditCardsContainer: {
-    flexDirection: 'row',
-    gap: moderateScale(24),
+    flexGrow: 0,
+    marginTop: moderateScale(12),
+  },
+  panditCardsContentContainer: {
+    paddingHorizontal: moderateScale(2),
+    paddingBottom: moderateScale(10),
   },
   panditCard: {
-    borderRadius: moderateScale(10),
+    width: moderateScale(160),
+    borderRadius: moderateScale(12),
     backgroundColor: COLORS.white,
-    paddingHorizontal: moderateScale(19),
-    paddingVertical: moderateScale(15),
-    alignItems: 'center',
-    flex: 1,
-    elevation: 2,
+    paddingHorizontal: moderateScale(12),
+    paddingVertical: moderateScale(12),
+    marginRight: moderateScale(12),
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   panditImageWrapper: {
-    width: moderateScale(86),
-    height: moderateScale(96),
-    marginBottom: moderateScale(10),
-    position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: moderateScale(8),
   },
   panditImage: {
     width: moderateScale(86),
-    height: moderateScale(96),
-    borderRadius: moderateScale(50),
+    height: moderateScale(86),
+    borderRadius: moderateScale(40),
+    borderWidth: 1,
   },
   ratingContainerAbsolute: {
     position: 'absolute',
-    bottom: moderateScale(4),
+    bottom: moderateScale(-10),
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(20),
-    paddingHorizontal: moderateScale(11),
-    paddingVertical: moderateScale(4),
+    borderRadius: moderateScale(12),
+    paddingHorizontal: moderateScale(8),
+    paddingVertical: moderateScale(3),
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: {
@@ -331,33 +348,22 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   panditName: {
-    fontSize: moderateScale(15),
+    fontSize: 15,
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
     textAlign: 'center',
-    marginBottom: moderateScale(8),
+    marginTop: moderateScale(10),
   },
   ratingText: {
+    fontSize: moderateScale(12),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primaryTextDark,
+  },
+  noPanditText: {
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Medium,
-    color: COLORS.primaryTextDark,
-  },
-  bookButton: {
-    backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: moderateScale(10),
-    paddingHorizontal: moderateScale(24),
-    paddingVertical: moderateScale(8),
-    minHeight: moderateScale(30),
-    justifyContent: 'center',
-    alignItems: 'center',
-    alignSelf: 'stretch',
-  },
-  bookButtonText: {
-    fontSize: moderateScale(15),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.primaryTextDark,
-    textTransform: 'uppercase',
-    letterSpacing: -0.15,
+    color: '#888',
+    paddingHorizontal: moderateScale(10),
   },
   pujaSection: {
     marginBottom: moderateScale(24),
@@ -368,7 +374,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(14),
     paddingVertical: moderateScale(14),
     marginTop: moderateScale(12),
-    // Improved shadow for both iOS and Android
     ...Platform.select({
       ios: {
         shadowColor: '#000',

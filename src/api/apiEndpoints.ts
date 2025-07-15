@@ -37,7 +37,8 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const GET_PUJALIST = '/auth/pujalist/';
+export const APP_URL = 'https://2d5129cf14ce.ngrok-free.app';
+export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';
 export const GET_CITY = '/app/areas/';
@@ -45,3 +46,4 @@ export const POST_LOGOUT = '/app/auth/logout/';
 export const POST_REFRESH_TOKEN = '/app/auth/refresh-token/';
 export const GET_RECOMMENDED_PANDIT =
   '/app/recommended-panditji?latitude={latitude}&longitude={longitude}';
+export const GET_ADDRESS = '/app/address/{id}';

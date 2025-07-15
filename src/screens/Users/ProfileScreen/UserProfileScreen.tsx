@@ -167,10 +167,8 @@ const UserProfileScreen: React.FC = () => {
           AppConstant.REFRESH_TOKEN,
           response.refresh_token,
         );
-        await AsyncStorage.setItem(
-          AppConstant.USER,
-          JSON.stringify(response.user),
-        );
+        const userID = response.user?.id;
+        await AsyncStorage.setItem(AppConstant.USER_ID, String(userID));
         await AsyncStorage.setItem(
           AppConstant.LOCATION,
           JSON.stringify(response.location),
