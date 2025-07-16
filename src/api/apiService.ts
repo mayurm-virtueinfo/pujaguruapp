@@ -15,6 +15,7 @@ import ApiEndpoints, {
   POST_SIGNIN,
   POST_SIGNUP,
   GET_ADDRESS,
+  GET_POOJA_DETAILS,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -288,34 +289,34 @@ export interface RefreshTokenRequest {
 }
 
 export interface AddAddress {
-  name: string
-  address_type: number,
-  address_line1: string,
-  address_line2: string,
-  phone_number: string,
-  city: number,
-  state: string,
-  pincode: string,
-  latitude: number,
-  longitude: number
+  name: string;
+  address_type: number;
+  address_line1: string;
+  address_line2: string;
+  phone_number: string;
+  city: number;
+  state: string;
+  pincode: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface deleteAddress {
-  id: number
+  id: number;
 }
 
 export interface EditAddress {
-  id: number,
-  name: string
-  address_type: number,
-  address_line1: string,
-  address_line2: string,
-  phone_number: string,
-  city: number,
-  state: string,
-  pincode: string,
-  latitude: number,
-  longitude: number
+  id: number;
+  name: string;
+  address_type: number;
+  address_line1: string;
+  address_line2: string;
+  phone_number: string;
+  city: number;
+  state: string;
+  pincode: string;
+  latitude: number;
+  longitude: number;
 }
 
 export const apiService = {
@@ -838,6 +839,21 @@ export const updateAddress = (data: EditAddress) => {
       })
       .catch(error => {
         console.error('Error update address', error);
+        reject(error);
+      });
+  });
+};
+
+export const getPoojaDetails = (id: string): Promise<any> => {
+  const apiUrl = GET_POOJA_DETAILS.replace('{id}', id);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching puja details:', error);
         reject(error);
       });
   });

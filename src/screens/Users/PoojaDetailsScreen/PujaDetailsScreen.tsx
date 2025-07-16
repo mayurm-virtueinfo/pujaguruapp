@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   StyleSheet,
@@ -9,32 +9,93 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
-import CustomHeader from '../../../components/CustomHeader';
-import {COLORS} from '../../../theme/theme';
-import Fonts from '../../../theme/fonts';
-import PrimaryButton from '../../../components/PrimaryButton';
-import Octicons from 'react-native-vector-icons/Octicons';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
-import {PujaListItemType, RecommendedPuja} from '../../../api/apiService';
-import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import Octicons from 'react-native-vector-icons/Octicons';
+import UserCustomHeader from '../../../components/UserCustomHeader';
+import PrimaryButton from '../../../components/PrimaryButton';
+import CustomeLoader from '../../../components/CustomeLoader';
+import {useCommonToast} from '../../../common/CommonToast';
+import {COLORS} from '../../../theme/theme';
+import Fonts from '../../../theme/fonts';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import {getPoojaDetails} from '../../../api/apiService';
+
+interface PujaDetails {
+  id: number;
+  title: string;
+  description: string;
+  short_description: string;
+  image_url: string;
+  base_price: string;
+  price_with_samagri: string;
+  price_without_samagri: string;
+  benifits: string[];
+  features: string[];
+  requirements: string[];
+  retual_steps: string[];
+  suggested_day: string;
+  suggested_tithi: string;
+  duration_minutes: number;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+  uuid: string;
+  pooja_category: number;
+  pooja_type: number;
+  slug: string;
+}
+
+interface PricingOption {
+  id: number;
+  priceDes: string;
+  price: string;
+}
 
 const PujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
-    'PlaceSelectionScreen'
+    'UserPoojaDetails'
   >;
-  const {t, i18n} = useTranslation();
+
+  const {t} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute();
+  const {showErrorToast} = useCommonToast();
 
-  const {data} = route.params as {data: PujaListItemType | RecommendedPuja};
+  const [data, setData] = useState<PujaDetails | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [selectedPricingId, setSelectedPricingId] = useState<number | null>(
+    null,
+  );
 
-  console.log('data in PujaDetailsScreen :: ', data);
+  const {poojaId} = route.params as {poojaId: string};
+
+  useEffect(() => {
+    if (poojaId) {
+      fetchPoojaDetails(poojaId);
+    }
+  }, [poojaId]);
+
+  const fetchPoojaDetails = async (id: string) => {
+    setLoading(true);
+    try {
+      const response: any = await getPoojaDetails(id);
+      if (response.success) {
+        setData(response.data);
+      } else {
+        setData(null);
+      }
+    } catch (error: any) {
+      showErrorToast(error.message || 'Failed to fetch puja details');
+      setData(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleBookNowPress = () => {
     console.log('Book Now pressed');
@@ -42,22 +103,34 @@ const PujaDetailsScreen: React.FC = () => {
   };
 
   const handleNotificationPress = () => {
-    navigation.navigate('NotificationScreen');
+    console.log('Notification Pressed');
   };
-
-  const [selectedPricingId, setSelectedPricingId] = useState<number | null>(
-    null,
-  );
 
   const handleCheckboxToggle = (id: number) => {
     setSelectedPricingId(id === selectedPricingId ? null : id);
   };
 
+  const getPricingOptions = (data: PujaDetails): PricingOption[] => {
+    return [
+      {
+        id: 1,
+        priceDes: 'With Puja Items',
+        price: data.price_with_samagri,
+      },
+      {
+        id: 2,
+        priceDes: 'Without Puja Items',
+        price: data.price_without_samagri,
+      },
+    ];
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+      <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader
-        title={data.name}
+        title={t('puja_details')}
         showBackButton={true}
         showBellButton={true}
         onNotificationPress={handleNotificationPress}
@@ -70,47 +143,55 @@ const PujaDetailsScreen: React.FC = () => {
           <View style={styles.imageContainer}>
             <Image
               source={{
-                uri: data.image,
+                uri: data?.image_url,
               }}
               style={styles.heroImage}
               resizeMode="cover"
             />
           </View>
           <View style={styles.detailsContainer}>
-            <Text style={styles.descriptionText}>{data.description}</Text>
+            <Text style={styles.descriptionText}>
+              {data?.description || 'No description available'}
+            </Text>
             <Text style={styles.sectionTitle}>{t('pricing_options')}</Text>
             <View style={styles.pricingContainer}>
-              {data.pricing.map((option: any, idx: number) => (
-                <React.Fragment key={option.id}>
-                  <TouchableOpacity
-                    style={styles.pricingOption}
-                    activeOpacity={0.7}
-                    onPress={() => handleCheckboxToggle(option.id)}>
-                    <Text style={styles.pricingText}>
-                      {option.priceDes} - Rs. {option.price}
-                    </Text>
-                    <Octicons
-                      name={
-                        selectedPricingId === option.id
-                          ? 'check-circle'
-                          : 'circle'
-                      }
-                      size={24}
-                      color={
-                        selectedPricingId === option.id
-                          ? COLORS.primary
-                          : COLORS.inputBoder
-                      }
-                    />
-                  </TouchableOpacity>
-                  {idx < data.pricing.length - 1 && (
-                    <View style={styles.divider} />
-                  )}
-                </React.Fragment>
-              ))}
+              {data ? (
+                getPricingOptions(data).map((option, idx) => (
+                  <React.Fragment key={option.id}>
+                    <TouchableOpacity
+                      style={styles.pricingOption}
+                      activeOpacity={0.7}
+                      onPress={() => handleCheckboxToggle(option.id)}>
+                      <Text style={styles.pricingText}>
+                        {option.priceDes} - Rs. {option.price}
+                      </Text>
+                      <Octicons
+                        name={
+                          selectedPricingId === option.id
+                            ? 'check-circle'
+                            : 'circle'
+                        }
+                        size={24}
+                        color={
+                          selectedPricingId === option.id
+                            ? COLORS.primary
+                            : COLORS.inputBoder
+                        }
+                      />
+                    </TouchableOpacity>
+                    {idx < getPricingOptions(data).length - 1 && (
+                      <View style={styles.divider} />
+                    )}
+                  </React.Fragment>
+                ))
+              ) : (
+                <Text style={styles.pricingText}>No pricing available</Text>
+              )}
             </View>
             <Text style={styles.sectionTitle}>{t('visual_section')}</Text>
-            <Text style={styles.visualText}>{data.visualSection}</Text>
+            <Text style={styles.visualText}>
+              {data?.benifits?.join(', ') || 'No benefits available'}
+            </Text>
             <PrimaryButton
               title={t('book_now')}
               onPress={handleBookNowPress}

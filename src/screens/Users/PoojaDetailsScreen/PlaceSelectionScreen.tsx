@@ -30,28 +30,18 @@ const PlaceSelectionScreen: React.FC = () => {
   const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
-  const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingPlace[]>([]);
+  const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingPlace[]>([
+    {
+      id: 1,
+      name: 'At My Place',
+    },
+    {
+      id: 2,
+      name: 'At Tirth Place',
+    },
+  ]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    fetchAllPoojaPlaces();
-  }, []);
-
-  const fetchAllPoojaPlaces = async () => {
-    try {
-      setIsLoading(true);
-      const response = await apiService.getBookingPlaces();
-      console.log('Fetched Pooja place Requests:', response);
-      if (response && Array.isArray(response)) {
-        setPoojaPlaces(response);
-      }
-    } catch (error) {
-      console.error('Error fetching pooja places:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleNextPress = () => {
     if (selectedPlaceId === 1) {
