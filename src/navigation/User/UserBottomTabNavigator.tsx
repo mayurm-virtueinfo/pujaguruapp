@@ -9,6 +9,7 @@ import UserHomeNavigator from './UsetHomeStack';
 import UserPanditjiNavigator from './UserPanditjiNavigator';
 import {useTranslation} from 'react-i18next';
 import UserProfileNavigator from './userProfileNavigator';
+import PujaBookingScreen from '../../screens/Users/PoojaBookingScreen/PujaBookingScreen';
 
 export type UserAppBottomTabParamList = {
   UserHomeNavigator: undefined;
@@ -35,7 +36,7 @@ const UserAppBottomTabNavigator: React.FC = () => {
       }}>
       <Tab.Screen
         name="UserHomeNavigator"
-        component={UserHomeNavigator}
+        component={PujaBookingScreen}
         options={({route}) => ({
           title: t('home'),
           // headerTitle: getHeaderTitle(route), // dynamic title in screen header
