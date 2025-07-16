@@ -37,7 +37,7 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const APP_URL = 'https://2d5129cf14ce.ngrok-free.app';
+export const APP_URL = 'https://62f295b92b3a.ngrok-free.app';
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';
@@ -47,3 +47,6 @@ export const POST_REFRESH_TOKEN = '/app/auth/refresh-token/';
 export const GET_RECOMMENDED_PANDIT =
   '/app/recommended-panditji?latitude={latitude}&longitude={longitude}';
 export const GET_ADDRESS = '/app/address/{id}';
+export const GET_TIRTH_PLACE = '/app/tirth-places/';
+export const GET_MUHRAT =
+  '/app/choghadiya?date={date}&latitude={latitude}&longitude={longitude}';

@@ -15,6 +15,7 @@ import PrimaryButton from '../../../components/PrimaryButton';
 import Octicons from 'react-native-vector-icons/Octicons';
 import {
   apiService,
+  getTirthPlace,
   PoojaBookingAddress,
   PoojaBookingTirthPlace,
 } from '../../../api/apiService';
@@ -44,6 +45,8 @@ const TirthPlaceSelectionScreen: React.FC = () => {
   >(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  console.log('selectedTirthPlaceId :: ', selectedTirthPlaceId);
+
   useEffect(() => {
     fetchTirthPlaces();
   }, []);
@@ -51,13 +54,14 @@ const TirthPlaceSelectionScreen: React.FC = () => {
   const fetchTirthPlaces = async () => {
     try {
       setIsLoading(true);
-      const response = await apiService.getBookingTirthPlaces();
-      console.log('Fetched Pooja Address Requests:', response);
+      const response = await getTirthPlace();
+      console.log('Fetched Tirth Place Requests:', response);
       if (response && Array.isArray(response)) {
         setPoojaPlaces(response);
+        console.log('Tirth Places:', response);
       }
     } catch (error) {
-      console.error('Error fetching pooja places:', error);
+      console.error('Error fetching tirth places:', error);
     } finally {
       setIsLoading(false);
     }
@@ -85,25 +89,32 @@ const TirthPlaceSelectionScreen: React.FC = () => {
                       style={styles.pricingOption}
                       activeOpacity={0.7}
                       onPress={() => setSelectedTirthPlaceId(place.id)}>
-                      <View>
-                        <Text style={styles.pricingText}>{place.title}</Text>
-                        <Text style={styles.subtitleText}>
-                          {place.subtitle}
+                      <View style={styles.textContainer}>
+                        <Text style={styles.pricingText}>
+                          {place.city_name}
+                        </Text>
+                        <Text
+                          style={styles.subtitleText}
+                          numberOfLines={2}
+                          ellipsizeMode="tail">
+                          {place.description}
                         </Text>
                       </View>
-                      <Octicons
-                        name={
-                          selectedTirthPlaceId === place.id
-                            ? 'check-circle'
-                            : 'circle'
-                        }
-                        size={24}
-                        color={
-                          selectedTirthPlaceId === place.id
-                            ? COLORS.primary
-                            : COLORS.inputBoder
-                        }
-                      />
+                      <View style={styles.iconContainer}>
+                        <Octicons
+                          name={
+                            selectedTirthPlaceId === place.id
+                              ? 'check-circle'
+                              : 'circle'
+                          }
+                          size={24}
+                          color={
+                            selectedTirthPlaceId === place.id
+                              ? COLORS.primary
+                              : COLORS.inputBoder
+                          }
+                        />
+                      </View>
                     </TouchableOpacity>
                     {index !== poojaPlaces.length - 1 && (
                       <View style={styles.divider} />
@@ -173,6 +184,15 @@ const styles = StyleSheet.create({
     minHeight: 44,
     paddingVertical: 8,
   },
+  textContainer: {
+    flex: 1,
+    marginRight: 10,
+  },
+  iconContainer: {
+    width: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pricingText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
@@ -181,6 +201,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: Fonts.Sen_Medium,
     color: '#8A8A8A',
+    textAlign: 'justify',
   },
   buttonContainer: {
     height: 46,

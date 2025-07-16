@@ -3,8 +3,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiDev from './apiDev';
 import ApiEndpoints, {
   GET_CITY,
+  GET_MUHRAT,
   GET_PUJALIST,
   GET_RECOMMENDED_PANDIT,
+  GET_TIRTH_PLACE,
   POST_LOGOUT,
   POST_REFRESH_TOKEN,
   POST_SIGNIN,
@@ -83,8 +85,13 @@ export interface PoojaBookingAddress {
 
 export interface PoojaBookingTirthPlace {
   id: number;
-  title: string;
-  subtitle: string;
+  city: number;
+  city_name: string;
+  description: string;
+  latitude: string;
+  longitude: string;
+  name: string;
+  is_enabled: boolean;
 }
 
 export interface HomeData {
@@ -685,6 +692,42 @@ export const getRecommendedPandit = (
       })
       .catch(error => {
         console.error('Error fetching recommended pandit:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getTirthPlace = () => {
+  let apiUrl = GET_TIRTH_PLACE;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching TirthPlace data:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getMuhrat = (
+  date: string,
+  latitude: string,
+  longitude: string,
+): Promise<any> => {
+  const apiUrl = GET_MUHRAT.replace('{date}', date)
+    .replace('{latitude}', latitude)
+    .replace('{longitude}', longitude);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching muhrat:', error);
         reject(error);
       });
   });
