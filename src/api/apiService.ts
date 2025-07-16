@@ -16,6 +16,7 @@ import ApiEndpoints, {
   POST_SIGNUP,
   GET_ADDRESS,
   GET_POOJA_DETAILS,
+  POST_BOOKING,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -317,6 +318,16 @@ export interface EditAddress {
   pincode: string;
   latitude: number;
   longitude: number;
+}
+
+export interface Booking {
+  pooja: string,
+  pandit: number,
+  samagri_required: boolean,
+  address: number,
+  booking_date: string,
+  muhurat_time: string,
+  notes: string
 }
 
 export const apiService = {
@@ -854,6 +865,21 @@ export const getPoojaDetails = (id: string): Promise<any> => {
       })
       .catch(error => {
         console.error('Error fetching puja details:', error);
+        reject(error);
+      });
+  });
+};
+
+export const postBooking = (data: Booking) => {
+  let apiUrl = POST_BOOKING;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error Booking', error);
         reject(error);
       });
   });

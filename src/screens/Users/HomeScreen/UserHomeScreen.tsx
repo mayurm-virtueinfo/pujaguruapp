@@ -115,7 +115,7 @@ const UserHomeScreen: React.FC = () => {
   };
 
   const handleBookPandit = (panditName: string) => {
-    navigation.navigate('PujaCancellationScreen');
+    navigation.navigate('SelectPujaScreen');
   };
 
   const handleNavigation = (route: string) => {

@@ -36,7 +36,7 @@ const UserAppBottomTabNavigator: React.FC = () => {
       }}>
       <Tab.Screen
         name="UserHomeNavigator"
-        component={PaymentScreen}
+        component={UserHomeNavigator}
         options={({route}) => ({
           title: t('home'),
           // headerTitle: getHeaderTitle(route), // dynamic title in screen header

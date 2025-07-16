@@ -152,5 +152,7 @@
   "address_deleted_successfully": "Address deleted successfully",
   "failed_to_delete_address": "Failed to delete address",
   "edit_address": "Edit Address",
-  "update_address": "Update Address"
+  "update_address": "Update Address",
+  "choose_the_puja_you_wish_to_book_from_the_list_below": "Choose the puja you wish to book from the  list below.",
+  "select_puja": "Select Puja"
 }

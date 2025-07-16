@@ -22,6 +22,7 @@ import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {getPoojaDetails} from '../../../api/apiService';
+import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 interface PujaDetails {
   id: number;
@@ -52,12 +53,13 @@ interface PricingOption {
   id: number;
   priceDes: string;
   price: string;
+  withPujaItem: boolean;
 }
 
 const PujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
-    UserPoojaListParamList,
-    'UserPoojaDetails'
+    UserHomeParamList,
+    'PlaceSelectionScreen'
   >;
 
   const {t} = useTranslation();
@@ -97,9 +99,26 @@ const PujaDetailsScreen: React.FC = () => {
     }
   };
 
+  // Find the selected pricing option object
+  const getSelectedPricingOption = (): PricingOption | undefined => {
+    if (!data || selectedPricingId == null) return undefined;
+    return getPricingOptions(data).find(
+      option => option.id === selectedPricingId,
+    );
+  };
+
+  // Pass like: withPujaItem: true/false and poojaId
   const handleBookNowPress = () => {
-    console.log('Book Now pressed');
-    navigation.navigate('PlaceSelectionScreen');
+    const selectedOption = getSelectedPricingOption();
+    if (!selectedOption) {
+      // Optionally show a toast or error if not selected
+      showErrorToast('Please select a pricing option');
+      return;
+    }
+    navigation.navigate('PlaceSelectionScreen', {
+      poojaId: poojaId,
+      withPujaItem: selectedOption.withPujaItem,
+    });
   };
 
   const handleNotificationPress = () => {
@@ -116,11 +135,13 @@ const PujaDetailsScreen: React.FC = () => {
         id: 1,
         priceDes: 'With Puja Items',
         price: data.price_with_samagri,
+        withPujaItem: true,
       },
       {
         id: 2,
         priceDes: 'Without Puja Items',
         price: data.price_without_samagri,
+        withPujaItem: false,
       },
     ];
   };
@@ -193,7 +214,7 @@ const PujaDetailsScreen: React.FC = () => {
               {data?.benifits?.join(', ') || 'No benefits available'}
             </Text>
             <PrimaryButton
-              title={t('book_now')}
+              title={t('next')}
               onPress={handleBookNowPress}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}

@@ -14,22 +14,24 @@ import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Octicons from 'react-native-vector-icons/Octicons';
 import {apiService, PoojaBookingPlace} from '../../../api/apiService';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
+import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 const PlaceSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
-    UserPoojaListParamList,
+    UserHomeParamList,
     'AddressSelectionScreen' | 'TirthPlaceSelectionScreen'
   >;
   const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
+  const route = useRoute();
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingPlace[]>([
     {
       id: 1,
@@ -43,11 +45,19 @@ const PlaceSelectionScreen: React.FC = () => {
   const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  const {poojaId, withPujaItem} = route.params as any;
+
   const handleNextPress = () => {
     if (selectedPlaceId === 1) {
-      navigation.navigate('AddressSelectionScreen');
+      navigation.navigate('AddressSelectionScreen', {
+        poojaId: poojaId,
+        withPujaItem: withPujaItem,
+      });
     } else if (selectedPlaceId === 2) {
-      navigation.navigate('TirthPlaceSelectionScreen');
+      navigation.navigate('TirthPlaceSelectionScreen', {
+        poojaId: poojaId,
+        withPujaItem: withPujaItem,
+      });
     }
   };
 
