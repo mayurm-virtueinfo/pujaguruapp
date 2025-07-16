@@ -17,12 +17,19 @@ export type UserHomeParamList = {
   UserHomeScreen: undefined;
   PujaCancellationScreen: undefined;
   NotificationScreen: undefined;
-  PujaBookingScreen: undefined;
+  PujaBookingScreen: {
+    poojaId?: any;
+    samagri_required: boolean;
+    address?: any;
+    tirth?: any;
+    poojaName?: any;
+    poojaDescription?: any;
+  };
   SelectPujaScreen: {poojaId?: any};
   PoojaDetailScreen: undefined;
-  PlaceSelectionScreen: {poojaId?: any; withPujaItem: boolean};
-  AddressSelectionScreen: {poojaId?: any; withPujaItem: boolean};
-  TirthPlaceSelectionScreen: {poojaId?: any; withPujaItem: boolean};
+  PlaceSelectionScreen: {poojaId?: any; samagri_required: boolean};
+  AddressSelectionScreen: {poojaId?: any; samagri_required: boolean};
+  TirthPlaceSelectionScreen: {poojaId?: any; samagri_required: boolean};
 };
 
 const Stack = createStackNavigator<UserHomeParamList>();

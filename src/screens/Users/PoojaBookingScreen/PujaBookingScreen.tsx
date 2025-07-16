@@ -35,8 +35,14 @@ const PujaBookingScreen: React.FC = () => {
   const today = new Date();
 
   const route = useRoute();
-  const {poojaId} = route.params as {poojaId: string};
-
+  const {
+    poojaId,
+    samagri_required,
+    address,
+    tirth,
+    poojaName,
+    poojaDescription,
+  } = route.params as any;
   const {showErrorToast} = useCommonToast();
 
   const [selectedSlot, setSelectedSlot] = useState<string>('');
@@ -190,7 +196,9 @@ const PujaBookingScreen: React.FC = () => {
           <View style={styles.pujaPlaceContent}>
             <View style={styles.pujaPlaceTextContainer}>
               <Text style={styles.pujaPlaceLabel}>{t('puja_place')}</Text>
-              <Text style={styles.pujaPlaceValue}>Home: Primary residence</Text>
+              <Text style={styles.pujaPlaceValue}>
+                {poojaName}: {poojaDescription}
+              </Text>
             </View>
             <TouchableOpacity style={styles.editButton}>
               <Ionicons

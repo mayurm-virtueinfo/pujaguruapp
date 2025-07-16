@@ -115,7 +115,7 @@ const PujaDetailsScreen: React.FC = () => {
     }
     navigation.navigate('PlaceSelectionScreen', {
       poojaId: poojaId,
-      withPujaItem: selectedOption.withPujaItem,
+      samagri_required: selectedOption.withPujaItem,
     });
   };
 

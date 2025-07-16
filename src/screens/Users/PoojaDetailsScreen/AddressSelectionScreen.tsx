@@ -25,11 +25,12 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 const AddressSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
-    UserPoojaListParamList,
-    'AddressSelectionScreen'
+    UserHomeParamList,
+    'PujaBookingScreen'
   >;
   const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
@@ -37,18 +38,14 @@ const AddressSelectionScreen: React.FC = () => {
 
   const route = useRoute();
 
-  const {poojaId} = route.params as {poojaId: string};
-
-  const handleNextPress = () => {
-    navigation.navigate('PujaBooking', {
-      poojaId: poojaId,
-    });
-  };
+  const {poojaId, samagri_required} = route.params as any;
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
     null,
   );
+  const [selectedAddress, setSelectedAddress] =
+    useState<PoojaBookingAddress | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -67,6 +64,22 @@ const AddressSelectionScreen: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSelectAddress = (id: number) => {
+    setSelectedAddressId(id);
+    const found = poojaPlaces.find(place => place.id === id) || null;
+    setSelectedAddress(found);
+  };
+
+  const handleNextPress = () => {
+    navigation.navigate('PujaBookingScreen', {
+      poojaId: poojaId,
+      samagri_required: samagri_required,
+      address: selectedAddressId,
+      poojaName: selectedAddress?.name || '',
+      poojaDescription: selectedAddress?.description || '',
+    });
   };
 
   return (
@@ -93,7 +106,7 @@ const AddressSelectionScreen: React.FC = () => {
                     <TouchableOpacity
                       style={styles.pricingOption}
                       activeOpacity={0.7}
-                      onPress={() => setSelectedAddressId(place.id)}>
+                      onPress={() => handleSelectAddress(place.id)}>
                       <View>
                         <Text style={styles.pricingText}>{place.name}</Text>
                         <Text style={styles.subtitleText}>
