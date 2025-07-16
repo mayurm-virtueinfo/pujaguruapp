@@ -4,10 +4,12 @@ import apiDev from './apiDev';
 import ApiEndpoints, {
   GET_ADDRESS_TYPE,
   GET_CITY,
+  GET_MUHRAT,
   GET_PUJALIST,
   GET_RECOMMENDED_PANDIT,
   GET_USER_ADDRESS,
   POST_ADD_ADDRESS,
+  GET_TIRTH_PLACE,
   POST_LOGOUT,
   POST_REFRESH_TOKEN,
   POST_SIGNIN,
@@ -86,8 +88,13 @@ export interface PoojaBookingAddress {
 
 export interface PoojaBookingTirthPlace {
   id: number;
-  title: string;
-  subtitle: string;
+  city: number;
+  city_name: string;
+  description: string;
+  latitude: string;
+  longitude: string;
+  name: string;
+  is_enabled: boolean;
 }
 
 export interface HomeData {
@@ -724,23 +731,8 @@ export const getRecommendedPandit = (
   });
 };
 
-export const postAddAddress = (data: AddAddress) => {
-  let apiUrl = POST_ADD_ADDRESS;
-  return new Promise((resolve, reject) => {
-    apiDev
-      .post(apiUrl, data)
-      .then(response => {
-        resolve(response);
-      })
-      .catch(error => {
-        console.error('Error add address', error);
-        reject(error);
-      });
-  });
-};
-
-export const getAddress = () => {
-  let apiUrl = GET_USER_ADDRESS;
+export const getTirthPlace = () => {
+  let apiUrl = GET_TIRTH_PLACE;
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)
@@ -748,44 +740,20 @@ export const getAddress = () => {
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error fetching city data:', error);
+        console.error('Error fetching TirthPlace data:', error);
         reject(error);
       });
   });
 };
 
-export const deleteAddress = (data: deleteAddress) => {
-  let apiUrl = GET_USER_ADDRESS;
-  return new Promise((resolve, reject) => {
-    apiDev
-      .delete(apiUrl, { data })
-      .then(response => {
-        resolve(response.data);
-      })
-      .catch(error => {
-        console.error('Error fetching city data:', error);
-        reject(error);
-      });
-  });
-};
-
-export const updateAddress = (data: EditAddress) => {
-  let apiUrl = GET_USER_ADDRESS;
-  return new Promise((resolve, reject) => {
-    apiDev
-      .put(apiUrl, data)
-      .then(response => {
-        resolve(response);
-      })
-      .catch(error => {
-        console.error('Error Update Address:', error);
-        reject(error);
-      });
-  });
-};
-
-export const getAddressType = () => {
-  let apiUrl = GET_ADDRESS_TYPE;
+export const getMuhrat = (
+  date: string,
+  latitude: string,
+  longitude: string,
+): Promise<any> => {
+  const apiUrl = GET_MUHRAT.replace('{date}', date)
+    .replace('{latitude}', latitude)
+    .replace('{longitude}', longitude);
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)
@@ -793,7 +761,7 @@ export const getAddressType = () => {
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error fetching city data:', error);
+        console.error('Error fetching muhrat:', error);
         reject(error);
       });
   });

@@ -30,6 +30,7 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import PrimaryButton from '../../../components/PrimaryButton';
+import axios from 'axios';
 
 const UserHomeScreen: React.FC = () => {
   const navigation = useNavigation<UserHomeParamList>();
@@ -41,6 +42,8 @@ const UserHomeScreen: React.FC = () => {
   const [recomendedPandits, setRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
+
+  console.log('recomendedPandits ::', recomendedPandits);
 
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
@@ -79,9 +82,11 @@ const UserHomeScreen: React.FC = () => {
   const fetchAllPanditAndPuja = async () => {
     setLoading(true);
     try {
-      const requests = await apiService.getPanditAndPujaData();
-      setPandits(requests?.pandits || []);
-      setPujas(requests?.puja || []);
+      const requests = await axios.get(
+        'https://api.jsonbin.io/v3/b/685e6f298960c979a5b24e1c',
+      );
+      const {pandits, puja} = requests.data.record;
+      setPujas(puja);
     } catch (error) {
       console.error('Error fetching pandit and puja data:', error);
       setPandits([]);
@@ -99,8 +104,8 @@ const UserHomeScreen: React.FC = () => {
         location.longitude,
       );
       console.log('Fetched Recommended Pandits:', response);
-      if (response && Array.isArray(response)) {
-        setRecomendedPandits(response);
+      if (response && Array.isArray(response.data)) {
+        setRecomendedPandits(response.data || []);
       }
     } catch (error) {
       console.error('Error fetching recommended pandits:', error);

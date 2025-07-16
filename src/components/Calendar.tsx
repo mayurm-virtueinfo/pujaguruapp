@@ -6,8 +6,8 @@ import Fonts from '../theme/fonts';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 
 interface CalendarProps {
-  onDateSelect?: (date: number) => void;
-  month?: string; // e.g. "September 2025"
+  onDateSelect?: (date: string) => void;
+  month?: string;
   onMonthChange?: (direction: 'prev' | 'next') => void;
   date: number;
 }
@@ -135,7 +135,7 @@ const Calendar: React.FC<CalendarProps> = ({
 
   const handleDayPress = (day: CalendarDayObject) => {
     setCurrentSelected(day.dateString);
-    onDateSelect?.(day.day);
+    onDateSelect?.(day.dateString);
   };
 
   return (

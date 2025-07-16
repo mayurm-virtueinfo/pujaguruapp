@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -21,26 +21,23 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 import PanditjiSelectionModal from '../../../components/PanditjiSelectionModal';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
-
-interface MuhuratSlot {
-  id: string;
-  name: string;
-  time: string;
-  isSelected: boolean;
-}
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from '../../../utils/appConstant';
+import {getMuhrat} from '../../../api/apiService';
+import {useCommonToast} from '../../../common/CommonToast';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 const PujaBookingScreen: React.FC = () => {
-  type ScreenNavigationProp = StackNavigationProp<
-    UserPoojaListParamList,
-    'PaymentScreen'
-  >;
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
   const navigation =
     useNavigation<StackNavigationProp<UserPoojaListParamList>>();
 
+  const today = new Date();
+
+  const {showErrorToast} = useCommonToast();
+
   const [selectedSlot, setSelectedSlot] = useState<string>('shubh');
   const [additionalNotes, setAdditionalNotes] = useState<string>('');
-  const today = new Date();
   const [selectedDate, setSelectedDate] = useState<number>(today.getDate());
   const [currentMonth, setCurrentMonth] = useState<string>(
     `${today.toLocaleString('default', {
@@ -51,39 +48,53 @@ const PujaBookingScreen: React.FC = () => {
   const [panditjiSelection, setPanditjiSelection] = useState<
     'automatic' | 'manual'
   >('automatic');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [location, setLocation] = useState<any>(null);
 
-  const muhuratSlots: MuhuratSlot[] = [
-    {
-      id: 'shubh',
-      name: 'Shubh Muhurat',
-      time: '10:00 AM - 12:00 PM',
-      isSelected: selectedSlot === 'shubh',
-    },
-    {
-      id: 'labh',
-      name: 'Labh Muhurat',
-      time: '01:00 PM - 03:00 PM',
-      isSelected: selectedSlot === 'labh',
-    },
-    {
-      id: 'amrit',
-      name: 'Amrit Muhurat',
-      time: '03:30 PM - 05:30 PM',
-      isSelected: selectedSlot === 'amrit',
-    },
-    {
-      id: 'char',
-      name: 'Char Muhurat',
-      time: '06:00 PM - 08:00 PM',
-      isSelected: selectedSlot === 'char',
-    },
-    {
-      id: 'rog',
-      name: 'Rog Muhurat',
-      time: '08:30 PM - 10:30 PM',
-      isSelected: selectedSlot === 'rog',
-    },
-  ];
+  const [muhurats, setMuhurats] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchLocation();
+  }, []);
+
+  const fetchLocation = async () => {
+    try {
+      const location = await AsyncStorage.getItem(AppConstant.LOCATION);
+      if (location) {
+        const parsedLocation = JSON.parse(location);
+        setLocation(parsedLocation);
+      }
+    } catch (error) {
+      console.error('Error fetching  location ::', error);
+    }
+  };
+
+  useEffect(() => {
+    if (location) {
+      fetchMuhurat();
+    }
+  }, [location]);
+
+  const fetchMuhurat = async (dateString?: string) => {
+    try {
+      setLoading(true);
+      const dateToFetch = dateString || new Date().toISOString().split('T')[0];
+      const response = await getMuhrat(
+        dateToFetch,
+        location?.latitude,
+        location?.longitude,
+      );
+      console.log('Fetched Muhurat:', response);
+      if (response && Array.isArray(response.choghadiya)) {
+        setMuhurats(response.choghadiya || []);
+      }
+    } catch (error: any) {
+      console.error('Error fetching muhurat:', error);
+      showErrorToast(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSlotSelect = (slotId: string) => {
     setSelectedSlot(slotId);
@@ -97,7 +108,6 @@ const PujaBookingScreen: React.FC = () => {
     setModalVisible(false);
   };
 
-  // Modified: On confirm, navigate to PaymentScreen if automatic, else SelectPanditjiScreen
   const handlePanditjiSelectionConfirm = (
     selection: 'automatic' | 'manual',
   ) => {
@@ -114,15 +124,17 @@ const PujaBookingScreen: React.FC = () => {
     <View style={styles.slotsContainer}>
       <Text style={styles.slotsTitle}>{t('select_muhurat_time_slot')}</Text>
       <View style={styles.slotsListContainer}>
-        {muhuratSlots.map((slot, index) => (
-          <View key={slot.id}>
+        {muhurats.map((slot, index) => (
+          <View key={index}>
             <TouchableOpacity
               style={styles.slotItem}
               onPress={() => handleSlotSelect(slot.id)}>
               <View style={styles.slotContent}>
                 <View style={styles.slotTextContainer}>
-                  <Text style={styles.slotName}>{slot.name}</Text>
-                  <Text style={styles.slotTime}>{slot.time}</Text>
+                  <Text style={styles.slotName}>{slot.type}</Text>
+                  <Text style={styles.slotTime}>
+                    {slot.start} - {slot.end}
+                  </Text>
                 </View>
                 <View style={styles.slotSelection}>
                   <Ionicons
@@ -137,9 +149,7 @@ const PujaBookingScreen: React.FC = () => {
                 </View>
               </View>
             </TouchableOpacity>
-            {index < muhuratSlots.length - 1 && (
-              <View style={styles.slotDivider} />
-            )}
+            {index < muhurats.length - 1 && <View style={styles.slotDivider} />}
           </View>
         ))}
       </View>
@@ -148,6 +158,7 @@ const PujaBookingScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container]}>
+      <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
 
@@ -182,7 +193,10 @@ const PujaBookingScreen: React.FC = () => {
         {/* Calendar Section */}
         <Calendar
           date={selectedDate}
-          onDateSelect={setSelectedDate}
+          onDateSelect={dateString => {
+            setSelectedDate(new Date(dateString).getDate());
+            fetchMuhurat(dateString);
+          }}
           month={currentMonth}
           onMonthChange={direction => {
             // Calculate new month/year
@@ -208,7 +222,7 @@ const PujaBookingScreen: React.FC = () => {
               {month: 'long'},
             );
             setCurrentMonth(`${newMonthName} ${newYear}`);
-            setSelectedDate(1); // Optionally reset selected date
+            setSelectedDate(1);
           }}
         />
 
