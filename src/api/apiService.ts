@@ -14,6 +14,7 @@ import ApiEndpoints, {
   POST_REFRESH_TOKEN,
   POST_SIGNIN,
   POST_SIGNUP,
+  GET_ADDRESS,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -762,6 +763,81 @@ export const getMuhrat = (
       })
       .catch(error => {
         console.error('Error fetching muhrat:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getAddress = () => {
+  let apiUrl = GET_USER_ADDRESS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error getAddress data:', error);
+        reject(error);
+      });
+  });
+};
+
+export const deleteAddress = (data: deleteAddress) => {
+  let apiUrl = GET_USER_ADDRESS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .delete(apiUrl, { data })
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error delete address', error);
+        reject(error);
+      });
+  });
+};
+
+export const getAddressType = () => {
+  let apiUrl = GET_ADDRESS_TYPE;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error getAddress Type:', error);
+        reject(error);
+      });
+  });
+};
+
+export const postAddAddress = (data: AddAddress) => {
+  let apiUrl = POST_ADD_ADDRESS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error add address', error);
+        reject(error);
+      });
+  });
+};
+
+export const updateAddress = (data: EditAddress) => {
+  let apiUrl = GET_USER_ADDRESS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .put(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error update address', error);
         reject(error);
       });
   });

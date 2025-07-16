@@ -10,7 +10,6 @@ import {
   Image,
 } from 'react-native';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import CustomHeader from '../../../components/CustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
@@ -25,6 +24,7 @@ import {useCommonToast} from '../../../common/CommonToast';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import RazorpayCheckout from 'react-native-razorpay';
 
 interface PaymentMethod {
   id: string;
@@ -53,7 +53,7 @@ const PaymentScreen: React.FC = () => {
     UserPoojaListParamList,
     'BookingSuccessfullyScreen'
   >;
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
@@ -65,12 +65,16 @@ const PaymentScreen: React.FC = () => {
   const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
+  const [orderId, setOrderId] = useState<string | null>('1');
+
+  // Payment methods
   const paymentMethods: PaymentMethod[] = [
     {id: 'credit', name: t('credit_card'), type: 'credit'},
-    {id: 'debit1', name: t('debit_card'), type: 'debit'},
-    {id: 'upt', name: t('upi'), type: 'upi'},
+    {id: 'debit', name: t('debit_card'), type: 'debit'},
+    {id: 'upi', name: t('upi'), type: 'upi'},
   ];
 
+  // Example puja data
   const suggestedPuja: PujaItem = {
     id: '1',
     name: 'Ganpati Puja',
@@ -91,22 +95,89 @@ const PaymentScreen: React.FC = () => {
     ],
   };
 
+  // Create Razorpay order
+  const createOrder = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/create-order', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({amount: 500000, currency: 'INR'}), // ₹5000 in paise
+      });
+      const data = await response.json();
+      setOrderId(data.id);
+    } catch (error) {
+      showErrorToast('Failed to create order');
+    }
+  };
+
+  // Handle payment
+  const handlePayment = async () => {
+    if (!orderId) {
+      await createOrder();
+      return;
+    }
+
+    const options: any = {
+      description: 'Puja Booking Payment',
+      image: 'https://your-logo-url.com/logo.png',
+      currency: 'INR',
+      key: 'rzp_test_WjmXdM6KUlsN6s', // Replace with your Razorpay Key ID
+      amount: '500000', // Amount in paise (₹5000)
+      name: 'Your App Name',
+      order_id: orderId,
+      prefill: {
+        email: 'user@example.com',
+        contact: '9999999999',
+        name: 'User Name',
+      },
+      theme: {color: COLORS.primary},
+    };
+
+    RazorpayCheckout.open(options)
+      .then((data: any) => {
+        showSuccessToast(`Payment successful: ${JSON.stringify(data)}`);
+        // Optionally: verify payment on backend here
+        navigation.navigate('BookingSuccessfullyScreen');
+      })
+      .catch((error: {code: any}) => {
+        showErrorToast(`Payment failed: ${error.code}`);
+      });
+  };
+
+  // Payment method selection
   const handlePaymentMethodSelect = (methodId: string) => {
     setSelectedPaymentMethod(methodId);
   };
 
-  const handleConfirmBooking = () => {
+  // Confirm booking
+  const handleConfirmBooking = async () => {
     if (!acceptTerms) {
       showErrorToast('Please accept the terms and conditions to proceed.');
       return;
     }
-    navigation.navigate('BookingSuccessfullyScreen');
+    if (!selectedPaymentMethod) {
+      showErrorToast('Please select a payment method.');
+      return;
+    }
+    // Only allow payment for online methods
+    if (
+      selectedPaymentMethod === 'credit' ||
+      selectedPaymentMethod === 'debit' ||
+      selectedPaymentMethod === 'upi'
+    ) {
+      await createOrder();
+      handlePayment();
+    } else {
+      navigation.navigate('BookingSuccessfullyScreen');
+    }
   };
 
+  // Expand/collapse suggested puja
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
   };
 
+  // Render payment method row
   const renderPaymentMethod = (method: PaymentMethod, index: number) => (
     <View key={method.id}>
       <TouchableOpacity
@@ -129,6 +200,7 @@ const PaymentScreen: React.FC = () => {
     </View>
   );
 
+  // Render booking data
   const renderBookingData = (
     item: PujaItem['bookingdata'][0],
     index: number,
@@ -141,7 +213,6 @@ const PaymentScreen: React.FC = () => {
             height: 40,
             justifyContent: 'center',
             alignItems: 'center',
-
             marginRight: scale(14),
           }}>
           <Octicons name="location" size={20} color={COLORS.pujaCardSubtext} />
@@ -320,7 +391,6 @@ const PaymentScreen: React.FC = () => {
   );
 };
 
-// Styles remain unchanged
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
