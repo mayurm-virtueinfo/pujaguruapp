@@ -14,7 +14,7 @@ import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Octicons from 'react-native-vector-icons/Octicons';
 import {apiService, PoojaBookingPlace} from '../../../api/apiService';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
@@ -30,6 +30,10 @@ const PlaceSelectionScreen: React.FC = () => {
   const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
+  const route = useRoute();
+
+  const {poojaId} = route.params as {poojaId: string};
+
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingPlace[]>([
     {
       id: 1,
@@ -45,9 +49,13 @@ const PlaceSelectionScreen: React.FC = () => {
 
   const handleNextPress = () => {
     if (selectedPlaceId === 1) {
-      navigation.navigate('AddressSelectionScreen');
+      navigation.navigate('AddressSelectionScreen', {
+        poojaId: poojaId,
+      });
     } else if (selectedPlaceId === 2) {
-      navigation.navigate('TirthPlaceSelectionScreen');
+      navigation.navigate('TirthPlaceSelectionScreen', {
+        poojaId: poojaId,
+      });
     }
   };
 

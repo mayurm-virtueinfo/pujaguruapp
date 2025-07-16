@@ -16,6 +16,7 @@ import ApiEndpoints, {
   POST_SIGNUP,
   GET_ADDRESS,
   GET_POOJA_DETAILS,
+  GET_AUTO_MANUAL_PANDIT_SELECTION,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -84,8 +85,8 @@ export interface PoojaBookingPlace {
 
 export interface PoojaBookingAddress {
   id: number;
-  title: string;
-  subtitle: string;
+  name: string;
+  description: string;
 }
 
 export interface PoojaBookingTirthPlace {
@@ -521,16 +522,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return { pandits: [], puja: [] };
+      return {pandits: [], puja: []};
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || { recommendedPuja: [], pujaList: [] };
+      return response.data?.record || {recommendedPuja: [], pujaList: []};
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return { recommendedPuja: [], pujaList: [] };
+      return {recommendedPuja: [], pujaList: []};
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -581,10 +582,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -612,10 +613,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
 };
@@ -788,7 +789,7 @@ export const deleteAddress = (data: deleteAddress) => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, { data })
+      .delete(apiUrl, {data})
       .then(response => {
         resolve(response);
       })
@@ -854,6 +855,29 @@ export const getPoojaDetails = (id: string): Promise<any> => {
       })
       .catch(error => {
         console.error('Error fetching puja details:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getPanditji = (
+  puja_id: string,
+  latitude: string,
+  longitude: string,
+  mode: 'auto' | 'manual',
+): Promise<any> => {
+  const apiUrl = GET_AUTO_MANUAL_PANDIT_SELECTION.replace('{puja_id}', puja_id)
+    .replace('{latitude}', latitude)
+    .replace('{longitude}', longitude)
+    .replace('{mode}', mode);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching panditji:', error);
         reject(error);
       });
   });
