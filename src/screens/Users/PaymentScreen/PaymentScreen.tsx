@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   StyleSheet,
@@ -19,12 +19,15 @@ import Octicons from 'react-native-vector-icons/Octicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {useCommonToast} from '../../../common/CommonToast';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import RazorpayCheckout from 'react-native-razorpay';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from '../../../utils/appConstant';
+import {getPanditji} from '../../../api/apiService';
 
 interface PaymentMethod {
   id: string;
@@ -57,6 +60,9 @@ const PaymentScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
+  const route = useRoute();
+  const {poojaId} = route.params as {poojaId: string};
+
   const {showErrorToast, showSuccessToast} = useCommonToast();
 
   const [usePoints, setUsePoints] = useState<boolean>(false);
@@ -64,8 +70,57 @@ const PaymentScreen: React.FC = () => {
     useState<string>('');
   const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
-
   const [orderId, setOrderId] = useState<string | null>('1');
+  const [location, setLocation] = useState<{
+    latitude: string;
+    longitude: string;
+  } | null>(null);
+  const [loading, setIsLoading] = useState<boolean>(false);
+  const [panditData, setPanditjiData] = useState<any>(null);
+
+  console.log('panditData in payment screen:', panditData);
+
+  useEffect(() => {
+    fetchLocation();
+  }, []);
+
+  const fetchLocation = async () => {
+    try {
+      const location = await AsyncStorage.getItem(AppConstant.LOCATION);
+      if (location) {
+        const parsedLocation = JSON.parse(location);
+        setLocation(parsedLocation);
+      }
+    } catch (error) {
+      console.error('Error fetching  location ::', error);
+    }
+  };
+
+  useEffect(() => {
+    if (location && poojaId) {
+      fetchPanditji(poojaId, location.latitude, location.longitude, 'auto');
+    }
+  }, [location, poojaId]);
+
+  const fetchPanditji = async (
+    pooja_id: string,
+    latitude: string,
+    longitude: string,
+    mode: 'auto',
+  ) => {
+    try {
+      setIsLoading(true);
+      const response = await getPanditji(pooja_id, latitude, longitude, mode);
+      console.log('Fetched Panditji in payment ::', response);
+      if (response.success) {
+        setPanditjiData(response.data);
+      }
+    } catch (error: any) {
+      showErrorToast(error.message || 'Failed to fetch panditji');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Payment methods
   const paymentMethods: PaymentMethod[] = [

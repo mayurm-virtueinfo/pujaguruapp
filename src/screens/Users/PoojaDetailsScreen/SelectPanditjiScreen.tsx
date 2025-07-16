@@ -27,6 +27,9 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from '../../../utils/appConstant';
+import {useCommonToast} from '../../../common/CommonToast';
 
 interface PanditjiItem {
   id: string;
@@ -45,62 +48,73 @@ const SelectPanditjiScreen: React.FC = () => {
   const route = useRoute();
   const {poojaId} = route.params as {poojaId: string};
 
+  const {showErrorToast} = useCommonToast();
+
   const navigation =
     useNavigation<StackNavigationProp<UserPoojaListParamList>>();
   const [searchText, setSearchText] = useState('');
   const [selectedPanditji, setSelectedPanditji] = useState<string | null>(null);
-
   const [panditjiData, setPanditjiData] = useState<PanditjiItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [location, setLocation] = useState<{
+    latitude: string;
+    longitude: string;
+  } | null>(null);
 
   useEffect(() => {
-    const fetchPanditjiData = async () => {
-      try {
-        setIsLoading(true);
-        const data = await apiService.getPanditListData();
-        const mappedData: PanditjiItem[] = data.map(
-          (item: any, idx: number) => ({
-            id: item.id?.toString() ?? `${idx + 1}`,
-            name: item.name ?? '',
-            location: item.location ?? '',
-            languages: item.languages ?? '',
-            image:
-              item.image ??
-              'https://cdn.builder.io/api/v1/image/assets/TEMP/96feb2dd36d383e6c73ee5b5d01ab81cd72a003a?width=104',
-            isSelected: false,
-            isVerified: item.isVerified ?? true,
-          }),
-        );
-        setPanditjiData(mappedData);
-      } catch (error) {
-        setPanditjiData([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchPanditjiData();
+    fetchLocation();
   }, []);
 
-  //   const fetchPanditji = async (
-  //   pooja_id: string,
-  //   latitude: string,
-  //   longitude: string,
-  //   mode: 'manual' | 'auto',
-  // ) => {
-  //   try {
-  //     setIsLoading(true);
-  //     const response = await getPanditji(pooja_id, latitude, longitude, mode);
-  //     console.log('Fetched Panditji:', response);
-  //     if (response && Array.isArray(response.panditji)) {
-  //       setMuhurats(response.panditji || []);
-  //     }
-  //   } catch (error: any) {
-  //     console.error('Error fetching muhurat:', error);
-  //     showErrorToast(error);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const fetchLocation = async () => {
+    try {
+      const location = await AsyncStorage.getItem(AppConstant.LOCATION);
+      if (location) {
+        const parsedLocation = JSON.parse(location);
+        setLocation(parsedLocation);
+      }
+    } catch (error) {
+      console.error('Error fetching  location ::', error);
+    }
+  };
+
+  console.log('panditjiData :: ', panditjiData);
+
+  useEffect(() => {
+    if (location && poojaId) {
+      fetchPanditji(poojaId, location.latitude, location.longitude, 'manual');
+    }
+  }, [location, poojaId]);
+
+  const fetchPanditji = async (
+    pooja_id: string,
+    latitude: string,
+    longitude: string,
+    mode: 'manual',
+  ) => {
+    try {
+      setIsLoading(true);
+      const response = await getPanditji(pooja_id, latitude, longitude, mode);
+      console.log('Fetched Panditji:', response);
+      if (response.success) {
+        const transformedData: PanditjiItem[] = response.data.map(
+          (item: any) => ({
+            id: item.id.toString(),
+            name: item.full_name,
+            location: item.city,
+            languages: item.supported_languages?.join(', '),
+            image: item.profile_img || 'https://via.placeholder.com/150',
+            isSelected: false,
+            isVerified: item.isVerified || false,
+          }),
+        );
+        setPanditjiData(transformedData);
+      }
+    } catch (error: any) {
+      showErrorToast(error.message || 'Failed to fetch panditji');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handlePanditjiSelect = (id: string) => {
     setSelectedPanditji(id);
@@ -119,10 +133,6 @@ const SelectPanditjiScreen: React.FC = () => {
         poojaId: poojaId,
       });
     }
-  };
-
-  const handleBackPress = () => {
-    navigation.goBack();
   };
 
   const renderSearchInput = () => (
@@ -201,10 +211,7 @@ const SelectPanditjiScreen: React.FC = () => {
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <CustomeLoader loading={isLoading} />
-      <StatusBar
-        barStyle="light-content"
-        // backgroundColor={COLORS.gradientStart}
-      />
+      <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('select_panditji')} showBackButton={true} />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}

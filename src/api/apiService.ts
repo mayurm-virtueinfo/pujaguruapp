@@ -902,7 +902,7 @@ export const getPanditji = (
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error fetching panditji:', error);
+        console.error('Error fetching panditji:', JSON.stringify(error));
         reject(error);
       });
   });
