@@ -87,6 +87,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Regular,
     fontSize: 13,
     fontWeight: '400',
+    paddingTop: 6,
   },
   price: {
     color: COLORS.pujaCardPrice,

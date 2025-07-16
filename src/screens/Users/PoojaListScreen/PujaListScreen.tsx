@@ -24,6 +24,7 @@ import {moderateScale} from 'react-native-size-matters';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
+import {useCommonToast} from '../../../common/CommonToast';
 
 type PujaItem = {
   id: any;
@@ -36,12 +37,12 @@ type PujaItem = {
 const PujaListScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
-    'UserPoojaDetails'
+    'PujaList'
   >;
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
+  const {showErrorToast} = useCommonToast();
 
-  // Only use pujaList, since API only returns puja list data
   const [pujaList, setPujaList] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -55,8 +56,9 @@ const PujaListScreen: React.FC = () => {
     setLoading(true);
     try {
       const data: any = await getPujaList();
-      if (Array.isArray(data)) {
-        const pujaItems = data.map(item => ({
+      console.log(data);
+      if (data.success) {
+        const pujaItems = data.data.map((item: any) => ({
           id: item.id,
           title: item.title,
           image_url: item.image_url,
@@ -67,7 +69,9 @@ const PujaListScreen: React.FC = () => {
       } else {
         setPujaList([]);
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.log('Error fetching puja list ::: ', error);
+      showErrorToast(error.message || 'Failed to fetch puja list');
       setPujaList([]);
     } finally {
       setLoading(false);
@@ -96,7 +100,6 @@ const PujaListScreen: React.FC = () => {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollViewContent}
           showsVerticalScrollIndicator={false}>
-          {/* Optionally, you can show a recommended section by picking a few from pujaList */}
           <View style={styles.recommendedSection}>
             <View style={{paddingHorizontal: 24, paddingTop: 24, gap: 8}}>
               <Text style={styles.sectionTitle}>{t('recomended_puja')}</Text>
@@ -116,7 +119,7 @@ const PujaListScreen: React.FC = () => {
                     title={puja.title}
                     onPress={() => {
                       navigation.navigate('UserPoojaDetails', {
-                        data: puja,
+                        poojaId: puja.id,
                       });
                     }}
                   />
@@ -140,7 +143,7 @@ const PujaListScreen: React.FC = () => {
                   price={`₹ ${puja.base_price}`}
                   onPress={() => {
                     navigation.navigate('UserPoojaDetails', {
-                      data: puja,
+                      poojaId: puja.id,
                     });
                   }}
                   showSeparator={idx !== pujaList.length - 1}

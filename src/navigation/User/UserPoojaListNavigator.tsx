@@ -21,7 +21,7 @@ export type UserPoojaListParamList = {
   navigate(arg0: string): unknown;
   PujaList: undefined;
   PujaBooking: undefined;
-  UserPoojaDetails: {data: PujaListItemType | RecommendedPuja};
+  UserPoojaDetails: {poojaId: string};
   PlaceSelectionScreen: undefined;
   AddressSelectionScreen: undefined;
   TirthPlaceSelectionScreen: undefined;

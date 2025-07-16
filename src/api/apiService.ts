@@ -14,6 +14,7 @@ import ApiEndpoints, {
   POST_REFRESH_TOKEN,
   POST_SIGNIN,
   POST_SIGNUP,
+  GET_POOJA_DETAILS,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -287,34 +288,34 @@ export interface RefreshTokenRequest {
 }
 
 export interface AddAddress {
-  name: string
-  address_type: number,
-  address_line1: string,
-  address_line2: string,
-  phone_number: string,
-  city: number,
-  state: string,
-  pincode: string,
-  latitude: number,
-  longitude: number
+  name: string;
+  address_type: number;
+  address_line1: string;
+  address_line2: string;
+  phone_number: string;
+  city: number;
+  state: string;
+  pincode: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface deleteAddress {
-  id: number
+  id: number;
 }
 
 export interface EditAddress {
-  id: number,
-  name: string
-  address_type: number,
-  address_line1: string,
-  address_line2: string,
-  phone_number: string,
-  city: number,
-  state: string,
-  pincode: string,
-  latitude: number,
-  longitude: number
+  id: number;
+  name: string;
+  address_type: number;
+  address_line1: string;
+  address_line2: string;
+  phone_number: string;
+  city: number;
+  state: string;
+  pincode: string;
+  latitude: number;
+  longitude: number;
 }
 
 export const apiService = {
@@ -519,16 +520,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return { pandits: [], puja: [] };
+      return {pandits: [], puja: []};
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || { recommendedPuja: [], pujaList: [] };
+      return response.data?.record || {recommendedPuja: [], pujaList: []};
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return { recommendedPuja: [], pujaList: [] };
+      return {recommendedPuja: [], pujaList: []};
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -579,10 +580,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -610,10 +611,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
 };
@@ -762,6 +763,21 @@ export const getMuhrat = (
       })
       .catch(error => {
         console.error('Error fetching muhrat:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getPoojaDetails = (id: string): Promise<any> => {
+  const apiUrl = GET_POOJA_DETAILS.replace('{id}', id);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching puja details:', error);
         reject(error);
       });
   });

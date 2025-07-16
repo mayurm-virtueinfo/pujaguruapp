@@ -211,8 +211,8 @@ const AddAddressScreen = ({navigation}: {navigation?: any}) => {
       if (
         typeof response === 'object' &&
         response !== null &&
-        'status' in response &&
-        (response as any).status
+        'success' in response &&
+        (response as any).success
       ) {
         showSuccessToast((response as any).message);
         navigation?.goBack();
