@@ -70,9 +70,7 @@ const PujaDetailsScreen: React.FC = () => {
 
   const [data, setData] = useState<PujaDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedPricingId, setSelectedPricingId] = useState<number | null>(
-    null,
-  );
+  const [selectedPricingId, setSelectedPricingId] = useState<number | null>(2);
 
   const {poojaId} = route.params as {poojaId: string};
 
@@ -167,7 +165,7 @@ const PujaDetailsScreen: React.FC = () => {
                 uri: data?.image_url,
               }}
               style={styles.heroImage}
-              resizeMode="cover"
+              resizeMode="contain"
             />
           </View>
           <View style={styles.detailsContainer}>

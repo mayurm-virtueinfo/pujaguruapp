@@ -54,4 +54,6 @@ export const GET_TIRTH_PLACE = '/app/tirth-places/';
 export const GET_MUHRAT =
   '/app/choghadiya?date={date}&latitude={latitude}&longitude={longitude}';
 export const GET_POOJA_DETAILS = '/app/puja-detail/{id}/';
-export const POST_BOOKING = '/app/booking/'
+export const POST_BOOKING = '/app/booking/';
+export const GET_AUTO_MANUAL_PANDIT_SELECTION =
+  '/app/auto-assign-panditji?puja_id={puja_id}&latitude={latitude}&longitude={longitude}&mode={mode}';

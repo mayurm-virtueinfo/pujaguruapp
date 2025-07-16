@@ -62,9 +62,6 @@ const UserHomeScreen: React.FC = () => {
     }
   }, [location]);
 
-  console.log('user id ::', user);
-  console.log('location ::', location);
-
   const fetchUserAndLocation = async () => {
     try {
       const user = await AsyncStorage.getItem(AppConstant.USER_ID);

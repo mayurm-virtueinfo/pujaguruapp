@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
@@ -23,7 +23,7 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
-import {getMuhrat} from '../../../api/apiService';
+import {getMuhrat, getPanditji} from '../../../api/apiService';
 import {useCommonToast} from '../../../common/CommonToast';
 import CustomeLoader from '../../../components/CustomeLoader';
 
@@ -34,9 +34,12 @@ const PujaBookingScreen: React.FC = () => {
 
   const today = new Date();
 
+  const route = useRoute();
+  const {poojaId} = route.params as {poojaId: string};
+
   const {showErrorToast} = useCommonToast();
 
-  const [selectedSlot, setSelectedSlot] = useState<string>('shubh');
+  const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [additionalNotes, setAdditionalNotes] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<number>(today.getDate());
   const [currentMonth, setCurrentMonth] = useState<string>(
@@ -50,7 +53,6 @@ const PujaBookingScreen: React.FC = () => {
   >('automatic');
   const [loading, setLoading] = useState<boolean>(false);
   const [location, setLocation] = useState<any>(null);
-
   const [muhurats, setMuhurats] = useState<any[]>([]);
 
   useEffect(() => {
@@ -96,8 +98,8 @@ const PujaBookingScreen: React.FC = () => {
     }
   };
 
-  const handleSlotSelect = (slotId: string) => {
-    setSelectedSlot(slotId);
+  const handleSlotSelect = (slot: any) => {
+    setSelectedSlot(`${slot.start}_${slot.end}_${slot.type}`);
   };
 
   const handlePanditjiSelectionModalOpen = () => {
@@ -114,9 +116,13 @@ const PujaBookingScreen: React.FC = () => {
     setPanditjiSelection(selection);
     setModalVisible(false);
     if (selection === 'automatic') {
-      navigation.navigate('PaymentScreen');
+      navigation.navigate('PaymentScreen', {
+        poojaId: poojaId,
+      });
     } else if (selection === 'manual') {
-      navigation.navigate('SelectPanditjiScreen');
+      navigation.navigate('SelectPanditjiScreen', {
+        poojaId: poojaId,
+      });
     }
   };
 
@@ -124,34 +130,40 @@ const PujaBookingScreen: React.FC = () => {
     <View style={styles.slotsContainer}>
       <Text style={styles.slotsTitle}>{t('select_muhurat_time_slot')}</Text>
       <View style={styles.slotsListContainer}>
-        {muhurats.map((slot, index) => (
-          <View key={index}>
-            <TouchableOpacity
-              style={styles.slotItem}
-              onPress={() => handleSlotSelect(slot.id)}>
-              <View style={styles.slotContent}>
-                <View style={styles.slotTextContainer}>
-                  <Text style={styles.slotName}>{slot.type}</Text>
-                  <Text style={styles.slotTime}>
-                    {slot.start} - {slot.end}
-                  </Text>
+        {muhurats.map((slot, index) => {
+          const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
+          const isSelected = selectedSlot === slotKey;
+          return (
+            <View key={slotKey}>
+              <TouchableOpacity
+                style={styles.slotItem}
+                onPress={() => handleSlotSelect(slot)}>
+                <View style={styles.slotContent}>
+                  <View style={styles.slotTextContainer}>
+                    <Text style={styles.slotName}>{slot.type}</Text>
+                    <Text style={styles.slotTime}>
+                      {slot.start} - {slot.end}
+                    </Text>
+                  </View>
+                  <View style={styles.slotSelection}>
+                    <Ionicons
+                      name={
+                        isSelected
+                          ? 'checkmark-circle-outline'
+                          : 'ellipse-outline'
+                      }
+                      size={24}
+                      color={isSelected ? COLORS.gradientEnd : '#E4E8E9'}
+                    />
+                  </View>
                 </View>
-                <View style={styles.slotSelection}>
-                  <Ionicons
-                    name={
-                      slot.isSelected
-                        ? 'checkmark-circle-outline'
-                        : 'ellipse-outline'
-                    }
-                    size={24}
-                    color={slot.isSelected ? COLORS.gradientEnd : '#E4E8E9'}
-                  />
-                </View>
-              </View>
-            </TouchableOpacity>
-            {index < muhurats.length - 1 && <View style={styles.slotDivider} />}
-          </View>
-        ))}
+              </TouchableOpacity>
+              {index < muhurats.length - 1 && (
+                <View style={styles.slotDivider} />
+              )}
+            </View>
+          );
+        })}
       </View>
     </View>
   );

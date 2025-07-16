@@ -13,8 +13,12 @@ import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Octicons from 'react-native-vector-icons/Octicons';
-import {apiService, PoojaBookingAddress} from '../../../api/apiService';
-import {useNavigation} from '@react-navigation/native';
+import {
+  apiService,
+  getAddressType,
+  PoojaBookingAddress,
+} from '../../../api/apiService';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
@@ -25,14 +29,20 @@ import {useTranslation} from 'react-i18next';
 const AddressSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
-    'PujaBooking'
+    'AddressSelectionScreen'
   >;
   const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
+  const route = useRoute();
+
+  const {poojaId} = route.params as {poojaId: string};
+
   const handleNextPress = () => {
-    navigation.navigate('PujaBooking');
+    navigation.navigate('PujaBooking', {
+      poojaId: poojaId,
+    });
   };
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingAddress[]>([]);
@@ -48,10 +58,9 @@ const AddressSelectionScreen: React.FC = () => {
   const fetchAllPoojaAddresses = async () => {
     try {
       setIsLoading(true);
-      const response = await apiService.getBookingAddress();
-      console.log('Fetched Pooja Address Requests:', response);
-      if (response && Array.isArray(response)) {
-        setPoojaPlaces(response);
+      const response: any = await getAddressType();
+      if (response.success) {
+        setPoojaPlaces(response.data);
       }
     } catch (error) {
       console.error('Error fetching pooja places:', error);
@@ -59,8 +68,6 @@ const AddressSelectionScreen: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  console.log('Pooja Places:', poojaPlaces);
 
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
@@ -88,9 +95,9 @@ const AddressSelectionScreen: React.FC = () => {
                       activeOpacity={0.7}
                       onPress={() => setSelectedAddressId(place.id)}>
                       <View>
-                        <Text style={styles.pricingText}>{place.title}</Text>
+                        <Text style={styles.pricingText}>{place.name}</Text>
                         <Text style={styles.subtitleText}>
-                          {place.subtitle}
+                          {place.description}
                         </Text>
                       </View>
                       <Octicons

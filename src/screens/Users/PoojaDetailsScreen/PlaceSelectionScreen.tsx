@@ -32,6 +32,7 @@ const PlaceSelectionScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute();
+
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingPlace[]>([
     {
       id: 1,

@@ -18,11 +18,11 @@ import PrimaryButton from '../../../components/PrimaryButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Octicons from 'react-native-vector-icons/Octicons';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {apiService} from '../../../api/apiService';
+import {apiService, getPanditji} from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
@@ -39,9 +39,12 @@ interface PanditjiItem {
 }
 
 const SelectPanditjiScreen: React.FC = () => {
-  // Set up navigation with correct type for stack navigation
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
   const inset = useSafeAreaInsets();
+
+  const route = useRoute();
+  const {poojaId} = route.params as {poojaId: string};
+
   const navigation =
     useNavigation<StackNavigationProp<UserPoojaListParamList>>();
   const [searchText, setSearchText] = useState('');
@@ -50,15 +53,11 @@ const SelectPanditjiScreen: React.FC = () => {
   const [panditjiData, setPanditjiData] = useState<PanditjiItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch Panditji data from API
   useEffect(() => {
     const fetchPanditjiData = async () => {
       try {
         setIsLoading(true);
         const data = await apiService.getPanditListData();
-        // Map API data to PanditjiItem shape if needed
-        // Assuming API returns array of objects with id, name, location, languages, image, isVerified
-        // If not, adjust mapping accordingly
         const mappedData: PanditjiItem[] = data.map(
           (item: any, idx: number) => ({
             id: item.id?.toString() ?? `${idx + 1}`,
@@ -82,6 +81,27 @@ const SelectPanditjiScreen: React.FC = () => {
     fetchPanditjiData();
   }, []);
 
+  //   const fetchPanditji = async (
+  //   pooja_id: string,
+  //   latitude: string,
+  //   longitude: string,
+  //   mode: 'manual' | 'auto',
+  // ) => {
+  //   try {
+  //     setIsLoading(true);
+  //     const response = await getPanditji(pooja_id, latitude, longitude, mode);
+  //     console.log('Fetched Panditji:', response);
+  //     if (response && Array.isArray(response.panditji)) {
+  //       setMuhurats(response.panditji || []);
+  //     }
+  //   } catch (error: any) {
+  //     console.error('Error fetching muhurat:', error);
+  //     showErrorToast(error);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const handlePanditjiSelect = (id: string) => {
     setSelectedPanditji(id);
     setPanditjiData(prev =>
@@ -95,8 +115,9 @@ const SelectPanditjiScreen: React.FC = () => {
   const handleNextPress = () => {
     if (selectedPanditji) {
       console.log('Selected Panditji:', selectedPanditji);
-      // Pass selectedPanditji as param if needed
-      navigation.navigate('PaymentScreen');
+      navigation.navigate('PaymentScreen', {
+        poojaId: poojaId,
+      });
     }
   };
 

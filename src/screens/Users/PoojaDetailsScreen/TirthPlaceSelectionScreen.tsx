@@ -21,10 +21,11 @@ import {
 } from '../../../api/apiService';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 const TirthPlaceSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -35,8 +36,13 @@ const TirthPlaceSelectionScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
+  const route = useRoute();
+  const {poojaId} = route.params as {poojaId: string};
+
   const handleNextPress = () => {
-    navigation.navigate('PujaBooking');
+    navigation.navigate('PujaBooking', {
+      poojaId: poojaId,
+    });
   };
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingTirthPlace[]>([]);
@@ -69,6 +75,7 @@ const TirthPlaceSelectionScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+      <CustomeLoader loading={isLoading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
       <ScrollView
