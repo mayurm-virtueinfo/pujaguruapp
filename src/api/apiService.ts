@@ -2,9 +2,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiDev from './apiDev';
 import ApiEndpoints, {
+  GET_ADDRESS_TYPE,
   GET_CITY,
   GET_PUJALIST,
   GET_RECOMMENDED_PANDIT,
+  GET_USER_ADDRESS,
+  POST_ADD_ADDRESS,
   POST_LOGOUT,
   POST_REFRESH_TOKEN,
   POST_SIGNIN,
@@ -276,6 +279,37 @@ export interface RefreshTokenRequest {
   refresh_token: string;
 }
 
+export interface AddAddress {
+  name: string
+  address_type: number,
+  address_line1: string,
+  address_line2: string,
+  phone_number: string,
+  city: number,
+  state: string,
+  pincode: string,
+  latitude: number,
+  longitude: number
+}
+
+export interface deleteAddress {
+  id: number
+}
+
+export interface EditAddress {
+  id: number,
+  name: string
+  address_type: number,
+  address_line1: string,
+  address_line2: string,
+  phone_number: string,
+  city: number,
+  state: string,
+  pincode: string,
+  latitude: number,
+  longitude: number
+}
+
 export const apiService = {
   // Fetch cities based on pincode
   getCities: async (pincode: string): Promise<DropdownItem[]> => {
@@ -478,16 +512,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return {pandits: [], puja: []};
+      return { pandits: [], puja: [] };
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || {recommendedPuja: [], pujaList: []};
+      return response.data?.record || { recommendedPuja: [], pujaList: [] };
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return {recommendedPuja: [], pujaList: []};
+      return { recommendedPuja: [], pujaList: [] };
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -538,10 +572,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -569,10 +603,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
 };
@@ -685,6 +719,81 @@ export const getRecommendedPandit = (
       })
       .catch(error => {
         console.error('Error fetching recommended pandit:', error);
+        reject(error);
+      });
+  });
+};
+
+export const postAddAddress = (data: AddAddress) => {
+  let apiUrl = POST_ADD_ADDRESS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error add address', error);
+        reject(error);
+      });
+  });
+};
+
+export const getAddress = () => {
+  let apiUrl = GET_USER_ADDRESS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching city data:', error);
+        reject(error);
+      });
+  });
+};
+
+export const deleteAddress = (data: deleteAddress) => {
+  let apiUrl = GET_USER_ADDRESS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .delete(apiUrl, { data })
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching city data:', error);
+        reject(error);
+      });
+  });
+};
+
+export const updateAddress = (data: EditAddress) => {
+  let apiUrl = GET_USER_ADDRESS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .put(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error Update Address:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getAddressType = () => {
+  let apiUrl = GET_ADDRESS_TYPE;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching city data:', error);
         reject(error);
       });
   });

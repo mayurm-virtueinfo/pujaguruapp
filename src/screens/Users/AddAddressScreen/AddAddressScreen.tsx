@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -14,14 +14,23 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import CustomTextInput from '../../../components/CustomTextInput';
 import PrimaryButton from '../../../components/PrimaryButton';
 import {useTranslation} from 'react-i18next';
+import {
+  getCity,
+  postAddAddress,
+  updateAddress,
+  getAddressType,
+} from '../../../api/apiService';
+import {useCommonToast} from '../../../common/CommonToast';
+import {requestLocationPermission} from '../../../utils/locationUtils';
+import Geolocation from '@react-native-community/geolocation';
+import CustomDropdown from '../../../components/CustomDropdown';
+import {useRoute} from '@react-navigation/native';
+import {Address} from '../AddressesScreen/AddressesScreen';
 
-interface AddAddressScreenProps {
-  navigation?: any;
-}
-
-const AddAddressScreen: React.FC<AddAddressScreenProps> = ({navigation}) => {
+const AddAddressScreen = ({navigation}: {navigation?: any}) => {
   const {t} = useTranslation();
   const insets = useSafeAreaInsets();
+  const {showErrorToast, showSuccessToast} = useCommonToast();
   const [formData, setFormData] = useState({
     fullName: '',
     phoneNumber: '',
@@ -33,6 +42,19 @@ const AddAddressScreen: React.FC<AddAddressScreenProps> = ({navigation}) => {
     addressType: '',
   });
 
+  const [location, setLocation] = useState({latitude: 0, longitude: 0});
+  const [isLoading, setIsLoading] = useState(false);
+  const [cityOptions, setCityOptions] = useState<
+    {label: string; value: string; id?: number}[]
+  >([]);
+  const [addressTypeOptions, setAddressTypeOptions] = useState<
+    {label: string; value: string; id: number}[]
+  >([]);
+  const didSetEditData = useRef(false);
+
+  const route = useRoute<any>();
+  const addressToEdit: Address | undefined = route.params?.addressToEdit;
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -40,36 +62,182 @@ const AddAddressScreen: React.FC<AddAddressScreenProps> = ({navigation}) => {
     }));
   };
 
-  const handleMyLocation = () => {
-    // Implementation for getting current location
-    console.log('Get my location');
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCitiesAndTypes = async () => {
+      try {
+        // Fetch cities
+        const cities: any = await getCity();
+        let cityList: any[] = Array.isArray(cities)
+          ? cities
+          : cities?.data || [];
+        let cityOptions = cityList.map((city: any) => ({
+          label: city.name,
+          value: String(city.id),
+          id: city.id,
+        }));
+        if (isMounted) setCityOptions(cityOptions);
+
+        // Fetch address types
+        const types: any = await getAddressType();
+        let typeList: any[] = Array.isArray(types) ? types : types?.data || [];
+        let typeOptions = typeList.map((type: any) => ({
+          label: type.name,
+          value: String(type.id),
+          id: type.id,
+        }));
+        if (isMounted) setAddressTypeOptions(typeOptions);
+
+        // If editing, set formData with correct city and addressType values
+        if (
+          addressToEdit &&
+          !didSetEditData.current &&
+          cityOptions.length > 0 &&
+          typeOptions.length > 0
+        ) {
+          // Find city id as string
+          let matchedCityId = '';
+          if (addressToEdit.city) {
+            let cityValue = addressToEdit.city;
+            if (typeof cityValue === 'object' && cityValue !== null) {
+              // Safely access id or name if they exist
+              cityValue = (cityValue as any).id ?? (cityValue as any).name;
+            }
+            const foundCity =
+              cityOptions.find(
+                opt =>
+                  String(opt.id) === String(cityValue) ||
+                  opt.label.toLowerCase() === String(cityValue).toLowerCase(),
+              ) || null;
+            matchedCityId = foundCity ? String(foundCity.value) : '';
+          }
+
+          // Find address type id as string
+          let matchedTypeId = '';
+          if (addressToEdit.address_type) {
+            let typeValue = addressToEdit.address_type;
+            if (typeof typeValue === 'object' && typeValue !== null) {
+              // Safely access id or name if they exist
+              typeValue = (typeValue as any).id ?? (typeValue as any).name;
+            }
+            const foundType =
+              typeOptions.find(
+                opt =>
+                  String(opt.id) === String(typeValue) ||
+                  opt.label.toLowerCase() === String(typeValue).toLowerCase(),
+              ) || null;
+            matchedTypeId = foundType ? String(foundType.value) : '';
+          }
+
+          setFormData({
+            fullName: addressToEdit.name || '',
+            phoneNumber: addressToEdit.phone_number || '',
+            addressLine1: addressToEdit.address_line1 || '',
+            addressLine2: addressToEdit.address_line2 || '',
+            city: matchedCityId,
+            state: addressToEdit.state || '',
+            pincode: addressToEdit.pincode || '',
+            addressType: matchedTypeId,
+          });
+          setLocation({
+            latitude: addressToEdit.latitude || 0,
+            longitude: addressToEdit.longitude || 0,
+          });
+          didSetEditData.current = true;
+        }
+      } catch (error) {
+        showErrorToast('Failed to fetch cities or address types');
+        setCityOptions([]);
+        setAddressTypeOptions([]);
+      }
+    };
+
+    fetchCitiesAndTypes();
+
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line
+  }, [addressToEdit]);
+
+  useEffect(() => {
+    didSetEditData.current = false;
+  }, [addressToEdit]);
+
+  const handleFetchGPS = async () => {
+    setIsLoading(true);
+    const hasPermission = await requestLocationPermission();
+    if (hasPermission) {
+      Geolocation.getCurrentPosition(
+        position => {
+          const {latitude, longitude} = position.coords;
+          setLocation({latitude, longitude});
+          setIsLoading(false);
+        },
+        () => setIsLoading(false),
+        {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+      );
+    } else {
+      setIsLoading(false);
+    }
   };
 
-  const handleSaveAddress = () => {
-    // Implementation for saving address
-    console.log('Save address:', formData);
+  const handleSaveAddress = async () => {
+    let cityId = Number(formData.city) || 0;
+    let addressTypeId = Number(formData.addressType) || 0;
+
+    const addressPayload = {
+      name: formData.fullName,
+      address_type: addressTypeId,
+      address_line1: formData.addressLine1,
+      address_line2: formData.addressLine2,
+      phone_number: formData.phoneNumber,
+      city: cityId,
+      state: formData.state,
+      pincode: formData.pincode,
+      latitude: location.latitude,
+      longitude: location.longitude,
+    };
+    try {
+      let response;
+      if (addressToEdit) {
+        response = await updateAddress({
+          id: addressToEdit.id,
+          ...addressPayload,
+        });
+      } else {
+        response = await postAddAddress(addressPayload);
+      }
+      if (
+        typeof response === 'object' &&
+        response !== null &&
+        'status' in response &&
+        (response as any).status
+      ) {
+        showSuccessToast((response as any).message);
+        navigation?.goBack();
+      }
+    } catch (error) {
+      showErrorToast(t('failed_to_save_address'));
+    }
   };
 
   const handleBack = () => {
-    if (navigation) {
-      navigation.goBack();
-    }
+    navigation?.goBack();
   };
 
   return (
     <SafeAreaView style={[styles.container, {paddingTop: insets.top}]}>
       <UserCustomHeader
-        title={t('add_address')}
+        title={addressToEdit ? t('edit_address') : t('add_address')}
         showBackButton={true}
         onBackPress={handleBack}
       />
 
-      {/* Form Content */}
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}>
         <View style={styles.formContainer}>
-          {/* Full Name */}
           <View style={styles.inputGroup}>
             <CustomTextInput
               label={t('full_name') + ' *'}
@@ -78,8 +246,6 @@ const AddAddressScreen: React.FC<AddAddressScreenProps> = ({navigation}) => {
               placeholder={t('enter_full_name')}
             />
           </View>
-
-          {/* Phone Number */}
           <View style={styles.inputGroup}>
             <CustomTextInput
               label={t('phone_number') + ' *'}
@@ -89,8 +255,6 @@ const AddAddressScreen: React.FC<AddAddressScreenProps> = ({navigation}) => {
               keyboardType="phone-pad"
             />
           </View>
-
-          {/* Address Line 1 */}
           <View style={styles.inputGroup}>
             <CustomTextInput
               label={t('address_line1') + ' *'}
@@ -99,8 +263,6 @@ const AddAddressScreen: React.FC<AddAddressScreenProps> = ({navigation}) => {
               placeholder={t('enter_address_line1')}
             />
           </View>
-
-          {/* Address Line 2 */}
           <View style={styles.inputGroup}>
             <CustomTextInput
               label={t('address_line2') + ' *'}
@@ -109,18 +271,16 @@ const AddAddressScreen: React.FC<AddAddressScreenProps> = ({navigation}) => {
               placeholder={t('enter_address_line2')}
             />
           </View>
-
-          {/* City and State Row */}
           <View style={styles.rowContainer}>
             <View style={styles.halfInputGroup}>
-              <CustomTextInput
+              <CustomDropdown
+                items={cityOptions}
+                selectedValue={formData.city}
+                onSelect={value => handleInputChange('city', value)}
                 label={t('city') + ' *'}
-                value={formData.city}
-                onChangeText={value => handleInputChange('city', value)}
                 placeholder={t('enter_city')}
               />
             </View>
-
             <View style={styles.halfInputGroup}>
               <CustomTextInput
                 label={t('state') + ' *'}
@@ -130,8 +290,6 @@ const AddAddressScreen: React.FC<AddAddressScreenProps> = ({navigation}) => {
               />
             </View>
           </View>
-
-          {/* Pincode and My Location Row */}
           <View style={styles.rowContainer}>
             <View style={styles.halfInputGroup}>
               <CustomTextInput
@@ -142,84 +300,38 @@ const AddAddressScreen: React.FC<AddAddressScreenProps> = ({navigation}) => {
                 keyboardType="phone-pad"
               />
             </View>
-
             <TouchableOpacity
               style={styles.locationButton}
-              onPress={handleMyLocation}>
+              onPress={handleFetchGPS}
+              disabled={isLoading}>
               <Icon
                 name="my-location"
                 size={18}
                 color={COLORS.primaryTextDark}
               />
-              <Text style={styles.locationButtonText}>{t('my_location')}</Text>
+              <Text style={styles.locationButtonText}>
+                {isLoading ? t('fetching_location') : t('my_location')}
+              </Text>
             </TouchableOpacity>
           </View>
-
-          {/* Address Type */}
           <View style={styles.addressTypeGroup}>
-            <Text style={styles.label}>{t('type_of_address')}</Text>
-            <View style={styles.addressTypeContainer}>
-              {/* HOME Button */}
-              <TouchableOpacity
-                style={[
-                  styles.addressTypeButton,
-                  formData.addressType === 'HOME' &&
-                    styles.addressTypeButtonActive,
-                ]}
-                onPress={() => handleInputChange('addressType', 'HOME')}>
-                <Icon
-                  name="home"
-                  size={16}
-                  color={
-                    formData.addressType === 'HOME'
-                      ? COLORS.white
-                      : COLORS.primaryTextDark
-                  }
-                />
-                <Text
-                  style={[
-                    styles.addressTypeText,
-                    formData.addressType === 'HOME' &&
-                      styles.addressTypeTextActive,
-                  ]}>
-                  {t('Home')}
-                </Text>
-              </TouchableOpacity>
-
-              {/* OFFICE Button */}
-              <TouchableOpacity
-                style={[
-                  styles.addressTypeButton,
-                  formData.addressType === 'OFFICE' &&
-                    styles.addressTypeButtonActive,
-                ]}
-                onPress={() => handleInputChange('addressType', 'OFFICE')}>
-                <Icon
-                  name="business"
-                  size={16}
-                  color={
-                    formData.addressType === 'OFFICE'
-                      ? COLORS.white
-                      : COLORS.primaryTextDark
-                  }
-                />
-                <Text
-                  style={[
-                    styles.addressTypeText,
-                    formData.addressType === 'OFFICE' &&
-                      styles.addressTypeTextActive,
-                  ]}>
-                  {t('office')}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <CustomDropdown
+              items={addressTypeOptions.map(opt => ({
+                ...opt,
+                label: t(opt.label.toLowerCase()),
+                value: String(opt.id),
+              }))}
+              selectedValue={formData.addressType}
+              onSelect={value => handleInputChange('addressType', value)}
+              label={t('type_of_address')}
+              placeholder={t('select_type_of_address')}
+            />
           </View>
-
-          {/* Save Button */}
           <PrimaryButton
-            title={t('save_address')}
+            title={addressToEdit ? t('update_address') : t('save_address')}
             onPress={handleSaveAddress}
             style={{marginTop: 0}}
+            disabled={isLoading}
           />
         </View>
       </ScrollView>
@@ -253,25 +365,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 16,
   },
-  label: {
-    color: COLORS.inputLabelText,
-    fontSize: 14,
-    fontWeight: '500',
-    fontFamily: 'Sen-Medium',
-    marginBottom: 2,
-    letterSpacing: -0.28,
-  },
-  textInput: {
-    height: 46,
-    borderWidth: 1,
-    borderColor: COLORS.inputBoder,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    fontSize: 14,
-    fontFamily: 'Sen-Medium',
-    color: COLORS.primaryTextDark,
-    backgroundColor: COLORS.white,
-  },
   locationButton: {
     height: 46,
     borderWidth: 1,
@@ -294,50 +387,6 @@ const styles = StyleSheet.create({
   },
   addressTypeGroup: {
     marginBottom: 16,
-  },
-  addressTypeContainer: {
-    flexDirection: 'row',
-    gap: 14,
-    marginTop: 6,
-  },
-  addressTypeButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: COLORS.inputBoder,
-    borderRadius: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: COLORS.white,
-  },
-  addressTypeButtonActive: {
-    backgroundColor: COLORS.gradientEnd,
-  },
-  addressTypeText: {
-    color: COLORS.primaryTextDark,
-    fontSize: 13,
-    fontWeight: '500',
-    fontFamily: 'Sen-Medium',
-  },
-  addressTypeTextActive: {
-    color: COLORS.white,
-  },
-  saveButton: {
-    height: 46,
-    backgroundColor: COLORS.gradientEnd,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  saveButtonText: {
-    color: COLORS.white,
-    fontSize: 15,
-    fontWeight: '500',
-    fontFamily: 'Sen-Medium',
-    letterSpacing: -0.15,
-    textTransform: 'uppercase',
   },
 });
 

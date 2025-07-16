@@ -1,45 +1,95 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {View, Text, StyleSheet, ScrollView, StatusBar} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
+import {
+  useNavigation,
+  RouteProp,
+  useRoute,
+  useFocusEffect,
+} from '@react-navigation/native';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
 import AddressCard from '../../../components/AddressCard';
 import AddressMenu from '../../../components/AddressMenu';
-import {address, apiService} from '../../../api/apiService';
+import {getAddress, deleteAddress} from '../../../api/apiService';
 import CustomeLoader from '../../../components/CustomeLoader';
+import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
+import CustomModal from '../../../components/CustomModal';
+import {useCommonToast} from '../../../common/CommonToast';
+
+// Define the address type based on the API response structure
+export interface Address {
+  id: number;
+  name: string;
+  address_type: string;
+  address_line1: string;
+  address_line2: string;
+  phone_number: string;
+  city: number;
+  city_name?: string;
+  state: string;
+  pincode: string;
+  latitude: number;
+  longitude: number;
+}
 
 const AddressesScreen: React.FC = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<UserProfileParamList>();
   const {t} = useTranslation();
+  const {showSuccessToast, showErrorToast} = useCommonToast();
 
   const [menuVisible, setMenuVisible] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState<address | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [menuPosition, setMenuPosition] = useState({x: 0, y: 0});
-  const [addresses, setAddresses] = useState<address[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  useEffect(() => {
-    fetchAddressData();
-  }, []);
+  // Use useRoute to get params (if any)
+  const route = useRoute<RouteProp<UserProfileParamList, 'AddressesScreen'>>();
+  // Try to get addressToEdit from route params, fallback to null
+  // But in this screen, there is no addressToEdit param, so always undefined
+  const addressToEdit =
+    (route.params && (route.params as any).addressToEdit) || null;
 
-  const fetchAddressData = async () => {
+  // Memoize fetchAddressData so it can be used in useFocusEffect
+  const fetchAddressData = useCallback(async () => {
     setLoading(true);
     try {
-      const requests = await apiService.getAddressData();
-      console.log('addresses : ', addresses);
-      setAddresses(requests.address || []);
+      const requests = await getAddress();
+      let addressList: Address[] = [];
+      if (
+        requests &&
+        typeof requests === 'object' &&
+        'data' in requests &&
+        Array.isArray((requests as any).data)
+      ) {
+        addressList = (requests as any).data;
+      }
+      setAddresses(addressList);
     } catch {
       setAddresses([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // Call fetchAddressData on mount and when screen is focused
+  useEffect(() => {
+    fetchAddressData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchAddressData();
+    }, [fetchAddressData]),
+  );
 
   const handleMenuPress = (
-    address: address,
+    address: Address,
     position: {x: number; y: number},
   ) => {
     setSelectedAddress(address);
@@ -49,12 +99,36 @@ const AddressesScreen: React.FC = () => {
 
   const handleEdit = () => {
     setMenuVisible(false);
-    console.log('Edit address:', selectedAddress?.id);
+    if (selectedAddress) {
+      navigation.navigate('AddAddressScreen', {addressToEdit: selectedAddress});
+    } else {
+      navigation.navigate('AddAddressScreen');
+    }
   };
 
   const handleDelete = () => {
     setMenuVisible(false);
-    console.log('Delete address:', selectedAddress?.id);
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    setDeleteModalVisible(false);
+    if (!selectedAddress) return;
+    setLoading(true);
+    try {
+      await deleteAddress({id: selectedAddress.id});
+      await fetchAddressData();
+      showSuccessToast(t('address_deleted_successfully'));
+    } catch (error) {
+      showErrorToast(t('failed_to_delete_address'));
+      console.error('Failed to delete address:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalVisible(false);
   };
 
   return (
@@ -68,9 +142,10 @@ const AddressesScreen: React.FC = () => {
       />
 
       <UserCustomHeader
-        title={t('my_addresses')}
+        title={addressToEdit ? t('edit_address') : t('add_address')}
         showBackButton={true}
         showCirclePlusButton={true}
+        onPlusPress={() => navigation.navigate('AddAddressScreen')}
       />
 
       <View style={styles.content}>
@@ -78,17 +153,26 @@ const AddressesScreen: React.FC = () => {
           {addresses.length} {t('saved_addresses')}
         </Text>
 
-        <ScrollView
-          style={styles.addressList}
-          showsVerticalScrollIndicator={false}>
-          {addresses.map(address => (
-            <AddressCard
-              key={address.id}
-              address={address}
-              onMenuPress={handleMenuPress}
-            />
-          ))}
-        </ScrollView>
+        <View>
+          {addresses.length === 0 && !loading ? (
+            <View style={styles.noDataContainer}>
+              <Text style={styles.noDataText}>{t('no_addresses_found')}</Text>
+            </View>
+          ) : (
+            <ScrollView
+              style={styles.addressList}
+              showsVerticalScrollIndicator={false}>
+              {addresses.map((address, idx) => (
+                <AddressCard
+                  key={address.id}
+                  address={address}
+                  onMenuPress={handleMenuPress}
+                  isLast={idx === addresses.length - 1 && addresses.length > 0}
+                />
+              ))}
+            </ScrollView>
+          )}
+        </View>
       </View>
 
       <AddressMenu
@@ -97,6 +181,16 @@ const AddressesScreen: React.FC = () => {
         onEdit={handleEdit}
         onDelete={handleDelete}
         position={menuPosition}
+      />
+
+      <CustomModal
+        visible={deleteModalVisible}
+        title={`${t('delete')} ${t('address')}`}
+        message={t('are_you_sure_you_want_to_delete_address')}
+        confirmText={t('delete')}
+        cancelText={t('cancel')}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
       />
     </SafeAreaView>
   );
@@ -122,16 +216,24 @@ const styles = StyleSheet.create({
     marginBottom: 11,
   },
   addressList: {
-    flex: 1,
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderRadius: 16,
     padding: 14,
     shadowColor: '#000',
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 3,
+  },
+  noDataContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
+  noDataText: {
+    color: COLORS.textSecondary || '#888',
+    fontSize: 16,
+    fontFamily: Fonts.Sen_Regular,
   },
 });
 

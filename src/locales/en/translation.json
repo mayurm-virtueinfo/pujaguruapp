@@ -143,5 +143,14 @@
   "edit": "Edit",
   "delete": "Delete",
   "enter_the_top_up_amount": "Enter The Top Up Amount",
-  "enter_amount": " Enter amount"
+  "enter_amount": " Enter amount",
+  "select_type_of_address": "Select type",
+  "no_addresses_found": "No addresses found.",
+  "are_you_sure_you_want_to_delete_address": "Are you sure you want to delete address?",
+  "are_you_sure_logout": "Are you sure you want to logout?",
+  "logging_out": "Logging out...",
+  "address_deleted_successfully": "Address deleted successfully",
+  "failed_to_delete_address": "Failed to delete address",
+  "edit_address": "Edit Address",
+  "update_address": "Update Address"
 }

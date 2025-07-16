@@ -1,5 +1,12 @@
 import React, {useState} from 'react';
-import {View, Text, TouchableOpacity, FlatList, StyleSheet} from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  ScrollView,
+} from 'react-native';
 import {moderateScale} from 'react-native-size-matters';
 import {COLORS, FONTS, THEMESHADOW} from '../theme/theme';
 import Fonts from '../theme/fonts';
@@ -73,6 +80,9 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
             renderItem={renderItem}
             keyExtractor={item => item.value}
             style={styles.flatList}
+            scrollEnabled={true}
+            nestedScrollEnabled={true}
+            showsVerticalScrollIndicator={true}
           />
         </View>
       )}

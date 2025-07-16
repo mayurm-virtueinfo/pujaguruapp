@@ -3,15 +3,21 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
-import {address} from '../api/apiService';
+import {Address} from '../screens/Users/AddressesScreen/AddressesScreen';
 
 interface AddressCardProps {
-  address: address;
-  onMenuPress: (address: address, position: {x: number; y: number}) => void;
+  address: Address;
+  onMenuPress: (address: Address, position: {x: number; y: number}) => void;
+  isLast?: boolean;
 }
 
-const AddressCard: React.FC<AddressCardProps> = ({address, onMenuPress}) => {
+const AddressCard: React.FC<AddressCardProps> = ({
+  address,
+  onMenuPress,
+  isLast = false,
+}) => {
   const buttonRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
+
   const handleMenuPress = () => {
     if (buttonRef.current) {
       buttonRef.current.measure(
@@ -29,13 +35,26 @@ const AddressCard: React.FC<AddressCardProps> = ({address, onMenuPress}) => {
     }
   };
 
+  // Compose address lines
+  const addressLines = [
+    address.address_line1,
+    address.address_line2,
+    address.city_name,
+    address.state,
+    address.pincode,
+  ]
+    .filter(Boolean)
+    .join(', ');
+
   return (
     <View style={styles.addressCard}>
       <View style={styles.addressHeader}>
-        <Text style={styles.addressName}>{address.name}</Text>
-        {address.type && (
+        <Text style={styles.addressName}>
+          {address.name ? address.name : 'Address'}
+        </Text>
+        {address.label && (
           <View style={styles.typeBadge}>
-            <Text style={styles.typeText}>{address.type}</Text>
+            <Text style={styles.typeText}>{address.label}</Text>
           </View>
         )}
         <TouchableOpacity
@@ -49,9 +68,11 @@ const AddressCard: React.FC<AddressCardProps> = ({address, onMenuPress}) => {
           />
         </TouchableOpacity>
       </View>
-      <Text style={styles.addressText}>{address.address}</Text>
-      <Text style={styles.phoneText}>{address.phone}</Text>
-      <View style={styles.cardSeparator} />
+      <Text style={styles.addressText}>{addressLines}</Text>
+      {address.phone_number ? (
+        <Text style={styles.phoneText}>{address.phone_number}</Text>
+      ) : null}
+      {!isLast && <View style={styles.cardSeparator} />}
     </View>
   );
 };

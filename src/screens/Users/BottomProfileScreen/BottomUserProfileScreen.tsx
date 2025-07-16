@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -23,6 +23,7 @@ import LanguageSwitcher from '../../../components/LanguageSwitcher';
 import {postLogout} from '../../../api/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
+import CustomModal from '../../../components/CustomModal';
 
 interface ProfileFieldProps {
   label: string;
@@ -45,7 +46,11 @@ const BottomUserProfileScreen: React.FC = () => {
 
   const {signOutApp} = useAuth();
 
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
   const handleLogout = async () => {
+    setLogoutLoading(true);
     try {
       const refreshToken =
         (await AsyncStorage.getItem(AppConstant.REFRESH_TOKEN)) || '';
@@ -54,10 +59,14 @@ const BottomUserProfileScreen: React.FC = () => {
       };
       const response: any = await postLogout(params);
       if (response.data.success) {
+        setLogoutModalVisible(false);
         signOutApp();
       }
     } catch (error: any) {
+      setLogoutModalVisible(false);
       console.error('Logout error:', error);
+    } finally {
+      setLogoutLoading(false);
     }
   };
 
@@ -69,6 +78,10 @@ const BottomUserProfileScreen: React.FC = () => {
   };
   const handleEditNavigation = () => {
     navigation.navigate('AddAddressScreen');
+  };
+
+  const handleSavedAddressNavigation = () => {
+    navigation.navigate('AddressesScreen');
   };
 
   const userData = {
@@ -152,6 +165,18 @@ const BottomUserProfileScreen: React.FC = () => {
             <View style={styles.divider} />
             <TouchableOpacity
               style={styles.editFieldContainer}
+              onPress={handleSavedAddressNavigation}
+              activeOpacity={0.7}>
+              <Text style={styles.editFieldLabel}>{t('Saved Address')}</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.primaryTextDark}
+              />
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity
+              style={styles.editFieldContainer}
               onPress={handleNotificationNavigation}
               activeOpacity={0.7}>
               <Text style={styles.editFieldLabel}>{t('notifications')} </Text>
@@ -166,7 +191,7 @@ const BottomUserProfileScreen: React.FC = () => {
           <LanguageSwitcher />
           <TouchableOpacity
             style={[styles.editSection, THEMESHADOW.shadow]}
-            onPress={handleLogout}>
+            onPress={() => setLogoutModalVisible(true)}>
             <View style={styles.editFieldContainer}>
               <Text style={styles.logoutLabel}>{t('logout')}</Text>
               <Ionicons
@@ -178,6 +203,15 @@ const BottomUserProfileScreen: React.FC = () => {
           </TouchableOpacity>
         </ScrollView>
       </View>
+      <CustomModal
+        visible={logoutModalVisible}
+        title={t('logout')}
+        message={t('are_you_sure_logout')}
+        confirmText={logoutLoading ? t('logging_out') : t('logout')}
+        cancelText={t('cancel')}
+        onConfirm={handleLogout}
+        onCancel={() => setLogoutModalVisible(false)}
+      />
     </SafeAreaView>
   );
 };

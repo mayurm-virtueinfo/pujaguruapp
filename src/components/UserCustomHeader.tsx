@@ -31,6 +31,7 @@ interface UserCustomHeaderProps {
   showCallButton?: boolean;
   showSliderButton?: boolean;
   showSkipButton?: boolean;
+  onPlusPress?: () => void;
   onBackPress?: () => void;
   onNotificationPress?: () => void;
 }
@@ -44,6 +45,7 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
   showCallButton = false,
   showSliderButton = false,
   showSkipButton = false,
+  onPlusPress,
   onBackPress,
   onNotificationPress,
 }) => {
@@ -119,9 +121,7 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
               </TouchableOpacity>
             )}
             {showCirclePlusButton && (
-              <TouchableOpacity
-                onPress={() => console.log('Plus Icon pressed')}
-                style={styles.iconButton}>
+              <TouchableOpacity onPress={onPlusPress} style={styles.iconButton}>
                 <Ionicons
                   name="add-circle-outline"
                   size={24}
