@@ -10,11 +10,7 @@ import {
   Image,
 } from 'react-native';
 import {COLORS} from '../../../theme/theme';
-import {
-  getPujaList,
-  PujaListItemType,
-  RecommendedPuja,
-} from '../../../api/apiService';
+import {getPujaList} from '../../../api/apiService';
 import Fonts from '../../../theme/fonts';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -37,6 +33,11 @@ type PujaItem = {
   description: any;
 };
 
+type ScreenNavigationProp = StackNavigationProp<
+  UserHomeParamList,
+  'SelectPujaScreen'
+>;
+
 const SelectPujaScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
@@ -45,7 +46,9 @@ const SelectPujaScreen: React.FC = () => {
   const [pujaList, setPujaList] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedPujaId, setSelectedPujaId] = useState<any>(null);
-  const navigation = useNavigation<UserHomeParamList>();
+  const navigation = useNavigation<ScreenNavigationProp>();
+
+  console.log('navigation :: ', navigation.getState());
 
   useEffect(() => {
     fetchPujaList();

@@ -29,12 +29,17 @@ import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 const AddressSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
-    UserHomeParamList,
-    'PujaBookingScreen'
+    UserPoojaListParamList | UserHomeParamList,
+    'AddressSelectionScreen'
   >;
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
+
+  console.log(
+    'navigation in address selection screen :: ',
+    navigation.getState(),
+  );
 
   const route = useRoute();
 
@@ -73,7 +78,7 @@ const AddressSelectionScreen: React.FC = () => {
   };
 
   const handleNextPress = () => {
-    navigation.navigate('PujaBookingScreen', {
+    navigation.navigate('PujaBooking', {
       poojaId: poojaId,
       samagri_required: samagri_required,
       address: selectedAddressId,

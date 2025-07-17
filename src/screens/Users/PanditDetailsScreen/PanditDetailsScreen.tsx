@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -16,9 +16,7 @@ import Fonts from '../../../theme/fonts';
 import CustomHeader from '../../../components/CustomHeader';
 import {
   apiService,
-  CommentData,
-  PanditItem,
-  PujaListItemType,
+  getPanditDetails,
   RecommendedPuja,
 } from '../../../api/apiService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -26,73 +24,145 @@ import Feather from 'react-native-vector-icons/Feather';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import CustomeLoader from '../../../components/CustomeLoader';
+import {useRoute} from '@react-navigation/native';
+import {useCommonToast} from '../../../common/CommonToast';
 
 const {width: screenWidth} = Dimensions.get('window');
 
+interface PujaListItemType {
+  id: number;
+  uuid: string;
+  pooja_title: string;
+  pooja_category: string;
+  amount: string;
+  booking_date: string;
+  muhurat_time: string;
+  muhurat_type: string;
+  address: string;
+  user_name: string;
+  user_mobile: string;
+  booking_status: string;
+  payment_status: string;
+  notes: string;
+  image?: string;
+}
+
+interface CommentData {
+  id: number;
+  booking: number;
+  user_name: string;
+  rating: number;
+  review: string;
+  created_at: string;
+  image?: string;
+}
+
+interface PanditDetails {
+  id: number;
+  uuid: string;
+  user: number;
+  pandit_name: string;
+  pandit_email: string;
+  pandit_mobile: string;
+  address_city: string;
+  caste: string;
+  sub_caste: string;
+  gotra: string;
+  bio: string | null;
+  supported_languages: string[];
+  average_rating: string;
+  total_ratings: number;
+  performed_pujas: PujaListItemType[];
+  ratings: CommentData[];
+  image?: string;
+}
+
+interface PanditResponse {
+  success: boolean;
+  data: PanditDetails;
+}
+
 const PanditDetailsScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
+  const route = useRoute();
+  const {panditId} = route.params as {panditId: string};
+
+  console.log('panditji id :: ', panditId);
+
+  const {showErrorToast} = useCommonToast();
 
   const [recommendedPuja, setRecommendedPuja] = useState<RecommendedPuja[]>([]);
   const [pujaList, setPujaList] = useState<PujaListItemType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [selectedPandit, setSelectedPandit] = useState<any>(null);
+  const [selectedPandit, setSelectedPandit] = useState<PanditDetails | null>(
+    null,
+  );
   const [commentData, setCommentData] = useState<CommentData[]>([]);
-  console.log('commentData', commentData);
+
   useEffect(() => {
-    fetchPujaData();
-    fetchAllPanditAndPuja();
-    fetchCommentData();
-  }, []);
-
-  const fetchPujaData = async () => {
-    setLoading(true);
-    try {
-      const requests = await apiService.getPujaListData();
-      setRecommendedPuja(requests.recommendedPuja || []);
-      setPujaList(requests.pujaList || []);
-    } catch {
-      setRecommendedPuja([]);
-      setPujaList([]);
-    } finally {
-      setLoading(false);
+    if (panditId) {
+      fetchPanditDetails(panditId);
     }
-  };
+  }, [panditId]);
 
-  const fetchAllPanditAndPuja = async () => {
-    setLoading(true);
-    try {
-      const requests = await apiService.getPanditAndPujaData();
-      if (requests.pandits && requests.pandits.length > 0) {
-        setSelectedPandit(requests.pandits[0]);
-      } else {
-        setSelectedPandit(null);
+  const fetchPanditDetails = useCallback(
+    async (panditId: string) => {
+      try {
+        setLoading(true);
+        const response: PanditResponse = await getPanditDetails(panditId);
+        console.log(response);
+
+        if (response.success) {
+          // Map API response to match expected UI fields
+          const mappedPujas: PujaListItemType[] =
+            response.data.performed_pujas.map(puja => ({
+              ...puja,
+              name: puja.pooja_title, // Map pooja_title to name for UI
+              pujaPurpose: puja.pooja_category, // Map pooja_category to pujaPurpose
+              price: parseFloat(puja.amount), // Convert string amount to number
+              image:
+                puja.image ||
+                'https://cdn.builder.io/api/v1/image/assets/e02e12c8254b4549b581b062ed0a5c7f/94c7341fbd9234bbb8e10341382dfaf1c28baf0d?placeholderIfAbsent=true', // Fallback image
+            }));
+
+          const mappedRatings: CommentData[] = response.data.ratings.map(
+            rating => ({
+              ...rating,
+              commenterName: rating.user_name, // Map user_name to commenterName
+              star: rating.rating, // Map rating to star
+              Comment: rating.review, // Map review to Comment
+              like: 0, // Default value as like is not in response
+              disLike: 0, // Default value as disLike is not in response
+              date: rating.created_at, // Map created_at to date
+              image:
+                rating.image ||
+                'https://cdn.builder.io/api/v1/image/assets/e02e12c8254b4549b581b062ed0a5c7f/94c7341fbd9234bbb8e10341382dfaf1c28baf0d?placeholderIfAbsent=true', // Fallback image
+            }),
+          );
+
+          setSelectedPandit(response.data);
+          setPujaList(mappedPujas);
+          setCommentData(mappedRatings);
+          console.log('Pandit details fetched successfully :: ', response.data);
+        }
+      } catch (error: any) {
+        showErrorToast(
+          error?.message || 'Failed to fetch Panditji details screen',
+        );
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      setSelectedPandit(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    [showErrorToast],
+  );
 
-  const fetchCommentData = async () => {
-    setLoading(true);
-    try {
-      const requests = await apiService.getCommentData();
-      setCommentData(requests);
-    } catch {
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Helper: get first two recommended pujas for gallery
   const galleryPujas = recommendedPuja.slice(0, 2);
 
-  // Fallback for selectedPandit if not loaded yet
-  const panditName = selectedPandit?.name || '';
-  const panditImage = selectedPandit?.image || '';
+  const panditName = selectedPandit?.pandit_name || '';
+  const panditImage =
+    selectedPandit?.image ||
+    'https://cdn.builder.io/api/v1/image/assets/e02e12c8254b4549b581b062ed0a5c7f/94c7341fbd9234bbb8e10341382dfaf1c28baf0d?placeholderIfAbsent=true';
 
-  // Helper: render stars for review
   const renderStars = (count: number) => {
     return (
       <View style={{flexDirection: 'row'}}>
@@ -111,7 +181,6 @@ const PanditDetailsScreen: React.FC = () => {
     );
   };
 
-  // Helper: format date from ISO to dd/mm/yyyy
   const formatDate = (isoDate: string) => {
     if (!isoDate) return '';
     const d = new Date(isoDate);
@@ -132,48 +201,35 @@ const PanditDetailsScreen: React.FC = () => {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
-        {/* Content Container */}
         <View style={styles.contentContainer}>
-          {/* Pandit Profile Card */}
           <View style={styles.panditCard}>
-            <Image
-              source={{
-                uri:
-                  panditImage ||
-                  'https://cdn.builder.io/api/v1/image/assets/e02e12c8254b4549b581b062ed0a5c7f/94c7341fbd9234bbb8e10341382dfaf1c28baf0d?placeholderIfAbsent=true',
-              }}
-              style={styles.panditImage}
-            />
+            <Image source={{uri: panditImage}} style={styles.panditImage} />
             <View style={styles.panditInfo}>
               <Text style={styles.panditName}>
                 {panditName || 'Pandit Name'}
               </Text>
               <View style={styles.nameRatingRow}>
-                <View style={{flexDirection: 'row'}}>
-                  {[...Array(5)].map((_, i) => (
-                    <Ionicons
-                      key={i}
-                      name="star"
-                      size={moderateScale(20)}
-                      color={COLORS.primaryBackgroundButton}
-                    />
-                  ))}
-                </View>
-                <Text style={styles.experienceText}>{24}</Text>
+                {renderStars(
+                  Math.round(parseFloat(selectedPandit?.average_rating || '0')),
+                )}
+                <Text style={styles.experienceText}>
+                  {selectedPandit?.total_ratings || 0} Reviews
+                </Text>
               </View>
             </View>
           </View>
 
-          {/* Recommended Section */}
           <View style={styles.recommendedSection}>
             <Text style={styles.descriptionText}>
               {panditName
-                ? `Pandit ${panditName} is highly experienced and well-versed in Hindu rituals and ceremonies.`
+                ? `Pandit ${panditName} is highly experienced and well-versed in Hindu rituals and ceremonies. ${
+                    selectedPandit?.bio ||
+                    'Specializing in various traditional pujas.'
+                  }`
                 : 'Pandit details will appear here.'}
             </Text>
           </View>
 
-          {/* Photo Gallery Section */}
           <View style={styles.photoGallerySection}>
             <Text style={styles.sectionTitle}>Photo Gallery</Text>
             <View style={styles.galleryRow}>
@@ -189,7 +245,6 @@ const PanditDetailsScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Pooja Performed Section */}
           <View style={styles.poojaSection}>
             <Text style={styles.sectionTitle}>Pooja Performed</Text>
             <View style={styles.poojaList}>
@@ -218,7 +273,6 @@ const PanditDetailsScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Reviews Section */}
           <View style={styles.reviewsSection}>
             <Text style={styles.sectionTitle}>Reviews</Text>
             <View style={styles.reviewsList}>
@@ -304,6 +358,7 @@ const PanditDetailsScreen: React.FC = () => {
   );
 };
 
+// Styles remain unchanged
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -317,27 +372,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-  },
-  rSection: {
-    paddingTop: moderateScale(50),
-    paddingHorizontal: moderateScale(20),
-    paddingBottom: moderateScale(30),
-    backgroundColor: COLORS.primary,
-  },
-  statusBar: {
-    marginBottom: moderateScale(15),
-  },
-  timeText: {
-    color: COLORS.white,
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_Regular,
-  },
-  headerTitle: {
-    color: COLORS.white,
-    textAlign: 'center',
-    fontSize: moderateScale(18),
-    fontFamily: Fonts.Sen_Bold,
-    fontWeight: '700',
   },
   contentContainer: {
     backgroundColor: COLORS.pujaBackground,
@@ -380,12 +414,6 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
     fontFamily: Fonts.Sen_SemiBold,
     fontWeight: '600',
-    // flex: 1,
-  },
-  ratingImage: {
-    width: moderateScale(80),
-    height: moderateScale(24),
-    resizeMode: 'contain',
   },
   experienceText: {
     color: COLORS.textSecondary,
@@ -396,32 +424,11 @@ const styles = StyleSheet.create({
   recommendedSection: {
     marginBottom: moderateScale(24),
   },
-  recommendedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: moderateScale(12),
-  },
   sectionTitle: {
     color: COLORS.textDark,
     fontSize: moderateScale(18),
     fontFamily: Fonts.Sen_SemiBold,
     fontWeight: '600',
-  },
-  seeAllRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  seeAllText: {
-    fontSize: moderateScale(16),
-    color: COLORS.primary,
-    fontFamily: Fonts.Sen_Medium,
-    fontWeight: '500',
-  },
-  arrowIcon: {
-    width: moderateScale(6),
-    height: moderateScale(10),
-    resizeMode: 'contain',
   },
   descriptionText: {
     color: COLORS.inputLabelText,
@@ -522,7 +529,6 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(12),
     padding: moderateScale(16),
     marginTop: moderateScale(12),
-    // Set shadow for reviewsList
     shadowColor: COLORS.black,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.08,
@@ -540,18 +546,6 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontFamily: Fonts.Sen_Regular,
     marginBottom: moderateScale(4),
-  },
-  reviewStars: {
-    width: moderateScale(60),
-    height: moderateScale(12),
-    resizeMode: 'contain',
-  },
-  reviewTitle: {
-    color: COLORS.textDark,
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_SemiBold,
-    fontWeight: '600',
-    marginBottom: moderateScale(8),
   },
   reviewText: {
     fontSize: moderateScale(12),
@@ -580,66 +574,6 @@ const styles = StyleSheet.create({
     color: COLORS.textDark,
     fontFamily: Fonts.Sen_Medium,
     fontWeight: '500',
-  },
-  bookButtonSection: {
-    backgroundColor: COLORS.pujaBackground,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  panditSummary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  summaryImage: {
-    width: moderateScale(50),
-    height: moderateScale(50),
-    borderRadius: moderateScale(25),
-    marginRight: moderateScale(12),
-  },
-  summaryInfo: {
-    flex: 1,
-  },
-  summaryName: {
-    color: COLORS.textDark,
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_SemiBold,
-    fontWeight: '600',
-    marginBottom: moderateScale(4),
-  },
-  summaryRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  starIcon: {
-    width: moderateScale(12),
-    height: moderateScale(12),
-    backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: moderateScale(6),
-    marginRight: moderateScale(4),
-  },
-  summaryRatingText: {
-    fontSize: moderateScale(12),
-    color: COLORS.textDark,
-    fontFamily: Fonts.Sen_Medium,
-    fontWeight: '500',
-  },
-  bookButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: moderateScale(10),
-    paddingVertical: moderateScale(12),
-    paddingHorizontal: moderateScale(24),
-    minWidth: moderateScale(100),
-  },
-  bookButtonText: {
-    color: COLORS.white,
-    textAlign: 'center',
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_SemiBold,
-    fontWeight: '600',
   },
 });
 

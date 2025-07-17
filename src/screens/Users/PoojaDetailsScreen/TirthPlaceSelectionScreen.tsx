@@ -30,8 +30,8 @@ import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 const TirthPlaceSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
-    UserHomeParamList,
-    'PujaBookingScreen'
+    UserPoojaListParamList,
+    'TirthPlaceSelectionScreen'
   >;
   const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
@@ -41,7 +41,7 @@ const TirthPlaceSelectionScreen: React.FC = () => {
   const {poojaId, samagri_required} = route.params as any;
 
   const handleNextPress = () => {
-    navigation.navigate('PujaBookingScreen', {
+    navigation.navigate('PujaBooking', {
       poojaId: poojaId,
       samagri_required: samagri_required,
       tirth: selectedTirthPlaceId,

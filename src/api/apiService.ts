@@ -18,6 +18,8 @@ import ApiEndpoints, {
   GET_POOJA_DETAILS,
   POST_BOOKING,
   GET_AUTO_MANUAL_PANDIT_SELECTION,
+  GET_ALL_PANDIT_LIST,
+  GET_PANDIT_DETAILS,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -903,6 +905,36 @@ export const getPanditji = (
       })
       .catch(error => {
         console.error('Error fetching panditji:', JSON.stringify(error));
+        reject(error);
+      });
+  });
+};
+
+export const getAllPanditji = () => {
+  let apiUrl = GET_ALL_PANDIT_LIST;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error getAllPanditji list :: ', error);
+        reject(error);
+      });
+  });
+};
+
+export const getPanditDetails = (id: string): Promise<any> => {
+  const apiUrl = GET_PANDIT_DETAILS.replace('{id}', id);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching pandit details:', error);
         reject(error);
       });
   });

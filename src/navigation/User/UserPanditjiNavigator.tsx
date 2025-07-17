@@ -12,7 +12,7 @@ export type UserPanditjiParamList = {
   goBack(): void;
   navigate(arg0: string): unknown;
   PanditjiScreen: undefined;
-  PanditDetailsScreen: undefined;
+  PanditDetailsScreen: {panditId: string};
   NotificationScreen: undefined;
 };
 

@@ -9,7 +9,7 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -58,8 +58,8 @@ interface PricingOption {
 
 const PujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
-    UserHomeParamList,
-    'PlaceSelectionScreen'
+    UserPoojaListParamList,
+    'UserPoojaDetails'
   >;
 
   const {t} = useTranslation();
@@ -97,7 +97,6 @@ const PujaDetailsScreen: React.FC = () => {
     }
   };
 
-  // Find the selected pricing option object
   const getSelectedPricingOption = (): PricingOption | undefined => {
     if (!data || selectedPricingId == null) return undefined;
     return getPricingOptions(data).find(
@@ -105,7 +104,6 @@ const PujaDetailsScreen: React.FC = () => {
     );
   };
 
-  // Pass like: withPujaItem: true/false and poojaId
   const handleBookNowPress = () => {
     const selectedOption = getSelectedPricingOption();
     if (!selectedOption) {

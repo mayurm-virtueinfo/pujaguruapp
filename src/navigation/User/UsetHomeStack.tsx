@@ -10,6 +10,7 @@ import PujaDetailsScreen from '../../screens/Users/PoojaDetailsScreen/PujaDetail
 import PlaceSelectionScreen from '../../screens/Users/PoojaDetailsScreen/PlaceSelectionScreen';
 import AddressSelectionScreen from '../../screens/Users/PoojaDetailsScreen/AddressSelectionScreen';
 import TirthPlaceSelectionScreen from '../../screens/Users/PoojaDetailsScreen/TirthPlaceSelectionScreen';
+import PaymentScreen from '../../screens/Users/PaymentScreen/PaymentScreen';
 
 export type UserHomeParamList = {
   goBack(): unknown;
@@ -17,19 +18,20 @@ export type UserHomeParamList = {
   UserHomeScreen: undefined;
   PujaCancellationScreen: undefined;
   NotificationScreen: undefined;
-  PujaBookingScreen: {
-    poojaId?: any;
+  PujaBooking: {
+    poojaId: string;
     samagri_required: boolean;
     address?: any;
     tirth?: any;
     poojaName?: any;
     poojaDescription?: any;
   };
-  SelectPujaScreen: {poojaId?: any};
-  PoojaDetailScreen: undefined;
+  SelectPujaScreen: undefined;
+  PoojaDetailScreen: {poojaId: any};
   PlaceSelectionScreen: {poojaId?: any; samagri_required: boolean};
-  AddressSelectionScreen: {poojaId?: any; samagri_required: boolean};
-  TirthPlaceSelectionScreen: {poojaId?: any; samagri_required: boolean};
+  AddressSelectionScreen: {poojaId: string; samagri_required: boolean};
+  TirthPlaceSelectionScreen: {poojaId: string; samagri_required: boolean};
+  PaymentScreen: {poojaId: string};
 };
 
 const Stack = createStackNavigator<UserHomeParamList>();
@@ -49,7 +51,7 @@ const UserHomeNavigator = () => {
         name="PlaceSelectionScreen"
         component={PlaceSelectionScreen}
       />
-      <Stack.Screen name="PujaBookingScreen" component={PujaBookingScreen} />
+      <Stack.Screen name="PujaBooking" component={PujaBookingScreen} />
       <Stack.Screen
         name="AddressSelectionScreen"
         component={AddressSelectionScreen}
@@ -58,6 +60,7 @@ const UserHomeNavigator = () => {
         name="TirthPlaceSelectionScreen"
         component={TirthPlaceSelectionScreen}
       />
+      <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
     </Stack.Navigator>
   );
 };

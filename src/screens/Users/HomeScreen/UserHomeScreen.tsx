@@ -31,9 +31,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import PrimaryButton from '../../../components/PrimaryButton';
 import axios from 'axios';
+import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 
 const UserHomeScreen: React.FC = () => {
-  const navigation = useNavigation<UserHomeParamList>();
+  const navigation = useNavigation<UserPoojaListParamList>();
   const [pandits, setPandits] = useState<PanditItem[]>([]);
   const [pujas, setPujas] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -42,8 +43,6 @@ const UserHomeScreen: React.FC = () => {
   const [recomendedPandits, setRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
-
-  console.log('recomendedPandits ::', recomendedPandits);
 
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();

@@ -25,10 +25,10 @@ import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 const PlaceSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
-    UserHomeParamList,
-    'AddressSelectionScreen' | 'TirthPlaceSelectionScreen'
+    UserPoojaListParamList,
+    'PlaceSelectionScreen'
   >;
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute();
@@ -46,18 +46,18 @@ const PlaceSelectionScreen: React.FC = () => {
   const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const {poojaId, withPujaItem} = route.params as any;
+  const {poojaId, samagri_required} = route.params as any;
 
   const handleNextPress = () => {
     if (selectedPlaceId === 1) {
       navigation.navigate('AddressSelectionScreen', {
         poojaId: poojaId,
-        withPujaItem: withPujaItem,
+        samagri_required: samagri_required,
       });
     } else if (selectedPlaceId === 2) {
       navigation.navigate('TirthPlaceSelectionScreen', {
         poojaId: poojaId,
-        withPujaItem: withPujaItem,
+        samagri_required: samagri_required,
       });
     }
   };

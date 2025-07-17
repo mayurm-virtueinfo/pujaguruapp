@@ -102,7 +102,7 @@ const SelectPanditjiScreen: React.FC = () => {
             name: item.full_name,
             location: item.city,
             languages: item.supported_languages?.join(', '),
-            image: item.profile_img || 'https://via.placeholder.com/150',
+            image: item.profile_img,
             isSelected: false,
             isVerified: item.isVerified || false,
           }),

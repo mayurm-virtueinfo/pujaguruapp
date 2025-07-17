@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
   View,
   StyleSheet,
@@ -18,76 +18,84 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {UserPanditjiParamList} from '../../../navigation/User/UserPanditjiNavigator';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {apiService} from '../../../api/apiService';
-import CustomHeader from '../../../components/CustomHeader';
+import {getAllPanditji} from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
+import {useCommonToast} from '../../../common/CommonToast';
 
 interface PanditjiItem {
   id: string;
-  name: string;
-  location: string;
-  languages: string;
-  image: string;
-  isSelected: boolean;
-  isVerified: boolean;
+  pandit_id: string;
+  full_name: string;
+  profile_img: string;
+  city: string;
+  supported_languages: Array<string>;
+}
+
+interface PanditjiResponse {
+  success: boolean;
+  message: string;
+  data: PanditjiItem[];
 }
 
 const PanditjiScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
 
   const navigation =
     useNavigation<StackNavigationProp<UserPanditjiParamList>>();
   const [searchText, setSearchText] = useState('');
-  const [panditjiData, setPanditjiData] = useState<PanditjiItem[]>([]);
+  const [panditjiData, setPanditjiData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const {showErrorToast} = useCommonToast();
 
   const handleNotificationPress = () => {
     navigation.navigate('NotificationScreen');
   };
 
-  useEffect(() => {
-    const fetchPanditjiData = async () => {
-      try {
-        setIsLoading(true);
-        const data = await apiService.getPanditListData();
-        const mappedData: PanditjiItem[] = data.map(
-          (item: any, idx: number) => ({
-            id: item.id?.toString() ?? `${idx + 1}`,
-            name: item.name ?? '',
-            location: item.location ?? '',
-            languages: item.languages ?? '',
-            image:
-              item.image ??
-              'https://cdn.builder.io/api/v1/image/assets/TEMP/96feb2dd36d383e6c73ee5b5d01ab81cd72a003a?width=104',
-            isSelected: false,
-            isVerified: item.isVerified ?? true,
-          }),
+  const fetchAllPanditji = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = (await getAllPanditji()) as PanditjiResponse;
+      if (response.success) {
+        setPanditjiData(
+          response.data
+            .filter(item =>
+              item.full_name.toLowerCase().includes(searchText.toLowerCase()),
+            )
+            .map((item: any) => ({
+              id: item.id,
+              pandit_id: item.pandit_id,
+              name: item.full_name,
+              image: item.profile_img,
+              location: item.city,
+              languages: item.supported_languages.join(', '),
+              isVerified: false,
+              isSelected: false,
+            })),
         );
-        setPanditjiData(mappedData);
-      } catch (error) {
-        setPanditjiData([]);
-      } finally {
-        setIsLoading(false);
       }
-    };
-    fetchPanditjiData();
-  }, []);
+    } catch (error: any) {
+      showErrorToast(error?.message || 'Failed to fetch Panditji list');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchText]);
+
+  useEffect(() => {
+    fetchAllPanditji();
+  }, [fetchAllPanditji]);
 
   const handlePanditjiSelect = (id: string) => {
-    setPanditjiData(prev =>
-      prev.map(item => ({
-        ...item,
-        isSelected: item.id === id,
-      })),
-    );
-    navigation.navigate('PanditDetailsScreen');
+    console.log('pandit id pass :: ', id);
+    navigation.navigate('PanditDetailsScreen', {
+      panditId: id,
+    });
   };
 
   const renderSearchInput = () => (
@@ -110,21 +118,18 @@ const PanditjiScreen: React.FC = () => {
     </View>
   );
 
-  const renderPanditjiItem = ({
-    item,
-    index,
-  }: {
-    item: PanditjiItem;
-    index: number;
-  }) => (
+  const renderPanditjiItem = ({item, index}: {item: any; index: number}) => (
     <View style={styles.panditjiContainer}>
       <TouchableOpacity
         style={styles.panditjiItem}
-        onPress={() => handlePanditjiSelect(item.id)}
+        onPress={() => handlePanditjiSelect(item.pandit_id)}
         activeOpacity={0.7}>
         <View style={styles.panditjiContent}>
           <View style={styles.imageContainer}>
-            <Image source={{uri: item.image}} style={styles.panditjiImage} />
+            <Image
+              source={{uri: item.profile_img}}
+              style={styles.panditjiImage}
+            />
             {item.isVerified && (
               <View style={styles.verifiedBadge}>
                 <MaterialIcons
@@ -142,7 +147,7 @@ const PanditjiScreen: React.FC = () => {
           </View>
           <TouchableOpacity
             style={styles.selectionButton}
-            onPress={() => handlePanditjiSelect(item.id)}>
+            onPress={() => handlePanditjiSelect(item.pandit_id)}>
             <Ionicons
               name="chevron-forward"
               size={20}

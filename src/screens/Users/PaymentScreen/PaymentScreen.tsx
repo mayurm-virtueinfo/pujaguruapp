@@ -312,8 +312,13 @@ const PaymentScreen: React.FC = () => {
           alignItems: 'center',
           paddingTop: 12,
         }}>
-        <Image source={{uri: item.pandit.image}} style={styles.panditImage} />
-        <Text style={styles.bookingDataText}>{item.pandit.name}</Text>
+        <Image
+          source={{
+            uri: panditData.profile_img || 'https://via.placeholder.com/150',
+          }}
+          style={styles.panditImage}
+        />
+        <Text style={styles.bookingDataText}>{panditData.full_name}</Text>
       </View>
     </View>
   );
@@ -645,6 +650,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 25,
     marginRight: scale(14),
+    backgroundColor: COLORS.inputBoder,
   },
   termsSection: {
     backgroundColor: COLORS.white,

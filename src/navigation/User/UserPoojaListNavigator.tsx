@@ -20,11 +20,18 @@ export type UserPoojaListParamList = {
   goBack(): void;
   navigate(arg0: string): unknown;
   PujaList: undefined;
-  PujaBooking: {poojaId: string};
+  PujaBooking: {
+    poojaId: string;
+    samagri_required: boolean;
+    address?: any;
+    tirth?: any;
+    poojaName?: any;
+    poojaDescription?: any;
+  };
   UserPoojaDetails: {poojaId: string};
-  PlaceSelectionScreen: {poojaId: string};
-  AddressSelectionScreen: {poojaId: string};
-  TirthPlaceSelectionScreen: {poojaId: string};
+  PlaceSelectionScreen: {poojaId: string; samagri_required: boolean};
+  AddressSelectionScreen: {poojaId: string; samagri_required: boolean};
+  TirthPlaceSelectionScreen: {poojaId: string; samagri_required: boolean};
   PaymentScreen: {poojaId: string};
   BookingSuccessfullyScreen: undefined;
   RateYourExperienceScreen: undefined;
