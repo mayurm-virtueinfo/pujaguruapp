@@ -37,7 +37,7 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const APP_URL = 'https://62f295b92b3a.ngrok-free.app';
+export const APP_URL = 'https://5f37d87777a1.ngrok-free.app';
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';
@@ -49,6 +49,7 @@ export const GET_RECOMMENDED_PANDIT =
 export const GET_ADDRESS = '/app/address/{id}';
 export const POST_ADD_ADDRESS = '/app/add-address/';
 export const GET_USER_ADDRESS = '/app/addresses/';
+export const GET_ADDRESS_TYPE_FOR_BOOKING = '/app/address-types-for-booking/';
 export const GET_ADDRESS_TYPE = '/app/address-types/';
 export const GET_TIRTH_PLACE = '/app/tirth-places/';
 export const GET_MUHRAT =
@@ -56,4 +57,6 @@ export const GET_MUHRAT =
 export const GET_POOJA_DETAILS = '/app/puja-detail/{id}/';
 export const POST_BOOKING = '/app/booking/';
 export const GET_AUTO_MANUAL_PANDIT_SELECTION =
-  '/app/auto-assign-panditji?puja_id={puja_id}&latitude={latitude}&longitude={longitude}&mode={mode}';
+  '/app/auto-assign-panditji/?puja_id={puja_id}&latitude={latitude}&longitude={longitude}&mode={mode}';
+export const POST_CREATE_RAZORPAY_ORDER = "/app/booking/create-razorpay-order/";
+export const POST_VERIFY_PAYMENT = "/app/booking/verify-payment/"

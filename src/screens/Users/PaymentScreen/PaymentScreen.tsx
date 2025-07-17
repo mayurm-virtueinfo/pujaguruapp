@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef, useCallback} from 'react';
 import {
   View,
   StyleSheet,
@@ -27,7 +27,12 @@ import {useTranslation} from 'react-i18next';
 import RazorpayCheckout from 'react-native-razorpay';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
-import {getPanditji} from '../../../api/apiService';
+import {
+  getPanditji,
+  postBooking,
+  postCreateRazorpayOrder,
+  postVerrifyPayment,
+} from '../../../api/apiService';
 
 interface PaymentMethod {
   id: string;
@@ -61,7 +66,17 @@ const PaymentScreen: React.FC = () => {
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const route = useRoute();
-  const {poojaId} = route.params as {poojaId: string};
+  const {
+    poojaId,
+    samagri_required,
+    address,
+    tirth,
+    booking_date,
+    muhurat_time,
+    muhurat_type,
+    notes,
+    pandit,
+  } = route.params as any;
 
   const {showErrorToast, showSuccessToast} = useCommonToast();
 
@@ -70,15 +85,20 @@ const PaymentScreen: React.FC = () => {
     useState<string>('');
   const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const [orderId, setOrderId] = useState<string | null>('1');
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [location, setLocation] = useState<{
     latitude: string;
     longitude: string;
   } | null>(null);
   const [loading, setIsLoading] = useState<boolean>(false);
   const [panditData, setPanditjiData] = useState<any>(null);
+  const [bookingId, setBookingId] = useState<string | undefined>();
 
-  console.log('panditData in payment screen:', panditData);
+  // Prevent duplicate API calls for Razorpay order
+  const razorpayOrderInProgress = useRef(false);
+
+  // Store the bookingId for which the orderId was created, to avoid duplicate order creation
+  const razorpayOrderBookingId = useRef<string | null>(null);
 
   useEffect(() => {
     fetchLocation();
@@ -92,7 +112,7 @@ const PaymentScreen: React.FC = () => {
         setLocation(parsedLocation);
       }
     } catch (error) {
-      console.error('Error fetching  location ::', error);
+      console.error('Error fetching location ::', error);
     }
   };
 
@@ -100,7 +120,91 @@ const PaymentScreen: React.FC = () => {
     if (location && poojaId) {
       fetchPanditji(poojaId, location.latitude, location.longitude, 'auto');
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, poojaId]);
+
+  // Helper to build bookingData with only address or tirth
+  const buildBookingData = () => {
+    let bookingData: any = {
+      pooja: typeof poojaId === 'string' ? parseInt(poojaId, 10) : poojaId,
+      pandit: typeof pandit === 'string' ? parseInt(pandit, 10) : pandit,
+      samagri_required: samagri_required,
+      booking_date: booking_date,
+      muhurat_time: muhurat_time,
+      muhurat_type: muhurat_type,
+      notes: notes,
+    };
+
+    if (
+      address &&
+      address !== '' &&
+      address !== null &&
+      address !== undefined
+    ) {
+      bookingData.address = address;
+    } else if (tirth && tirth !== '' && tirth !== null && tirth !== undefined) {
+      bookingData.tirth = tirth;
+    }
+
+    if (
+      bookingData.address === '' ||
+      bookingData.address === null ||
+      bookingData.address === undefined
+    ) {
+      delete bookingData.address;
+    }
+    if (
+      bookingData.tirth === '' ||
+      bookingData.tirth === null ||
+      bookingData.tirth === undefined
+    ) {
+      delete bookingData.tirth;
+    }
+
+    return bookingData;
+  };
+
+  // Function to create Razorpay order, expects bookingId as argument
+  // Prevents duplicate API calls by using a ref flag and bookingId check
+  const handleCreateRazorpayOrder = useCallback(
+    async (bookingIdForOrder: string) => {
+      // If we already have an orderId for this bookingId, just return it
+      if (razorpayOrderBookingId.current === bookingIdForOrder && orderId) {
+        return {order_id: orderId};
+      }
+      if (razorpayOrderInProgress.current) {
+        // Prevent duplicate calls
+        return null;
+      }
+      razorpayOrderInProgress.current = true;
+      setIsLoading(true);
+      try {
+        const data = {
+          booking_id: bookingIdForOrder,
+        };
+        const response: any = await postCreateRazorpayOrder(data as any);
+        console.log('respnse=========>', response.data);
+        if (response && response.data && response.data.order_id) {
+          setOrderId(response.data.order_id);
+          razorpayOrderBookingId.current = bookingIdForOrder;
+          showSuccessToast('Razorpay order created successfully!');
+          return response.data;
+        } else {
+          showErrorToast(
+            response?.message || 'Failed to create Razorpay order.',
+          );
+          return null;
+        }
+      } catch (error: any) {
+        showErrorToast(error?.message || 'Failed to create Razorpay order.');
+        return null;
+      } finally {
+        setIsLoading(false);
+        razorpayOrderInProgress.current = false;
+      }
+    },
+    [orderId, showSuccessToast, showErrorToast],
+  );
 
   const fetchPanditji = async (
     pooja_id: string,
@@ -111,7 +215,6 @@ const PaymentScreen: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await getPanditji(pooja_id, latitude, longitude, mode);
-      console.log('Fetched Panditji in payment ::', response);
       if (response.success) {
         setPanditjiData(response.data);
       }
@@ -150,36 +253,71 @@ const PaymentScreen: React.FC = () => {
     ],
   };
 
-  // Create Razorpay order
-  const createOrder = async () => {
+  // Function to verify payment using postVerrifyPayment API
+  const handleVerifyPayment = async ({
+    booking_id,
+    razorpay_payment_id,
+    razorpay_order_id,
+    razorpay_signature,
+  }: {
+    booking_id: string;
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+    razorpay_signature: string;
+  }) => {
+    setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/create-order', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({amount: 500000, currency: 'INR'}), // ₹5000 in paise
-      });
-      const data = await response.json();
-      setOrderId(data.id);
-    } catch (error) {
-      showErrorToast('Failed to create order');
+      const data = {
+        booking_id,
+        razorpay_payment_id,
+        razorpay_order_id,
+        razorpay_signature,
+      };
+      const response: any = await postVerrifyPayment(data);
+      if (response && response.data.success) {
+        showSuccessToast('Payment verified successfully!');
+        navigation.navigate('BookingSuccessfullyScreen');
+      } else {
+        showErrorToast(response?.message || 'Payment verification failed===>.');
+      }
+    } catch (error: any) {
+      showErrorToast(error?.message || 'Payment verification failed------>.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Handle payment
-  const handlePayment = async () => {
-    if (!orderId) {
-      await createOrder();
-      return;
+  const handlePayment = async (
+    amount: number,
+    bookingIdForOrder: string,
+    currentOrderId: string,
+  ) => {
+    // Always use the orderId for the current bookingId
+    let updatedOrderId = currentOrderId;
+    if (
+      !updatedOrderId ||
+      razorpayOrderBookingId.current !== bookingIdForOrder
+    ) {
+      // If orderId is not set or is for a different booking, create it
+      const razorpayOrder = await handleCreateRazorpayOrder(bookingIdForOrder);
+      if (!razorpayOrder || !razorpayOrder.order_id) {
+        showErrorToast('Order ID not found. Please try again.');
+        return;
+      }
+      updatedOrderId = razorpayOrder.order_id;
+      setOrderId(updatedOrderId);
+      razorpayOrderBookingId.current = bookingIdForOrder;
     }
 
     const options: any = {
       description: 'Puja Booking Payment',
       image: 'https://your-logo-url.com/logo.png',
       currency: 'INR',
-      key: 'rzp_test_WjmXdM6KUlsN6s', // Replace with your Razorpay Key ID
-      amount: '500000', // Amount in paise (₹5000)
+      key: 'rzp_test_birUVdrhV4Jm7l', // Replace with your Razorpay Key ID
+      amount: amount.toString(), // Amount in paise
       name: 'Your App Name',
-      order_id: orderId,
+      order_id: updatedOrderId, // Use the correct order_id here
       prefill: {
         email: 'user@example.com',
         contact: '9999999999',
@@ -189,10 +327,35 @@ const PaymentScreen: React.FC = () => {
     };
 
     RazorpayCheckout.open(options)
-      .then((data: any) => {
+      .then(async (data: any) => {
+        console.log('data=========>', data);
         showSuccessToast(`Payment successful: ${JSON.stringify(data)}`);
-        // Optionally: verify payment on backend here
-        navigation.navigate('BookingSuccessfullyScreen');
+        console.log(
+          'booking_id',
+          bookingIdForOrder,
+          'razorpay_payment_id',
+          data.razorpay_payment_id,
+          'razorpay_order_id',
+          updatedOrderId,
+          'razorpay_signature',
+          data.razorpay_signature,
+        );
+        if (
+          data &&
+          data.razorpay_payment_id &&
+          data.razorpay_order_id &&
+          data.razorpay_signature &&
+          bookingIdForOrder
+        ) {
+          await handleVerifyPayment({
+            booking_id: bookingIdForOrder,
+            razorpay_payment_id: data.razorpay_payment_id,
+            razorpay_order_id: updatedOrderId,
+            razorpay_signature: data.razorpay_signature,
+          });
+        } else {
+          showErrorToast('Payment verification data missing.');
+        }
       })
       .catch((error: {code: any}) => {
         showErrorToast(`Payment failed: ${error.code}`);
@@ -214,16 +377,105 @@ const PaymentScreen: React.FC = () => {
       showErrorToast('Please select a payment method.');
       return;
     }
+
     // Only allow payment for online methods
     if (
       selectedPaymentMethod === 'credit' ||
       selectedPaymentMethod === 'debit' ||
       selectedPaymentMethod === 'upi'
     ) {
-      await createOrder();
-      handlePayment();
+      // 500000 paise = ₹5000, you may want to calculate this dynamically
+      const amount = 500000;
+
+      setIsLoading(true);
+      try {
+        // Always call postBooking first, then postCreateRazorpayOrder
+        const bookingData = buildBookingData();
+        const bookingResponse = await postBooking(bookingData as any);
+        if (
+          bookingResponse &&
+          bookingResponse.data &&
+          bookingResponse.data.status &&
+          bookingResponse.data.data &&
+          bookingResponse.data.data.id
+        ) {
+          const newBookingId = bookingResponse.data.data.id;
+          setBookingId(newBookingId);
+
+          // Only create Razorpay order if not already created for this bookingId
+          let currentOrderId = orderId;
+          if (
+            !currentOrderId ||
+            razorpayOrderBookingId.current !== newBookingId
+          ) {
+            const razorpayOrder = await handleCreateRazorpayOrder(newBookingId);
+            console.log('razorpayOrder=======>', razorpayOrder);
+            if (!razorpayOrder || !razorpayOrder.order_id) {
+              showErrorToast('Order ID not found. Please try again.');
+              setIsLoading(false);
+              return;
+            }
+            currentOrderId = razorpayOrder.order_id;
+            setOrderId(currentOrderId);
+            razorpayOrderBookingId.current = newBookingId;
+          }
+          await handlePayment(amount, newBookingId, currentOrderId!);
+        } else {
+          // Show error details for debugging
+          if (bookingResponse && bookingResponse.errors) {
+            showErrorToast(
+              `Booking failed=-=-=-=-->: ${JSON.stringify(
+                bookingResponse.errors,
+              )}`,
+            );
+          } else {
+            showErrorToast(bookingResponse?.message || 'Booking failed.');
+          }
+        }
+      } catch (error: any) {
+        // Show error details for debugging
+        if (error?.response?.data) {
+          showErrorToast(
+            `Error Booking=-=-==-----=-==-: ${JSON.stringify(
+              error.response.data,
+            )}`,
+          );
+        } else {
+          showErrorToast(error?.message || 'Booking failed.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
     } else {
-      navigation.navigate('BookingSuccessfullyScreen');
+      // For offline methods, just book and navigate
+      setIsLoading(true);
+      try {
+        const bookingData = buildBookingData();
+        const response = await postBooking(bookingData as any);
+        if (response && response.success) {
+          setBookingId(response.data.id);
+          showSuccessToast('Booking successful!');
+          navigation.navigate('BookingSuccessfullyScreen');
+        } else {
+          if (response && response.errors) {
+            showErrorToast(
+              `Booking failed: ${JSON.stringify(response.errors)}`,
+            );
+          } else {
+            showErrorToast(response?.message || 'Booking failed.');
+          }
+        }
+      } catch (error: any) {
+        if (error?.response?.data) {
+          showErrorToast(
+            `Error Booking: ${JSON.stringify(error.response.data)}`,
+          );
+        } else {
+          showErrorToast(error?.message || 'Booking failed.');
+        }
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -439,6 +691,7 @@ const PaymentScreen: React.FC = () => {
             onPress={handleConfirmBooking}
             style={styles.buttonContainer}
             textStyle={styles.buttonText}
+            disabled={loading}
           />
         </ScrollView>
       </View>

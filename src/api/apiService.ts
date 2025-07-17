@@ -18,6 +18,9 @@ import ApiEndpoints, {
   GET_POOJA_DETAILS,
   POST_BOOKING,
   GET_AUTO_MANUAL_PANDIT_SELECTION,
+  POST_CREATE_RAZORPAY_ORDER,
+  POST_VERIFY_PAYMENT,
+  GET_ADDRESS_TYPE_FOR_BOOKING,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -326,9 +329,22 @@ export interface Booking {
   pandit: number;
   samagri_required: boolean;
   address: number;
+  tirth: number,
   booking_date: string;
+  muhurat_type: string
   muhurat_time: string;
   notes: string;
+}
+
+export interface CreateRazorpayOrder {
+  booking_id: number
+}
+
+export interface VerrifyPayment {
+  booking_id: number,
+  razorpay_payment_id: string,
+  razorpay_order_id: string,
+  razorpay_signature: string
 }
 
 export const apiService = {
@@ -533,16 +549,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return {pandits: [], puja: []};
+      return { pandits: [], puja: [] };
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || {recommendedPuja: [], pujaList: []};
+      return response.data?.record || { recommendedPuja: [], pujaList: [] };
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return {recommendedPuja: [], pujaList: []};
+      return { recommendedPuja: [], pujaList: [] };
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -593,10 +609,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -624,10 +640,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
 };
@@ -800,7 +816,7 @@ export const deleteAddress = (data: deleteAddress) => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, {data})
+      .delete(apiUrl, { data })
       .then(response => {
         resolve(response);
       })
@@ -813,6 +829,21 @@ export const deleteAddress = (data: deleteAddress) => {
 
 export const getAddressType = () => {
   let apiUrl = GET_ADDRESS_TYPE;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error getAddress Type:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getAddressTypeForBooking = () => {
+  let apiUrl = GET_ADDRESS_TYPE_FOR_BOOKING;
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)
@@ -903,6 +934,36 @@ export const getPanditji = (
       })
       .catch(error => {
         console.error('Error fetching panditji:', JSON.stringify(error));
+        reject(error);
+      });
+  });
+};
+
+export const postCreateRazorpayOrder = (data: CreateRazorpayOrder) => {
+  let apiUrl = POST_CREATE_RAZORPAY_ORDER;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error create razorpay order', error);
+        reject(error);
+      });
+  });
+};
+
+export const postVerrifyPayment = (data: VerrifyPayment) => {
+  let apiUrl = POST_VERIFY_PAYMENT;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error create razorpay order', error);
         reject(error);
       });
   });

@@ -30,6 +30,7 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import {useCommonToast} from '../../../common/CommonToast';
+import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 interface PanditjiItem {
   id: string;
@@ -46,12 +47,19 @@ const SelectPanditjiScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
 
   const route = useRoute();
-  const {poojaId} = route.params as {poojaId: string};
-
+  const {
+    poojaId,
+    samagri_required,
+    address,
+    tirth,
+    booking_date,
+    muhurat_time,
+    muhurat_type,
+    notes,
+  } = route.params as any;
   const {showErrorToast} = useCommonToast();
 
-  const navigation =
-    useNavigation<StackNavigationProp<UserPoojaListParamList>>();
+  const navigation = useNavigation<StackNavigationProp<UserHomeParamList>>();
   const [searchText, setSearchText] = useState('');
   const [selectedPanditji, setSelectedPanditji] = useState<string | null>(null);
   const [panditjiData, setPanditjiData] = useState<PanditjiItem[]>([]);
@@ -98,7 +106,7 @@ const SelectPanditjiScreen: React.FC = () => {
       if (response.success) {
         const transformedData: PanditjiItem[] = response.data.map(
           (item: any) => ({
-            id: item.id.toString(),
+            id: item.pandit_id,
             name: item.full_name,
             location: item.city,
             languages: item.supported_languages?.join(', '),
@@ -126,11 +134,20 @@ const SelectPanditjiScreen: React.FC = () => {
     );
   };
 
+  // Pass selected pandit id in navigation
   const handleNextPress = () => {
     if (selectedPanditji) {
       console.log('Selected Panditji:', selectedPanditji);
       navigation.navigate('PaymentScreen', {
         poojaId: poojaId,
+        samagri_required: samagri_required,
+        address: address,
+        tirth: tirth,
+        booking_date: booking_date,
+        muhurat_time: muhurat_time,
+        muhurat_type: muhurat_type,
+        notes: notes,
+        pandit: selectedPanditji, // Pass selected pandit id here
       });
     }
   };
