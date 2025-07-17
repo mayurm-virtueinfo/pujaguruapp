@@ -27,6 +27,20 @@ import {getMuhrat, getPanditji} from '../../../api/apiService';
 import {useCommonToast} from '../../../common/CommonToast';
 import CustomeLoader from '../../../components/CustomeLoader';
 
+const formatDateYYYYMMDD = (date: Date | string) => {
+  if (typeof date === 'string') {
+    // If already in YYYY-MM-DD, just return
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+    // Try to parse string to Date
+    date = new Date(date);
+  }
+  // Ensure two digits for month and day
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 const PujaBookingScreen: React.FC = () => {
   const {t} = useTranslation();
   const navigation =
@@ -46,8 +60,12 @@ const PujaBookingScreen: React.FC = () => {
   const {showErrorToast} = useCommonToast();
 
   const [selectedSlot, setSelectedSlot] = useState<string>('');
+  const [selectedSlotObj, setSelectedSlotObj] = useState<any>(null);
   const [additionalNotes, setAdditionalNotes] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<number>(today.getDate());
+  const [selectedDateString, setSelectedDateString] = useState<string>(
+    formatDateYYYYMMDD(today),
+  );
   const [currentMonth, setCurrentMonth] = useState<string>(
     `${today.toLocaleString('default', {
       month: 'long',
@@ -86,13 +104,13 @@ const PujaBookingScreen: React.FC = () => {
   const fetchMuhurat = async (dateString?: string) => {
     try {
       setLoading(true);
-      const dateToFetch = dateString || new Date().toISOString().split('T')[0];
+      const dateToFetch = formatDateYYYYMMDD(dateString || today);
       const response = await getMuhrat(
         dateToFetch,
         location?.latitude,
         location?.longitude,
       );
-      console.log('Fetched Muhurat:', response);
+      // console.log('Fetched Muhurat:', response);
       if (response && Array.isArray(response.choghadiya)) {
         setMuhurats(response.choghadiya || []);
       }
@@ -106,6 +124,7 @@ const PujaBookingScreen: React.FC = () => {
 
   const handleSlotSelect = (slot: any) => {
     setSelectedSlot(`${slot.start}_${slot.end}_${slot.type}`);
+    setSelectedSlotObj(slot);
   };
 
   const handlePanditjiSelectionModalOpen = () => {
@@ -121,14 +140,39 @@ const PujaBookingScreen: React.FC = () => {
   ) => {
     setPanditjiSelection(selection);
     setModalVisible(false);
+
+    // Prepare selected date in YYYY-MM-DD format
+    let selectedDateISO = selectedDateString;
+    // If selectedDateString is not set, fallback to today
+    if (!selectedDateISO) {
+      selectedDateISO = formatDateYYYYMMDD(today);
+    } else {
+      selectedDateISO = formatDateYYYYMMDD(selectedDateISO);
+    }
+
+    // Prepare muhurat time and type
+    let muhuratTime = '';
+    let muhuratType = '';
+    if (selectedSlotObj) {
+      muhuratTime = `${selectedSlotObj.start} - ${selectedSlotObj.end}`;
+      muhuratType = selectedSlotObj.type;
+    }
+
+    const navigationParams: any = {
+      poojaId: poojaId,
+      samagri_required: samagri_required,
+      address: address,
+      tirth: tirth,
+      booking_date: selectedDateISO,
+      muhurat_time: muhuratTime,
+      muhurat_type: muhuratType,
+      notes: additionalNotes,
+    };
+
     if (selection === 'automatic') {
-      navigation.navigate('PaymentScreen', {
-        poojaId: poojaId,
-      });
+      navigation.navigate('PaymentScreen', navigationParams);
     } else if (selection === 'manual') {
-      navigation.navigate('SelectPanditjiScreen', {
-        poojaId: poojaId,
-      });
+      navigation.navigate('SelectPanditjiScreen', navigationParams);
     }
   };
 
@@ -214,8 +258,10 @@ const PujaBookingScreen: React.FC = () => {
         <Calendar
           date={selectedDate}
           onDateSelect={dateString => {
+            // dateString is expected to be in YYYY-MM-DD
             setSelectedDate(new Date(dateString).getDate());
-            fetchMuhurat(dateString);
+            setSelectedDateString(formatDateYYYYMMDD(dateString));
+            fetchMuhurat(formatDateYYYYMMDD(dateString));
           }}
           month={currentMonth}
           onMonthChange={direction => {
@@ -243,6 +289,11 @@ const PujaBookingScreen: React.FC = () => {
             );
             setCurrentMonth(`${newMonthName} ${newYear}`);
             setSelectedDate(1);
+            // Also update selectedDateString to first of new month in YYYY-MM-DD
+            const newDate = new Date(newYear, newMonthIdx, 1);
+            const formattedDate = formatDateYYYYMMDD(newDate);
+            setSelectedDateString(formattedDate);
+            fetchMuhurat(formattedDate);
           }}
         />
 

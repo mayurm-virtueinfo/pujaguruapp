@@ -11,6 +11,8 @@ import PlaceSelectionScreen from '../../screens/Users/PoojaDetailsScreen/PlaceSe
 import AddressSelectionScreen from '../../screens/Users/PoojaDetailsScreen/AddressSelectionScreen';
 import TirthPlaceSelectionScreen from '../../screens/Users/PoojaDetailsScreen/TirthPlaceSelectionScreen';
 import PaymentScreen from '../../screens/Users/PaymentScreen/PaymentScreen';
+import SelectPanditjiScreen from '../../screens/Users/PoojaDetailsScreen/SelectPanditjiScreen';
+import BookingSuccessfullyScreen from '../../screens/Users/BookingSuccessfullyScreen/BookingSuccessfullyScreen';
 
 export type UserHomeParamList = {
   goBack(): unknown;
@@ -29,9 +31,11 @@ export type UserHomeParamList = {
   SelectPujaScreen: undefined;
   PoojaDetailScreen: {poojaId: any};
   PlaceSelectionScreen: {poojaId?: any; samagri_required: boolean};
-  AddressSelectionScreen: {poojaId: string; samagri_required: boolean};
-  TirthPlaceSelectionScreen: {poojaId: string; samagri_required: boolean};
-  PaymentScreen: {poojaId: string};
+  AddressSelectionScreen: {poojaId?: any; samagri_required: boolean};
+  TirthPlaceSelectionScreen: {poojaId?: any; samagri_required: boolean};
+  PaymentScreen: any;
+  SelectPanditjiScreen: any;
+  BookingSuccessfullyScreen: undefined;
 };
 
 const Stack = createStackNavigator<UserHomeParamList>();
@@ -61,6 +65,14 @@ const UserHomeNavigator = () => {
         component={TirthPlaceSelectionScreen}
       />
       <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
+      <Stack.Screen
+        name="SelectPanditjiScreen"
+        component={SelectPanditjiScreen}
+      />
+      <Stack.Screen
+        name="BookingSuccessfullyScreen"
+        component={BookingSuccessfullyScreen}
+      />
     </Stack.Navigator>
   );
 };

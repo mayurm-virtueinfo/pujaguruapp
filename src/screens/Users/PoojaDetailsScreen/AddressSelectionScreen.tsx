@@ -14,8 +14,7 @@ import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Octicons from 'react-native-vector-icons/Octicons';
 import {
-  apiService,
-  getAddressType,
+  getAddressTypeForBooking,
   PoojaBookingAddress,
 } from '../../../api/apiService';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -46,9 +45,14 @@ const AddressSelectionScreen: React.FC = () => {
   const {poojaId, samagri_required} = route.params as any;
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingAddress[]>([]);
+  // selectedAddressId is the id of the address type (not user_address_id)
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
     null,
   );
+  // selectedUserAddressId is the user_address_id to be sent in API
+  const [selectedUserAddressId, setSelectedUserAddressId] = useState<
+    number | null
+  >(null);
   const [selectedAddress, setSelectedAddress] =
     useState<PoojaBookingAddress | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -60,7 +64,8 @@ const AddressSelectionScreen: React.FC = () => {
   const fetchAllPoojaAddresses = async () => {
     try {
       setIsLoading(true);
-      const response: any = await getAddressType();
+      const response: any = await getAddressTypeForBooking();
+      console.log('response', response);
       if (response.success) {
         setPoojaPlaces(response.data);
       }
@@ -71,17 +76,24 @@ const AddressSelectionScreen: React.FC = () => {
     }
   };
 
+  // When user selects an address, store both the address type id and the user_address_id
   const handleSelectAddress = (id: number) => {
     setSelectedAddressId(id);
     const found = poojaPlaces.find(place => place.id === id) || null;
     setSelectedAddress(found);
+    if (found && found.user_address_id) {
+      setSelectedUserAddressId(found.user_address_id);
+    } else {
+      setSelectedUserAddressId(null);
+    }
   };
 
+  // Pass user_address_id as "address" in navigation params
   const handleNextPress = () => {
     navigation.navigate('PujaBooking', {
       poojaId: poojaId,
       samagri_required: samagri_required,
-      address: selectedAddressId,
+      address: selectedUserAddressId, // Pass user_address_id here
       poojaName: selectedAddress?.name || '',
       poojaDescription: selectedAddress?.description || '',
     });
@@ -144,7 +156,7 @@ const AddressSelectionScreen: React.FC = () => {
               onPress={handleNextPress}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}
-              disabled={!selectedAddressId}
+              disabled={!selectedUserAddressId}
             />
           </View>
         </View>

@@ -40,18 +40,15 @@ const TirthPlaceSelectionScreen: React.FC = () => {
   const route = useRoute();
   const {poojaId, samagri_required} = route.params as any;
 
-  const handleNextPress = () => {
-    navigation.navigate('PujaBooking', {
-      poojaId: poojaId,
-      samagri_required: samagri_required,
-      tirth: selectedTirthPlaceId,
-    });
-  };
-
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingTirthPlace[]>([]);
   const [selectedTirthPlaceId, setSelectedTirthPlaceId] = useState<
     number | null
   >(null);
+  const [selectedTirthPlaceName, setSelectedTirthPlaceName] = useState<
+    string | null
+  >(null);
+  const [selectedTirthPlaceDescription, setSelectedTirthPlaceDescription] =
+    useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   console.log('selectedTirthPlaceId :: ', selectedTirthPlaceId);
@@ -76,6 +73,22 @@ const TirthPlaceSelectionScreen: React.FC = () => {
     }
   };
 
+  const handleTirthPlaceSelect = (place: PoojaBookingTirthPlace) => {
+    setSelectedTirthPlaceId(place.id);
+    setSelectedTirthPlaceName(place.city_name);
+    setSelectedTirthPlaceDescription(place.description);
+  };
+
+  const handleNextPress = () => {
+    navigation.navigate('PujaBooking', {
+      poojaId: poojaId,
+      samagri_required: samagri_required,
+      tirth: selectedTirthPlaceId,
+      poojaName: selectedTirthPlaceName,
+      poojaDescription: selectedTirthPlaceDescription,
+    });
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <CustomeLoader loading={isLoading} />
@@ -98,7 +111,7 @@ const TirthPlaceSelectionScreen: React.FC = () => {
                     <TouchableOpacity
                       style={styles.pricingOption}
                       activeOpacity={0.7}
-                      onPress={() => setSelectedTirthPlaceId(place.id)}>
+                      onPress={() => handleTirthPlaceSelect(place)}>
                       <View style={styles.textContainer}>
                         <Text style={styles.pricingText}>
                           {place.city_name}

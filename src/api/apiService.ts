@@ -20,6 +20,9 @@ import ApiEndpoints, {
   GET_AUTO_MANUAL_PANDIT_SELECTION,
   GET_ALL_PANDIT_LIST,
   GET_PANDIT_DETAILS,
+  GET_ADDRESS_TYPE_FOR_BOOKING,
+  POST_CREATE_RAZORPAY_ORDER,
+  POST_VERIFY_PAYMENT,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -328,9 +331,22 @@ export interface Booking {
   pandit: number;
   samagri_required: boolean;
   address: number;
+  tirth: number;
   booking_date: string;
+  muhurat_type: string;
   muhurat_time: string;
   notes: string;
+}
+
+export interface CreateRazorpayOrder {
+  booking_id: number;
+}
+
+export interface VerrifyPayment {
+  booking_id: number;
+  razorpay_payment_id: string;
+  razorpay_order_id: string;
+  razorpay_signature: string;
 }
 
 export const apiService = {
@@ -828,6 +844,21 @@ export const getAddressType = () => {
   });
 };
 
+export const getAddressTypeForBooking = () => {
+  let apiUrl = GET_ADDRESS_TYPE_FOR_BOOKING;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error getAddress Type:', error);
+        reject(error);
+      });
+  });
+};
+
 export const postAddAddress = (data: AddAddress) => {
   let apiUrl = POST_ADD_ADDRESS;
   return new Promise((resolve, reject) => {
@@ -935,6 +966,36 @@ export const getPanditDetails = (id: string): Promise<any> => {
       })
       .catch(error => {
         console.error('Error fetching pandit details:', error);
+        reject(error);
+      });
+  });
+};
+
+export const postCreateRazorpayOrder = (data: CreateRazorpayOrder) => {
+  let apiUrl = POST_CREATE_RAZORPAY_ORDER;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error create razorpay order', error);
+        reject(error);
+      });
+  });
+};
+
+export const postVerrifyPayment = (data: VerrifyPayment) => {
+  let apiUrl = POST_VERIFY_PAYMENT;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error create razorpay order', error);
         reject(error);
       });
   });
