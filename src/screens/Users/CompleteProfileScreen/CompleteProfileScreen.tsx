@@ -1,8 +1,6 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
-  Text,
-  TouchableOpacity,
   StyleSheet,
   StatusBar,
   Dimensions,
@@ -14,11 +12,7 @@ import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {moderateScale} from 'react-native-size-matters';
 import {AuthStackParamList} from '../../../navigation/AuthNavigator';
-import {
-  getCurrentLocation,
-  requestLocationPermission,
-  LocationData,
-} from '../../../utils/locationUtils';
+import {requestLocationPermission} from '../../../utils/locationUtils';
 import PrimaryButton from '../../../components/PrimaryButton';
 import ThemedInput from '../../../components/ThemedInput';
 import UserCustomHeader from '../../../components/UserCustomHeader';
@@ -66,7 +60,9 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   const route = useRoute();
   const {phoneNumber} = route.params as {phoneNumber: string};
 
-  const [uid, setUid] = useState<string | null>('');
+  // Use a ref to always have the latest UID value
+  const uidRef = useRef<string | null>(null);
+  const [uid, setUid] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     phoneNumber: phoneNumber || '',
     firstName: '',
@@ -83,10 +79,23 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
     longitude: number;
   } | null>(null);
 
-  console.log('uid :: ', uid);
+  // Helper to fetch UID, with retry logic if not found
+  const fetchUID = async (retryCount = 0) => {
+    try {
+      let fetchedUid = await AsyncStorage.getItem(AppConstant.FIREBASE_UID);
+      if (!fetchedUid && retryCount < 5) {
+        // Wait a bit and try again (in case async storage is not ready yet)
+        await new Promise(res => setTimeout(res, 300));
+        return fetchUID(retryCount + 1);
+      }
+      setUid(fetchedUid);
+      uidRef.current = fetchedUid;
+    } catch (error) {
+      console.error('Error fetching UID:', error);
+    }
+  };
 
-  console.log('location :: ', location);
-
+  // On mount, fetch UID and GPS, and listen for screen size changes
   useEffect(() => {
     fetchUID();
     handleFetchGPS();
@@ -97,13 +106,12 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
     return () => subscription?.remove();
   }, []);
 
-  const fetchUID = async () => {
-    try {
-      const uid = await AsyncStorage.getItem(AppConstant.FIREBASE_UID);
-      setUid(uid);
-    } catch (error) {
-      console.error('Error fetching UID:', error);
+  // If UID is still not available, try to fetch again when user presses Next
+  const ensureUID = async () => {
+    if (!uidRef.current) {
+      await fetchUID();
     }
+    return uidRef.current;
   };
 
   const validateForm = (): boolean => {
@@ -163,19 +171,47 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
     }
   };
 
-  const handleNext = () => {
-    if (validateForm() && uid && location) {
-      setIsLoading(true);
-      navigation.navigate('UserProfileScreen', {
-        phoneNumber: formData.phoneNumber,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        address: formData.address,
-        uid: uid || '',
-        latitude: location?.latitude || 0,
-        longitude: location?.longitude || 0,
-      });
+  // Modified handleNext to ensure UID is available before navigating
+  const handleNext = async () => {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+
+    let currentUid = uidRef.current;
+    if (!currentUid) {
+      // Try to fetch again if not available
+      await fetchUID();
+      currentUid = uidRef.current;
     }
+
+    if (!currentUid) {
+      setIsLoading(false);
+      setFormErrors(prev => ({
+        ...prev,
+        phoneNumber: t('uid_not_found_try_again'),
+      }));
+      return;
+    }
+
+    if (!location) {
+      setIsLoading(false);
+      setFormErrors(prev => ({
+        ...prev,
+        address: t('location_required'),
+      }));
+      return;
+    }
+
+    navigation.navigate('UserProfileScreen', {
+      phoneNumber: formData.phoneNumber,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      address: formData.address,
+      uid: currentUid,
+      latitude: location.latitude,
+      longitude: location.longitude,
+    });
+    setIsLoading(false);
   };
 
   const themedInputLabelStyle = {
@@ -242,14 +278,6 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
           error={formErrors.address}
         />
       </View>
-
-      {/* <TouchableOpacity
-        style={[styles.gpsButton]}
-        onPress={handleFetchGPS}
-        disabled={isLoading}
-        accessibilityLabel="Fetch GPS location button"
-        accessibilityHint="Tap to get your current location automatically"
-        accessibilityRole="button"></TouchableOpacity> */}
 
       <PrimaryButtonOutlined
         title={t('fetch_gps_location')}

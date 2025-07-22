@@ -13,6 +13,8 @@ import TirthPlaceSelectionScreen from '../../screens/Users/PoojaDetailsScreen/Ti
 import PaymentScreen from '../../screens/Users/PaymentScreen/PaymentScreen';
 import SelectPanditjiScreen from '../../screens/Users/PoojaDetailsScreen/SelectPanditjiScreen';
 import BookingSuccessfullyScreen from '../../screens/Users/BookingSuccessfullyScreen/BookingSuccessfullyScreen';
+import RateYourExperienceScreen from '../../screens/Users/RateYourExperienceScreen/RateYourExperienceScreen';
+import UserPujaDetailsScreen from '../../screens/Users/UserPujaDetailsScreen/UserPujaDetailsScreen';
 
 export type UserHomeParamList = {
   goBack(): unknown;
@@ -36,6 +38,8 @@ export type UserHomeParamList = {
   PaymentScreen: any;
   SelectPanditjiScreen: any;
   BookingSuccessfullyScreen: undefined;
+  RateYourExperienceScreen: any;
+  UserPujaDetailsScreen: undefined;
 };
 
 const Stack = createStackNavigator<UserHomeParamList>();
@@ -72,6 +76,14 @@ const UserHomeNavigator = () => {
       <Stack.Screen
         name="BookingSuccessfullyScreen"
         component={BookingSuccessfullyScreen}
+      />
+      <Stack.Screen
+        name="RateYourExperienceScreen"
+        component={RateYourExperienceScreen}
+      />
+      <Stack.Screen
+        name="UserPujaDetailsScreen"
+        component={UserPujaDetailsScreen}
       />
     </Stack.Navigator>
   );

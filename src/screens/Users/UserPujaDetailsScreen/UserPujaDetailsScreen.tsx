@@ -8,9 +8,10 @@ import {
   StatusBar,
   Image,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {COLORS} from '../../../theme/theme';
@@ -22,15 +23,38 @@ import {Images} from '../../../theme/Images';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {useTranslation} from 'react-i18next';
+import {getUpcomingPujaDetails} from '../../../api/apiService';
 
 const UserPujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'PujaCancellationScreen' | 'UserChatScreen'
   >;
+  const route = useRoute();
+  const {id} = route.params as any;
   const {t, i18n} = useTranslation();
   const navigation = useNavigation<ScreenNavigationProp>();
   const [isPujaItemsModalVisible, setIsPujaItemsModalVisible] = useState(false);
+
+  const [pujaDetails, setPujaDetails] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  React.useEffect(() => {
+    const fetchPujaDetails = async () => {
+      setLoading(true);
+      try {
+        const details = await getUpcomingPujaDetails(id?.toString());
+        setPujaDetails(details);
+      } catch (error) {
+        setPujaDetails(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (id) {
+      fetchPujaDetails();
+    }
+  }, [id]);
 
   const handlePujaItemsPress = () => {
     setIsPujaItemsModalVisible(true);
@@ -40,164 +64,265 @@ const UserPujaDetailsScreen: React.FC = () => {
     setIsPujaItemsModalVisible(false);
   };
 
-  const renderPujaDetails = () => (
-    <View style={styles.detailsContainer}>
-      <View style={styles.detailsCard}>
-        <View style={styles.detailsContent}>
-          {/* Ganpati Puja Section */}
-          <View style={styles.detailRow}>
-            <View style={styles.detailRowContent}>
-              <Image
-                source={{
-                  uri: 'https://cdn.builder.io/api/v1/image/assets/TEMP/bc53826fa5e88773c79af40315fbcef0694d1da0?width=82',
-                }}
-                style={styles.pujaIcon}
+  // Helper to format date as DD/MM/YYYY
+  const formatDate = (dateStr: string | null | undefined) => {
+    if (!dateStr) return '';
+    // If dateStr is like "2025-07-23"
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) {
+      // fallback for "YYYY-MM-DD"
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return dateStr;
+    }
+    const day = d.getDate().toString().padStart(2, '0');
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // Helper to get Pandit image url (handle relative url)
+  const getPanditImageUrl = (url: string | null | undefined) => {
+    if (!url) return undefined;
+    if (url.startsWith('http')) return url;
+    // Assume relative to server, fallback to a default image if needed
+    return `https://pujapaath.com${url}`;
+  };
+
+  // Helper to get Puja image url
+  const getPujaImageUrl = (url: string | null | undefined) => {
+    if (!url) return undefined;
+    if (url.startsWith('http')) return url;
+    return `https://pujapaath.com${url}`;
+  };
+
+  const renderPujaDetails = () => {
+    if (!pujaDetails) return null;
+    return (
+      <View style={styles.detailsContainer}>
+        <View style={styles.detailsCard}>
+          <View style={styles.detailsContent}>
+            {/* Puja Name & Image */}
+            <View style={styles.detailRow}>
+              <View style={styles.detailRowContent}>
+                <Image
+                  source={
+                    pujaDetails.pooja_image_url
+                      ? {uri: getPujaImageUrl(pujaDetails.pooja_image_url)}
+                      : Images.ic_puja // fallback
+                  }
+                  style={styles.pujaIcon}
+                />
+                <Text style={styles.pujaTitle}>
+                  {pujaDetails.pooja_name || t('puja')}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.separator} />
+
+            {/* Location Section */}
+            <View style={styles.detailRow}>
+              <MaterialIcons
+                name="location-on"
+                size={scale(24)}
+                color={COLORS.pujaCardSubtext}
+                style={styles.detailIcon}
               />
-              <Text style={styles.pujaTitle}>Ganpati Puja</Text>
+              <Text style={styles.detailText}>
+                {pujaDetails.location_display || t('location_not_available')}
+              </Text>
+            </View>
+
+            <View style={styles.separator} />
+
+            {/* Date Section */}
+            <View style={styles.detailRow}>
+              <MaterialIcons
+                name="event"
+                size={scale(24)}
+                color={COLORS.pujaCardSubtext}
+                style={styles.detailIcon}
+              />
+              <Text style={styles.detailText}>
+                {formatDate(pujaDetails.booking_date)}
+              </Text>
+            </View>
+
+            <View style={styles.separator} />
+
+            {/* Time Section */}
+            <View style={styles.detailRow}>
+              <MaterialIcons
+                name="access-time"
+                size={scale(24)}
+                color={COLORS.pujaCardSubtext}
+                style={styles.detailIcon}
+              />
+              <Text style={styles.detailText}>
+                {pujaDetails.muhurat_time
+                  ? pujaDetails.muhurat_time
+                  : t('time_not_available')}
+                {pujaDetails.muhurat_type
+                  ? ` (${pujaDetails.muhurat_type})`
+                  : ''}
+              </Text>
+            </View>
+
+            <View style={styles.separator} />
+
+            {/* Puja Items Section */}
+            {pujaDetails.samagri_required ? (
+              <>
+                <View style={styles.detailRow}>
+                  <MaterialIcons
+                    name="list"
+                    size={scale(24)}
+                    color={COLORS.pujaCardSubtext}
+                    style={styles.detailIcon}
+                  />
+                  <Text style={styles.detailText}>{t('puja_items_list')}</Text>
+                  <TouchableOpacity
+                    style={styles.viewButton}
+                    onPress={handlePujaItemsPress}>
+                    <MaterialIcons
+                      name="visibility"
+                      size={scale(20)}
+                      color={COLORS.primaryBackgroundButton}
+                    />
+                  </TouchableOpacity>
+                </View>
+                {(pujaDetails.verification_pin ||
+                  pujaDetails.completion_pin) && (
+                  <View style={styles.separator} />
+                )}
+              </>
+            ) : null}
+
+            {/* Pin Section */}
+            {(pujaDetails.verification_pin || pujaDetails.completion_pin) && (
+              <View style={styles.detailRow}>
+                <Image
+                  source={Images.ic_pin}
+                  style={[
+                    styles.detailIcon,
+                    {width: scale(20), height: scale(16)},
+                  ]}
+                  resizeMode="contain"
+                />
+                <Text style={styles.detailText}>
+                  {pujaDetails.verification_pin
+                    ? `${pujaDetails.verification_pin}: ${t(
+                        'verification_pin',
+                      )}`
+                    : ''}
+                  {pujaDetails.completion_pin
+                    ? `${pujaDetails.completion_pin}: ${t('completion_pin')}`
+                    : ''}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  const renderTotalAmount = () => {
+    if (!pujaDetails) return null;
+    return (
+      <View style={styles.totalContainer}>
+        <View style={styles.totalCard}>
+          <View style={styles.totalContent}>
+            <View style={{gap: 6}}>
+              <Text style={styles.totalLabel}>{t('total_amount')}</Text>
+              <Text style={styles.totalSubtext}>
+                {pujaDetails.pooja_name || t('puja')}
+              </Text>
+            </View>
+            <View>
+              <Text style={styles.totalAmount}>
+                ₹{' '}
+                {pujaDetails.amount
+                  ? parseFloat(pujaDetails.amount).toLocaleString('en-IN', {
+                      minimumFractionDigits: 0,
+                    })
+                  : '0'}
+              </Text>
             </View>
           </View>
+        </View>
+      </View>
+    );
+  };
 
-          <View style={styles.separator} />
-
-          {/* Location Section */}
-          <View style={styles.detailRow}>
-            <MaterialIcons
-              name="location-on"
-              size={scale(24)}
-              color={COLORS.pujaCardSubtext}
-              style={styles.detailIcon}
-            />
-            <Text style={styles.detailText}>Home: Primary residence</Text>
-          </View>
-
-          <View style={styles.separator} />
-
-          {/* Date Section */}
-          <View style={styles.detailRow}>
-            <MaterialIcons
-              name="event"
-              size={scale(24)}
-              color={COLORS.pujaCardSubtext}
-              style={styles.detailIcon}
-            />
-            <Text style={styles.detailText}>15/09/2025</Text>
-          </View>
-
-          <View style={styles.separator} />
-
-          {/* Time Section */}
-          <View style={styles.detailRow}>
-            <MaterialIcons
-              name="access-time"
-              size={scale(24)}
-              color={COLORS.pujaCardSubtext}
-              style={styles.detailIcon}
-            />
-            <Text style={styles.detailText}>10:00 AM</Text>
-          </View>
-
-          <View style={styles.separator} />
-
-          {/* Puja Items Section */}
-          <View style={styles.detailRow}>
-            <MaterialIcons
-              name="list"
-              size={scale(24)}
-              color={COLORS.pujaCardSubtext}
-              style={styles.detailIcon}
-            />
-            <Text style={styles.detailText}>Puja items list</Text>
+  const renderPanditDetails = () => {
+    if (!pujaDetails) return null;
+    const pandit = pujaDetails.assigned_pandit;
+    if (!pandit) return null;
+    return (
+      <View style={styles.totalContainer}>
+        <View style={styles.totalCard}>
+          <View style={styles.totalContent}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <Image
+                source={
+                  pandit.profile_img_url
+                    ? {uri: getPanditImageUrl(pandit.profile_img_url)}
+                    : Images.ic_pandit // fallback
+                }
+                style={styles.pujaIcon}
+              />
+              <Text style={styles.totalSubtext}>
+                {pandit.pandit_name || t('panditji')}
+              </Text>
+            </View>
             <TouchableOpacity
-              style={styles.viewButton}
-              onPress={handlePujaItemsPress}>
-              <MaterialIcons
-                name="visibility"
-                size={scale(20)}
-                color={COLORS.primaryBackgroundButton}
+              onPress={() => navigation.navigate('UserChatScreen')}>
+              <Image
+                source={Images.ic_message}
+                style={{width: scale(20), height: scale(20)}}
+                resizeMode="contain"
               />
             </TouchableOpacity>
           </View>
-          <View style={styles.separator} />
-          <View style={styles.detailRow}>
-            <Image
-              source={Images.ic_pin}
-              style={[styles.detailIcon, {width: scale(20), height: scale(16)}]}
-              resizeMode="contain"
-            />
-            <Text style={styles.detailText}>3457: Pin for puja</Text>
-          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
-  const renderTotalAmount = () => (
-    <View style={styles.totalContainer}>
-      <View style={styles.totalCard}>
-        <View style={styles.totalContent}>
-          <View style={{gap: 6}}>
-            <Text style={styles.totalLabel}>{t('total_amount')}</Text>
-            <Text style={styles.totalSubtext}>Ganesh Chaturthi Pooja</Text>
-          </View>
-          <View>
-            <Text style={styles.totalAmount}>₹ 5000</Text>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderPanditDetails = () => (
-    <View style={styles.totalContainer}>
-      <View style={styles.totalCard}>
-        <View style={styles.totalContent}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            <Image
-              source={{
-                uri: 'https://cdn.builder.io/api/v1/image/assets/TEMP/96feb2dd36d383e6c73ee5b5d01ab81cd72a003a?width=104',
-              }}
-              style={styles.pujaIcon}
-            />
-            <Text style={styles.totalSubtext}>Ramesh Purohit</Text>
-          </View>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('UserChatScreen')}>
-            <Image
-              source={Images.ic_message}
-              style={{width: scale(20), height: scale(20)}}
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderPanditjiSection = () => (
-    <View style={styles.panditjiContainer}>
-      <View style={styles.panditjiCard}>
-        <View style={styles.panditjiContent}>
-          <View style={styles.panditjiAvatarContainer}>
-            <View style={styles.panditjiAvatar}>
-              <MaterialIcons
-                name="person"
-                size={scale(24)}
-                color={COLORS.white}
-              />
+  const renderPanditjiSection = () => {
+    if (!pujaDetails) return null;
+    // Only show if no assigned_pandit
+    if (pujaDetails.assigned_pandit) return null;
+    return (
+      <View style={styles.panditjiContainer}>
+        <View style={styles.panditjiCard}>
+          <View style={styles.panditjiContent}>
+            <View style={styles.panditjiAvatarContainer}>
+              <View style={styles.panditjiAvatar}>
+                <MaterialIcons
+                  name="person"
+                  size={scale(24)}
+                  color={COLORS.white}
+                />
+              </View>
             </View>
+            <Text style={styles.panditjiText}>
+              {t('panditji_will_be_assigned_soon')}
+            </Text>
           </View>
-          <Text style={styles.panditjiText}>
-            {t('panditji_will_be_assigned_soon')}
-          </Text>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   const handleCancelBooking = () => {
     navigation.navigate('PujaCancellationScreen');
@@ -225,11 +350,28 @@ const UserPujaDetailsScreen: React.FC = () => {
             style={styles.content}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.contentContainer}>
-            {renderPujaDetails()}
-            {renderTotalAmount()}
-            {renderPanditDetails()}
-            {renderPanditjiSection()}
-            {renderCancelButton()}
+            {loading ? (
+              <View
+                style={{
+                  flex: 1,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginTop: 40,
+                }}>
+                <ActivityIndicator
+                  size="large"
+                  color={COLORS.primaryBackgroundButton}
+                />
+              </View>
+            ) : (
+              <>
+                {renderPujaDetails()}
+                {renderTotalAmount()}
+                {renderPanditDetails()}
+                {renderPanditjiSection()}
+                {renderCancelButton()}
+              </>
+            )}
           </ScrollView>
         </View>
         {Platform.OS !== 'ios' && (

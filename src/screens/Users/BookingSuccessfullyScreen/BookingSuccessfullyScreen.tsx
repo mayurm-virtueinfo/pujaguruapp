@@ -16,7 +16,7 @@ import {COLORS} from '../../../theme/theme';
 import {Images} from '../../../theme/Images';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
@@ -24,14 +24,18 @@ import {useTranslation} from 'react-i18next';
 const BookingSuccessfullyScreen: React.FC = () => {
   type ScreenNavigationProps = StackNavigationProp<
     UserPoojaListParamList,
-    'RateYourExperienceScreen'
+    'BookingSuccessfullyScreen'
   >;
   const {t, i18n} = useTranslation();
 
   const inset = useSafeAreaInsets();
 
   const navigation = useNavigation<ScreenNavigationProps>();
-
+  const route = useRoute();
+  // Check if route.params exists and has the expected property
+  // Always extract booking from route.params, even if it's null/undefined
+  const booking = (route.params as any)?.booking;
+  console.log('booking-1', booking);
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
@@ -53,7 +57,11 @@ const BookingSuccessfullyScreen: React.FC = () => {
             </Text>
             <PrimaryButton
               title={t('rate_your_experience')}
-              onPress={() => navigation.navigate('RateYourExperienceScreen')}
+              onPress={() =>
+                navigation.navigate('RateYourExperienceScreen', {
+                  booking: booking,
+                })
+              }
               style={styles.buttonContainer}
               textStyle={styles.buttonText}
             />

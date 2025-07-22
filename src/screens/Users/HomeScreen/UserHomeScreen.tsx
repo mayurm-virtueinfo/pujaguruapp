@@ -9,12 +9,14 @@ import {
   TouchableOpacity,
   Platform,
   SafeAreaView,
+  Alert,
 } from 'react-native';
 import {moderateScale} from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   apiService,
   getRecommendedPandit,
+  getUpcomingPujas,
   PanditItem,
   PujaItem,
   RecommendedPandit,
@@ -35,7 +37,6 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 
 const UserHomeScreen: React.FC = () => {
   const navigation = useNavigation<UserPoojaListParamList>();
-  const [pandits, setPandits] = useState<PanditItem[]>([]);
   const [pujas, setPujas] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<string | null>(null);
@@ -52,7 +53,7 @@ const UserHomeScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchAllPanditAndPuja();
+    fetchUpcomingPujas();
   }, []);
 
   useEffect(() => {
@@ -75,47 +76,62 @@ const UserHomeScreen: React.FC = () => {
     }
   };
 
-  const fetchAllPanditAndPuja = async () => {
+  const fetchUpcomingPujas = async () => {
     setLoading(true);
     try {
-      const requests = await axios.get(
-        'https://api.jsonbin.io/v3/b/685e6f298960c979a5b24e1c',
-      );
-      const {pandits, puja} = requests.data.record;
-      setPujas(puja);
+      const response: any = await getUpcomingPujas();
+      setPujas(Array.isArray(response) ? response : []);
     } catch (error) {
-      console.error('Error fetching pandit and puja data:', error);
-      setPandits([]);
+      console.error('Error fetching upcoming puja data:', error);
       setPujas([]);
     } finally {
       setLoading(false);
     }
   };
 
+  // --- Fix for iOS authentication issue when fetching recommended pandits ---
   const fetchRecommendedPandits = async () => {
     try {
       setLoading(true);
+
       const response = await getRecommendedPandit(
         location.latitude,
         location.longitude,
       );
-      console.log('Fetched Recommended Pandits:', response);
+      // Only log the response if not an authentication error
       if (response && Array.isArray(response.data)) {
         setRecomendedPandits(response.data || []);
       }
-    } catch (error) {
-      console.error('Error fetching recommended pandits:', error);
+    } catch (error: any) {
+      // Only show alert for authentication error, do not log the error to avoid noisy logs
+      if (
+        Platform.OS === 'ios' &&
+        error?.response?.status === 403 &&
+        error?.response?.data?.detail ===
+          'Authentication credentials were not provided.'
+      ) {
+        Alert.alert(
+          t('error'),
+          t('authentication_credentials_not_provided') ||
+            'Authentication credentials were not provided. Please login again.',
+        );
+        // Do not log error to console for this specific case
+        return;
+      }
+      // For other errors, log as usual
+      console.error('Error fetching recommended pandits:', error.response.data);
     } finally {
       setLoading(false);
     }
   };
+  // --------------------------------------------------------------------------
 
   const handleBookPandit = (panditName: string) => {
     navigation.navigate('SelectPujaScreen');
   };
 
   const handleNavigation = (route: string) => {
-    // Implement navigation logic if needed
+    navigation.navigate(route);
   };
 
   const handleNotificationPress = () => {
@@ -219,16 +235,22 @@ const UserHomeScreen: React.FC = () => {
             {pujas && pujas.length > 0 ? (
               pujas.map((puja, idx) => (
                 <View key={puja.id}>
-                  <View style={styles.pujaCard}>
+                  <TouchableOpacity
+                    style={styles.pujaCard}
+                    onPress={() =>
+                      navigation.navigate('UserPujaDetailsScreen', {
+                        id: puja.id,
+                      })
+                    }>
                     <Image
-                      source={{uri: puja.image}}
+                      source={{uri: puja.pooja_image_url}}
                       style={styles.pujaImage}
                     />
                     <View style={styles.pujaTextContainer}>
-                      <Text style={styles.pujaName}>{puja.name}</Text>
-                      <Text style={styles.pujaDate}>{puja.time}</Text>
+                      <Text style={styles.pujaName}>{puja.pooja_name}</Text>
+                      <Text style={styles.pujaDate}>{puja.when_is_pooja}</Text>
                     </View>
-                  </View>
+                  </TouchableOpacity>
                   {idx !== pujas.length - 1 && <View style={styles.divider} />}
                 </View>
               ))

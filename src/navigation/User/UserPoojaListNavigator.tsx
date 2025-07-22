@@ -15,6 +15,7 @@ import PanditDetailsScreen from '../../screens/Users/PanditDetailsScreen/PanditD
 import PujaCancellationScreen from '../../screens/Users/PujaCancellationScreen/PujaCancellationScreen';
 import BookedPujaDetailsScreen from '../../screens/Users/UserPujaDetailsScreen/UserPujaDetailsScreen';
 import UserChatScreen from '../../screens/Users/UserChatScreen/UserChatScreen';
+import UserPujaDetailsScreen from '../../screens/Users/UserPujaDetailsScreen/UserPujaDetailsScreen';
 
 export type UserPoojaListParamList = {
   goBack(): void;
@@ -33,12 +34,12 @@ export type UserPoojaListParamList = {
   AddressSelectionScreen: {poojaId: string; samagri_required: boolean};
   TirthPlaceSelectionScreen: {poojaId: string; samagri_required: boolean};
   PaymentScreen: {poojaId: string};
-  BookingSuccessfullyScreen: undefined;
-  RateYourExperienceScreen: undefined;
+  BookingSuccessfullyScreen: any;
+  RateYourExperienceScreen: any;
   SelectPanditjiScreen: {poojaId: string};
   PanditDetailsScreen: undefined;
   PujaCancellationScreen: undefined;
-  BookedPujaDetailsScreen: undefined;
+  UserPujaDetailsScreen: undefined;
   UserChatScreen: undefined;
 };
 
@@ -91,8 +92,8 @@ const UserPoojaListNavigator = () => {
         component={PujaCancellationScreen}
       />
       <Stack.Screen
-        name="BookedPujaDetailsScreen"
-        component={BookedPujaDetailsScreen}
+        name="UserPujaDetailsScreen"
+        component={UserPujaDetailsScreen}
       />
       <Stack.Screen name="UserChatScreen" component={UserChatScreen} />
     </Stack.Navigator>

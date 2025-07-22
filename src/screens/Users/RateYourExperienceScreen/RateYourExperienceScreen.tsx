@@ -19,12 +19,13 @@ import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import CustomHeader from '../../../components/CustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import {postRatePandit} from '../../../api/apiService';
 
 const RateYourExperienceScreen: React.FC = () => {
   const [rating, setRating] = useState<number>(0);
@@ -32,7 +33,7 @@ const RateYourExperienceScreen: React.FC = () => {
 
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
-    'BookedPujaDetailsScreen'
+    'UserPujaDetailsScreen'
   >;
   const {t, i18n} = useTranslation();
 
@@ -40,14 +41,34 @@ const RateYourExperienceScreen: React.FC = () => {
 
   const navigation = useNavigation<ScreenNavigationProp>();
 
+  const route = useRoute();
+  const {booking} = route.params as any;
+  console.log('booking=====>', booking);
   const handleStarPress = (starIndex: number) => {
     setRating(starIndex + 1);
   };
 
-  const handleSubmit = () => {
-    setRating(0);
-    setFeedback('');
-    navigation.navigate('BookedPujaDetailsScreen');
+  const handleSubmit = async () => {
+    try {
+      // You may need to get the booking id and pandit id from props, params, or state
+      // For now, using placeholder values
+      const bookingId = booking; // Replace with actual booking id
+      const ratingValue = rating;
+      const reviewText = feedback;
+
+      await postRatePandit({
+        booking: bookingId,
+        rating: ratingValue,
+        review: reviewText,
+      });
+
+      setRating(0);
+      setFeedback('');
+      navigation.navigate('UserPujaDetailsScreen');
+    } catch (error) {
+      // Optionally handle error, e.g. show a toast
+      console.error('Failed to submit rating:', error);
+    }
   };
 
   const renderStar = (index: number) => {

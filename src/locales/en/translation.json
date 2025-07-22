@@ -154,5 +154,20 @@
   "edit_address": "Edit Address",
   "update_address": "Update Address",
   "choose_the_puja_you_wish_to_book_from_the_list_below": "Choose the puja you wish to book from the  list below.",
-  "select_puja": "Select Puja"
+  "select_puja": "Select Puja",
+  "verification_pin": "Pin for Start Puja",
+  "completion_pin": "Pin for Complete Puja",
+  "profile_photo": "Profile Photo",
+  "select_photo": "Select Photo",
+  "take_photo": "Take Photo",
+  "choose_from_gallery": "Choose from gallery",
+  "select_profile_picture": "Select profile picture",
+  "choose_an_option": "Choose an option",
+  "camera_access_failed": "Camera access failed",
+  "gallery_access_failed": "Gallery access failed",
+  "image_processing_failed": "Image processing failed",
+  "invalid_email": "Invalid email address",
+  "invalid_phone": "Invalid phone number",
+  "location_required": "Location is required",
+  "signup_failed": "Sign up failed"
 }

@@ -59,7 +59,7 @@ interface PujaItem {
 const PaymentScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
-    'BookingSuccessfullyScreen'
+    'PaymentScreen'
   >;
   const {t} = useTranslation();
   const inset = useSafeAreaInsets();
@@ -77,6 +77,8 @@ const PaymentScreen: React.FC = () => {
     notes,
     pandit,
   } = route.params as any;
+
+  console.log('oute.params', route.params);
 
   const {showErrorToast, showSuccessToast} = useCommonToast();
 
@@ -127,7 +129,10 @@ const PaymentScreen: React.FC = () => {
   const buildBookingData = () => {
     let bookingData: any = {
       pooja: typeof poojaId === 'string' ? parseInt(poojaId, 10) : poojaId,
-      pandit: typeof pandit === 'string' ? parseInt(pandit, 10) : pandit,
+      pandit:
+        typeof pandit === 'string'
+          ? parseInt(pandit, 10)
+          : pandit || panditData?.pandit_id,
       samagri_required: samagri_required,
       booking_date: booking_date,
       muhurat_time: muhurat_time,
@@ -143,7 +148,7 @@ const PaymentScreen: React.FC = () => {
     ) {
       bookingData.address = address;
     } else if (tirth && tirth !== '' && tirth !== null && tirth !== undefined) {
-      bookingData.tirth = tirth;
+      bookingData.tirth_place = tirth;
     }
 
     if (
@@ -163,7 +168,7 @@ const PaymentScreen: React.FC = () => {
 
     return bookingData;
   };
-
+  console.log('buildBookingData', buildBookingData());
   // Function to create Razorpay order, expects bookingId as argument
   // Prevents duplicate API calls by using a ref flag and bookingId check
   const handleCreateRazorpayOrder = useCallback(
@@ -276,7 +281,7 @@ const PaymentScreen: React.FC = () => {
       const response: any = await postVerrifyPayment(data);
       if (response && response.data.success) {
         showSuccessToast('Payment verified successfully!');
-        navigation.navigate('BookingSuccessfullyScreen');
+        navigation.navigate('BookingSuccessfullyScreen', {booking: booking_id});
       } else {
         showErrorToast(response?.message || 'Payment verification failed===>.');
       }
@@ -451,11 +456,11 @@ const PaymentScreen: React.FC = () => {
       setIsLoading(true);
       try {
         const bookingData = buildBookingData();
+        console.log('bookingData', bookingData);
         const response = await postBooking(bookingData as any);
         if (response && response.success) {
           setBookingId(response.data.id);
           showSuccessToast('Booking successful!');
-          navigation.navigate('BookingSuccessfullyScreen');
         } else {
           if (response && response.errors) {
             showErrorToast(

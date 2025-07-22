@@ -185,7 +185,7 @@ const UserProfileScreen: React.FC = () => {
 
   const handleImagePicker = () => {
     Keyboard.dismiss();
-    Alert.alert(t('change_profile_picture'), t('choose_an_option'), [
+    Alert.alert(t('select_profile_picture'), t('choose_an_option'), [
       {text: t('take_photo'), onPress: () => openCamera()},
       {text: t('choose_from_gallery'), onPress: () => openGallery()},
       {text: t('cancel'), style: 'cancel'},

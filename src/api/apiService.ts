@@ -23,6 +23,9 @@ import ApiEndpoints, {
   GET_ADDRESS_TYPE_FOR_BOOKING,
   POST_CREATE_RAZORPAY_ORDER,
   POST_VERIFY_PAYMENT,
+  POST_RATE_PANDIT,
+  GET_UPCOMING_PUJA_DETAILS,
+  GET_UPCOMING_PUJA,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -124,9 +127,9 @@ export interface RecommendedPandit {
 }
 export interface PujaItem {
   id: number;
-  name: string;
-  image: string;
-  time: string;
+  pooja_name: string;
+  pooja_image_url: string;
+  when_is_pooja: string;
 }
 export interface PricingOption {
   id: number;
@@ -349,6 +352,12 @@ export interface VerrifyPayment {
   razorpay_signature: string;
 }
 
+export interface RatePandit {
+  booking: number,
+  rating: number,
+  review: string
+}
+
 export const apiService = {
   // Fetch cities based on pincode
   getCities: async (pincode: string): Promise<DropdownItem[]> => {
@@ -551,16 +560,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return {pandits: [], puja: []};
+      return { pandits: [], puja: [] };
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || {recommendedPuja: [], pujaList: []};
+      return response.data?.record || { recommendedPuja: [], pujaList: [] };
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return {recommendedPuja: [], pujaList: []};
+      return { recommendedPuja: [], pujaList: [] };
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -611,10 +620,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -642,10 +651,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
 };
@@ -757,7 +766,7 @@ export const getRecommendedPandit = (
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error fetching recommended pandit:', error);
+        console.error('Error fetching recommended pandit:', error.response.data);
         reject(error);
       });
   });
@@ -818,7 +827,7 @@ export const deleteAddress = (data: deleteAddress) => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, {data})
+      .delete(apiUrl, { data })
       .then(response => {
         resolve(response);
       })
@@ -910,7 +919,9 @@ export const postBooking = (data: Booking) => {
     apiDev
       .post(apiUrl, data)
       .then(response => {
+        console.log("response for booking1", response)
         resolve(response);
+        console.log("response for booking2", response)
       })
       .catch(error => {
         console.error('Error Booking', error);
@@ -996,6 +1007,51 @@ export const postVerrifyPayment = (data: VerrifyPayment) => {
       })
       .catch(error => {
         console.error('Error create razorpay order', error);
+        reject(error);
+      });
+  });
+};
+
+export const postRatePandit = (data: RatePandit) => {
+  let apiUrl = POST_RATE_PANDIT;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error rate pandit', error);
+        reject(error);
+      });
+  });
+};
+
+export const getUpcomingPujas = () => {
+  let apiUrl = GET_UPCOMING_PUJA;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error getUpcoming puja list :: ', error);
+        reject(error);
+      });
+  });
+};
+
+export const getUpcomingPujaDetails = (id: string): Promise<any> => {
+  const apiUrl = GET_UPCOMING_PUJA_DETAILS.replace('{id}', id);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching UpcomingPuja details:', error);
         reject(error);
       });
   });
