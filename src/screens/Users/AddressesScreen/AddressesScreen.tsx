@@ -1,6 +1,6 @@
 import React, {useState, useEffect, useCallback} from 'react';
 import {View, Text, StyleSheet, ScrollView, StatusBar} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
   useNavigation,
   RouteProp,
@@ -53,7 +53,7 @@ const AddressesScreen: React.FC = () => {
   // But in this screen, there is no addressToEdit param, so always undefined
   const addressToEdit =
     (route.params && (route.params as any).addressToEdit) || null;
-
+  const inset = useSafeAreaInsets();
   // Memoize fetchAddressData so it can be used in useFocusEffect
   const fetchAddressData = useCallback(async () => {
     setLoading(true);
@@ -132,14 +132,8 @@ const AddressesScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, {paddingTop: inset.top}]}>
       <CustomeLoader loading={loading} />
-
-      <StatusBar
-        translucent
-        backgroundColor="transparent"
-        barStyle="light-content"
-      />
 
       <UserCustomHeader
         title={addressToEdit ? t('edit_address') : t('add_address')}
@@ -192,7 +186,7 @@ const AddressesScreen: React.FC = () => {
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 

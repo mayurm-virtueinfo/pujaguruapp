@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {
   View,
   Text,
@@ -54,6 +54,8 @@ interface Props {
   route: OTPVerificationScreenRouteProp;
 }
 
+const RESEND_OTP_WAIT_TIME = 30; // seconds
+
 const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   const {t} = useTranslation();
   const {showErrorToast, showSuccessToast} = useCommonToast();
@@ -66,6 +68,18 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   );
   const {phoneNumber} = route.params;
   const inputRefs = useRef<Array<TextInput | null>>([]);
+
+  // Timer state for resend OTP
+  const [timer, setTimer] = useState(RESEND_OTP_WAIT_TIME);
+
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => {
+        setTimer(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timer]);
 
   const handleOtpChange = (value: string, index: number) => {
     if (value.length <= 1) {
@@ -150,6 +164,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       const confirmation = await signInWithPhoneNumber(getAuth(), phoneNumber);
       setOtpConfirmation(confirmation);
       showSuccessToast(t('otp_resent'));
+      setTimer(RESEND_OTP_WAIT_TIME); // Reset timer after resend
     } catch (error: any) {
       showErrorToast(error?.message || t('resend_otp_failed'));
     } finally {
@@ -196,15 +211,21 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
                 ))}
               </View>
               <PrimaryButton onPress={handleVerification} title={t('verify')} />
-              <View style={styles.resendContainer}>
-                <Text style={styles.resendText}>
-                  {t('did_not_receive_code')}
-                </Text>
-                <PrimaryButtonLabeled
-                  onPress={handleResendOTP}
-                  title={t('resend_otp')}
-                />
-              </View>
+              {timer > 0 ? (
+                <View style={styles.timerContainer}>
+                  <Text style={styles.timerText}>00: {timer}</Text>
+                </View>
+              ) : (
+                <View style={styles.resendContainer}>
+                  <Text style={styles.resendText}>
+                    {t('did_not_receive_code')}
+                  </Text>
+                  <PrimaryButtonLabeled
+                    onPress={handleResendOTP}
+                    title={t('resend_otp')}
+                  />
+                </View>
+              )}
               <PrimaryButtonOutlined
                 onPress={() => navigation.goBack()}
                 title={t('change_mobile_number')}
@@ -298,6 +319,18 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Regular,
     color: COLORS.primaryTextDark,
     marginRight: moderateScale(5),
+  },
+  timerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: moderateScale(16),
+    marginBottom: moderateScale(24),
+  },
+  timerText: {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
   },
 });
 

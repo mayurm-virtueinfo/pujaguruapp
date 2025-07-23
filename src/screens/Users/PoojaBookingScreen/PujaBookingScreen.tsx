@@ -78,7 +78,7 @@ const PujaBookingScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [location, setLocation] = useState<any>(null);
   const [muhurats, setMuhurats] = useState<any[]>([]);
-
+  console.log('selectedSlot', selectedSlot);
   useEffect(() => {
     fetchLocation();
   }, []);
@@ -127,7 +127,19 @@ const PujaBookingScreen: React.FC = () => {
     setSelectedSlotObj(slot);
   };
 
-  const handlePanditjiSelectionModalOpen = () => {
+  // Validation before opening modal
+  const handleNextButtonPress = () => {
+    // Validate required fields before opening modal
+    if (!selectedDateString) {
+      showErrorToast(t('please_select_date') || 'Please select a date.');
+      return;
+    }
+    if (!selectedSlot) {
+      showErrorToast(
+        t('please_select_muhurat_slot') || 'Please select a muhurat slot.',
+      );
+      return;
+    }
     setModalVisible(true);
   };
 
@@ -158,6 +170,18 @@ const PujaBookingScreen: React.FC = () => {
       muhuratType = selectedSlotObj.type;
     }
 
+    // Final validation before navigation
+    if (!selectedDateISO) {
+      showErrorToast(t('please_select_date') || 'Please select a date.');
+      return;
+    }
+    if (!selectedSlot) {
+      showErrorToast(
+        t('please_select_muhurat_slot') || 'Please select a muhurat slot.',
+      );
+      return;
+    }
+
     const navigationParams: any = {
       poojaId: poojaId,
       samagri_required: samagri_required,
@@ -168,7 +192,7 @@ const PujaBookingScreen: React.FC = () => {
       muhurat_type: muhuratType,
       notes: additionalNotes,
     };
-
+    console.log('navigationParams', navigationParams);
     if (selection === 'automatic') {
       navigation.navigate('PaymentScreen', navigationParams);
     } else if (selection === 'manual') {
@@ -244,7 +268,9 @@ const PujaBookingScreen: React.FC = () => {
                 {poojaName}: {poojaDescription}
               </Text>
             </View>
-            <TouchableOpacity style={styles.editButton}>
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => navigation.goBack()}>
               <Ionicons
                 name="create-outline"
                 size={20}
@@ -261,6 +287,9 @@ const PujaBookingScreen: React.FC = () => {
             // dateString is expected to be in YYYY-MM-DD
             setSelectedDate(new Date(dateString).getDate());
             setSelectedDateString(formatDateYYYYMMDD(dateString));
+            // Clear selected muhurat when date changes
+            setSelectedSlot('');
+            setSelectedSlotObj(null);
             fetchMuhurat(formatDateYYYYMMDD(dateString));
           }}
           month={currentMonth}
@@ -293,6 +322,9 @@ const PujaBookingScreen: React.FC = () => {
             const newDate = new Date(newYear, newMonthIdx, 1);
             const formattedDate = formatDateYYYYMMDD(newDate);
             setSelectedDateString(formattedDate);
+            // Clear selected muhurat when month changes
+            setSelectedSlot('');
+            setSelectedSlotObj(null);
             fetchMuhurat(formattedDate);
           }}
         />
@@ -317,7 +349,7 @@ const PujaBookingScreen: React.FC = () => {
         {/* Next Button */}
         <TouchableOpacity
           style={styles.nextButton}
-          onPress={handlePanditjiSelectionModalOpen}>
+          onPress={handleNextButtonPress}>
           <Text style={styles.nextButtonText}>{t('next')}</Text>
         </TouchableOpacity>
       </ScrollView>

@@ -169,5 +169,8 @@
   "invalid_email": "Invalid email address",
   "invalid_phone": "Invalid phone number",
   "location_required": "Location is required",
-  "signup_failed": "Sign up failed"
+  "signup_failed": "Sign up failed",
+  "add_your_address": "Please add your address",
+  "please_select_date": "Please select a date.",
+  "please_select_muhurat_slot": "Please select a muhurat slot."
 }

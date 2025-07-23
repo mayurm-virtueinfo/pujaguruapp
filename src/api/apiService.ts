@@ -755,10 +755,7 @@ export const getRecommendedPandit = (
   latitude: string,
   longitude: string,
 ): Promise<any> => {
-  const apiUrl = GET_RECOMMENDED_PANDIT.replace('{latitude}', latitude).replace(
-    '{longitude}',
-    longitude,
-  );
+  const apiUrl = `/app/recommended-panditji?latitude=${latitude}&longitude=${longitude}`;
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)

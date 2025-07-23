@@ -1,8 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ApiEndpoints, {APP_URL, POST_REFRESH_TOKEN} from './apiEndpoints';
+import ApiEndpoints, { APP_URL, POST_REFRESH_TOKEN } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
-import {postRefreshToken} from './apiService';
+import { postRefreshToken } from './apiService';
 
 // Create an axios instance
 
@@ -53,9 +53,10 @@ const onRefreshed = (newAccessToken: string) => {
 
 const refreshAccessToken = async (refreshToken: string) => {
   try {
+    // Use axios directly to avoid circular dependency and issues with postRefreshToken
     const response = await axios.post(
-      `${APP_URL}${POST_REFRESH_TOKEN}`,
-      {refresh_token: refreshToken},
+      'https://c692148aa3f9.ngrok-free.app/app/auth/refresh-token/',
+      { refresh_token: refreshToken },
       {
         headers: {
           'Content-Type': 'application/json',

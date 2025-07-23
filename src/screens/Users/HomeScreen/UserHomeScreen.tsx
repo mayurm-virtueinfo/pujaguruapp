@@ -21,7 +21,7 @@ import {
   PujaItem,
   RecommendedPandit,
 } from '../../../api/apiService';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
@@ -44,7 +44,7 @@ const UserHomeScreen: React.FC = () => {
   const [recomendedPandits, setRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
-
+  console.log('location', location);
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
 
@@ -80,6 +80,7 @@ const UserHomeScreen: React.FC = () => {
     setLoading(true);
     try {
       const response: any = await getUpcomingPujas();
+      console.log('response', response);
       setPujas(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error('Error fetching upcoming puja data:', error);
@@ -93,7 +94,7 @@ const UserHomeScreen: React.FC = () => {
   const fetchRecommendedPandits = async () => {
     try {
       setLoading(true);
-
+      console.log('location in =====>', location.latitude, location.longitude);
       const response = await getRecommendedPandit(
         location.latitude,
         location.longitude,
@@ -102,6 +103,7 @@ const UserHomeScreen: React.FC = () => {
       if (response && Array.isArray(response.data)) {
         setRecomendedPandits(response.data || []);
       }
+      console.log('response======>', response);
     } catch (error: any) {
       // Only show alert for authentication error, do not log the error to avoid noisy logs
       if (
@@ -158,7 +160,7 @@ const UserHomeScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>{t('recomended_panditji')}</Text>
             <TouchableOpacity
               style={styles.seeAllContainer}
-              onPress={() => handleNavigation('PanditList')}>
+              onPress={() => handleNavigation('UserPanditjiNavigator')}>
               <Text style={styles.seeAllText}>{t('see_all')}</Text>
               <Ionicons
                 name="chevron-forward-outline"
@@ -223,7 +225,21 @@ const UserHomeScreen: React.FC = () => {
                 </View>
               ))
             ) : (
-              <Text style={styles.noPanditText}>{t('no_panditji_found')}</Text>
+              <View
+                style={[
+                  THEMESHADOW.shadow,
+                  {
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: COLORS.white,
+                    paddingVertical: 12,
+                  },
+                ]}>
+                <Text style={styles.noPanditText}>
+                  {t('no_panditji_found')}
+                </Text>
+              </View>
             )}
           </ScrollView>
         </View>
@@ -258,7 +274,7 @@ const UserHomeScreen: React.FC = () => {
               <Text
                 style={{
                   color: '#888',
-                  marginTop: 10,
+                  // marginTop: 10,
                   textAlign: 'center',
                 }}>
                 {t('no_upcoming_pujas')}
@@ -322,6 +338,9 @@ const styles = StyleSheet.create({
     marginTop: moderateScale(12),
   },
   panditCardsContentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: moderateScale(2),
     paddingBottom: moderateScale(10),
   },

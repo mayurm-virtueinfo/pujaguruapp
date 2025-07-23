@@ -118,7 +118,13 @@ const SelectPanditjiScreen: React.FC = () => {
         setPanditjiData(transformedData);
       }
     } catch (error: any) {
-      showErrorToast(error.message || 'Failed to fetch panditji');
+      // Set a proper message for toast message
+      showErrorToast(
+        error?.message
+          ? error.message
+          : t('failed_to_fetch_panditji') ||
+              'Failed to fetch Panditji list. Please try again later.',
+      );
     } finally {
       setIsLoading(false);
     }

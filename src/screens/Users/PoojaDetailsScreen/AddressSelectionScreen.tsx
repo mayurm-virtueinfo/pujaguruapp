@@ -29,7 +29,8 @@ import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 const AddressSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList | UserHomeParamList,
-    'AddressSelectionScreen'
+    'AddressSelectionScreen',
+    'AddAddressScreen'
   >;
   const {t} = useTranslation();
   const inset = useSafeAreaInsets();
@@ -81,7 +82,9 @@ const AddressSelectionScreen: React.FC = () => {
     setSelectedAddressId(id);
     const found = poojaPlaces.find(place => place.id === id) || null;
     setSelectedAddress(found);
+    // @ts-ignore
     if (found && found.user_address_id) {
+      // @ts-ignore
       setSelectedUserAddressId(found.user_address_id);
     } else {
       setSelectedUserAddressId(null);
@@ -99,6 +102,11 @@ const AddressSelectionScreen: React.FC = () => {
     });
   };
 
+  // Handler for plus button click
+  const onPlusPress = () => {
+    navigation.navigate('AddAddressScreen' as never);
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <CustomeLoader loading={isLoading} />
@@ -107,6 +115,7 @@ const AddressSelectionScreen: React.FC = () => {
         title={t('puja_booking')}
         showBackButton={true}
         showCirclePlusButton={true}
+        onPlusPress={onPlusPress}
       />
       <ScrollView
         style={styles.scrollContainer}
@@ -118,37 +127,50 @@ const AddressSelectionScreen: React.FC = () => {
             <Text style={styles.descriptionText}>{t('choose_puja_place')}</Text>
             {!isLoading && (
               <View style={styles.pricingContainer}>
-                {poojaPlaces.map((place, index) => (
-                  <React.Fragment key={place.id}>
-                    <TouchableOpacity
-                      style={styles.pricingOption}
-                      activeOpacity={0.7}
-                      onPress={() => handleSelectAddress(place.id)}>
-                      <View>
-                        <Text style={styles.pricingText}>{place.name}</Text>
-                        <Text style={styles.subtitleText}>
-                          {place.description}
-                        </Text>
-                      </View>
-                      <Octicons
-                        name={
-                          selectedAddressId === place.id
-                            ? 'check-circle'
-                            : 'circle'
-                        }
-                        size={24}
-                        color={
-                          selectedAddressId === place.id
-                            ? COLORS.primary
-                            : COLORS.inputBoder
-                        }
-                      />
-                    </TouchableOpacity>
-                    {index !== poojaPlaces.length - 1 && (
-                      <View style={styles.divider} />
-                    )}
-                  </React.Fragment>
-                ))}
+                {poojaPlaces.length === 0 ? (
+                  <View style={{alignItems: 'center', paddingVertical: 24}}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        color: COLORS.primaryTextDark,
+                        fontFamily: Fonts.Sen_Medium,
+                      }}>
+                      {t('add_your_address')}
+                    </Text>
+                  </View>
+                ) : (
+                  poojaPlaces.map((place, index) => (
+                    <React.Fragment key={place.id}>
+                      <TouchableOpacity
+                        style={styles.pricingOption}
+                        activeOpacity={0.7}
+                        onPress={() => handleSelectAddress(place.id)}>
+                        <View>
+                          <Text style={styles.pricingText}>{place.name}</Text>
+                          <Text style={styles.subtitleText}>
+                            {place.description}
+                          </Text>
+                        </View>
+                        <Octicons
+                          name={
+                            selectedAddressId === place.id
+                              ? 'check-circle'
+                              : 'circle'
+                          }
+                          size={24}
+                          color={
+                            selectedAddressId === place.id
+                              ? COLORS.primary
+                              : COLORS.inputBoder
+                          }
+                        />
+                      </TouchableOpacity>
+                      {index !== poojaPlaces.length - 1 && (
+                        <View style={styles.divider} />
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
               </View>
             )}
             <PrimaryButton

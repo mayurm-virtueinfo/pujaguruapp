@@ -11,7 +11,7 @@ import {
   Dimensions,
 } from 'react-native';
 import {moderateScale, verticalScale} from 'react-native-size-matters';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import CustomHeader from '../../../components/CustomHeader';
 import {
@@ -45,6 +45,9 @@ interface PujaListItemType {
   payment_status: string;
   notes: string;
   image?: string;
+  name?: string;
+  pujaPurpose?: string;
+  price?: number;
 }
 
 interface CommentData {
@@ -55,6 +58,12 @@ interface CommentData {
   review: string;
   created_at: string;
   image?: string;
+  commenterName?: string;
+  star?: number;
+  Comment?: string;
+  like?: number;
+  disLike?: number;
+  date?: string;
 }
 
 interface PanditDetails {
@@ -87,8 +96,6 @@ const PanditDetailsScreen: React.FC = () => {
   const route = useRoute();
   const {panditId} = route.params as {panditId: string};
 
-  console.log('panditji id :: ', panditId);
-
   const {showErrorToast} = useCommonToast();
 
   const [recommendedPuja, setRecommendedPuja] = useState<RecommendedPuja[]>([]);
@@ -110,7 +117,6 @@ const PanditDetailsScreen: React.FC = () => {
       try {
         setLoading(true);
         const response: PanditResponse = await getPanditDetails(panditId);
-        console.log(response);
 
         if (response.success) {
           // Map API response to match expected UI fields
@@ -143,7 +149,6 @@ const PanditDetailsScreen: React.FC = () => {
           setSelectedPandit(response.data);
           setPujaList(mappedPujas);
           setCommentData(mappedRatings);
-          console.log('Pandit details fetched successfully :: ', response.data);
         }
       } catch (error: any) {
         showErrorToast(
@@ -230,54 +235,73 @@ const PanditDetailsScreen: React.FC = () => {
             </Text>
           </View>
 
+          {/* Photo Gallery Section */}
           <View style={styles.photoGallerySection}>
             <Text style={styles.sectionTitle}>Photo Gallery</Text>
-            <View style={styles.galleryRow}>
-              {galleryPujas.map(puja => (
-                <View style={styles.galleryItem} key={puja.id}>
-                  <Image
-                    source={{uri: puja.image}}
-                    style={styles.galleryImage}
-                  />
-                  <Text style={styles.galleryLabel}>{puja.name}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.poojaSection}>
-            <Text style={styles.sectionTitle}>Pooja Performed</Text>
-            <View style={styles.poojaList}>
-              {pujaList.map((puja, idx) => (
-                <React.Fragment key={puja.id}>
-                  <View style={styles.poojaItem}>
+            {galleryPujas && galleryPujas.length > 0 ? (
+              <View style={styles.galleryRow}>
+                {galleryPujas.map(puja => (
+                  <View style={styles.galleryItem} key={puja.id}>
                     <Image
                       source={{uri: puja.image}}
-                      style={styles.poojaImage}
+                      style={styles.galleryImage}
                     />
-                    <View style={styles.poojaDetails}>
-                      <Text style={styles.poojaName}>{puja.name}</Text>
-                      <Text style={styles.poojaDescription}>
-                        {puja.pujaPurpose}
-                      </Text>
-                      <Text style={styles.poojaPrice}>
-                        ₹ {puja.price.toLocaleString('en-IN')}
-                      </Text>
-                    </View>
+                    <Text style={styles.galleryLabel}>{puja.name}</Text>
                   </View>
-                  {idx < pujaList.length - 1 && (
-                    <View style={styles.separator} />
-                  )}
-                </React.Fragment>
-              ))}
-            </View>
+                ))}
+              </View>
+            ) : (
+              <View style={[THEMESHADOW.shadow, styles.forNodata]}>
+                <Text style={styles.forNoDataText}>
+                  No photo gallery available.
+                </Text>
+              </View>
+            )}
           </View>
 
+          {/* Pooja Performed Section */}
+          <View style={styles.poojaSection}>
+            <Text style={styles.sectionTitle}>Pooja Performed</Text>
+            {pujaList && pujaList.length > 0 ? (
+              <View style={styles.poojaList}>
+                {pujaList.map((puja, idx) => (
+                  <React.Fragment key={puja.id}>
+                    <View style={styles.poojaItem}>
+                      <Image
+                        source={{uri: puja.image}}
+                        style={styles.poojaImage}
+                      />
+                      <View style={styles.poojaDetails}>
+                        <Text style={styles.poojaName}>{puja.name}</Text>
+                        <Text style={styles.poojaDescription}>
+                          {puja.pujaPurpose}
+                        </Text>
+                        <Text style={styles.poojaPrice}>
+                          ₹ {puja.price?.toLocaleString('en-IN')}
+                        </Text>
+                      </View>
+                    </View>
+                    {idx < pujaList.length - 1 && (
+                      <View style={styles.separator} />
+                    )}
+                  </React.Fragment>
+                ))}
+              </View>
+            ) : (
+              <View style={[THEMESHADOW.shadow, styles.forNodata]}>
+                <Text style={styles.forNoDataText}>
+                  No pooja performed yet.
+                </Text>
+              </View>
+            )}
+          </View>
+
+          {/* Reviews Section */}
           <View style={styles.reviewsSection}>
             <Text style={styles.sectionTitle}>Reviews</Text>
-            <View style={styles.reviewsList}>
-              {Array.isArray(commentData) && commentData.length > 0 ? (
-                commentData.map((review, idx) => (
+            {Array.isArray(commentData) && commentData.length > 0 ? (
+              <View style={[styles.reviewsList, THEMESHADOW.shadow]}>
+                {commentData.map((review, idx) => (
                   <React.Fragment key={idx}>
                     <View style={styles.reviewItem}>
                       <View
@@ -297,7 +321,7 @@ const PanditDetailsScreen: React.FC = () => {
                         />
                         <View style={styles.reviewHeader}>
                           <Text style={styles.reviewDate}>
-                            {formatDate(review.date)}
+                            {formatDate(review.date!)}
                           </Text>
                           <Text
                             style={{
@@ -308,7 +332,7 @@ const PanditDetailsScreen: React.FC = () => {
                             }}>
                             {review.commenterName}
                           </Text>
-                          {renderStars(review.star)}
+                          {renderStars(review.star!)}
                         </View>
                       </View>
                       <Text style={styles.reviewText}>{review.Comment}</Text>
@@ -339,18 +363,13 @@ const PanditDetailsScreen: React.FC = () => {
                       <View style={styles.separator} />
                     )}
                   </React.Fragment>
-                ))
-              ) : (
-                <Text
-                  style={{
-                    color: COLORS.textSecondary,
-                    fontFamily: Fonts.Sen_Regular,
-                    fontSize: moderateScale(13),
-                  }}>
-                  No reviews yet.
-                </Text>
-              )}
-            </View>
+                ))}
+              </View>
+            ) : (
+              <View style={[THEMESHADOW.shadow, styles.forNodata]}>
+                <Text style={styles.forNoDataText}>No reviews yet.</Text>
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -524,16 +543,18 @@ const styles = StyleSheet.create({
   reviewsSection: {
     marginBottom: moderateScale(24),
   },
+  forNodata: {
+    alignItems: 'center',
+    marginTop: moderateScale(16),
+    backgroundColor: COLORS.white,
+    paddingVertical: 12,
+  },
+
   reviewsList: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
     padding: moderateScale(16),
     marginTop: moderateScale(12),
-    shadowColor: COLORS.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
   },
   reviewItem: {
     marginBottom: moderateScale(4),
@@ -553,6 +574,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Regular,
     lineHeight: moderateScale(18),
     marginBottom: moderateScale(8),
+  },
+  forNoDataText: {
+    color: COLORS.textSecondary,
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(13),
   },
   reviewActions: {
     flexDirection: 'row',

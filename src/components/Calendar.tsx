@@ -142,6 +142,7 @@ const Calendar: React.FC<CalendarProps> = ({
     <View style={styles.calendarContainer}>
       <RNCalendar
         current={initialDate}
+        minDate={todayStr}
         markingType={'custom'}
         markedDates={markedDates}
         onDayPress={handleDayPress}
