@@ -353,9 +353,9 @@ export interface VerrifyPayment {
 }
 
 export interface RatePandit {
-  booking: number,
-  rating: number,
-  review: string
+  booking: number;
+  rating: number;
+  review: string;
 }
 
 export const apiService = {
@@ -560,16 +560,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return { pandits: [], puja: [] };
+      return {pandits: [], puja: []};
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || { recommendedPuja: [], pujaList: [] };
+      return response.data?.record || {recommendedPuja: [], pujaList: []};
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return { recommendedPuja: [], pujaList: [] };
+      return {recommendedPuja: [], pujaList: []};
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -620,10 +620,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -651,10 +651,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
 };
@@ -763,7 +763,10 @@ export const getRecommendedPandit = (
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error fetching recommended pandit:', error.response.data);
+        console.error(
+          'Error fetching recommended pandit:',
+          error.response.data,
+        );
         reject(error);
       });
   });
@@ -824,7 +827,7 @@ export const deleteAddress = (data: deleteAddress) => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, { data })
+      .delete(apiUrl, {data})
       .then(response => {
         resolve(response);
       })
@@ -867,6 +870,7 @@ export const getAddressTypeForBooking = () => {
 
 export const postAddAddress = (data: AddAddress) => {
   let apiUrl = POST_ADD_ADDRESS;
+  console.log('postAddAddress data ::', data);
   return new Promise((resolve, reject) => {
     apiDev
       .post(apiUrl, data)
@@ -916,9 +920,9 @@ export const postBooking = (data: Booking) => {
     apiDev
       .post(apiUrl, data)
       .then(response => {
-        console.log("response for booking1", response)
+        console.log('response for booking1', response);
         resolve(response);
-        console.log("response for booking2", response)
+        console.log('response for booking2', response);
       })
       .catch(error => {
         console.error('Error Booking', error);
@@ -926,16 +930,19 @@ export const postBooking = (data: Booking) => {
       });
   });
 };
+
 export const getPanditji = (
   puja_id: string,
   latitude: string,
   longitude: string,
   mode: 'auto' | 'manual',
+  bookingDate: string,
 ): Promise<any> => {
   const apiUrl = GET_AUTO_MANUAL_PANDIT_SELECTION.replace('{puja_id}', puja_id)
     .replace('{latitude}', latitude)
     .replace('{longitude}', longitude)
-    .replace('{mode}', mode);
+    .replace('{mode}', mode)
+    .replace('{booking_date}', bookingDate);
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)

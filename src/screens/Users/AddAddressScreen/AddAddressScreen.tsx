@@ -24,10 +24,10 @@ import {useCommonToast} from '../../../common/CommonToast';
 import {requestLocationPermission} from '../../../utils/locationUtils';
 import Geolocation from '@react-native-community/geolocation';
 import CustomDropdown from '../../../components/CustomDropdown';
-import {useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {Address} from '../AddressesScreen/AddressesScreen';
 
-const AddAddressScreen = ({navigation}: {navigation?: any}) => {
+const AddAddressScreen = () => {
   const {t} = useTranslation();
   const insets = useSafeAreaInsets();
   const {showErrorToast, showSuccessToast} = useCommonToast();
@@ -41,6 +41,8 @@ const AddAddressScreen = ({navigation}: {navigation?: any}) => {
     pincode: '',
     addressType: '',
   });
+
+  const navigation = useNavigation();
 
   const [location, setLocation] = useState({latitude: 0, longitude: 0});
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +68,6 @@ const AddAddressScreen = ({navigation}: {navigation?: any}) => {
     let isMounted = true;
     const fetchCitiesAndTypes = async () => {
       try {
-        // Fetch cities
         const cities: any = await getCity();
         let cityList: any[] = Array.isArray(cities)
           ? cities
@@ -78,7 +79,6 @@ const AddAddressScreen = ({navigation}: {navigation?: any}) => {
         }));
         if (isMounted) setCityOptions(cityOptions);
 
-        // Fetch address types
         const types: any = await getAddressType();
         let typeList: any[] = Array.isArray(types) ? types : types?.data || [];
         let typeOptions = typeList.map((type: any) => ({
@@ -88,19 +88,16 @@ const AddAddressScreen = ({navigation}: {navigation?: any}) => {
         }));
         if (isMounted) setAddressTypeOptions(typeOptions);
 
-        // If editing, set formData with correct city and addressType values
         if (
           addressToEdit &&
           !didSetEditData.current &&
           cityOptions.length > 0 &&
           typeOptions.length > 0
         ) {
-          // Find city id as string
           let matchedCityId = '';
           if (addressToEdit.city) {
             let cityValue = addressToEdit.city;
             if (typeof cityValue === 'object' && cityValue !== null) {
-              // Safely access id or name if they exist
               cityValue = (cityValue as any).id ?? (cityValue as any).name;
             }
             const foundCity =
@@ -112,12 +109,10 @@ const AddAddressScreen = ({navigation}: {navigation?: any}) => {
             matchedCityId = foundCity ? String(foundCity.value) : '';
           }
 
-          // Find address type id as string
           let matchedTypeId = '';
           if (addressToEdit.address_type) {
             let typeValue = addressToEdit.address_type;
             if (typeof typeValue === 'object' && typeValue !== null) {
-              // Safely access id or name if they exist
               typeValue = (typeValue as any).id ?? (typeValue as any).name;
             }
             const foundType =
@@ -157,7 +152,6 @@ const AddAddressScreen = ({navigation}: {navigation?: any}) => {
     return () => {
       isMounted = false;
     };
-    // eslint-disable-next-line
   }, [addressToEdit]);
 
   useEffect(() => {
@@ -199,26 +193,48 @@ const AddAddressScreen = ({navigation}: {navigation?: any}) => {
       longitude: location.longitude,
     };
     try {
-      let response;
       if (addressToEdit) {
-        response = await updateAddress({
+        const response: any = await updateAddress({
           id: addressToEdit.id,
           ...addressPayload,
         });
+        console.log('response for update address :: ', response);
+        if (response.data.success) {
+          setFormData({
+            fullName: '',
+            phoneNumber: '',
+            addressLine1: '',
+            addressLine2: '',
+            city: '',
+            state: '',
+            pincode: '',
+            addressType: '',
+          });
+          setLocation({latitude: 0, longitude: 0});
+          navigation?.goBack();
+        }
       } else {
-        response = await postAddAddress(addressPayload);
+        console.log('======= Add Address Api called =======');
+        const response: any = await postAddAddress(addressPayload);
+        console.log('response for add address :: ', response);
+        if (response.data.success) {
+          setFormData({
+            fullName: '',
+            phoneNumber: '',
+            addressLine1: '',
+            addressLine2: '',
+            city: '',
+            state: '',
+            pincode: '',
+            addressType: '',
+          });
+          setLocation({latitude: 0, longitude: 0});
+          handleBack();
+        }
       }
-      if (
-        typeof response === 'object' &&
-        response !== null &&
-        'success' in response &&
-        (response as any).success
-      ) {
-        showSuccessToast((response as any).message);
-        navigation?.goBack();
-      }
-    } catch (error) {
+    } catch (error: any) {
       showErrorToast(t('failed_to_save_address'));
+      console.log('error :: ', error?.response?.data?.message);
     }
   };
 

@@ -47,14 +47,12 @@ const AddressesScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  // Use useRoute to get params (if any)
   const route = useRoute<RouteProp<UserProfileParamList, 'AddressesScreen'>>();
-  // Try to get addressToEdit from route params, fallback to null
-  // But in this screen, there is no addressToEdit param, so always undefined
+
   const addressToEdit =
     (route.params && (route.params as any).addressToEdit) || null;
   const inset = useSafeAreaInsets();
-  // Memoize fetchAddressData so it can be used in useFocusEffect
+
   const fetchAddressData = useCallback(async () => {
     setLoading(true);
     try {
@@ -76,10 +74,8 @@ const AddressesScreen: React.FC = () => {
     }
   }, []);
 
-  // Call fetchAddressData on mount and when screen is focused
   useEffect(() => {
     fetchAddressData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useFocusEffect(
