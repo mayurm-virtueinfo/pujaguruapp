@@ -147,10 +147,16 @@ const SelectPanditjiScreen: React.FC = () => {
               'No Panditji available for the selected date and pooja',
           );
         }
+      } else {
+        setPanditjiData([]);
+        showErrorToast(response.message || 'No Panditji found');
       }
     } catch (error: any) {
       console.error('Error fetching panditji :: ', JSON.stringify(error));
-      showErrorToast(error?.message || 'Failed to fetch panditji');
+      setPanditjiData([]);
+      const errorMsg =
+        error?.response?.data?.message || error?.message || 'No Panditji found';
+      showErrorToast(errorMsg);
     } finally {
       setIsLoading(false);
     }
@@ -282,6 +288,18 @@ const SelectPanditjiScreen: React.FC = () => {
             showsVerticalScrollIndicator={true}
             contentContainerStyle={styles.listContent}
             keyboardShouldPersistTaps="handled"
+            ListEmptyComponent={() => (
+              <View style={{alignItems: 'center', padding: 20}}>
+                <Text
+                  style={{
+                    color: COLORS.pujaCardSubtext,
+                    fontFamily: Fonts.Sen_Regular,
+                    fontSize: moderateScale(15),
+                  }}>
+                  {t('no_panditji_found') || 'No Panditji found'}
+                </Text>
+              </View>
+            )}
           />
           <View style={styles.absoluteButtonContainer}>
             <PrimaryButton

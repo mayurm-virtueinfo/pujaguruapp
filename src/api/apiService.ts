@@ -28,6 +28,7 @@ import ApiEndpoints, {
   GET_UPCOMING_PUJA,
   GET_WALLET,
   GET_TRANSACTION,
+  POST_CANCEL_BOOKING,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -362,6 +363,11 @@ export interface RatePandit {
   review: string;
 }
 
+export interface bookingCancellation {
+  cancellation_reason_type: string,
+  cancellation_reason_other?: string
+}
+
 export const apiService = {
   // Fetch cities based on pincode
   getCities: async (pincode: string): Promise<DropdownItem[]> => {
@@ -564,16 +570,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return {pandits: [], puja: []};
+      return { pandits: [], puja: [] };
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || {recommendedPuja: [], pujaList: []};
+      return response.data?.record || { recommendedPuja: [], pujaList: [] };
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return {recommendedPuja: [], pujaList: []};
+      return { recommendedPuja: [], pujaList: [] };
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -624,10 +630,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -655,10 +661,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
 };
@@ -831,7 +837,7 @@ export const deleteAddress = (data: deleteAddress) => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, {data})
+      .delete(apiUrl, { data })
       .then(response => {
         resolve(response);
       })
@@ -954,7 +960,7 @@ export const getPanditji = (
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error fetching panditji:', JSON.stringify(error));
+        console.error('Error fetching panditji:', JSON.stringify(error.response.data));
         reject(error);
       });
   });
@@ -1090,6 +1096,20 @@ export const getTransaction = () => {
       })
       .catch(error => {
         console.error('Error in Transaction api :: ', error);
+        reject(error);
+      });
+  });
+};
+export const postCancelBooking = (id: string, data: bookingCancellation): Promise<any> => {
+  const apiUrl = POST_CANCEL_BOOKING.replace('{id}', id);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error cancel booking:', error);
         reject(error);
       });
   });

@@ -294,6 +294,13 @@ const PujaBookingScreen: React.FC = () => {
             // Clear selected muhurat when date changes
             setSelectedSlot('');
             setSelectedSlotObj(null);
+            if (!location) {
+              showErrorToast(
+                t('location_not_found') ||
+                  'Location not found. Please set your location first.',
+              );
+              return;
+            }
             fetchMuhurat(formatDateYYYYMMDD(dateString));
           }}
           month={currentMonth}

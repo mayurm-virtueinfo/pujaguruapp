@@ -325,7 +325,7 @@ const UserPujaDetailsScreen: React.FC = () => {
   };
 
   const handleCancelBooking = () => {
-    navigation.navigate('PujaCancellationScreen');
+    navigation.navigate('PujaCancellationScreen', {id: id});
   };
   const renderCancelButton = () => (
     <PrimaryButton
