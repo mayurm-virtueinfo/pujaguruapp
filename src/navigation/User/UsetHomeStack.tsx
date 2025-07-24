@@ -29,12 +29,14 @@ export type UserHomeParamList = {
     tirth?: any;
     poojaName?: any;
     poojaDescription?: any;
+    puja_image: string;
+    puja_name: string;
   };
   SelectPujaScreen: undefined;
   PoojaDetailScreen: {poojaId: any};
-  PlaceSelectionScreen: {poojaId?: any; samagri_required: boolean};
-  AddressSelectionScreen: {poojaId?: any; samagri_required: boolean};
-  TirthPlaceSelectionScreen: {poojaId?: any; samagri_required: boolean};
+  PlaceSelectionScreen: any;
+  AddressSelectionScreen: any;
+  TirthPlaceSelectionScreen: any;
   PaymentScreen: any;
   SelectPanditjiScreen: any;
   BookingSuccessfullyScreen: undefined;

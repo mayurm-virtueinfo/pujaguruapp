@@ -56,12 +56,20 @@ const SelectPanditjiScreen: React.FC = () => {
     muhurat_time,
     muhurat_type,
     notes,
+    puja_name,
+    puja_image,
   } = route.params as any;
   const {showErrorToast} = useCommonToast();
 
   const navigation = useNavigation<StackNavigationProp<UserHomeParamList>>();
   const [searchText, setSearchText] = useState('');
   const [selectedPanditji, setSelectedPanditji] = useState<string | null>(null);
+  const [selectedPanditjiName, setSelectedPanditjiName] = useState<
+    string | null
+  >(null);
+  const [selectedPanditjiImage, setSelectedPanditjiImage] = useState<
+    string | null
+  >(null);
   const [panditjiData, setPanditjiData] = useState<PanditjiItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useState<{
@@ -131,7 +139,10 @@ const SelectPanditjiScreen: React.FC = () => {
   };
 
   const handlePanditjiSelect = (id: string) => {
+    const selected = panditjiData.find(item => item.id === id);
     setSelectedPanditji(id);
+    setSelectedPanditjiName(selected ? selected.name : null);
+    setSelectedPanditjiImage(selected ? selected.image : null);
     setPanditjiData(prev =>
       prev.map(item => ({
         ...item,
@@ -140,7 +151,7 @@ const SelectPanditjiScreen: React.FC = () => {
     );
   };
 
-  // Pass selected pandit id in navigation
+  // Pass selected pandit id, name, and image in navigation
   const handleNextPress = () => {
     if (selectedPanditji) {
       console.log('Selected Panditji:', selectedPanditji);
@@ -154,6 +165,10 @@ const SelectPanditjiScreen: React.FC = () => {
         muhurat_type: muhurat_type,
         notes: notes,
         pandit: selectedPanditji, // Pass selected pandit id here
+        pandit_name: selectedPanditjiName, // Pass selected pandit name
+        pandit_image: selectedPanditjiImage, // Pass selected pandit image
+        puja_image: puja_image,
+        puja_name: puja_name,
       });
     }
   };

@@ -104,6 +104,7 @@ const PujaDetailsScreen: React.FC = () => {
     );
   };
 
+  // Modified to pass puja image and name
   const handleBookNowPress = () => {
     const selectedOption = getSelectedPricingOption();
     if (!selectedOption) {
@@ -114,6 +115,8 @@ const PujaDetailsScreen: React.FC = () => {
     navigation.navigate('PlaceSelectionScreen', {
       poojaId: poojaId,
       samagri_required: selectedOption.withPujaItem,
+      puja_image: data?.image_url ?? '',
+      puja_name: data?.title ?? '',
     });
   };
 

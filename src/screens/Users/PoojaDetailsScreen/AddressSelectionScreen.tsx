@@ -43,7 +43,8 @@ const AddressSelectionScreen: React.FC = () => {
 
   const route = useRoute();
 
-  const {poojaId, samagri_required} = route.params as any;
+  const {poojaId, samagri_required, puja_image, puja_name} =
+    route.params as any;
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingAddress[]>([]);
   // selectedAddressId is the id of the address type (not user_address_id)
@@ -99,6 +100,8 @@ const AddressSelectionScreen: React.FC = () => {
       address: selectedUserAddressId, // Pass user_address_id here
       poojaName: selectedAddress?.name || '',
       poojaDescription: selectedAddress?.description || '',
+      puja_image: puja_image,
+      puja_name: puja_name,
     });
   };
 

@@ -56,6 +56,8 @@ const PujaBookingScreen: React.FC = () => {
     tirth,
     poojaName,
     poojaDescription,
+    puja_image,
+    puja_name,
   } = route.params as any;
   const {showErrorToast} = useCommonToast();
 
@@ -191,6 +193,8 @@ const PujaBookingScreen: React.FC = () => {
       muhurat_time: muhuratTime,
       muhurat_type: muhuratType,
       notes: additionalNotes,
+      puja_image: puja_image,
+      puja_name: puja_name,
     };
     console.log('navigationParams', navigationParams);
     if (selection === 'automatic') {

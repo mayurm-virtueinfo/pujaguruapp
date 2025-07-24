@@ -29,11 +29,13 @@ export type UserPoojaListParamList = {
     tirth?: any;
     poojaName?: any;
     poojaDescription?: any;
+    puja_name: string;
+    puja_image: string;
   };
   UserPoojaDetails: {poojaId: string};
-  PlaceSelectionScreen: {poojaId: string; samagri_required: boolean};
-  AddressSelectionScreen: {poojaId: string; samagri_required: boolean};
-  TirthPlaceSelectionScreen: {poojaId: string; samagri_required: boolean};
+  PlaceSelectionScreen: any;
+  AddressSelectionScreen: any;
+  TirthPlaceSelectionScreen: any;
   PaymentScreen: {poojaId: string};
   BookingSuccessfullyScreen: any;
   RateYourExperienceScreen: any;

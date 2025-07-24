@@ -76,6 +76,10 @@ const PaymentScreen: React.FC = () => {
     muhurat_type,
     notes,
     pandit,
+    pandit_name,
+    pandit_image,
+    puja_name,
+    puja_image,
   } = route.params as any;
 
   console.log('oute.params', route.params);
@@ -95,7 +99,7 @@ const PaymentScreen: React.FC = () => {
   const [loading, setIsLoading] = useState<boolean>(false);
   const [panditData, setPanditjiData] = useState<any>(null);
   const [bookingId, setBookingId] = useState<string | undefined>();
-
+  console.log('panditData========>', panditData);
   // Prevent duplicate API calls for Razorpay order
   const razorpayOrderInProgress = useRef(false);
 
@@ -530,7 +534,7 @@ const PaymentScreen: React.FC = () => {
           <Octicons name="location" size={20} color={COLORS.pujaCardSubtext} />
         </View>
         <View>
-          <Text style={styles.bookingDataText}>{item.address}</Text>
+          <Text style={styles.bookingDataText}>{address || tirth}</Text>
         </View>
       </View>
       <View style={styles.textContainer}>
@@ -545,7 +549,7 @@ const PaymentScreen: React.FC = () => {
           <Octicons name="calendar" size={20} color={COLORS.pujaCardSubtext} />
         </View>
         <View>
-          <Text style={styles.bookingDataText}>{item.date}</Text>
+          <Text style={styles.bookingDataText}>{booking_date}</Text>
         </View>
       </View>
       <View style={styles.textContainer}>
@@ -560,7 +564,7 @@ const PaymentScreen: React.FC = () => {
           <Octicons name="clock" size={20} color={COLORS.pujaCardSubtext} />
         </View>
         <View>
-          <Text style={styles.bookingDataText}>{item.time}</Text>
+          <Text style={styles.bookingDataText}>{muhurat_time}</Text>
         </View>
       </View>
       <View
@@ -571,11 +575,11 @@ const PaymentScreen: React.FC = () => {
         }}>
         <Image
           source={{
-            uri: panditData.profile_img || 'https://via.placeholder.com/150',
+            uri: pandit_image || 'https://via.placeholder.com/150',
           }}
           style={styles.panditImage}
         />
-        <Text style={styles.bookingDataText}>{panditData.full_name}</Text>
+        <Text style={styles.bookingDataText}>{pandit_name}</Text>
       </View>
     </View>
   );
@@ -649,14 +653,9 @@ const PaymentScreen: React.FC = () => {
               activeOpacity={0.7}>
               <View style={styles.suggestedLeft}>
                 <View style={styles.pujaImageContainer}>
-                  <Image
-                    source={{uri: suggestedPuja.image}}
-                    style={styles.pujaImage}
-                  />
+                  <Image source={{uri: puja_image}} style={styles.pujaImage} />
                 </View>
-                <Text style={styles.suggestedPujaName}>
-                  {suggestedPuja.name}
-                </Text>
+                <Text style={styles.suggestedPujaName}>{puja_name}</Text>
               </View>
               <View
                 style={{

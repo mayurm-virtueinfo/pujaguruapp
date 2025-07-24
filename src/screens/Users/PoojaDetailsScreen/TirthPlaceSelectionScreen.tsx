@@ -38,7 +38,8 @@ const TirthPlaceSelectionScreen: React.FC = () => {
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const route = useRoute();
-  const {poojaId, samagri_required} = route.params as any;
+  const {poojaId, samagri_required, puja_image, puja_name} =
+    route.params as any;
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingTirthPlace[]>([]);
   const [selectedTirthPlaceId, setSelectedTirthPlaceId] = useState<
@@ -86,6 +87,8 @@ const TirthPlaceSelectionScreen: React.FC = () => {
       tirth: selectedTirthPlaceId,
       poojaName: selectedTirthPlaceName,
       poojaDescription: selectedTirthPlaceDescription,
+      puja_image: puja_image,
+      puja_name: puja_name,
     });
   };
 
