@@ -172,5 +172,13 @@
   "signup_failed": "Sign up failed",
   "add_your_address": "Please add your address",
   "please_select_date": "Please select a date.",
-  "please_select_muhurat_slot": "Please select a muhurat slot."
+  "please_select_muhurat_slot": "Please select a muhurat slot.",
+  "location_not_found": "Location not found. Please set your location first.",
+  "confirm_cancellation": "Confirm Cancellation",
+  "are_you_sure_you_want_to_cancel": "Are you sure you want to cancel this booking?",
+  "yes": "Yes",
+  "no": "No",
+  "please_select_cancellation_reason": "Please select a cancellation reason.",
+  "please_enter_cancellation_reason": "Please enter your cancellation reason.",
+  "cancellation_submitted_successfully": "Cancellation submitted successfully."
 }

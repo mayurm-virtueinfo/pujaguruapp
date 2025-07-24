@@ -41,7 +41,7 @@ export type UserPoojaListParamList = {
   RateYourExperienceScreen: any;
   SelectPanditjiScreen: {poojaId: string};
   PanditDetailsScreen: undefined;
-  PujaCancellationScreen: undefined;
+  PujaCancellationScreen: {id: any};
   UserPujaDetailsScreen: undefined;
   UserChatScreen: undefined;
   AddAddressScreen: undefined;

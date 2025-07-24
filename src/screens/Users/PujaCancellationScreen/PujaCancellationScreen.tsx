@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,12 @@ import {
   StyleSheet,
   TextInput,
   ScrollView,
-  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import LinearGradient from 'react-native-linear-gradient';
-import {useNavigation} from '@react-navigation/native';
-import {apiService} from '../../../api/apiService';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {postCancelBooking} from '../../../api/apiService';
 import {COLORS} from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
 import CancellationPolicyModal from '../../../components/CancellationPolicyModal';
@@ -21,97 +20,101 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import CustomModal from '../../../components/CustomModal';
+import {useCommonToast} from '../../../common/CommonToast';
 
 interface CancellationReason {
-  id: number;
-  reason: string;
+  key: string;
+  label: string;
   requiresSpecification?: boolean;
 }
 
 const PujaCancellationScreen = () => {
   const inset = useSafeAreaInsets();
+  const route = useRoute();
   const navigation = useNavigation<UserPoojaListParamList>();
-  const {t, i18n} = useTranslation();
-
-  const [cancellationReasons, setCancellationReasons] = useState<
-    CancellationReason[]
-  >([
-    {id: 1, reason: 'Personal reasons'},
-    {id: 2, reason: 'Personal reasons'},
-    {id: 3, reason: 'Found another service'},
-    {id: 4, reason: 'Financial reasons'},
-    {id: 5, reason: 'Other', requiresSpecification: true},
+  const {t} = useTranslation();
+  const {id} = route.params as any;
+  const [cancellationReasons] = useState<CancellationReason[]>([
+    {key: 'personal', label: 'Personal reasons'},
+    {key: 'another_service', label: 'Found another service'},
+    {key: 'financial', label: 'Financial reasons'},
+    {key: 'other', label: 'Other', requiresSpecification: true},
   ]);
-  const [selectedReasonId, setSelectedReasonId] = useState<number | null>(null);
+  const [selectedReasonKey, setSelectedReasonKey] = useState<string | null>(
+    null,
+  );
   const [customReason, setCustomReason] = useState('');
   const [
     isCancellationPolicyModalVisible,
     setIsCancellationPolicyModalVisible,
   ] = useState(false);
-  console.log(isCancellationPolicyModalVisible);
-  useEffect(() => {
-    fetchCancellationReason();
-  }, []);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
 
-  const fetchCancellationReason = async () => {
-    try {
-      const requests = await apiService.getCancellationReason();
-      if (requests && requests.length > 0) {
-        setCancellationReasons(requests);
-      }
-    } catch (error) {
-      // Use default reasons
-    }
-  };
+  const {showErrorToast, showSuccessToast} = useCommonToast();
 
   const handleSubmit = () => {
     const selectedReason = cancellationReasons.find(
-      r => r.id === selectedReasonId,
+      r => r.key === selectedReasonKey,
     );
-
     if (!selectedReason) {
-      Alert.alert('Validation Error', 'Please select a cancellation reason.');
+      showErrorToast(t('please_select_cancellation_reason'));
       return;
     }
-
     if (selectedReason.requiresSpecification && customReason.trim() === '') {
-      Alert.alert('Validation Error', 'Please enter your cancellation reason.');
+      showErrorToast(t('please_enter_cancellation_reason'));
       return;
     }
-
-    // Submit logic here
-
-    Alert.alert('Success', 'Cancellation submitted successfully.');
+    setIsConfirmModalVisible(true);
   };
 
-  const handleOpenPolicy = () => {
-    setIsCancellationPolicyModalVisible(true);
-  };
-
-  const handleCancellationPolicyModalClose = () => {
-    setIsCancellationPolicyModalVisible(false);
+  const handleConfirmCancellation = async () => {
+    setIsConfirmModalVisible(false);
+    setIsSubmitting(true);
+    const selectedReason = cancellationReasons.find(
+      r => r.key === selectedReasonKey,
+    );
+    try {
+      const payload: any = {
+        cancellation_reason_type: selectedReason?.key,
+        reason: selectedReason?.label,
+        ...(selectedReason?.requiresSpecification && {
+          other_reason: customReason,
+        }),
+      };
+      await postCancelBooking(id, payload);
+      showSuccessToast(t('cancellation_submitted_successfully'));
+      navigation.goBack();
+    } catch (error: any) {
+      showErrorToast(
+        error?.message || 'Failed to submit cancellation. Please try again.',
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const showCustomInput = cancellationReasons.find(
-    r => r.id === selectedReasonId,
+    r => r.key === selectedReasonKey,
   )?.requiresSpecification;
 
   const renderReasonOption = (reason: CancellationReason, index: number) => (
-    <View key={reason.id}>
+    <View key={reason.key}>
       <TouchableOpacity
         style={styles.reasonOption}
-        onPress={() => setSelectedReasonId(reason.id)}
+        onPress={() => setSelectedReasonKey(reason.key)}
         activeOpacity={0.7}>
-        <Text style={styles.reasonText}>{reason.reason}</Text>
+        <Text style={styles.reasonText}>{reason.label}</Text>
         <Ionicons
           name={
-            selectedReasonId === reason.id
+            selectedReasonKey === reason.key
               ? 'checkmark-circle-outline'
               : 'ellipse-outline'
           }
           size={moderateScale(24)}
           color={
-            selectedReasonId === reason.id
+            selectedReasonKey === reason.key
               ? COLORS.gradientEnd
               : COLORS.inputBoder
           }
@@ -154,24 +157,46 @@ const PujaCancellationScreen = () => {
             </View>
           )}
           <TouchableOpacity
-            onPress={handleOpenPolicy}
+            onPress={() => setIsCancellationPolicyModalVisible(true)}
             style={styles.policyLinkContainer}>
             <Text style={styles.policyLinkText}>
               {t('cancellation_policy')}
             </Text>
           </TouchableOpacity>
           <PrimaryButton
-            title={t('submit_cancellation')}
+            title={isSubmitting ? t('submitting') : t('submit_cancellation')}
             onPress={handleSubmit}
             style={styles.submitButton}
             textStyle={styles.submitButtonText}
+            disabled={isSubmitting}
           />
+          {isSubmitting && (
+            <View style={{marginTop: 16, alignItems: 'center'}}>
+              <ActivityIndicator
+                size="small"
+                color={COLORS.primaryBackgroundButton}
+              />
+            </View>
+          )}
         </View>
       </ScrollView>
 
       <CancellationPolicyModal
         visible={isCancellationPolicyModalVisible}
-        onClose={handleCancellationPolicyModalClose}
+        onClose={() => setIsCancellationPolicyModalVisible(false)}
+      />
+
+      <CustomModal
+        visible={isConfirmModalVisible}
+        title={t('confirm_cancellation') || 'Confirm Cancellation'}
+        message={
+          t('are_you_sure_you_want_to_cancel') ||
+          'Are you sure you want to cancel this booking?'
+        }
+        confirmText={t('yes') || 'Yes'}
+        cancelText={t('no') || 'No'}
+        onConfirm={handleConfirmCancellation}
+        onCancel={() => setIsConfirmModalVisible(false)}
       />
     </View>
   );
@@ -193,29 +218,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingBottom: verticalScale(20),
-  },
-  headerGradient: {
-    paddingBottom: verticalScale(20),
-  },
-  headerContainer: {},
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  backButton: {
-    width: scale(44),
-    height: scale(44),
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    color: COLORS.white,
-    fontSize: moderateScale(18),
-    fontFamily: Fonts.Sen_Bold,
-  },
-  headerSpacer: {
-    width: scale(44),
   },
   content: {
     flex: 1,
