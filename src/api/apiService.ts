@@ -26,6 +26,8 @@ import ApiEndpoints, {
   POST_RATE_PANDIT,
   GET_UPCOMING_PUJA_DETAILS,
   GET_UPCOMING_PUJA,
+  GET_WALLET,
+  GET_TRANSACTION,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -240,6 +242,7 @@ export interface location {
 }
 
 export interface SignInResponse {
+  success: boolean;
   message: string;
   access_token: string;
   refresh_token: string;
@@ -283,6 +286,7 @@ export interface CreateUserLocation {
 }
 
 export interface SignUpResponse {
+  success: boolean;
   message: string;
   access_token: string;
   refresh_token: string;
@@ -665,7 +669,7 @@ export const postSignIn = (data: SignInRequest): Promise<SignInResponse> => {
   return new Promise((resolve, reject) => {
     apiDev
       .post(apiUrl, data)
-      .then(response => {
+      .then((response: any) => {
         resolve(response.data);
       })
       .catch(error => {
@@ -1056,6 +1060,36 @@ export const getUpcomingPujaDetails = (id: string): Promise<any> => {
       })
       .catch(error => {
         console.error('Error fetching UpcomingPuja details:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getWallet = () => {
+  let apiUrl = GET_WALLET;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error in wallet api :: ', error);
+        reject(error);
+      });
+  });
+};
+
+export const getTransaction = () => {
+  let apiUrl = GET_TRANSACTION;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error in Transaction api :: ', error);
         reject(error);
       });
   });

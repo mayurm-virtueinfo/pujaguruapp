@@ -33,12 +33,12 @@ const TirthPlaceSelectionScreen: React.FC = () => {
     UserPoojaListParamList,
     'TirthPlaceSelectionScreen'
   >;
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const route = useRoute();
-  const {poojaId, samagri_required, puja_image, puja_name} =
+  const {poojaId, samagri_required, puja_image, puja_name, price} =
     route.params as any;
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingTirthPlace[]>([]);
@@ -52,7 +52,7 @@ const TirthPlaceSelectionScreen: React.FC = () => {
     useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  console.log('selectedTirthPlaceId :: ', selectedTirthPlaceId);
+  console.log('selectedTirthPlaceName :: ', selectedTirthPlaceName);
 
   useEffect(() => {
     fetchTirthPlaces();
@@ -62,10 +62,8 @@ const TirthPlaceSelectionScreen: React.FC = () => {
     try {
       setIsLoading(true);
       const response = await getTirthPlace();
-      console.log('Fetched Tirth Place Requests:', response);
       if (response && Array.isArray(response)) {
         setPoojaPlaces(response);
-        console.log('Tirth Places:', response);
       }
     } catch (error) {
       console.error('Error fetching tirth places:', error);
@@ -89,6 +87,8 @@ const TirthPlaceSelectionScreen: React.FC = () => {
       poojaDescription: selectedTirthPlaceDescription,
       puja_image: puja_image,
       puja_name: puja_name,
+      price: price,
+      selectTirthPlaceName: selectedTirthPlaceName || '',
     });
   };
 

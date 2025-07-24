@@ -72,6 +72,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
       await AsyncStorage.removeItem(AppConstant.FIREBASE_UID);
       await AsyncStorage.removeItem(AppConstant.USER_ID);
       await AsyncStorage.removeItem(AppConstant.LOCATION);
+      await AsyncStorage.removeItem(AppConstant.CURRENT_USER);
       setIsAuthenticated(false);
     } catch (error) {
       console.error('Sign out error:', error);

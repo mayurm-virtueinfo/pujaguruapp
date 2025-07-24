@@ -4,9 +4,7 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   Image,
-  Dimensions,
   Platform,
   StatusBar,
   ActivityIndicator,
@@ -21,40 +19,61 @@ import {useTranslation} from 'react-i18next';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import PrimaryButton from '../../../components/PrimaryButton';
 import {useNavigation} from '@react-navigation/native';
-import {apiService} from '../../../api/apiService';
-
-const {width: screenWidth} = Dimensions.get('window');
-
-// Use the API's type for transaction data
+import {getTransaction, getWallet} from '../../../api/apiService';
 import type {TransactioData} from '../../../api/apiService';
+import {useCommonToast} from '../../../common/CommonToast';
 
 const WalletScreen: React.FC = () => {
   const {t} = useTranslation();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
+  const {showErrorToast} = useCommonToast();
+
   const [transactions, setTransactions] = useState<TransactioData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [walletData, setWalletData] = useState<any>({});
 
-  // Optionally, you could fetch wallet balance from API, but for now keep it static
-  const walletBalance = 5250;
+  console.log('transactions :: ', transactions);
 
   const fetchTransactions = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiService.getTransactionData();
-      setTransactions(data);
-    } catch (error) {
+      const data: any = await getTransaction();
+      if (data.success) {
+        console.log('data :: ', data);
+        setTransactions(data.data);
+      }
+    } catch (error: any) {
+      console.log('error of transaction :: ', error.response.data);
+      showErrorToast(error.response.data.message);
       setTransactions([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  const fetchWallet = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data: any = await getWallet();
+      if (data.success) {
+        setWalletData(data.data);
+      }
+    } catch (error: any) {
+      showErrorToast(error.response.data.message);
+      console.log('error of wallet :: ', error.response.data);
+      setWalletData({});
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
+    fetchWallet();
     fetchTransactions();
-  }, [fetchTransactions]);
+  }, [fetchTransactions, fetchWallet]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -84,10 +103,6 @@ const WalletScreen: React.FC = () => {
       {index < transactions.length - 1 && <View style={styles.separator} />}
     </View>
   );
-
-  // Fix: Remove extra space after header on iOS by NOT wrapping header in SafeAreaView,
-  // and instead apply paddingTop: insets.top to the outermost View.
-  // This matches the pattern in CompleteProfileScreen and avoids double safe area on iOS.
 
   return (
     <View
@@ -124,7 +139,7 @@ const WalletScreen: React.FC = () => {
                 </Text>
                 <View style={styles.balanceRow}>
                   <Image source={Images.ic_coin} style={styles.coinIcon} />
-                  <Text style={styles.balanceAmount}>{walletBalance}</Text>
+                  <Text style={styles.balanceAmount}>{walletData.balance}</Text>
                 </View>
               </View>
               <Text style={styles.balanceDescription}>
@@ -164,7 +179,7 @@ const WalletScreen: React.FC = () => {
                       fontSize: moderateScale(14),
                       marginVertical: 16,
                     }}>
-                    {t('no_transactions_found') || 'No transactions found.'}
+                    No transactions found.
                   </Text>
                 ) : (
                   transactions.map((item, index) =>

@@ -91,7 +91,6 @@ const UserHomeScreen: React.FC = () => {
     }
   };
 
-  // --- Fix for iOS authentication issue when fetching recommended pandits ---
   const fetchRecommendedPandits = async () => {
     try {
       setLoading(true);
@@ -99,12 +98,11 @@ const UserHomeScreen: React.FC = () => {
         location.latitude,
         location.longitude,
       );
-      // Only log the response if not an authentication error
+      console.log('response for recommended pandit :: ', response);
       if (response && Array.isArray(response.data)) {
         setRecomendedPandits(response.data || []);
       }
     } catch (error: any) {
-      // Only show alert for authentication error, do not log the error to avoid noisy logs
       if (
         Platform.OS === 'ios' &&
         error?.response?.status === 403 &&
@@ -116,16 +114,13 @@ const UserHomeScreen: React.FC = () => {
           t('authentication_credentials_not_provided') ||
             'Authentication credentials were not provided. Please login again.',
         );
-        // Do not log error to console for this specific case
         return;
       }
-      // For other errors, log as usual
       console.error('Error fetching recommended pandits:', error.response.data);
     } finally {
       setLoading(false);
     }
   };
-  // --------------------------------------------------------------------------
 
   const handleBookPandit = (panditName: string) => {
     navigation.navigate('SelectPujaScreen');
@@ -179,7 +174,7 @@ const UserHomeScreen: React.FC = () => {
             style={styles.panditCardsContainer}
             contentContainerStyle={styles.panditCardsContentContainer}>
             {recomendedPandits && recomendedPandits.length > 0 ? (
-              recomendedPandits.map(pandit => (
+              recomendedPandits.map((pandit: any) => (
                 <View style={styles.panditCard} key={pandit.id}>
                   <View style={styles.panditImageWrapper}>
                     <Image
@@ -196,7 +191,9 @@ const UserHomeScreen: React.FC = () => {
                         color={COLORS.primaryBackgroundButton}
                         style={{marginRight: 5}}
                       />
-                      <Text style={styles.ratingText}>4</Text>
+                      <Text style={styles.ratingText}>
+                        {pandit.total_ratings}
+                      </Text>
                     </View>
                   </View>
                   <Text
@@ -337,9 +334,7 @@ const styles = StyleSheet.create({
     marginTop: moderateScale(12),
   },
   panditCardsContentContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: 'row',
     paddingHorizontal: moderateScale(2),
     paddingBottom: moderateScale(10),
   },

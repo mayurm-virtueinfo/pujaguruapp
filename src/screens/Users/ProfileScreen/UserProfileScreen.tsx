@@ -167,12 +167,16 @@ const UserProfileScreen: React.FC = () => {
           AppConstant.REFRESH_TOKEN,
           response.refresh_token,
         );
-        const userID = response.user?.id;
-        await AsyncStorage.setItem(AppConstant.USER_ID, String(userID));
+        await AsyncStorage.setItem(
+          AppConstant.CURRENT_USER,
+          JSON.stringify(response.user),
+        );
         await AsyncStorage.setItem(
           AppConstant.LOCATION,
           JSON.stringify(response.location),
         );
+        const userID = response.user?.id;
+        await AsyncStorage.setItem(AppConstant.USER_ID, String(userID));
         navigation.navigate('UserAppBottomTabNavigator');
       }
     } catch (error: any) {

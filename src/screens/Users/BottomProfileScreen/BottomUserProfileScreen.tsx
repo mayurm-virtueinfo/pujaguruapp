@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -42,12 +42,41 @@ type ProfileNavigationProp = StackNavigationProp<UserProfileParamList>;
 const BottomUserProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ProfileNavigationProp>();
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
 
   const {signOutApp} = useAuth();
 
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
+
+  interface CurrentUser {
+    first_name: string;
+    email: string;
+    firebase_uid: string;
+    id: string;
+    last_name: string;
+    mobile: string;
+    pandit_details: string;
+    profile_img: string;
+    role: number;
+    city_name: string;
+  }
+
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+
+  useEffect(() => {
+    fetchCurrentUser();
+  }, []);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const userData = await AsyncStorage.getItem(AppConstant.CURRENT_USER);
+      setCurrentUser(userData ? JSON.parse(userData) : null);
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+      return null;
+    }
+  };
 
   const handleLogout = async () => {
     setLogoutLoading(true);
@@ -77,7 +106,7 @@ const BottomUserProfileScreen: React.FC = () => {
     navigation.navigate('NotificationScreen');
   };
   const handleEditNavigation = () => {
-    navigation.navigate('AddAddressScreen');
+    console.log('edit profile screen pressed');
   };
 
   const handleSavedAddressNavigation = () => {
@@ -99,27 +128,37 @@ const BottomUserProfileScreen: React.FC = () => {
       />
       <UserCustomHeader title={t('profile')} showBackButton={true} />
 
-      <View style={styles.profileImageContainer}>
-        <Image
-          source={{
-            uri: 'https://plus.unsplash.com/premium_photo-1689568126014-06fea9d5d341?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8cHJvZmlsZXxlbnwwfHwwfHx8MA%3D%3D',
-          }}
-          style={styles.profileImage}
-        />
-      </View>
+      {currentUser && (
+        <View style={styles.profileImageContainer}>
+          <Image
+            source={{
+              uri:
+                currentUser?.profile_img ||
+                'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2220431045.jpg',
+            }}
+            style={styles.profileImage}
+          />
+        </View>
+      )}
       <View style={styles.contentContainer}>
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}>
-          <View style={[styles.infoSection, THEMESHADOW.shadow]}>
-            <ProfileField label={t('name')} value={userData.name} />
-            <View style={styles.divider} />
-            <ProfileField label={t('email')} value={userData.email} />
-            <View style={styles.divider} />
-            <ProfileField label={t('phone')} value={userData.phone} />
-            <View style={styles.divider} />
-            <ProfileField label={t('location')} value={userData.location} />
-          </View>
+          {currentUser && (
+            <View style={[styles.infoSection, THEMESHADOW.shadow]}>
+              <ProfileField label={t('name')} value={currentUser.first_name} />
+              <View style={styles.divider} />
+              <ProfileField label={t('email')} value={currentUser.email} />
+              <View style={styles.divider} />
+              <ProfileField label={t('phone')} value={currentUser.mobile} />
+              <View style={styles.divider} />
+              <ProfileField
+                label={t('location')}
+                value={currentUser.city_name}
+              />
+            </View>
+          )}
+
           <View style={[styles.editSection, THEMESHADOW.shadow]}>
             <TouchableOpacity
               style={styles.editFieldContainer}
@@ -227,7 +266,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 184,
-    // backgroundColor: COLORS.primaryBackground,
   },
   profileImageContainer: {
     position: 'absolute',
@@ -239,8 +277,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    borderWidth: 2,
-    borderColor: COLORS.pujaBackground,
+    backgroundColor: COLORS.separatorColor,
   },
   contentContainer: {
     position: 'absolute',
@@ -265,7 +302,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     backgroundColor: COLORS.white,
     marginTop: 10,
-    // shadow styles removed, now handled by THEMESHADOW
   },
   editSection: {
     borderRadius: 10,
@@ -273,7 +309,6 @@ const styles = StyleSheet.create({
     marginHorizontal: 24,
     marginBottom: 24,
     backgroundColor: COLORS.white,
-    // shadow styles removed, now handled by THEMESHADOW
   },
   fieldContainer: {
     flexDirection: 'row',

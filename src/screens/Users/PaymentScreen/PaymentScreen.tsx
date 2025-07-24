@@ -29,6 +29,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import {
   getPanditji,
+  getWallet,
   postBooking,
   postCreateRazorpayOrder,
   postVerrifyPayment,
@@ -80,6 +81,8 @@ const PaymentScreen: React.FC = () => {
     pandit_image,
     puja_name,
     puja_image,
+    price,
+    selectAddress,
   } = route.params as any;
 
   console.log('oute.params', route.params);
@@ -99,15 +102,15 @@ const PaymentScreen: React.FC = () => {
   const [loading, setIsLoading] = useState<boolean>(false);
   const [panditData, setPanditjiData] = useState<any>(null);
   const [bookingId, setBookingId] = useState<string | undefined>();
-  console.log('panditData========>', panditData);
-  // Prevent duplicate API calls for Razorpay order
+  const [walletData, setWalletData] = useState<any>({});
+
   const razorpayOrderInProgress = useRef(false);
 
-  // Store the bookingId for which the orderId was created, to avoid duplicate order creation
   const razorpayOrderBookingId = useRef<string | null>(null);
 
   useEffect(() => {
     fetchLocation();
+    fetchWallet();
   }, []);
 
   const fetchLocation = async () => {
@@ -122,6 +125,22 @@ const PaymentScreen: React.FC = () => {
     }
   };
 
+  const fetchWallet = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data: any = await getWallet();
+      if (data.success) {
+        setWalletData(data.data);
+      }
+    } catch (error: any) {
+      showErrorToast(error.response.data.message);
+      console.log('error of wallet :: ', error.response.data);
+      setWalletData({});
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (location && poojaId) {
       fetchPanditji(
@@ -135,7 +154,6 @@ const PaymentScreen: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, poojaId]);
 
-  // Helper to build bookingData with only address or tirth
   const buildBookingData = () => {
     let bookingData: any = {
       pooja: typeof poojaId === 'string' ? parseInt(poojaId, 10) : poojaId,
@@ -178,17 +196,13 @@ const PaymentScreen: React.FC = () => {
 
     return bookingData;
   };
-  console.log('buildBookingData', buildBookingData());
-  // Function to create Razorpay order, expects bookingId as argument
-  // Prevents duplicate API calls by using a ref flag and bookingId check
+
   const handleCreateRazorpayOrder = useCallback(
     async (bookingIdForOrder: string) => {
-      // If we already have an orderId for this bookingId, just return it
       if (razorpayOrderBookingId.current === bookingIdForOrder && orderId) {
         return {order_id: orderId};
       }
       if (razorpayOrderInProgress.current) {
-        // Prevent duplicate calls
         return null;
       }
       razorpayOrderInProgress.current = true;
@@ -198,7 +212,6 @@ const PaymentScreen: React.FC = () => {
           booking_id: bookingIdForOrder,
         };
         const response: any = await postCreateRazorpayOrder(data as any);
-        console.log('respnse=========>', response.data);
         if (response && response.data && response.data.order_id) {
           setOrderId(response.data.order_id);
           razorpayOrderBookingId.current = bookingIdForOrder;
@@ -211,6 +224,7 @@ const PaymentScreen: React.FC = () => {
           return null;
         }
       } catch (error: any) {
+        console.error('error in create booking :: ', error?.response.data);
         showErrorToast(error?.message || 'Failed to create Razorpay order.');
         return null;
       } finally {
@@ -247,14 +261,12 @@ const PaymentScreen: React.FC = () => {
     }
   };
 
-  // Payment methods
   const paymentMethods: PaymentMethod[] = [
     {id: 'credit', name: t('credit_card'), type: 'credit'},
     {id: 'debit', name: t('debit_card'), type: 'debit'},
     {id: 'upi', name: t('upi'), type: 'upi'},
   ];
 
-  // Example puja data
   const suggestedPuja: PujaItem = {
     id: '1',
     name: 'Ganpati Puja',
@@ -275,7 +287,6 @@ const PaymentScreen: React.FC = () => {
     ],
   };
 
-  // Function to verify payment using postVerrifyPayment API
   const handleVerifyPayment = async ({
     booking_id,
     razorpay_payment_id,
@@ -289,7 +300,7 @@ const PaymentScreen: React.FC = () => {
   }) => {
     setIsLoading(true);
     try {
-      const data = {
+      const data: any = {
         booking_id,
         razorpay_payment_id,
         razorpay_order_id,
@@ -309,19 +320,16 @@ const PaymentScreen: React.FC = () => {
     }
   };
 
-  // Handle payment
   const handlePayment = async (
     amount: number,
     bookingIdForOrder: string,
     currentOrderId: string,
   ) => {
-    // Always use the orderId for the current bookingId
     let updatedOrderId = currentOrderId;
     if (
       !updatedOrderId ||
       razorpayOrderBookingId.current !== bookingIdForOrder
     ) {
-      // If orderId is not set or is for a different booking, create it
       const razorpayOrder = await handleCreateRazorpayOrder(bookingIdForOrder);
       if (!razorpayOrder || !razorpayOrder.order_id) {
         showErrorToast('Order ID not found. Please try again.');
@@ -336,10 +344,10 @@ const PaymentScreen: React.FC = () => {
       description: 'Puja Booking Payment',
       image: 'https://your-logo-url.com/logo.png',
       currency: 'INR',
-      key: 'rzp_test_birUVdrhV4Jm7l', // Replace with your Razorpay Key ID
-      amount: amount.toString(), // Amount in paise
-      name: 'Your App Name',
-      order_id: updatedOrderId, // Use the correct order_id here
+      key: 'rzp_test_birUVdrhV4Jm7l',
+      amount: amount.toString(),
+      name: 'PujaGuru App',
+      order_id: updatedOrderId,
       prefill: {
         email: 'user@example.com',
         contact: '9999999999',
@@ -350,18 +358,6 @@ const PaymentScreen: React.FC = () => {
 
     RazorpayCheckout.open(options)
       .then(async (data: any) => {
-        console.log('data=========>', data);
-        showSuccessToast(`Payment successful: ${JSON.stringify(data)}`);
-        console.log(
-          'booking_id',
-          bookingIdForOrder,
-          'razorpay_payment_id',
-          data.razorpay_payment_id,
-          'razorpay_order_id',
-          updatedOrderId,
-          'razorpay_signature',
-          data.razorpay_signature,
-        );
         if (
           data &&
           data.razorpay_payment_id &&
@@ -384,12 +380,10 @@ const PaymentScreen: React.FC = () => {
       });
   };
 
-  // Payment method selection
   const handlePaymentMethodSelect = (methodId: string) => {
     setSelectedPaymentMethod(methodId);
   };
 
-  // Confirm booking
   const handleConfirmBooking = async () => {
     if (!acceptTerms) {
       showErrorToast('Please accept the terms and conditions to proceed.');
@@ -400,20 +394,17 @@ const PaymentScreen: React.FC = () => {
       return;
     }
 
-    // Only allow payment for online methods
     if (
       selectedPaymentMethod === 'credit' ||
       selectedPaymentMethod === 'debit' ||
       selectedPaymentMethod === 'upi'
     ) {
-      // 500000 paise = ₹5000, you may want to calculate this dynamically
       const amount = 500000;
 
       setIsLoading(true);
       try {
-        // Always call postBooking first, then postCreateRazorpayOrder
         const bookingData = buildBookingData();
-        const bookingResponse = await postBooking(bookingData as any);
+        const bookingResponse: any = await postBooking(bookingData as any);
         if (
           bookingResponse &&
           bookingResponse.data &&
@@ -424,14 +415,12 @@ const PaymentScreen: React.FC = () => {
           const newBookingId = bookingResponse.data.data.id;
           setBookingId(newBookingId);
 
-          // Only create Razorpay order if not already created for this bookingId
           let currentOrderId = orderId;
           if (
             !currentOrderId ||
             razorpayOrderBookingId.current !== newBookingId
           ) {
             const razorpayOrder = await handleCreateRazorpayOrder(newBookingId);
-            console.log('razorpayOrder=======>', razorpayOrder);
             if (!razorpayOrder || !razorpayOrder.order_id) {
               showErrorToast('Order ID not found. Please try again.');
               setIsLoading(false);
@@ -443,25 +432,15 @@ const PaymentScreen: React.FC = () => {
           }
           await handlePayment(amount, newBookingId, currentOrderId!);
         } else {
-          // Show error details for debugging
           if (bookingResponse && bookingResponse.errors) {
-            showErrorToast(
-              `Booking failed=-=-=-=-->: ${JSON.stringify(
-                bookingResponse.errors,
-              )}`,
-            );
+            console.error('Error Booking', bookingResponse.errors);
           } else {
             showErrorToast(bookingResponse?.message || 'Booking failed.');
           }
         }
       } catch (error: any) {
-        // Show error details for debugging
         if (error?.response?.data) {
-          showErrorToast(
-            `Error Booking=-=-==-----=-==-: ${JSON.stringify(
-              error.response.data,
-            )}`,
-          );
+          console.log('Error Booking', error.response.data);
         } else {
           showErrorToast(error?.message || 'Booking failed.');
         }
@@ -469,12 +448,11 @@ const PaymentScreen: React.FC = () => {
         setIsLoading(false);
       }
     } else {
-      // For offline methods, just book and navigate
       setIsLoading(true);
       try {
         const bookingData = buildBookingData();
         console.log('bookingData', bookingData);
-        const response = await postBooking(bookingData as any);
+        const response: any = await postBooking(bookingData as any);
         if (response && response.success) {
           setBookingId(response.data.id);
           showSuccessToast('Booking successful!');
@@ -501,12 +479,10 @@ const PaymentScreen: React.FC = () => {
     }
   };
 
-  // Expand/collapse suggested puja
   const toggleExpand = () => {
     setIsExpanded(!isExpanded);
   };
 
-  // Render payment method row
   const renderPaymentMethod = (method: PaymentMethod, index: number) => (
     <View key={method.id}>
       <TouchableOpacity
@@ -529,7 +505,6 @@ const PaymentScreen: React.FC = () => {
     </View>
   );
 
-  // Render booking data
   const renderBookingData = (
     item: PujaItem['bookingdata'][0],
     index: number,
@@ -547,7 +522,7 @@ const PaymentScreen: React.FC = () => {
           <Octicons name="location" size={20} color={COLORS.pujaCardSubtext} />
         </View>
         <View>
-          <Text style={styles.bookingDataText}>{address || tirth}</Text>
+          <Text style={styles.bookingDataText}>{selectAddress}</Text>
         </View>
       </View>
       <View style={styles.textContainer}>
@@ -615,10 +590,10 @@ const PaymentScreen: React.FC = () => {
             <View style={styles.totalRow}>
               <View style={styles.totalInfo}>
                 <Text style={styles.totalAmountLabel}>{t('total_amount')}</Text>
-                <Text style={styles.pujaName}>Ganesh Chaturthi Pooja</Text>
+                <Text style={styles.pujaName}>{puja_name}</Text>
               </View>
               <View style={styles.amoutContainer}>
-                <Text style={styles.totalAmount}>₹ 5000</Text>
+                <Text style={styles.totalAmount}>₹ {price}</Text>
               </View>
             </View>
           </View>
@@ -646,7 +621,7 @@ const PaymentScreen: React.FC = () => {
               </View>
               <View style={styles.pointsRight}>
                 <Image source={Images.ic_coin} style={styles.pointsIcon} />
-                <Text style={styles.pointsValue}>5250</Text>
+                <Text style={styles.pointsValue}>{walletData.balance}</Text>
               </View>
             </View>
           </View>

@@ -4,6 +4,7 @@ const AppConstant = {
   FIREBASE_UID: 'uid',
   USER_ID: 'user_ID',
   LOCATION: 'location',
+  CURRENT_USER: 'currentUser',
 };
 
 export default AppConstant;

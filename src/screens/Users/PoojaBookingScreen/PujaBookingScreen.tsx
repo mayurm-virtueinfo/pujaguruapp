@@ -56,7 +56,11 @@ const PujaBookingScreen: React.FC = () => {
     poojaDescription,
     puja_image,
     puja_name,
+    price,
+    selectTirthPlaceName,
+    selectAddressName,
   } = route.params as any;
+
   const {showErrorToast} = useCommonToast();
 
   const [selectedSlot, setSelectedSlot] = useState<string>('');
@@ -190,8 +194,9 @@ const PujaBookingScreen: React.FC = () => {
       notes: additionalNotes,
       puja_image: puja_image,
       puja_name: puja_name,
+      price: price,
+      selectAddress: selectTirthPlaceName || selectAddressName,
     };
-    console.log('navigationParams ===> ', navigationParams);
     if (selection === 'automatic') {
       navigation.navigate('PaymentScreen', navigationParams);
     } else if (selection === 'manual') {

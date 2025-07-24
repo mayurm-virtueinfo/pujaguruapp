@@ -22,7 +22,6 @@ import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {getPoojaDetails} from '../../../api/apiService';
-import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 interface PujaDetails {
   id: number;
@@ -70,7 +69,10 @@ const PujaDetailsScreen: React.FC = () => {
 
   const [data, setData] = useState<PujaDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedPricingId, setSelectedPricingId] = useState<number | null>(2);
+  const [selectedPricingId, setSelectedPricingId] = useState<number | null>(
+    null,
+  );
+  const [selectPrice, setSelectPrice] = useState<string>('');
 
   const {poojaId} = route.params as {poojaId: string};
 
@@ -90,7 +92,9 @@ const PujaDetailsScreen: React.FC = () => {
         setData(null);
       }
     } catch (error: any) {
-      showErrorToast(error.message || 'Failed to fetch puja details');
+      showErrorToast(
+        error.response?.data?.message || 'Failed to fetch puja details',
+      );
       setData(null);
     } finally {
       setLoading(false);
@@ -104,11 +108,9 @@ const PujaDetailsScreen: React.FC = () => {
     );
   };
 
-  // Modified to pass puja image and name
   const handleBookNowPress = () => {
     const selectedOption = getSelectedPricingOption();
     if (!selectedOption) {
-      // Optionally show a toast or error if not selected
       showErrorToast('Please select a pricing option');
       return;
     }
@@ -117,6 +119,7 @@ const PujaDetailsScreen: React.FC = () => {
       samagri_required: selectedOption.withPujaItem,
       puja_image: data?.image_url ?? '',
       puja_name: data?.title ?? '',
+      price: selectPrice,
     });
   };
 
@@ -124,8 +127,9 @@ const PujaDetailsScreen: React.FC = () => {
     console.log('Notification Pressed');
   };
 
-  const handleCheckboxToggle = (id: number) => {
+  const handleCheckboxToggle = (id: number, price: string) => {
     setSelectedPricingId(id === selectedPricingId ? null : id);
+    setSelectPrice(price);
   };
 
   const getPricingOptions = (data: PujaDetails): PricingOption[] => {
@@ -181,7 +185,9 @@ const PujaDetailsScreen: React.FC = () => {
                     <TouchableOpacity
                       style={styles.pricingOption}
                       activeOpacity={0.7}
-                      onPress={() => handleCheckboxToggle(option.id)}>
+                      onPress={() =>
+                        handleCheckboxToggle(option.id, option.price)
+                      }>
                       <Text style={styles.pricingText}>
                         {option.priceDes} - Rs. {option.price}
                       </Text>

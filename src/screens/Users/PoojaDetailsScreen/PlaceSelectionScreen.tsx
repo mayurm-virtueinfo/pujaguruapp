@@ -46,7 +46,7 @@ const PlaceSelectionScreen: React.FC = () => {
   const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const {poojaId, samagri_required, puja_image, puja_name} =
+  const {poojaId, samagri_required, puja_image, puja_name, price} =
     route.params as any;
 
   const handleNextPress = () => {
@@ -56,6 +56,7 @@ const PlaceSelectionScreen: React.FC = () => {
         samagri_required: samagri_required,
         puja_name: puja_name,
         puja_image: puja_image,
+        price: price,
       });
     } else if (selectedPlaceId === 2) {
       navigation.navigate('TirthPlaceSelectionScreen', {
@@ -63,6 +64,7 @@ const PlaceSelectionScreen: React.FC = () => {
         samagri_required: samagri_required,
         puja_name: puja_name,
         puja_image: puja_image,
+        price: price,
       });
     }
   };

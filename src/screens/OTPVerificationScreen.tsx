@@ -107,8 +107,8 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
         role: 1,
       };
       const response = await postSignIn(params);
+      console.log('response :: ', response);
       if (response) {
-        console.log('response :: ', response);
         if (response?.is_register === false) {
           navigation.navigate('CompleteProfileScreen', {
             phoneNumber: phoneNumber,
@@ -120,6 +120,10 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
           await AsyncStorage.setItem(
             AppConstant.LOCATION,
             JSON.stringify(response.location),
+          );
+          await AsyncStorage.setItem(
+            AppConstant.CURRENT_USER,
+            JSON.stringify(response.user),
           );
           navigation.navigate('UserAppBottomTabNavigator');
         }

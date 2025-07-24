@@ -65,3 +65,5 @@ export const POST_VERIFY_PAYMENT = '/app/booking/verify-payment/';
 export const POST_RATE_PANDIT = '/app/rate-pandit/';
 export const GET_UPCOMING_PUJA = '/app/upcoming-pujas/';
 export const GET_UPCOMING_PUJA_DETAILS = '/app/bookings/{id}/';
+export const GET_WALLET = '/app/wallet/';
+export const GET_TRANSACTION = '/app/wallet/transactions/';

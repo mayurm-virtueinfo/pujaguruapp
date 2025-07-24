@@ -31,6 +31,9 @@ export type UserPoojaListParamList = {
     poojaDescription?: any;
     puja_name: string;
     puja_image: string;
+    price: string;
+    selectAddressName?: string;
+    selectTirthPlaceName?: string;
   };
   UserPoojaDetails: {poojaId: string};
   PlaceSelectionScreen: any;

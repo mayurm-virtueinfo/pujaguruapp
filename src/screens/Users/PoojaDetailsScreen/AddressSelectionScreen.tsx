@@ -8,7 +8,6 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
-import CustomHeader from '../../../components/CustomHeader';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
@@ -17,7 +16,11 @@ import {
   getAddressTypeForBooking,
   PoojaBookingAddress,
 } from '../../../api/apiService';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
@@ -36,22 +39,17 @@ const AddressSelectionScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
-  console.log(
-    'navigation in address selection screen :: ',
-    navigation.getState(),
-  );
-
   const route = useRoute();
 
-  const {poojaId, samagri_required, puja_image, puja_name} =
+  const {poojaId, samagri_required, puja_image, puja_name, price} =
     route.params as any;
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingAddress[]>([]);
-  // selectedAddressId is the id of the address type (not user_address_id)
+
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
     null,
   );
-  // selectedUserAddressId is the user_address_id to be sent in API
+
   const [selectedUserAddressId, setSelectedUserAddressId] = useState<
     number | null
   >(null);
@@ -59,16 +57,20 @@ const AddressSelectionScreen: React.FC = () => {
     useState<PoojaBookingAddress | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    fetchAllPoojaAddresses();
-  }, []);
+  console.log('selectedAddress :: ', selectedAddress);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchAllPoojaAddresses();
+    }, []),
+  );
 
   const fetchAllPoojaAddresses = async () => {
     try {
       setIsLoading(true);
       const response: any = await getAddressTypeForBooking();
-      console.log('response', response);
       if (response.success) {
+        console.log('response.data :: ', response.data);
         setPoojaPlaces(response.data);
       }
     } catch (error) {
@@ -78,7 +80,6 @@ const AddressSelectionScreen: React.FC = () => {
     }
   };
 
-  // When user selects an address, store both the address type id and the user_address_id
   const handleSelectAddress = (id: number) => {
     setSelectedAddressId(id);
     const found = poojaPlaces.find(place => place.id === id) || null;
@@ -92,20 +93,20 @@ const AddressSelectionScreen: React.FC = () => {
     }
   };
 
-  // Pass user_address_id as "address" in navigation params
   const handleNextPress = () => {
     navigation.navigate('PujaBooking', {
       poojaId: poojaId,
       samagri_required: samagri_required,
-      address: selectedUserAddressId, // Pass user_address_id here
+      address: selectedUserAddressId,
       poojaName: selectedAddress?.name || '',
       poojaDescription: selectedAddress?.description || '',
       puja_image: puja_image,
       puja_name: puja_name,
+      price: price,
+      selectAddressName: selectedAddress?.name || '',
     });
   };
 
-  // Handler for plus button click
   const onPlusPress = () => {
     navigation.navigate('AddAddressScreen' as never);
   };

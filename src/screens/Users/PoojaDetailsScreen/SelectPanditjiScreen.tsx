@@ -58,6 +58,8 @@ const SelectPanditjiScreen: React.FC = () => {
     notes,
     puja_name,
     puja_image,
+    price,
+    selectAddress,
   } = route.params as any;
   const {showErrorToast, showSuccessToast} = useCommonToast();
 
@@ -167,10 +169,8 @@ const SelectPanditjiScreen: React.FC = () => {
     );
   };
 
-  // Pass selected pandit id, name, and image in navigation
   const handleNextPress = () => {
     if (selectedPanditji) {
-      console.log('Selected Panditji:', selectedPanditji);
       navigation.navigate('PaymentScreen', {
         poojaId: poojaId,
         samagri_required: samagri_required,
@@ -180,11 +180,13 @@ const SelectPanditjiScreen: React.FC = () => {
         muhurat_time: muhurat_time,
         muhurat_type: muhurat_type,
         notes: notes,
-        pandit: selectedPanditji, // Pass selected pandit id here
-        pandit_name: selectedPanditjiName, // Pass selected pandit name
-        pandit_image: selectedPanditjiImage, // Pass selected pandit image
+        pandit: selectedPanditji,
+        pandit_name: selectedPanditjiName,
+        pandit_image: selectedPanditjiImage,
         puja_image: puja_image,
         puja_name: puja_name,
+        price: price,
+        selectAddress: selectAddress,
       });
     }
   };
