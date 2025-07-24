@@ -75,13 +75,14 @@ const UserHomeScreen: React.FC = () => {
       console.error('Error fetching user and location ::', error);
     }
   };
+  console.log('Pujas :: ', pujas);
 
   const fetchUpcomingPujas = async () => {
     setLoading(true);
     try {
       const response: any = await getUpcomingPujas();
-      console.log('response', response);
-      setPujas(Array.isArray(response) ? response : []);
+      console.log('response for upcoming puja :: ', response);
+      setPujas(response || []);
     } catch (error) {
       console.error('Error fetching upcoming puja data:', error);
       setPujas([]);
@@ -94,7 +95,6 @@ const UserHomeScreen: React.FC = () => {
   const fetchRecommendedPandits = async () => {
     try {
       setLoading(true);
-      console.log('location in =====>', location.latitude, location.longitude);
       const response = await getRecommendedPandit(
         location.latitude,
         location.longitude,
@@ -103,7 +103,6 @@ const UserHomeScreen: React.FC = () => {
       if (response && Array.isArray(response.data)) {
         setRecomendedPandits(response.data || []);
       }
-      console.log('response======>', response);
     } catch (error: any) {
       // Only show alert for authentication error, do not log the error to avoid noisy logs
       if (

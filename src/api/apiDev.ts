@@ -1,8 +1,8 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ApiEndpoints, { APP_URL, POST_REFRESH_TOKEN } from './apiEndpoints';
+import ApiEndpoints, {APP_URL, POST_REFRESH_TOKEN} from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
-import { postRefreshToken } from './apiService';
+import {postRefreshToken} from './apiService';
 
 // Create an axios instance
 
@@ -53,10 +53,9 @@ const onRefreshed = (newAccessToken: string) => {
 
 const refreshAccessToken = async (refreshToken: string) => {
   try {
-    // Use axios directly to avoid circular dependency and issues with postRefreshToken
     const response = await axios.post(
-      'https://c692148aa3f9.ngrok-free.app/app/auth/refresh-token/',
-      { refresh_token: refreshToken },
+      `${APP_URL}/app/auth/refresh-token/`,
+      {refresh_token: refreshToken},
       {
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +75,6 @@ apiDev.interceptors.response.use(
   async error => {
     const originalRequest = error.config;
 
-    // Fix: Use || instead of && for status check, and check for _retry
     if (
       (error.response?.status === 401 || error.response?.status === 403) &&
       !originalRequest._retry

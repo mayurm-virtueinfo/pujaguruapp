@@ -124,7 +124,13 @@ const PaymentScreen: React.FC = () => {
 
   useEffect(() => {
     if (location && poojaId) {
-      fetchPanditji(poojaId, location.latitude, location.longitude, 'auto');
+      fetchPanditji(
+        poojaId,
+        location.latitude,
+        location.longitude,
+        'auto',
+        booking_date,
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, poojaId]);
@@ -220,10 +226,17 @@ const PaymentScreen: React.FC = () => {
     latitude: string,
     longitude: string,
     mode: 'auto',
+    booking_date: string,
   ) => {
     try {
       setIsLoading(true);
-      const response = await getPanditji(pooja_id, latitude, longitude, mode);
+      const response = await getPanditji(
+        pooja_id,
+        latitude,
+        longitude,
+        mode,
+        booking_date,
+      );
       if (response.success) {
         setPanditjiData(response.data);
       }

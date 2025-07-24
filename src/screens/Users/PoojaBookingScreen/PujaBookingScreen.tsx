@@ -23,18 +23,16 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
-import {getMuhrat, getPanditji} from '../../../api/apiService';
+import {getMuhrat} from '../../../api/apiService';
 import {useCommonToast} from '../../../common/CommonToast';
 import CustomeLoader from '../../../components/CustomeLoader';
 
 const formatDateYYYYMMDD = (date: Date | string) => {
   if (typeof date === 'string') {
-    // If already in YYYY-MM-DD, just return
     if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-    // Try to parse string to Date
     date = new Date(date);
   }
-  // Ensure two digits for month and day
+
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day = `${date.getDate()}`.padStart(2, '0');
@@ -112,7 +110,6 @@ const PujaBookingScreen: React.FC = () => {
         location?.latitude,
         location?.longitude,
       );
-      // console.log('Fetched Muhurat:', response);
       if (response && Array.isArray(response.choghadiya)) {
         setMuhurats(response.choghadiya || []);
       }
@@ -129,9 +126,7 @@ const PujaBookingScreen: React.FC = () => {
     setSelectedSlotObj(slot);
   };
 
-  // Validation before opening modal
   const handleNextButtonPress = () => {
-    // Validate required fields before opening modal
     if (!selectedDateString) {
       showErrorToast(t('please_select_date') || 'Please select a date.');
       return;
@@ -196,7 +191,7 @@ const PujaBookingScreen: React.FC = () => {
       puja_image: puja_image,
       puja_name: puja_name,
     };
-    console.log('navigationParams', navigationParams);
+    console.log('navigationParams ===> ', navigationParams);
     if (selection === 'automatic') {
       navigation.navigate('PaymentScreen', navigationParams);
     } else if (selection === 'manual') {

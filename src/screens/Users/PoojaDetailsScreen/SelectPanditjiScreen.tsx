@@ -59,7 +59,7 @@ const SelectPanditjiScreen: React.FC = () => {
     puja_name,
     puja_image,
   } = route.params as any;
-  const {showErrorToast} = useCommonToast();
+  const {showErrorToast, showSuccessToast} = useCommonToast();
 
   const navigation = useNavigation<StackNavigationProp<UserHomeParamList>>();
   const [searchText, setSearchText] = useState('');
@@ -93,11 +93,17 @@ const SelectPanditjiScreen: React.FC = () => {
     }
   };
 
-  console.log('panditjiData :: ', panditjiData);
+  console.log('booking_date :: ', booking_date);
 
   useEffect(() => {
-    if (location && poojaId) {
-      fetchPanditji(poojaId, location.latitude, location.longitude, 'manual');
+    if (location && poojaId && booking_date) {
+      fetchPanditji(
+        poojaId,
+        location.latitude,
+        location.longitude,
+        'manual',
+        booking_date,
+      );
     }
   }, [location, poojaId]);
 
@@ -106,33 +112,43 @@ const SelectPanditjiScreen: React.FC = () => {
     latitude: string,
     longitude: string,
     mode: 'manual',
+    booking_date: string,
   ) => {
     try {
       setIsLoading(true);
-      const response = await getPanditji(pooja_id, latitude, longitude, mode);
-      console.log('Fetched Panditji:', response);
+      const response = await getPanditji(
+        pooja_id,
+        latitude,
+        longitude,
+        mode,
+        booking_date,
+      );
+      console.log('Fetched Panditji :: ', response);
       if (response.success) {
-        const transformedData: PanditjiItem[] = response.data.map(
-          (item: any) => ({
-            id: item.pandit_id,
-            name: item.full_name,
-            location: item.city,
-            languages: item.supported_languages?.join(', '),
-            image: item.profile_img,
-            isSelected: false,
-            isVerified: item.isVerified || false,
-          }),
-        );
-        setPanditjiData(transformedData);
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          const transformedData: PanditjiItem[] = response.data.map(
+            (item: any) => ({
+              id: item.pandit_id,
+              name: item.full_name,
+              location: item.city,
+              languages: item.supported_languages?.join(', '),
+              image: item.profile_img,
+              isSelected: false,
+              isVerified: item.isVerified || false,
+            }),
+          );
+          setPanditjiData(transformedData);
+        } else {
+          setPanditjiData([]);
+          showSuccessToast(
+            response.message ||
+              'No Panditji available for the selected date and pooja',
+          );
+        }
       }
     } catch (error: any) {
-      // Set a proper message for toast message
-      showErrorToast(
-        error?.message
-          ? error.message
-          : t('failed_to_fetch_panditji') ||
-              'Failed to fetch Panditji list. Please try again later.',
-      );
+      console.error('Error fetching panditji :: ', JSON.stringify(error));
+      showErrorToast(error?.message || 'Failed to fetch panditji');
     } finally {
       setIsLoading(false);
     }

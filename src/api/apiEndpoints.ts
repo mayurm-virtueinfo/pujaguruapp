@@ -57,11 +57,11 @@ export const GET_MUHRAT =
 export const GET_POOJA_DETAILS = '/app/puja-detail/{id}/';
 export const POST_BOOKING = '/app/booking/';
 export const GET_AUTO_MANUAL_PANDIT_SELECTION =
-  '/app/auto-assign-panditji?puja_id={puja_id}&latitude={latitude}&longitude={longitude}&mode={mode}';
+  '/app/auto-assign-panditji?puja_id={puja_id}&latitude={latitude}&longitude={longitude}&mode={mode}&booking_date={booking_date}';
 export const GET_ALL_PANDIT_LIST = '/app/panditji-list/';
 export const GET_PANDIT_DETAILS = '/panditji/my-details/{id}/';
 export const POST_CREATE_RAZORPAY_ORDER = '/app/booking/create-razorpay-order/';
 export const POST_VERIFY_PAYMENT = '/app/booking/verify-payment/';
-export const POST_RATE_PANDIT = "/app/rate-pandit/"
-export const GET_UPCOMING_PUJA = "/app/upcoming-pujas/"
-export const GET_UPCOMING_PUJA_DETAILS = "/app/bookings/{id}/"
+export const POST_RATE_PANDIT = '/app/rate-pandit/';
+export const GET_UPCOMING_PUJA = '/app/upcoming-pujas/';
+export const GET_UPCOMING_PUJA_DETAILS = '/app/bookings/{id}/';
