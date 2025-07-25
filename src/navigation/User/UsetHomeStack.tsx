@@ -42,6 +42,7 @@ export type UserHomeParamList = {
   BookingSuccessfullyScreen: undefined;
   RateYourExperienceScreen: any;
   UserPujaDetailsScreen: undefined;
+  UserChatScreen: undefined;
 };
 
 const Stack = createStackNavigator<UserHomeParamList>();
@@ -53,7 +54,7 @@ const UserHomeNavigator = () => {
         headerShown: false,
       }}>
       <Stack.Screen name="UserHomeScreen" component={UserHomeScreen} />
-      <Stack.Screen name="PujaCancellationScreen" component={UserChatScreen} />
+      <Stack.Screen name="UserChatScreen" component={UserChatScreen} />
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
       <Stack.Screen name="SelectPujaScreen" component={SelectPujaScreen} />
       <Stack.Screen name="PoojaDetailScreen" component={PujaDetailsScreen} />
@@ -86,6 +87,10 @@ const UserHomeNavigator = () => {
       <Stack.Screen
         name="UserPujaDetailsScreen"
         component={UserPujaDetailsScreen}
+      />
+      <Stack.Screen
+        name="PujaCancellationScreen"
+        component={PujaCancellationScreen}
       />
     </Stack.Navigator>
   );

@@ -95,12 +95,12 @@ const UserPoojaListNavigator = () => {
         component={PanditDetailsScreen}
       />
       <Stack.Screen
-        name="PujaCancellationScreen"
-        component={PujaCancellationScreen}
-      />
-      <Stack.Screen
         name="UserPujaDetailsScreen"
         component={UserPujaDetailsScreen}
+      />
+      <Stack.Screen
+        name="PujaCancellationScreen"
+        component={PujaCancellationScreen}
       />
       <Stack.Screen name="UserChatScreen" component={UserChatScreen} />
       <Stack.Screen name="AddAddressScreen" component={AddAddressScreen} />

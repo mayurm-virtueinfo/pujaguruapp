@@ -6,6 +6,7 @@ import NotificationScreen from '../../screens/Users/NotificationScreen/Notificat
 import WalletTopUpScreen from '../../screens/Users/WalletTopUpScreen/WalletTopUpScreen';
 import AddAddressScreen from '../../screens/Users/AddAddressScreen/AddAddressScreen';
 import AddressesScreen from '../../screens/Users/AddressesScreen/AddressesScreen';
+import UserEditProfileScreen from '../../screens/Users/ProfileScreen/EditProfile';
 
 export type UserProfileParamList = {
   goBack(): void;
@@ -16,6 +17,7 @@ export type UserProfileParamList = {
   WalletTopUpScreen: undefined;
   AddressesScreen: undefined;
   AddAddressScreen: {addressToEdit?: any};
+  EditProfile: any;
 };
 
 const Stack = createStackNavigator<UserProfileParamList>();
@@ -35,6 +37,7 @@ const UserProfileNavigator = () => {
       <Stack.Screen name="WalletTopUpScreen" component={WalletTopUpScreen} />
       <Stack.Screen name="AddressesScreen" component={AddressesScreen} />
       <Stack.Screen name="AddAddressScreen" component={AddAddressScreen} />
+      <Stack.Screen name="EditProfile" component={UserEditProfileScreen} />
     </Stack.Navigator>
   );
 };

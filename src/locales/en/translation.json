@@ -180,5 +180,15 @@
   "no": "No",
   "please_select_cancellation_reason": "Please select a cancellation reason.",
   "please_enter_cancellation_reason": "Please enter your cancellation reason.",
-  "cancellation_submitted_successfully": "Cancellation submitted successfully."
+  "cancellation_submitted_successfully": "Cancellation submitted successfully.",
+  "in_progress_pujas": "In-progress Puja's",
+  "no_in_progress_pujas": "No in-progress pujas.",
+  "error_fetching_profile_city_data": "Error fetching profile/city data",
+  "invalid_first_name": "Invalid first name",
+  "invalid_last_name": "Invalid last name",
+  "address_required": "Address is required",
+  "profile_updated_successfully": "Profile updated successfully",
+  "profile_update_failed": "Profile update failed",
+  "error_getting_location": "Error getting location",
+  "location_permission_denied": "Location permission denied"
 }

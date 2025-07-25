@@ -8,9 +8,9 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { COLORS } from '../theme/theme';
+import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
-import { moderateScale } from 'react-native-size-matters';
+import {moderateScale} from 'react-native-size-matters';
 
 interface Props {
   title: string;
@@ -47,16 +47,16 @@ const styles = StyleSheet.create({
     borderWidth: 1, // Border width
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 3,
+    // shadowColor: '#000',
+    // shadowOpacity: 0.1,
+    // shadowRadius: 4,
+    // shadowOffset: { width: 0, height: 2 },
+    // elevation: 3,
     marginTop: moderateScale(10),
   },
   buttonText: {
     fontSize: moderateScale(16),
-    fontFamily:Fonts.Sen_Regular
+    fontFamily: Fonts.Sen_Regular,
   },
   disabled: {
     backgroundColor: '#E5E7EB',

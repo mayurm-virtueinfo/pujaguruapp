@@ -29,6 +29,9 @@ import ApiEndpoints, {
   GET_WALLET,
   GET_TRANSACTION,
   POST_CANCEL_BOOKING,
+  GET_IN_PROGRESS,
+  GET_EDIT_PROFILE,
+  PUT_EDIT_PROFILE,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -791,7 +794,7 @@ export const getTirthPlace = () => {
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error fetching TirthPlace data:', error);
+        console.error('Error fetching TirthPlace data:', error.response.data);
         reject(error);
       });
   });
@@ -935,7 +938,7 @@ export const postBooking = (data: Booking) => {
         console.log('response for booking2', response);
       })
       .catch(error => {
-        console.error('Error Booking', error);
+        console.error('Error Booking', error.response.data);
         reject(error);
       });
   });
@@ -1110,6 +1113,55 @@ export const postCancelBooking = (id: string, data: bookingCancellation): Promis
       })
       .catch(error => {
         console.error('Error cancel booking:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getInProgress = () => {
+  let apiUrl = GET_IN_PROGRESS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error in In-progress api :: ', error.response.data);
+        reject(error);
+      });
+  });
+};
+
+export const getEditProfile = () => {
+  let apiUrl = GET_EDIT_PROFILE;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error in get edit profile data api :: ', error.response.data);
+        reject(error);
+      });
+  });
+};
+
+export const putEditProfile = (params: any) => {
+  let apiUrl = PUT_EDIT_PROFILE;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .put(apiUrl, params, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error in put edit profile api :: ', error.response?.data || error);
         reject(error);
       });
   });

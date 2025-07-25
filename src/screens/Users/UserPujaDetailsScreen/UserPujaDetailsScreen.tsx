@@ -38,7 +38,7 @@ const UserPujaDetailsScreen: React.FC = () => {
 
   const [pujaDetails, setPujaDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
-
+  console.log('pujaDetails', pujaDetails);
   React.useEffect(() => {
     const fetchPujaDetails = async () => {
       setLoading(true);
@@ -213,12 +213,12 @@ const UserPujaDetailsScreen: React.FC = () => {
                   resizeMode="contain"
                 />
                 <Text style={styles.detailText}>
-                  {pujaDetails.verification_pin
+                  {pujaDetails.booking_status !== 'in_progress' &&
+                  pujaDetails.verification_pin
                     ? `${pujaDetails.verification_pin}: ${t(
                         'verification_pin',
                       )}`
-                    : ''}
-                  {pujaDetails.completion_pin
+                    : pujaDetails.completion_pin
                     ? `${pujaDetails.completion_pin}: ${t('completion_pin')}`
                     : ''}
                 </Text>

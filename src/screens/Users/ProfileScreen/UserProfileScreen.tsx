@@ -60,7 +60,7 @@ const UserProfileScreen: React.FC = () => {
   const navigation = useNavigation<CompleteProfileScreenRouteProp>();
   const route = useRoute<CompleteProfileScreenRouteProps>();
   const {phoneNumber, firstName, lastName, address, uid, latitude, longitude} =
-    route.params;
+    route?.params;
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState(phoneNumber);

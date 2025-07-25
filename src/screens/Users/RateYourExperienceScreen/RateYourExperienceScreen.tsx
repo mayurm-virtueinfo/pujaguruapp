@@ -64,7 +64,7 @@ const RateYourExperienceScreen: React.FC = () => {
 
       setRating(0);
       setFeedback('');
-      navigation.navigate('UserPujaDetailsScreen');
+      navigation.navigate('UserPujaDetailsScreen', {id: booking});
     } catch (error) {
       // Optionally handle error, e.g. show a toast
       console.error('Failed to submit rating:', error);

@@ -37,7 +37,7 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const APP_URL = 'https://c692148aa3f9.ngrok-free.app';
+export const APP_URL = 'https://7953020ffd01.ngrok-free.app';
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';
@@ -68,3 +68,6 @@ export const GET_UPCOMING_PUJA_DETAILS = '/app/bookings/{id}/';
 export const GET_WALLET = '/app/wallet/';
 export const GET_TRANSACTION = '/app/wallet/transactions/';
 export const POST_CANCEL_BOOKING = "/app/bookings/{id}/cancel/"
+export const GET_IN_PROGRESS = "/app/bookings/in_progress/";
+export const GET_EDIT_PROFILE = "/app/profile/me/"
+export const PUT_EDIT_PROFILE = '/app/profile/me/'

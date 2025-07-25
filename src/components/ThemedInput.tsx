@@ -24,6 +24,7 @@ interface ThemedInputProps {
   keyboardType?: KeyboardTypeOptions;
   maxLength?: number;
   error?: string;
+  editable?: boolean;
 }
 
 const ThemedInput: React.FC<ThemedInputProps> = ({
@@ -38,6 +39,7 @@ const ThemedInput: React.FC<ThemedInputProps> = ({
   textContentType = 'none',
   maxLength,
   error,
+  editable = true,
 }) => {
   return (
     <View style={styles.container}>
@@ -53,6 +55,7 @@ const ThemedInput: React.FC<ThemedInputProps> = ({
         autoComplete={autoComplete}
         textContentType={textContentType}
         maxLength={maxLength}
+        editable={editable}
       />
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>

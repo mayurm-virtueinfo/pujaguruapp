@@ -106,7 +106,7 @@ const BottomUserProfileScreen: React.FC = () => {
     navigation.navigate('NotificationScreen');
   };
   const handleEditNavigation = () => {
-    console.log('edit profile screen pressed');
+    navigation.navigate('EditProfile');
   };
 
   const handleSavedAddressNavigation = () => {

@@ -17,6 +17,7 @@ import {
   apiService,
   getRecommendedPandit,
   getUpcomingPujas,
+  getInProgress,
   PanditItem,
   PujaItem,
   RecommendedPandit,
@@ -38,6 +39,7 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 const UserHomeScreen: React.FC = () => {
   const navigation = useNavigation<UserPoojaListParamList>();
   const [pujas, setPujas] = useState<PujaItem[]>([]);
+  const [inProgressPujas, setInProgressPujas] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<string | null>(null);
   const [location, setLocation] = useState<any | null>(null);
@@ -54,6 +56,7 @@ const UserHomeScreen: React.FC = () => {
 
   useEffect(() => {
     fetchUpcomingPujas();
+    fetchInProgressPujas();
   }, []);
 
   useEffect(() => {
@@ -86,6 +89,20 @@ const UserHomeScreen: React.FC = () => {
     } catch (error) {
       console.error('Error fetching upcoming puja data:', error);
       setPujas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchInProgressPujas = async () => {
+    setLoading(true);
+    try {
+      const response: any = await getInProgress();
+      console.log('response for in-progress puja :: ', response);
+      setInProgressPujas(response || []);
+    } catch (error) {
+      console.error('Error fetching in-progress puja data:', error);
+      setInProgressPujas([]);
     } finally {
       setLoading(false);
     }
@@ -238,6 +255,48 @@ const UserHomeScreen: React.FC = () => {
               </View>
             )}
           </ScrollView>
+        </View>
+
+        {/* In-progress Puja Section */}
+        <View style={styles.pujaSection}>
+          <Text style={styles.sectionTitle}>
+            {t('in_progress_pujas') || 'In-progress Pujas'}
+          </Text>
+          <View style={styles.pujaCardsContainer}>
+            {inProgressPujas && inProgressPujas.length > 0 ? (
+              inProgressPujas.map((puja, idx) => (
+                <View key={puja.id}>
+                  <TouchableOpacity
+                    style={styles.pujaCard}
+                    onPress={() =>
+                      navigation.navigate('UserPujaDetailsScreen', {
+                        id: puja.id,
+                      })
+                    }>
+                    <Image
+                      source={{uri: puja.pooja_image_url}}
+                      style={styles.pujaImage}
+                    />
+                    <View style={styles.pujaTextContainer}>
+                      <Text style={styles.pujaName}>{puja.pooja_name}</Text>
+                      <Text style={styles.pujaDate}>{puja.when_is_pooja}</Text>
+                    </View>
+                  </TouchableOpacity>
+                  {idx !== inProgressPujas.length - 1 && (
+                    <View style={styles.divider} />
+                  )}
+                </View>
+              ))
+            ) : (
+              <Text
+                style={{
+                  color: '#888',
+                  textAlign: 'center',
+                }}>
+                {t('no_in_progress_pujas') || 'No in-progress pujas'}
+              </Text>
+            )}
+          </View>
         </View>
 
         <View style={styles.pujaSection}>
