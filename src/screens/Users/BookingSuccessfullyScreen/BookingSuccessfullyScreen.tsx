@@ -34,8 +34,12 @@ const BookingSuccessfullyScreen: React.FC = () => {
   const route = useRoute();
   // Check if route.params exists and has the expected property
   // Always extract booking from route.params, even if it's null/undefined
-  const booking = (route.params as any)?.booking;
+  const {booking, panditjiData, selectManualPanitData} = route.params as any;
+
   console.log('booking-1', booking);
+
+  console.log('panditjiData :: ', panditjiData);
+  console.log('selectManualPanitData :: ', selectManualPanitData);
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
@@ -60,6 +64,8 @@ const BookingSuccessfullyScreen: React.FC = () => {
               onPress={() =>
                 navigation.navigate('RateYourExperienceScreen', {
                   booking: booking,
+                  panditjiData: panditjiData,
+                  selectManualPanitData: selectManualPanitData,
                 })
               }
               style={styles.buttonContainer}

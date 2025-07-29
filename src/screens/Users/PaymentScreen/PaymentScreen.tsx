@@ -83,6 +83,8 @@ const PaymentScreen: React.FC = () => {
     puja_image,
     price,
     selectAddress,
+    panditjiData,
+    selectManualPanitData,
   } = route.params as any;
 
   console.log('oute.params', route.params);
@@ -100,7 +102,7 @@ const PaymentScreen: React.FC = () => {
     longitude: string;
   } | null>(null);
   const [loading, setIsLoading] = useState<boolean>(false);
-  const [panditData, setPanditjiData] = useState<any>(null);
+  // const [panditData, setPanditjiData] = useState<any>(null);
   const [bookingId, setBookingId] = useState<string | undefined>();
   const [walletData, setWalletData] = useState<any>({});
 
@@ -109,21 +111,8 @@ const PaymentScreen: React.FC = () => {
   const razorpayOrderBookingId = useRef<string | null>(null);
 
   useEffect(() => {
-    fetchLocation();
     fetchWallet();
   }, []);
-
-  const fetchLocation = async () => {
-    try {
-      const location = await AsyncStorage.getItem(AppConstant.LOCATION);
-      if (location) {
-        const parsedLocation = JSON.parse(location);
-        setLocation(parsedLocation);
-      }
-    } catch (error) {
-      console.error('Error fetching location ::', error);
-    }
-  };
 
   const fetchWallet = useCallback(async () => {
     setIsLoading(true);
@@ -141,26 +130,13 @@ const PaymentScreen: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
-    if (location && poojaId) {
-      fetchPanditji(
-        poojaId,
-        location.latitude,
-        location.longitude,
-        'auto',
-        booking_date,
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location, poojaId]);
-
   const buildBookingData = () => {
     let bookingData: any = {
       pooja: typeof poojaId === 'string' ? parseInt(poojaId, 10) : poojaId,
       pandit:
         typeof pandit === 'string'
           ? parseInt(pandit, 10)
-          : pandit || panditData?.pandit_id,
+          : pandit || panditjiData?.pandit_id,
       samagri_required: samagri_required,
       booking_date: booking_date,
       muhurat_time: muhurat_time,
@@ -235,32 +211,6 @@ const PaymentScreen: React.FC = () => {
     [orderId, showSuccessToast, showErrorToast],
   );
 
-  const fetchPanditji = async (
-    pooja_id: string,
-    latitude: string,
-    longitude: string,
-    mode: 'auto',
-    booking_date: string,
-  ) => {
-    try {
-      setIsLoading(true);
-      const response = await getPanditji(
-        pooja_id,
-        latitude,
-        longitude,
-        mode,
-        booking_date,
-      );
-      if (response.success) {
-        setPanditjiData(response.data);
-      }
-    } catch (error: any) {
-      showErrorToast(error.message || 'Failed to fetch panditji');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const paymentMethods: PaymentMethod[] = [
     {id: 'credit', name: t('credit_card'), type: 'credit'},
     {id: 'debit', name: t('debit_card'), type: 'debit'},
@@ -309,7 +259,11 @@ const PaymentScreen: React.FC = () => {
       const response: any = await postVerrifyPayment(data);
       if (response && response.data.success) {
         showSuccessToast('Payment verified successfully!');
-        navigation.navigate('BookingSuccessfullyScreen', {booking: booking_id});
+        navigation.navigate('BookingSuccessfullyScreen', {
+          booking: booking_id,
+          panditjiData: panditjiData,
+          selectManualPanitData: selectManualPanitData,
+        });
       } else {
         showErrorToast(response?.message || 'Payment verification failed===>.');
       }
@@ -563,11 +517,16 @@ const PaymentScreen: React.FC = () => {
         }}>
         <Image
           source={{
-            uri: pandit_image || 'https://via.placeholder.com/150',
+            uri:
+              selectManualPanitData?.image ||
+              panditjiData?.profile_img ||
+              'https://via.placeholder.com/150',
           }}
           style={styles.panditImage}
         />
-        <Text style={styles.bookingDataText}>{pandit_name}</Text>
+        <Text style={styles.bookingDataText}>
+          {panditjiData?.full_name || selectManualPanitData?.name || 'Panditji'}
+        </Text>
       </View>
     </View>
   );

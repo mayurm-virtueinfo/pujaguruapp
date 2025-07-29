@@ -19,7 +19,6 @@ import {UserProfileParamList} from '../../../navigation/User/userProfileNavigato
 import CustomModal from '../../../components/CustomModal';
 import {useCommonToast} from '../../../common/CommonToast';
 
-// Define the address type based on the API response structure
 export interface Address {
   id: number;
   name: string;

@@ -36,10 +36,10 @@ const PujaCancellationScreen = () => {
   const {t} = useTranslation();
   const {id} = route.params as any;
   const [cancellationReasons] = useState<CancellationReason[]>([
-    {key: 'personal', label: 'Personal reasons'},
-    {key: 'another_service', label: 'Found another service'},
-    {key: 'financial', label: 'Financial reasons'},
-    {key: 'other', label: 'Other', requiresSpecification: true},
+    {key: 'user_personal', label: 'Personal reasons'},
+    {key: 'user_another_service', label: 'Found another service'},
+    {key: 'user_financial', label: 'Financial reasons'},
+    {key: 'user_other', label: 'Other', requiresSpecification: true},
   ]);
   const [selectedReasonKey, setSelectedReasonKey] = useState<string | null>(
     null,
@@ -83,10 +83,12 @@ const PujaCancellationScreen = () => {
           other_reason: customReason,
         }),
       };
+      console.log('payload :: ', payload);
       await postCancelBooking(id, payload);
       showSuccessToast(t('cancellation_submitted_successfully'));
       navigation.goBack();
     } catch (error: any) {
+      console.log('error in cancel booking api :: ', error?.response?.data);
       showErrorToast(
         error?.message || 'Failed to submit cancellation. Please try again.',
       );

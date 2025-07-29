@@ -72,12 +72,15 @@ const SelectPanditjiScreen: React.FC = () => {
   const [selectedPanditjiImage, setSelectedPanditjiImage] = useState<
     string | null
   >(null);
+  const [selectPanditData, setSelectPanditData] = useState<any>(null);
   const [panditjiData, setPanditjiData] = useState<PanditjiItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useState<{
     latitude: string;
     longitude: string;
   } | null>(null);
+
+  console.log('selectPanditData :: ', selectPanditData);
 
   useEffect(() => {
     fetchLocation();
@@ -165,6 +168,7 @@ const SelectPanditjiScreen: React.FC = () => {
   const handlePanditjiSelect = (id: string) => {
     const selected = panditjiData.find(item => item.id === id);
     setSelectedPanditji(id);
+    setSelectPanditData(selected);
     setSelectedPanditjiName(selected ? selected.name : null);
     setSelectedPanditjiImage(selected ? selected.image : null);
     setPanditjiData(prev =>
@@ -193,6 +197,7 @@ const SelectPanditjiScreen: React.FC = () => {
         puja_name: puja_name,
         price: price,
         selectAddress: selectAddress,
+        selectManualPanitData: selectPanditData,
       });
     }
   };

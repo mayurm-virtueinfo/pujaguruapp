@@ -26,6 +26,7 @@ import Geolocation from '@react-native-community/geolocation';
 import CustomDropdown from '../../../components/CustomDropdown';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {Address} from '../AddressesScreen/AddressesScreen';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 const AddAddressScreen = () => {
   const {t} = useTranslation();
@@ -198,8 +199,8 @@ const AddAddressScreen = () => {
           id: addressToEdit.id,
           ...addressPayload,
         });
-        console.log('response for update address :: ', response);
-        if (response.data.success) {
+        console.log('response for update address :: ', response.data);
+        if (response?.data?.success) {
           setFormData({
             fullName: '',
             phoneNumber: '',
@@ -211,7 +212,7 @@ const AddAddressScreen = () => {
             addressType: '',
           });
           setLocation({latitude: 0, longitude: 0});
-          navigation?.goBack();
+          handleBack();
         }
       } else {
         console.log('======= Add Address Api called =======');
@@ -244,12 +245,12 @@ const AddAddressScreen = () => {
 
   return (
     <SafeAreaView style={[styles.container, {paddingTop: insets.top}]}>
+      <CustomeLoader loading={isLoading} />
       <UserCustomHeader
         title={addressToEdit ? t('edit_address') : t('add_address')}
         showBackButton={true}
         onBackPress={handleBack}
       />
-
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}>

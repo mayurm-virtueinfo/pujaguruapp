@@ -42,11 +42,14 @@ const RateYourExperienceScreen: React.FC = () => {
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const route = useRoute();
-  const {booking} = route.params as any;
+  const {booking, panditjiData, selectManualPanitData} = route.params as any;
   console.log('booking=====>', booking);
   const handleStarPress = (starIndex: number) => {
     setRating(starIndex + 1);
   };
+
+  console.log('selectManualPanitData :: ', selectManualPanitData);
+  console.log('panditjiData :: ', panditjiData);
 
   const handleSubmit = async () => {
     try {
@@ -106,14 +109,19 @@ const RateYourExperienceScreen: React.FC = () => {
             <View style={styles.panditImageContainer}>
               <Image
                 source={{
-                  uri: 'https://cdn.builder.io/api/v1/image/assets/TEMP/db9492299c701c6ca2a23d6de9fc258e7ec2b5fd?width=160',
+                  uri:
+                    panditjiData?.profile_img ||
+                    selectManualPanitData?.image ||
+                    'https://cdn.builder.io/api/v1/image/assets/TEMP/db9492299c701c6ca2a23d6de9fc258e7ec2b5fd?width=160',
                 }}
                 style={styles.panditImage}
                 resizeMode="cover"
               />
             </View>
             <View style={styles.panditInfo}>
-              <Text style={styles.panditName}>Rajesh Sharma</Text>
+              <Text style={styles.panditName}>
+                {panditjiData?.full_name || selectManualPanitData?.name}
+              </Text>
               <Text style={styles.panditPurpose}>For family well-being</Text>
               <PrimaryButton
                 title={t('view_details')}

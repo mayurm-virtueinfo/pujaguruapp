@@ -23,7 +23,7 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
-import {getMuhrat} from '../../../api/apiService';
+import {getMuhrat, getPanditji} from '../../../api/apiService';
 import {useCommonToast} from '../../../common/CommonToast';
 import CustomeLoader from '../../../components/CustomeLoader';
 
@@ -61,7 +61,7 @@ const PujaBookingScreen: React.FC = () => {
     selectAddressName,
   } = route.params as any;
 
-  const {showErrorToast} = useCommonToast();
+  const {showErrorToast, showSuccessToast} = useCommonToast();
 
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [selectedSlotObj, setSelectedSlotObj] = useState<any>(null);
@@ -82,6 +82,8 @@ const PujaBookingScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [location, setLocation] = useState<any>(null);
   const [muhurats, setMuhurats] = useState<any[]>([]);
+  const [panditjiData, setPanditjiData] = useState({});
+
   console.log('selectedSlot', selectedSlot);
   useEffect(() => {
     fetchLocation();
@@ -96,6 +98,41 @@ const PujaBookingScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching  location ::', error);
+    }
+  };
+
+  const fetchPanditji = async (
+    pooja_id: string,
+    latitude: string,
+    longitude: string,
+    mode: 'auto',
+    booking_date: string,
+  ) => {
+    try {
+      setLoading(true);
+      const response = await getPanditji(
+        pooja_id,
+        latitude,
+        longitude,
+        mode,
+        booking_date,
+      );
+      if (response.success) {
+        console.log('response of pandit data :: ', response);
+        if (Object.keys(response.data).length === 0) {
+          showSuccessToast(response.message);
+          return {};
+        } else {
+          setPanditjiData(response.data);
+          return response.data;
+        }
+      }
+      return [];
+    } catch (error: any) {
+      showErrorToast(error.message || 'Failed to fetch panditji');
+      return [];
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -198,7 +235,35 @@ const PujaBookingScreen: React.FC = () => {
       selectAddress: selectTirthPlaceName || selectAddressName,
     };
     if (selection === 'automatic') {
-      navigation.navigate('PaymentScreen', navigationParams);
+      fetchPanditji(
+        poojaId,
+        location?.latitude,
+        location?.longitude,
+        'auto',
+        selectedDateISO,
+      ).then(data => {
+        if (Object.keys(data).length > 0) {
+          navigation.navigate('PaymentScreen', {
+            poojaId: poojaId,
+            samagri_required: samagri_required,
+            address: address,
+            tirth: tirth,
+            booking_date: selectedDateISO,
+            muhurat_time: muhuratTime,
+            muhurat_type: muhuratType,
+            notes: additionalNotes,
+            puja_image: puja_image,
+            puja_name: puja_name,
+            price: price,
+            selectAddress: selectTirthPlaceName || selectAddressName,
+            panditjiData: data,
+          });
+        } else {
+          showErrorToast(
+            'No panditji available for selected date and location.',
+          );
+        }
+      });
     } else if (selection === 'manual') {
       navigation.navigate('SelectPanditjiScreen', navigationParams);
     }
