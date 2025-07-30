@@ -1,5 +1,5 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {View, StyleSheet, StatusBar, Platform, Text} from 'react-native';
+import React, {useEffect, useRef, useState, useCallback} from 'react';
+import {View, StyleSheet, StatusBar, ScrollView} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {moderateScale} from 'react-native-size-matters';
 import {COLORS} from '../../../theme/theme';
@@ -29,8 +29,7 @@ const UserChatScreen: React.FC = () => {
   const [userId, setUserId] = useState<number | null>(null);
 
   const ws = useRef<WebSocket | null>(null);
-
-  console.log('messages :: ', messages);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,7 +58,6 @@ const UserChatScreen: React.FC = () => {
 
       ws.current.onmessage = e => {
         const data = JSON.parse(e.data);
-        console.log('e :: ', JSON.parse(e.data));
         const newMsg: Message = {
           id: data.uuid,
           text: data.message,
@@ -67,7 +65,7 @@ const UserChatScreen: React.FC = () => {
             hour: '2-digit',
             minute: '2-digit',
           }),
-          isOwn: data.sender_id === userId,
+          isOwn: data.sender_id == userId,
         };
         setMessages(prev => [...prev, newMsg]);
       };
@@ -86,36 +84,43 @@ const UserChatScreen: React.FC = () => {
         }
       };
     }
-  }, [accessToken, uuid, userId]);
+  }, [accessToken, userId]);
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
+      const fetchChatHistory = async () => {
+        setLoading(true);
+        try {
+          const response = await getChatHistory(uuid);
+          if (response) {
+            const normalized = response.map((msg: any) => ({
+              id: msg.uuid,
+              text: msg.content,
+              time: new Date(msg.timestamp).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              isOwn: msg.sender == userId,
+            }));
+            setMessages(normalized);
+          }
+        } catch (error) {
+          console.error('Error fetching chat history:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
       fetchChatHistory();
-    }, [userId]),
+    }, [userId, uuid]),
   );
 
-  const fetchChatHistory = async () => {
-    setLoading(true);
-    try {
-      const response = await getChatHistory(uuid);
-      if (response) {
-        const normalized = response.map((msg: any) => ({
-          id: msg.uuid,
-          text: msg.content || msg.message,
-          time: new Date(msg.timestamp).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-          isOwn: msg.sender === userId || msg.sender_id === userId,
-        }));
-        setMessages(normalized);
-      }
-    } catch (error) {
-      console.error('Error fetching chat history:', error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (scrollViewRef.current) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({animated: true});
+      }, 100);
     }
-  };
+  }, [messages]);
 
   const handleSendMessage = (text: string) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
@@ -140,9 +145,13 @@ const UserChatScreen: React.FC = () => {
           showCallButton={true}
         />
         <View style={styles.chatContainer}>
-          <View style={styles.messagesContainer}>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messagesContainer}
+            contentContainerStyle={styles.contentContainer}
+            showsVerticalScrollIndicator={false}>
             <ChatMessages messages={messages} />
-          </View>
+          </ScrollView>
           <ChatInput onSendMessage={handleSendMessage} />
         </View>
       </SafeAreaView>
@@ -153,6 +162,7 @@ const UserChatScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     backgroundColor: COLORS.primaryBackground,
+    flex: 1,
   },
   chatContainer: {
     flex: 1,
@@ -160,11 +170,13 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
     paddingTop: moderateScale(24),
-    minHeight: '100%',
-    paddingBottom: Platform.OS === 'ios' ? 90 : 100,
   },
   messagesContainer: {
     flex: 1,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
   },
 });
 
