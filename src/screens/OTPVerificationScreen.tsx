@@ -25,9 +25,8 @@ import Fonts from '../theme/fonts';
 import PrimaryButton from '../components/PrimaryButton';
 import PrimaryButtonLabeled from '../components/PrimaryButtonLabeled';
 import PrimaryButtonOutlined from '../components/PrimaryButtonOutlined';
-import {apiService, postSignIn} from '../api/apiService';
+import {postSignIn} from '../api/apiService';
 import {useAuth} from '../provider/AuthProvider';
-import {MainAppStackParamList} from '../navigation/RootNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../utils/appConstant';
 
@@ -54,7 +53,7 @@ interface Props {
   route: OTPVerificationScreenRouteProp;
 }
 
-const RESEND_OTP_WAIT_TIME = 30; // seconds
+const RESEND_OTP_WAIT_TIME = 30;
 
 const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   const {t} = useTranslation();
@@ -69,7 +68,6 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   const {phoneNumber} = route.params;
   const inputRefs = useRef<Array<TextInput | null>>([]);
 
-  // Timer state for resend OTP
   const [timer, setTimer] = useState(RESEND_OTP_WAIT_TIME);
 
   useEffect(() => {
@@ -168,7 +166,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       const confirmation = await signInWithPhoneNumber(getAuth(), phoneNumber);
       setOtpConfirmation(confirmation);
       showSuccessToast(t('otp_resent'));
-      setTimer(RESEND_OTP_WAIT_TIME); // Reset timer after resend
+      setTimer(RESEND_OTP_WAIT_TIME);
     } catch (error: any) {
       showErrorToast(error?.message || t('resend_otp_failed'));
     } finally {

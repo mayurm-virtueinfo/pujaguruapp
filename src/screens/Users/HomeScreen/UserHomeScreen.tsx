@@ -25,7 +25,7 @@ import {
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
@@ -46,7 +46,7 @@ const UserHomeScreen: React.FC = () => {
   const [recomendedPandits, setRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
-  console.log('location', location);
+
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
 
@@ -54,10 +54,12 @@ const UserHomeScreen: React.FC = () => {
     fetchUserAndLocation();
   }, []);
 
-  useEffect(() => {
-    fetchUpcomingPujas();
-    fetchInProgressPujas();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchUpcomingPujas();
+      fetchInProgressPujas();
+    }, []),
+  );
 
   useEffect(() => {
     if (location) {
@@ -78,7 +80,6 @@ const UserHomeScreen: React.FC = () => {
       console.error('Error fetching user and location ::', error);
     }
   };
-  console.log('Pujas :: ', pujas);
 
   const fetchUpcomingPujas = async () => {
     setLoading(true);
@@ -209,7 +210,7 @@ const UserHomeScreen: React.FC = () => {
                         style={{marginRight: 5}}
                       />
                       <Text style={styles.ratingText}>
-                        {pandit.total_ratings}
+                        {pandit.average_rating}
                       </Text>
                     </View>
                   </View>

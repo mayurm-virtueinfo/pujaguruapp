@@ -11,7 +11,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {COLORS} from '../../../theme/theme';
@@ -23,7 +27,7 @@ import {Images} from '../../../theme/Images';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {useTranslation} from 'react-i18next';
-import {getUpcomingPujaDetails} from '../../../api/apiService';
+import {getUpcomingPujaDetails, postStartChat} from '../../../api/apiService';
 
 const UserPujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -32,29 +36,32 @@ const UserPujaDetailsScreen: React.FC = () => {
   >;
   const route = useRoute();
   const {id} = route.params as any;
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
   const navigation = useNavigation<ScreenNavigationProp>();
   const [isPujaItemsModalVisible, setIsPujaItemsModalVisible] = useState(false);
 
   const [pujaDetails, setPujaDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  console.log('pujaDetails', pujaDetails);
-  React.useEffect(() => {
-    const fetchPujaDetails = async () => {
-      setLoading(true);
-      try {
-        const details = await getUpcomingPujaDetails(id?.toString());
-        setPujaDetails(details);
-      } catch (error) {
-        setPujaDetails(null);
-      } finally {
-        setLoading(false);
+  console.log('pujaDetail :: ', pujaDetails);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchPujaDetails = async () => {
+        setLoading(true);
+        try {
+          const details = await getUpcomingPujaDetails(id?.toString());
+          setPujaDetails(details);
+        } catch (error) {
+          setPujaDetails(null);
+        } finally {
+          setLoading(false);
+        }
+      };
+      if (id) {
+        fetchPujaDetails();
       }
-    };
-    if (id) {
-      fetchPujaDetails();
-    }
-  }, [id]);
+    }, [id]),
+  );
 
   const handlePujaItemsPress = () => {
     setIsPujaItemsModalVisible(true);
@@ -64,13 +71,32 @@ const UserPujaDetailsScreen: React.FC = () => {
     setIsPujaItemsModalVisible(false);
   };
 
-  // Helper to format date as DD/MM/YYYY
+  const startChatConversation = async () => {
+    const payload = {
+      other_user_id: pujaDetails?.assigned_pandit?.id,
+    };
+    setLoading(true);
+    try {
+      const response = await postStartChat(payload);
+      if (response) {
+        console.log('response for start chat :: ', response);
+        navigation.navigate('UserChatScreen', {
+          uuid: response?.uuid,
+          pandit_name: response?.other_participant_name,
+          profile_img_url: response?.other_participant_profile_img,
+        });
+      }
+    } catch (error) {
+      console.error('Error starting chat :: ', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '';
-    // If dateStr is like "2025-07-23"
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) {
-      // fallback for "YYYY-MM-DD"
       const parts = dateStr.split('-');
       if (parts.length === 3) {
         return `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -83,15 +109,12 @@ const UserPujaDetailsScreen: React.FC = () => {
     return `${day}/${month}/${year}`;
   };
 
-  // Helper to get Pandit image url (handle relative url)
   const getPanditImageUrl = (url: string | null | undefined) => {
     if (!url) return undefined;
     if (url.startsWith('http')) return url;
-    // Assume relative to server, fallback to a default image if needed
     return `https://pujapaath.com${url}`;
   };
 
-  // Helper to get Puja image url
   const getPujaImageUrl = (url: string | null | undefined) => {
     if (!url) return undefined;
     if (url.startsWith('http')) return url;
@@ -111,7 +134,7 @@ const UserPujaDetailsScreen: React.FC = () => {
                   source={
                     pujaDetails.pooja_image_url
                       ? {uri: getPujaImageUrl(pujaDetails.pooja_image_url)}
-                      : Images.ic_puja // fallback
+                      : Images.ic_puja
                   }
                   style={styles.pujaIcon}
                 />
@@ -285,7 +308,9 @@ const UserPujaDetailsScreen: React.FC = () => {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => navigation.navigate('UserChatScreen')}>
+              onPress={() => {
+                startChatConversation();
+              }}>
               <Image
                 source={Images.ic_message}
                 style={{width: scale(20), height: scale(20)}}

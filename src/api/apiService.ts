@@ -32,6 +32,8 @@ import ApiEndpoints, {
   GET_IN_PROGRESS,
   GET_EDIT_PROFILE,
   PUT_EDIT_PROFILE,
+  POST_START_CHAT,
+  GET_CHAT_MESSAGES,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -221,10 +223,14 @@ export interface NotificationData {
 
 export interface TransactioData {
   id: number;
-  title: string;
+  puja_name: string;
   amount: string;
-  date: string;
-  type: string;
+  timestamp: string;
+  booking: string;
+  notes: string;
+  reason: string;
+  transaction_type: string;
+  wallet: string;
 }
 
 export interface User {
@@ -367,8 +373,8 @@ export interface RatePandit {
 }
 
 export interface bookingCancellation {
-  cancellation_reason_type: string,
-  cancellation_reason_other?: string
+  cancellation_reason_type: string;
+  cancellation_reason_other?: string;
 }
 
 export const apiService = {
@@ -573,16 +579,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return { pandits: [], puja: [] };
+      return {pandits: [], puja: []};
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || { recommendedPuja: [], pujaList: [] };
+      return response.data?.record || {recommendedPuja: [], pujaList: []};
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return { recommendedPuja: [], pujaList: [] };
+      return {recommendedPuja: [], pujaList: []};
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -633,10 +639,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -664,10 +670,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
 };
@@ -840,7 +846,7 @@ export const deleteAddress = (data: deleteAddress) => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, { data })
+      .delete(apiUrl, {data})
       .then(response => {
         resolve(response);
       })
@@ -963,7 +969,10 @@ export const getPanditji = (
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error fetching panditji:', JSON.stringify(error.response.data));
+        console.error(
+          'Error fetching panditji:',
+          JSON.stringify(error.response.data),
+        );
         reject(error);
       });
   });
@@ -1103,7 +1112,10 @@ export const getTransaction = () => {
       });
   });
 };
-export const postCancelBooking = (id: string, data: bookingCancellation): Promise<any> => {
+export const postCancelBooking = (
+  id: string,
+  data: bookingCancellation,
+): Promise<any> => {
   const apiUrl = POST_CANCEL_BOOKING.replace('{id}', id);
   return new Promise((resolve, reject) => {
     apiDev
@@ -1142,7 +1154,10 @@ export const getEditProfile = () => {
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error in get edit profile data api :: ', error.response.data);
+        console.error(
+          'Error in get edit profile data api :: ',
+          error.response.data,
+        );
         reject(error);
       });
   });
@@ -1161,7 +1176,40 @@ export const putEditProfile = (params: any) => {
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error in put edit profile api :: ', error.response?.data || error);
+        console.error(
+          'Error in put edit profile api :: ',
+          error.response?.data || error,
+        );
+        reject(error);
+      });
+  });
+};
+
+export const postStartChat = (data: any): Promise<any> => {
+  let apiUrl = POST_START_CHAT;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error starting chat:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getChatHistory = (id: string): Promise<any> => {
+  const apiUrl = GET_CHAT_MESSAGES.replace('{id}', id);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error in getting chat history ::', error);
         reject(error);
       });
   });

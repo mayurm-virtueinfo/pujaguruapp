@@ -7,6 +7,7 @@ import WalletTopUpScreen from '../../screens/Users/WalletTopUpScreen/WalletTopUp
 import AddAddressScreen from '../../screens/Users/AddAddressScreen/AddAddressScreen';
 import AddressesScreen from '../../screens/Users/AddressesScreen/AddressesScreen';
 import UserEditProfileScreen from '../../screens/Users/ProfileScreen/EditProfile';
+import UpcomingPuja from '../../screens/Users/BottomProfileScreen/UpcomingPuja';
 
 export type UserProfileParamList = {
   goBack(): void;
@@ -18,6 +19,7 @@ export type UserProfileParamList = {
   AddressesScreen: undefined;
   AddAddressScreen: {addressToEdit?: any};
   EditProfile: any;
+  UpcomingPuja: any;
 };
 
 const Stack = createStackNavigator<UserProfileParamList>();
@@ -38,6 +40,7 @@ const UserProfileNavigator = () => {
       <Stack.Screen name="AddressesScreen" component={AddressesScreen} />
       <Stack.Screen name="AddAddressScreen" component={AddAddressScreen} />
       <Stack.Screen name="EditProfile" component={UserEditProfileScreen} />
+      <Stack.Screen name="UpcomingPuja" component={UpcomingPuja} />
     </Stack.Navigator>
   );
 };

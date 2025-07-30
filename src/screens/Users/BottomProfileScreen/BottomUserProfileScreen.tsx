@@ -8,7 +8,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import Fonts from '../../../theme/fonts';
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
@@ -20,10 +20,11 @@ import {useTranslation} from 'react-i18next';
 import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
 import {useAuth} from '../../../provider/AuthProvider';
 import LanguageSwitcher from '../../../components/LanguageSwitcher';
-import {postLogout} from '../../../api/apiService';
+import {getEditProfile, postLogout} from '../../../api/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomModal from '../../../components/CustomModal';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 interface ProfileFieldProps {
   label: string;
@@ -49,34 +50,50 @@ const BottomUserProfileScreen: React.FC = () => {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
 
-  interface CurrentUser {
-    first_name: string;
-    email: string;
-    firebase_uid: string;
-    id: string;
-    last_name: string;
-    mobile: string;
-    pandit_details: string;
-    profile_img: string;
-    role: number;
+  interface Address {
+    address_line1: string;
+    address_line2: string;
+    address_type: number;
+    address_type_name: string;
+    city: number;
     city_name: string;
+    latitude: string;
+    longitude: string;
+    phone_number: string;
+  }
+
+  interface CurrentUser {
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    mobile?: string;
+    profile_img?: string;
+    address?: Address;
+    id: number;
+    role: number;
+    uuid: string;
   }
 
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
-  useEffect(() => {
-    fetchCurrentUser();
-  }, []);
-
   const fetchCurrentUser = async () => {
     try {
-      const userData = await AsyncStorage.getItem(AppConstant.CURRENT_USER);
-      setCurrentUser(userData ? JSON.parse(userData) : null);
+      const response: any = await getEditProfile();
+      if (response) {
+        console.log('response in profile screen :: ', response);
+        setCurrentUser(response);
+      }
     } catch (error) {
       console.error('Error fetching current user:', error);
       return null;
     }
   };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchCurrentUser();
+    }, []),
+  );
 
   const handleLogout = async () => {
     setLogoutLoading(true);
@@ -108,20 +125,16 @@ const BottomUserProfileScreen: React.FC = () => {
   const handleEditNavigation = () => {
     navigation.navigate('EditProfile');
   };
-
+  const handleUpcomingPuja = () => {
+    navigation.navigate('UpcomingPuja');
+  };
   const handleSavedAddressNavigation = () => {
     navigation.navigate('AddressesScreen');
   };
 
-  const userData = {
-    name: 'John Smith',
-    email: 'johnsmith@gmail.com',
-    phone: '90909 09090',
-    location: 'Ahmedabad',
-  };
-
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+      <CustomeLoader loading={logoutLoading} />
       <LinearGradient
         colors={[COLORS.gradientStart, COLORS.gradientEnd]}
         style={[styles.headerGradient]}
@@ -146,15 +159,24 @@ const BottomUserProfileScreen: React.FC = () => {
           style={styles.scrollView}>
           {currentUser && (
             <View style={[styles.infoSection, THEMESHADOW.shadow]}>
-              <ProfileField label={t('name')} value={currentUser.first_name} />
+              <ProfileField
+                label={t('name')}
+                value={currentUser?.first_name || ''}
+              />
               <View style={styles.divider} />
-              <ProfileField label={t('email')} value={currentUser.email} />
+              <ProfileField
+                label={t('email')}
+                value={currentUser?.email || ''}
+              />
               <View style={styles.divider} />
-              <ProfileField label={t('phone')} value={currentUser.mobile} />
+              <ProfileField
+                label={t('phone')}
+                value={currentUser?.mobile || ''}
+              />
               <View style={styles.divider} />
               <ProfileField
                 label={t('location')}
-                value={currentUser.city_name}
+                value={currentUser?.address?.city_name || ''}
               />
             </View>
           )}
@@ -172,14 +194,16 @@ const BottomUserProfileScreen: React.FC = () => {
               />
             </TouchableOpacity>
             <View style={styles.divider} />
-            <View style={styles.editFieldContainer}>
+            <TouchableOpacity
+              onPress={handleUpcomingPuja}
+              style={styles.editFieldContainer}>
               <Text style={styles.editFieldLabel}>{t('upcoming_puja')} </Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
                 color={COLORS.primaryTextDark}
               />
-            </View>
+            </TouchableOpacity>
             <View style={styles.divider} />
             <View style={styles.editFieldContainer}>
               <Text style={styles.editFieldLabel}>{t('past_puja')} </Text>

@@ -44,8 +44,8 @@ interface FormData {
   lastName: string;
   email: string;
   phone: string;
-  location: string; // city id as string
-  address: string; // address_line1
+  location: string;
+  address: string;
   latitude?: string;
   longitude?: string;
 }
@@ -182,7 +182,6 @@ const UserEditProfileScreen: React.FC = () => {
     marginBottom: 4,
   };
 
-  // Modified handleInputChange to accept optional lat/lng and always update them if provided
   const handleInputChange = (
     field: keyof FormData,
     value: string,
@@ -214,7 +213,6 @@ const UserEditProfileScreen: React.FC = () => {
       params.append('address.city', formData.location);
       params.append('address.address_line1', formData.address);
 
-      // Pass latitude and longitude if present
       if (formData.latitude) {
         params.append('address.latitude', formData.latitude);
       }
@@ -318,7 +316,6 @@ const UserEditProfileScreen: React.FC = () => {
     }
   };
 
-  // Modified to always update lat/lng in formData on change
   const handleFetchGPS = async () => {
     setIsLoading(true);
     const hasPermission = await requestLocationPermission();

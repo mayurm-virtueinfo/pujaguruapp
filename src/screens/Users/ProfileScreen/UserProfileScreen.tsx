@@ -36,6 +36,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import ThemedInput from '../../../components/ThemedInput';
 import {moderateScale} from 'react-native-size-matters';
+import {useCommonToast} from '../../../common/CommonToast';
 
 type CompleteProfileScreenRouteProp = NavigationProp<
   AuthStackParamList,
@@ -73,6 +74,8 @@ const UserProfileScreen: React.FC = () => {
     name: string;
     type: string;
   } | null>(null);
+
+  const {showErrorToast} = useCommonToast();
 
   console.log(firstName, lastName, address, uid, latitude, longitude);
 
@@ -181,7 +184,7 @@ const UserProfileScreen: React.FC = () => {
       }
     } catch (error: any) {
       console.log('error in sign up :: ', error?.response?.data || error);
-      Alert.alert(t('error'), t('signup_failed'));
+      showErrorToast(error?.response?.data?.message);
     } finally {
       setIsLoading(false);
     }

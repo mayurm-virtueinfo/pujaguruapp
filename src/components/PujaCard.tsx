@@ -18,7 +18,7 @@ interface PujaCardProps {
 }
 
 const PujaCard: React.FC<PujaCardProps> = ({image, title, onPress}) => {
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
 
   return (
     <View style={styles.shadowWrapper}>
@@ -47,7 +47,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginBottom: 24,
     marginTop: 12,
-    marginLeft: 24,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -97,6 +96,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
+    marginTop: 12,
     ...Platform.select({
       ios: {
         shadowColor: COLORS.primaryBackground,

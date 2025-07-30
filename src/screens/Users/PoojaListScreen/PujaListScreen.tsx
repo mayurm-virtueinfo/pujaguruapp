@@ -189,7 +189,10 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     letterSpacing: 0.05,
   },
-  horizontalScroll: {},
+  horizontalScroll: {
+    paddingHorizontal: 24,
+    flex: 1,
+  },
   horizontalScrollContent: {
     flexDirection: 'row',
     alignItems: 'center',

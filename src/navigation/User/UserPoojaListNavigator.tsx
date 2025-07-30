@@ -46,7 +46,11 @@ export type UserPoojaListParamList = {
   PanditDetailsScreen: undefined;
   PujaCancellationScreen: {id: any};
   UserPujaDetailsScreen: undefined;
-  UserChatScreen: undefined;
+  UserChatScreen: {
+    uuid: string;
+    pandit_name: string;
+    profile_img_url: string;
+  };
   AddAddressScreen: undefined;
 };
 

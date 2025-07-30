@@ -85,17 +85,35 @@ const WalletScreen: React.FC = () => {
     navigation.navigate('WalletTopUpScreen' as never);
   };
 
+  const formatTimestamp = (timestamp: any) => {
+    const date = new Date(timestamp);
+
+    const options: any = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    };
+
+    const formattedDateString = date.toLocaleDateString('en-GB', options);
+
+    return formattedDateString;
+  };
+
   const renderTransactionItem = (item: TransactioData, index: number) => (
     <View key={item.id}>
       <View style={styles.transactionItem}>
         <View style={styles.transactionDetails}>
-          <Text style={styles.transactionTitle}>{item.title}</Text>
-          <Text style={styles.transactionDate}>{item.date}</Text>
+          <Text style={styles.transactionTitle}>{item.puja_name}</Text>
+          <Text style={styles.transactionDate}>
+            {formatTimestamp(item.timestamp)}
+          </Text>
         </View>
         <Text
           style={[
             styles.transactionAmount,
-            item.type === 'credit' ? styles.creditAmount : styles.debitAmount,
+            item.transaction_type === 'credit'
+              ? styles.creditAmount
+              : styles.debitAmount,
           ]}>
           {item.amount}
         </Text>
