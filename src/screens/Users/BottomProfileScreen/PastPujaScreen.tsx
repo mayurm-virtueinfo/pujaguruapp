@@ -40,7 +40,6 @@ const PastPujaScreen: React.FC = () => {
     setLoading(true);
     try {
       const response: any = await getPastBookings();
-      //   setPastBookings(Array.isArray(bookings?.data) ? bookings.data : []);
       if (response.status === 200) {
         setPastBookings(response.data);
       }
@@ -125,7 +124,7 @@ const PastPujaScreen: React.FC = () => {
   const renderSeparator = () => <View style={styles.separator} />;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, {paddingTop: insets.top}]}>
       <CustomeLoader loading={loading} />
       <StatusBar
         translucent
@@ -167,7 +166,7 @@ const PastPujaScreen: React.FC = () => {
           </View>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
 
