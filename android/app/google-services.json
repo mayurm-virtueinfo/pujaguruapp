@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "763089003272",
-    "project_id": "panditji-42b4a",
-    "storage_bucket": "panditji-42b4a.firebasestorage.app"
+    "project_number": "878317813750",
+    "project_id": "pujaguru-4c6a1",
+    "storage_bucket": "pujaguru-4c6a1.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:763089003272:android:ef8b3f3f1ab892936342bd",
+        "mobilesdk_app_id": "1:878317813750:android:5222e6ccfc9909217191d7",
         "android_client_info": {
-          "package_name": "com.panditjiapp.pandit"
+          "package_name": "com.panditjiapp.pujaguru"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCFZKnm1J3Qn5C5aVhHeJ8ePbwOLwpfa8Q"
+          "current_key": "AIzaSyDhGN5nuR2oyjw6pKK0b76KrfwZHhHkRZA"
         }
       ],
       "services": {

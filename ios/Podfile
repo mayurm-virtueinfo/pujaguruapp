@@ -14,7 +14,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-target 'PanditApp' do
+target 'PujaGuruApp' do
   config = use_native_modules!
   use_frameworks! :linkage => :static
   use_react_native!(
@@ -23,7 +23,7 @@ target 'PanditApp' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
-  target 'PanditAppTests' do
+  target 'PujaGuruAppTests' do
     inherit! :complete
     # Pods for testing
   end
