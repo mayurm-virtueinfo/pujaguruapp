@@ -35,18 +35,12 @@ type AuthNavigationProp = StackNavigationProp<
   'OTPVerification' | 'CompleteProfileScreen' | 'UserAppBottomTabNavigator'
 >;
 
-// type MainAppNavigationProp = StackNavigationProp<
-//   MainAppStackParamList,
-//   'UserAppBottomTabNavigator'
-// >;
-
 type OTPVerificationScreenRouteProp = RouteProp<
   AuthStackParamList,
   'OTPVerification'
 >;
 
 type OTPVerificationScreenNavigationProp = AuthNavigationProp;
-// | MainAppNavigationProp;
 
 interface Props {
   navigation: OTPVerificationScreenNavigationProp;
@@ -65,9 +59,9 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   const [otpConfirmation, setOtpConfirmation] = useState(
     route.params.confirmation,
   );
+  const [isOtpExpired, setIsOtpExpired] = useState(false);
   const {phoneNumber} = route.params;
   const inputRefs = useRef<Array<TextInput | null>>([]);
-
   const [timer, setTimer] = useState(RESEND_OTP_WAIT_TIME);
 
   useEffect(() => {
@@ -76,8 +70,12 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
         setTimer(prev => prev - 1);
       }, 1000);
       return () => clearInterval(interval);
+    } else {
+      setIsOtpExpired(true);
+      setOtpConfirmation(null);
+      showErrorToast('OTP has expired. Please request a new one.');
     }
-  }, [timer]);
+  }, [timer, t]);
 
   const handleOtpChange = (value: string, index: number) => {
     if (value.length <= 1) {
@@ -105,12 +103,9 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
         role: 1,
       };
       const response = await postSignIn(params);
-      console.log('response :: ', response);
       if (response) {
         if (response?.is_register === false) {
-          navigation.navigate('CompleteProfileScreen', {
-            phoneNumber: phoneNumber,
-          });
+          navigation.navigate('CompleteProfileScreen', {phoneNumber});
         } else {
           signIn(response.access_token, response.refresh_token);
           const userID = response.user?.id;
@@ -136,6 +131,10 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   const verifyOtp = async (code: string) => {
     try {
       setLoading(true);
+      if (isOtpExpired || !otpConfirmation) {
+        showErrorToast('OTP has expired. Please request a new one.');
+        return;
+      }
       const userCredential = await otpConfirmation.confirm(code);
       if (userCredential?.user) {
         await handleSignIn(phoneNumber, userCredential.user.uid);
@@ -145,7 +144,11 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
         );
       }
     } catch (error: any) {
-      showErrorToast(error?.message);
+      if (error.code === 'auth/invalid-verification-code') {
+        showErrorToast(t('invalid_otp'));
+      } else {
+        showErrorToast(error?.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -165,8 +168,13 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       setLoading(true);
       const confirmation = await signInWithPhoneNumber(getAuth(), phoneNumber);
       setOtpConfirmation(confirmation);
+      setIsOtpExpired(false);
+      setOtp(['', '', '', '', '', '']);
       showSuccessToast(t('otp_resent'));
       setTimer(RESEND_OTP_WAIT_TIME);
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
     } catch (error: any) {
       showErrorToast(error?.message || t('resend_otp_failed'));
     } finally {

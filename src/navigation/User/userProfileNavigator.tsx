@@ -8,6 +8,8 @@ import AddAddressScreen from '../../screens/Users/AddAddressScreen/AddAddressScr
 import AddressesScreen from '../../screens/Users/AddressesScreen/AddressesScreen';
 import UserEditProfileScreen from '../../screens/Users/ProfileScreen/EditProfile';
 import UpcomingPuja from '../../screens/Users/BottomProfileScreen/UpcomingPuja';
+import PastPujaScreen from '../../screens/Users/BottomProfileScreen/PastPujaScreen';
+import UserPujaDetailsScreen from '../../screens/Users/UserPujaDetailsScreen/UserPujaDetailsScreen';
 
 export type UserProfileParamList = {
   goBack(): void;
@@ -20,6 +22,10 @@ export type UserProfileParamList = {
   AddAddressScreen: {addressToEdit?: any};
   EditProfile: any;
   UpcomingPuja: any;
+  PastPujaScreen: any;
+  UserPujaDetailsScreen: {
+    id: string;
+  };
 };
 
 const Stack = createStackNavigator<UserProfileParamList>();
@@ -41,6 +47,11 @@ const UserProfileNavigator = () => {
       <Stack.Screen name="AddAddressScreen" component={AddAddressScreen} />
       <Stack.Screen name="EditProfile" component={UserEditProfileScreen} />
       <Stack.Screen name="UpcomingPuja" component={UpcomingPuja} />
+      <Stack.Screen name="PastPujaScreen" component={PastPujaScreen} />
+      <Stack.Screen
+        name="UserPujaDetailsScreen"
+        component={UserPujaDetailsScreen}
+      />
     </Stack.Navigator>
   );
 };

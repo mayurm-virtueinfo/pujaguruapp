@@ -34,6 +34,7 @@ import ApiEndpoints, {
   PUT_EDIT_PROFILE,
   POST_START_CHAT,
   GET_CHAT_MESSAGES,
+  GET_PAST_BOOKINGS,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -1210,6 +1211,21 @@ export const getChatHistory = (id: string): Promise<any> => {
       })
       .catch(error => {
         console.error('Error in getting chat history ::', error);
+        reject(error);
+      });
+  });
+};
+
+export const getPastBookings = () => {
+  let apiUrl = GET_PAST_BOOKINGS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error in getting past bookings ::', error);
         reject(error);
       });
   });

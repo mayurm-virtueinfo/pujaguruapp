@@ -19,12 +19,11 @@ import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
 
 const UpcomingPuja: React.FC = () => {
-  const navigation = useNavigation<UserPoojaListParamList>();
+  const navigation = useNavigation<UserProfileParamList>();
   const [pujas, setPujas] = useState<PujaItem[]>([]);
-
   const [loading, setLoading] = useState<boolean>(true);
 
   const inset = useSafeAreaInsets();

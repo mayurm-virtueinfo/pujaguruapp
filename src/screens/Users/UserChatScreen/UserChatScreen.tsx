@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState, useCallback} from 'react';
 import {View, StyleSheet, StatusBar, ScrollView} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {moderateScale} from 'react-native-size-matters';
 import {COLORS} from '../../../theme/theme';
 import ChatMessages from '../../../components/ChatMessages';
@@ -31,6 +31,8 @@ const UserChatScreen: React.FC = () => {
   const ws = useRef<WebSocket | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
 
+  const inset = useSafeAreaInsets();
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -49,7 +51,7 @@ const UserChatScreen: React.FC = () => {
 
   useEffect(() => {
     if (accessToken && uuid) {
-      const socketURL = `ws://192.168.1.10:8001/ws/chat/${uuid}/?token=${accessToken}`;
+      const socketURL = `ws://192.168.1.10:8081/ws/chat/${uuid}/?token=${accessToken}`;
       ws.current = new WebSocket(socketURL);
 
       ws.current.onopen = () => {
@@ -131,14 +133,19 @@ const UserChatScreen: React.FC = () => {
   };
 
   return (
-    <View style={{flex: 1}}>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: COLORS.primaryBackground,
+        paddingTop: inset.top,
+      }}>
       <CustomeLoader loading={loading} />
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.primaryBackground}
         translucent
       />
-      <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.safeArea]}>
         <UserCustomHeader
           title={pandit_name}
           showBackButton={true}
@@ -154,7 +161,7 @@ const UserChatScreen: React.FC = () => {
           </ScrollView>
           <ChatInput onSendMessage={handleSendMessage} />
         </View>
-      </SafeAreaView>
+      </View>
     </View>
   );
 };

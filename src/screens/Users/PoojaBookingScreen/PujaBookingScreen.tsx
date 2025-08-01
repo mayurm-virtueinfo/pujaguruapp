@@ -30,9 +30,17 @@ import CustomeLoader from '../../../components/CustomeLoader';
 const formatDateYYYYMMDD = (date: Date | string) => {
   if (typeof date === 'string') {
     if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-    date = new Date(date);
+    const parsedDate = new Date(date);
+    if (isNaN(parsedDate.getTime())) {
+      console.warn('Invalid date string in formatDateYYYYMMDD:', date);
+      return formatDateYYYYMMDD(new Date());
+    }
+    date = parsedDate;
   }
-
+  if (!(date instanceof Date) || isNaN(date.getTime())) {
+    console.warn('Invalid date object in formatDateYYYYMMDD:', date);
+    return formatDateYYYYMMDD(new Date());
+  }
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
   const day = `${date.getDate()}`.padStart(2, '0');
@@ -137,26 +145,37 @@ const PujaBookingScreen: React.FC = () => {
   };
 
   useEffect(() => {
+    console.log('muhurats updated:', muhurats);
+  }, [muhurats]);
+
+  useEffect(() => {
     if (location) {
-      fetchMuhurat();
+      fetchMuhurat(selectedDateString);
     }
-  }, [location]);
+  }, [selectedDateString, location]);
 
   const fetchMuhurat = async (dateString?: string) => {
+    console.log('fetchMuhurat called with dateString:', dateString);
     try {
       setLoading(true);
       const dateToFetch = formatDateYYYYMMDD(dateString || today);
+      console.log('dateToFetch :: ', dateToFetch);
       const response = await getMuhrat(
         dateToFetch,
         location?.latitude,
         location?.longitude,
       );
       if (response && Array.isArray(response.choghadiya)) {
+        console.log('Fetched muhurats:', response.choghadiya);
         setMuhurats(response.choghadiya || []);
+      } else {
+        console.log('No choghadiya data in response:', response);
+        setMuhurats([]);
       }
     } catch (error: any) {
       console.error('Error fetching muhurat:', error);
       showErrorToast(error);
+      setMuhurats([]);
     } finally {
       setLoading(false);
     }
@@ -349,28 +368,55 @@ const PujaBookingScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Calendar Section */}
         <Calendar
           date={selectedDate}
           onDateSelect={dateString => {
-            // dateString is expected to be in YYYY-MM-DD
-            setSelectedDate(new Date(dateString).getDate());
-            setSelectedDateString(formatDateYYYYMMDD(dateString));
-            // Clear selected muhurat when date changes
+            console.log('onDateSelect triggered with dateString:', dateString);
+            if (
+              !dateString ||
+              typeof dateString !== 'string' ||
+              !/^\d{4}-\d{2}-\d{2}$/.test(dateString)
+            ) {
+              console.warn(
+                'Invalid dateString from Calendar in onDateSelect:',
+                dateString,
+              );
+              showErrorToast(
+                t('please_select_date') || 'Please select a valid date.',
+              );
+              return;
+            }
+            const parsedDate = new Date(dateString);
+            if (isNaN(parsedDate.getTime())) {
+              console.warn(
+                'Failed to parse dateString in onDateSelect:',
+                dateString,
+              );
+              showErrorToast(
+                t('please_select_date') || 'Please select a valid date.',
+              );
+              return;
+            }
+            console.log('Parsed date:', parsedDate);
+            setSelectedDate(parsedDate.getDate());
+            setSelectedDateString(dateString);
             setSelectedSlot('');
             setSelectedSlotObj(null);
+            setMuhurats([]); // Clear muhurats immediately
+            setCurrentMonth(
+              `${parsedDate.toLocaleString('default', {
+                month: 'long',
+              })} ${parsedDate.getFullYear()}`,
+            );
             if (!location) {
               showErrorToast(
                 t('location_not_found') ||
                   'Location not found. Please set your location first.',
               );
-              return;
             }
-            fetchMuhurat(formatDateYYYYMMDD(dateString));
           }}
           month={currentMonth}
           onMonthChange={direction => {
-            // Calculate new month/year
             const [monthName, yearStr] = currentMonth.split(' ');
             const monthIdx = new Date(`${monthName} 1, ${yearStr}`).getMonth();
             let newMonthIdx = monthIdx;
@@ -394,18 +440,17 @@ const PujaBookingScreen: React.FC = () => {
             );
             setCurrentMonth(`${newMonthName} ${newYear}`);
             setSelectedDate(1);
-            // Also update selectedDateString to first of new month in YYYY-MM-DD
             const newDate = new Date(newYear, newMonthIdx, 1);
             const formattedDate = formatDateYYYYMMDD(newDate);
+            console.log('onMonthChange formattedDate:', formattedDate);
             setSelectedDateString(formattedDate);
-            // Clear selected muhurat when month changes
             setSelectedSlot('');
             setSelectedSlotObj(null);
+            setMuhurats([]);
             fetchMuhurat(formattedDate);
           }}
         />
 
-        {/* Muhurat Slots Section */}
         {renderMuhuratSlots()}
 
         {/* Additional Notes Section */}

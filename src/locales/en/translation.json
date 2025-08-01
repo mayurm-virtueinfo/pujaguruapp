@@ -12,6 +12,8 @@
   "login": "Login",
   "language": "Language",
   "otp_verification": "OTP Verification",
+  "otp_resent": "OTP resent",
+  "invalid_otp": "Invalid OTP, Please enter a valid OTP.",
   "6_digit_code_has_been_sent": "6 digit code has been sent to\nyour mobile number.",
   "verify": "Verify",
   "resend_otp": "Resend OTP",

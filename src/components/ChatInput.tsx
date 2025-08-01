@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     ...Platform.select({
       ios: {
-        paddingBottom: moderateScale(32),
+        paddingBottom: moderateScale(10),
       },
       android: {
         paddingBottom: moderateScale(16),

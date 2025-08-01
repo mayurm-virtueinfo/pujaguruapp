@@ -128,6 +128,9 @@ const BottomUserProfileScreen: React.FC = () => {
   const handleUpcomingPuja = () => {
     navigation.navigate('UpcomingPuja');
   };
+  const handlePastPuja = () => {
+    navigation.navigate('PastPujaScreen');
+  };
   const handleSavedAddressNavigation = () => {
     navigation.navigate('AddressesScreen');
   };
@@ -205,14 +208,16 @@ const BottomUserProfileScreen: React.FC = () => {
               />
             </TouchableOpacity>
             <View style={styles.divider} />
-            <View style={styles.editFieldContainer}>
+            <TouchableOpacity
+              onPress={handlePastPuja}
+              style={styles.editFieldContainer}>
               <Text style={styles.editFieldLabel}>{t('past_puja')} </Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
                 color={COLORS.primaryTextDark}
               />
-            </View>
+            </TouchableOpacity>
             <View style={styles.divider} />
             <TouchableOpacity
               style={styles.editFieldContainer}
