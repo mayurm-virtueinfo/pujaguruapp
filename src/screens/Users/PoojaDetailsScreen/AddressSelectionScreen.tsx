@@ -7,6 +7,8 @@ import {
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
@@ -121,62 +123,81 @@ const AddressSelectionScreen: React.FC = () => {
         showCirclePlusButton={true}
         onPlusPress={onPlusPress}
       />
-      <ScrollView
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        bounces={false}>
-        <View style={styles.contentWrapper}>
-          <View style={styles.detailsContainer}>
-            <Text style={styles.sectionTitle}>{t('select_address')}</Text>
-            <Text style={styles.descriptionText}>{t('choose_puja_place')}</Text>
-            {!isLoading && (
-              <View style={styles.pricingContainer}>
-                {poojaPlaces.length === 0 ? (
-                  <View style={{alignItems: 'center', paddingVertical: 24}}>
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        color: COLORS.primaryTextDark,
-                        fontFamily: Fonts.Sen_Medium,
-                      }}>
-                      {t('add_your_address')}
-                    </Text>
+      <KeyboardAvoidingView
+        style={{flex: 1}}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+        <View style={styles.flexGrow}>
+          <ScrollView
+            style={styles.scrollContainer}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+            keyboardShouldPersistTaps="handled">
+            <View style={styles.contentWrapper}>
+              <View style={styles.detailsContainer}>
+                <Text style={styles.sectionTitle}>{t('select_address')}</Text>
+                <Text style={styles.descriptionText}>
+                  {t('choose_puja_place')}
+                </Text>
+                {!isLoading && (
+                  <View style={styles.pricingContainer}>
+                    {poojaPlaces.length === 0 ? (
+                      <View style={{alignItems: 'center', paddingVertical: 24}}>
+                        <Text
+                          style={{
+                            fontSize: 16,
+                            color: COLORS.primaryTextDark,
+                            fontFamily: Fonts.Sen_Medium,
+                          }}>
+                          {t('add_your_address')}
+                        </Text>
+                      </View>
+                    ) : (
+                      poojaPlaces.map((place, index) => (
+                        <React.Fragment key={place.id}>
+                          <TouchableOpacity
+                            style={styles.pricingOption}
+                            activeOpacity={0.7}
+                            onPress={() => handleSelectAddress(place.id)}>
+                            <View>
+                              <Text style={styles.pricingText}>
+                                {place.name}
+                              </Text>
+                              <Text style={styles.subtitleText}>
+                                {place.description}
+                              </Text>
+                            </View>
+                            <Octicons
+                              name={
+                                selectedAddressId === place.id
+                                  ? 'check-circle'
+                                  : 'circle'
+                              }
+                              size={24}
+                              color={
+                                selectedAddressId === place.id
+                                  ? COLORS.primary
+                                  : COLORS.inputBoder
+                              }
+                            />
+                          </TouchableOpacity>
+                          {index !== poojaPlaces.length - 1 && (
+                            <View style={styles.divider} />
+                          )}
+                        </React.Fragment>
+                      ))
+                    )}
                   </View>
-                ) : (
-                  poojaPlaces.map((place, index) => (
-                    <React.Fragment key={place.id}>
-                      <TouchableOpacity
-                        style={styles.pricingOption}
-                        activeOpacity={0.7}
-                        onPress={() => handleSelectAddress(place.id)}>
-                        <View>
-                          <Text style={styles.pricingText}>{place.name}</Text>
-                          <Text style={styles.subtitleText}>
-                            {place.description}
-                          </Text>
-                        </View>
-                        <Octicons
-                          name={
-                            selectedAddressId === place.id
-                              ? 'check-circle'
-                              : 'circle'
-                          }
-                          size={24}
-                          color={
-                            selectedAddressId === place.id
-                              ? COLORS.primary
-                              : COLORS.inputBoder
-                          }
-                        />
-                      </TouchableOpacity>
-                      {index !== poojaPlaces.length - 1 && (
-                        <View style={styles.divider} />
-                      )}
-                    </React.Fragment>
-                  ))
                 )}
               </View>
-            )}
+            </View>
+          </ScrollView>
+          <View
+            style={[
+              styles.buttonWrapper,
+              {paddingBottom: inset.bottom > 0 ? inset.bottom : 16},
+            ]}>
             <PrimaryButton
               title={t('next')}
               onPress={handleNextPress}
@@ -186,7 +207,7 @@ const AddressSelectionScreen: React.FC = () => {
             />
           </View>
         </View>
-      </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -196,10 +217,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
+  flexGrow: {
+    flex: 1,
+  },
   scrollContainer: {
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     backgroundColor: COLORS.white,
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 16,
   },
   contentWrapper: {
     width: '100%',
@@ -253,6 +282,11 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
+  },
+  buttonWrapper: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 24,
+    paddingTop: 8,
   },
   divider: {
     borderColor: COLORS.inputBoder,
