@@ -188,9 +188,21 @@
   "error_fetching_profile_city_data": "Error fetching profile/city data",
   "invalid_first_name": "Invalid first name",
   "invalid_last_name": "Invalid last name",
-  "address_required": "Address is required",
   "profile_updated_successfully": "Profile updated successfully",
   "profile_update_failed": "Profile update failed",
   "error_getting_location": "Error getting location",
-  "location_permission_denied": "Location permission denied"
+  "location_permission_denied": "Location permission denied",
+  "no_pandit_found": "No pandit found",
+  "full_name_required": "Full name is required",
+  "address_required": "Address is required",
+  "city_required": "City is required",
+  "state_required": "State is required",
+  "pincode_required": "Pincode is required",
+  "phone_number_required": "Phone number is required",
+  "email_required": "Email is required",
+  "password_required": "Password is required",
+  "address_line1_required": "Address line 1 is required",
+  "address_line2_required": "Address line 2 is required",
+  "address_type_required": "Address type is required",
+  "please_fill_all_required_fields": "Please fill all required fields"
 }

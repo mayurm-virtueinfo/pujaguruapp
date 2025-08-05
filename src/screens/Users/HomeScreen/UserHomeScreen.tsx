@@ -47,6 +47,8 @@ const UserHomeScreen: React.FC = () => {
     RecommendedPandit[]
   >([]);
 
+  console.log('recomendedPandits :: ', recomendedPandits);
+
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
 
@@ -197,7 +199,9 @@ const UserHomeScreen: React.FC = () => {
                   <View style={styles.panditImageWrapper}>
                     <Image
                       source={{
-                        uri: 'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg',
+                        uri:
+                          pandit.profile_img ||
+                          'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg',
                       }}
                       style={styles.panditImage}
                       accessibilityLabel={`Profile image of ${pandit.full_name}`}

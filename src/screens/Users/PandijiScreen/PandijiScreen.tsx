@@ -160,6 +160,12 @@ const PanditjiScreen: React.FC = () => {
     </View>
   );
 
+  const renderEmptyComponent = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>{t('no_pandit_found')}</Text>
+    </View>
+  );
+
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <CustomeLoader loading={isLoading} />
@@ -197,6 +203,7 @@ const PanditjiScreen: React.FC = () => {
               showsVerticalScrollIndicator={true}
               contentContainerStyle={styles.listContent}
               keyboardShouldPersistTaps="handled"
+              ListEmptyComponent={renderEmptyComponent} // Add this prop
             />
           </View>
         </View>
@@ -305,6 +312,18 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: COLORS.separatorColor,
     marginHorizontal: scale(14),
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: verticalScale(100),
+  },
+  emptyText: {
+    fontSize: moderateScale(18),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.pujaTextSecondary,
+    textAlign: 'center',
   },
 });
 

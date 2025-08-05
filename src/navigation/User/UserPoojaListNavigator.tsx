@@ -39,13 +39,13 @@ export type UserPoojaListParamList = {
   PlaceSelectionScreen: any;
   AddressSelectionScreen: any;
   TirthPlaceSelectionScreen: any;
-  PaymentScreen: {poojaId: string};
+  PaymentScreen: any;
   BookingSuccessfullyScreen: any;
   RateYourExperienceScreen: any;
   SelectPanditjiScreen: {poojaId: string};
   PanditDetailsScreen: undefined;
   PujaCancellationScreen: {id: any};
-  UserPujaDetailsScreen: undefined;
+  UserPujaDetailsScreen: any;
   UserChatScreen: {
     uuid: string;
     pandit_name: string;

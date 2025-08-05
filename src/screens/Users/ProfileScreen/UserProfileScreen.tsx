@@ -28,7 +28,11 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import {useTranslation} from 'react-i18next';
 import {AuthStackParamList} from '../../../navigation/AuthNavigator';
-import {getCity, postSignUp} from '../../../api/apiService';
+import {
+  getCity,
+  postRegisterFCMToken,
+  postSignUp,
+} from '../../../api/apiService';
 import CustomDropdown from '../../../components/CustomDropdown';
 import CustomeLoader from '../../../components/CustomeLoader';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -37,6 +41,7 @@ import AppConstant from '../../../utils/appConstant';
 import ThemedInput from '../../../components/ThemedInput';
 import {moderateScale} from 'react-native-size-matters';
 import {useCommonToast} from '../../../common/CommonToast';
+import {getMessaging, getToken} from '@react-native-firebase/messaging';
 
 type CompleteProfileScreenRouteProp = NavigationProp<
   AuthStackParamList,
@@ -180,6 +185,12 @@ const UserProfileScreen: React.FC = () => {
         );
         const userID = response.user?.id;
         await AsyncStorage.setItem(AppConstant.USER_ID, String(userID));
+        const messaging = getMessaging();
+        const fcmToken = await getToken(messaging);
+
+        if (fcmToken) {
+          postRegisterFCMToken(fcmToken, 'user');
+        }
         navigation.navigate('UserAppBottomTabNavigator');
       }
     } catch (error: any) {

@@ -15,6 +15,7 @@ import SelectPanditjiScreen from '../../screens/Users/PoojaDetailsScreen/SelectP
 import BookingSuccessfullyScreen from '../../screens/Users/BookingSuccessfullyScreen/BookingSuccessfullyScreen';
 import RateYourExperienceScreen from '../../screens/Users/RateYourExperienceScreen/RateYourExperienceScreen';
 import UserPujaDetailsScreen from '../../screens/Users/UserPujaDetailsScreen/UserPujaDetailsScreen';
+import AddAddressScreen from '../../screens/Users/AddAddressScreen/AddAddressScreen';
 
 export type UserHomeParamList = {
   goBack(): unknown;
@@ -43,6 +44,7 @@ export type UserHomeParamList = {
   RateYourExperienceScreen: any;
   UserPujaDetailsScreen: undefined;
   UserChatScreen: undefined;
+  AddAddressScreen: any;
 };
 
 const Stack = createStackNavigator<UserHomeParamList>();
@@ -92,6 +94,7 @@ const UserHomeNavigator = () => {
         name="PujaCancellationScreen"
         component={PujaCancellationScreen}
       />
+      <Stack.Screen name="AddAddressScreen" component={AddAddressScreen} />
     </Stack.Navigator>
   );
 };

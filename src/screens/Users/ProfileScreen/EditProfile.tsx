@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   Platform,
   Keyboard,
+  Alert,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import ImagePicker from 'react-native-image-crop-picker';
@@ -256,7 +257,7 @@ const UserEditProfileScreen: React.FC = () => {
     Keyboard.dismiss();
     // eslint-disable-next-line no-alert
     // @ts-ignore
-    global.Alert.alert(t('select_profile_picture'), t('choose_an_option'), [
+    Alert.alert(t('select_profile_picture'), t('choose_an_option'), [
       {text: t('take_photo'), onPress: () => openCamera()},
       {text: t('choose_from_gallery'), onPress: () => openGallery()},
       {text: t('cancel'), style: 'cancel'},

@@ -65,12 +65,13 @@ const AddressSelectionScreen: React.FC = () => {
     }, []),
   );
 
+  console.log('poojaPlaces :: ', poojaPlaces);
+
   const fetchAllPoojaAddresses = async () => {
     try {
       setIsLoading(true);
       const response: any = await getAddressTypeForBooking();
       if (response.success) {
-        console.log('response.data :: ', response.data);
         setPoojaPlaces(response.data);
       }
     } catch (error) {
@@ -152,7 +153,7 @@ const AddressSelectionScreen: React.FC = () => {
                         <View>
                           <Text style={styles.pricingText}>{place.name}</Text>
                           <Text style={styles.subtitleText}>
-                            {place.description}
+                            {place.full_address}
                           </Text>
                         </View>
                         <Octicons

@@ -42,9 +42,18 @@ const AddAddressScreen = () => {
     pincode: '',
     addressType: '',
   });
+  const [formErrors, setFormErrors] = useState({
+    fullName: '',
+    phoneNumber: '',
+    addressLine1: '',
+    addressLine2: '',
+    city: '',
+    state: '',
+    pincode: '',
+    addressType: '',
+  });
 
   const navigation = useNavigation();
-
   const [location, setLocation] = useState({latitude: 0, longitude: 0});
   const [isLoading, setIsLoading] = useState(false);
   const [cityOptions, setCityOptions] = useState<
@@ -58,11 +67,75 @@ const AddAddressScreen = () => {
   const route = useRoute<any>();
   const addressToEdit: Address | undefined = route.params?.addressToEdit;
 
+  console.log('addressToEdit :: ', addressToEdit);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
+
+    setFormErrors(prev => ({
+      ...prev,
+      [field]: '',
+    }));
+  };
+
+  const validatePhoneNumber = (phone: string) => {
+    const phoneRegex = /^[0-9]{10}$/;
+    return phoneRegex.test(phone);
+  };
+
+  const validatePincode = (pincode: string) => {
+    const pincodeRegex = /^[0-9]{6}$/;
+    return pincodeRegex.test(pincode);
+  };
+
+  const validateForm = () => {
+    const errors: any = {};
+    let isValid = true;
+
+    if (!formData.fullName.trim()) {
+      errors.fullName = t('full_name_required');
+      isValid = false;
+    }
+    if (!formData.phoneNumber.trim()) {
+      errors.phoneNumber = t('phone_number_required');
+      isValid = false;
+    } else if (!validatePhoneNumber(formData.phoneNumber)) {
+      errors.phoneNumber = t('invalid_phone_number');
+      isValid = false;
+    }
+    if (!formData.addressLine1.trim()) {
+      errors.addressLine1 = t('address_line1_required');
+      isValid = false;
+    }
+    if (!formData.addressLine2.trim()) {
+      errors.addressLine2 = t('address_line2_required');
+      isValid = false;
+    }
+    if (!formData.city) {
+      errors.city = t('city_required');
+      isValid = false;
+    }
+    if (!formData.state.trim()) {
+      errors.state = t('state_required');
+      isValid = false;
+    }
+    if (!formData.pincode.trim()) {
+      errors.pincode = t('pincode_required');
+      isValid = false;
+    } else if (!validatePincode(formData.pincode)) {
+      errors.pincode = t('invalid_pincode');
+      isValid = false;
+    }
+    if (!formData.addressType) {
+      errors.addressType = t('address_type_required');
+      isValid = false;
+    }
+
+    setFormErrors(errors);
+    return isValid;
   };
 
   useEffect(() => {
@@ -178,6 +251,11 @@ const AddAddressScreen = () => {
   };
 
   const handleSaveAddress = async () => {
+    if (!validateForm()) {
+      showErrorToast(t('please_fill_all_required_fields'));
+      return;
+    }
+
     let cityId = Number(formData.city) || 0;
     let addressTypeId = Number(formData.addressType) || 0;
 
@@ -201,6 +279,7 @@ const AddAddressScreen = () => {
         });
         console.log('response for update address :: ', response.data);
         if (response?.data?.success) {
+          showSuccessToast(t('address_updated_successfully'));
           setFormData({
             fullName: '',
             phoneNumber: '',
@@ -219,6 +298,7 @@ const AddAddressScreen = () => {
         const response: any = await postAddAddress(addressPayload);
         console.log('response for add address :: ', response);
         if (response.data.success) {
+          showSuccessToast(t('address_added_successfully'));
           setFormData({
             fullName: '',
             phoneNumber: '',
@@ -261,6 +341,7 @@ const AddAddressScreen = () => {
               value={formData.fullName}
               onChangeText={value => handleInputChange('fullName', value)}
               placeholder={t('enter_full_name')}
+              error={formErrors.fullName}
             />
           </View>
           <View style={styles.inputGroup}>
@@ -270,6 +351,7 @@ const AddAddressScreen = () => {
               onChangeText={value => handleInputChange('phoneNumber', value)}
               placeholder={t('enter_phone_number')}
               keyboardType="phone-pad"
+              error={formErrors.phoneNumber}
             />
           </View>
           <View style={styles.inputGroup}>
@@ -278,6 +360,7 @@ const AddAddressScreen = () => {
               value={formData.addressLine1}
               onChangeText={value => handleInputChange('addressLine1', value)}
               placeholder={t('enter_address_line1')}
+              error={formErrors.addressLine1}
             />
           </View>
           <View style={styles.inputGroup}>
@@ -286,6 +369,7 @@ const AddAddressScreen = () => {
               value={formData.addressLine2}
               onChangeText={value => handleInputChange('addressLine2', value)}
               placeholder={t('enter_address_line2')}
+              error={formErrors.addressLine2}
             />
           </View>
           <View style={styles.rowContainer}>
@@ -296,6 +380,7 @@ const AddAddressScreen = () => {
                 onSelect={value => handleInputChange('city', value)}
                 label={t('city') + ' *'}
                 placeholder={t('enter_city')}
+                error={formErrors.city}
               />
             </View>
             <View style={styles.halfInputGroup}>
@@ -304,6 +389,7 @@ const AddAddressScreen = () => {
                 value={formData.state}
                 onChangeText={value => handleInputChange('state', value)}
                 placeholder={t('enter_state')}
+                error={formErrors.state}
               />
             </View>
           </View>
@@ -315,6 +401,7 @@ const AddAddressScreen = () => {
                 onChangeText={value => handleInputChange('pincode', value)}
                 placeholder={t('enter_pincode')}
                 keyboardType="phone-pad"
+                error={formErrors.pincode}
               />
             </View>
             <TouchableOpacity
@@ -342,6 +429,7 @@ const AddAddressScreen = () => {
               onSelect={value => handleInputChange('addressType', value)}
               label={t('type_of_address')}
               placeholder={t('select_type_of_address')}
+              error={formErrors.addressType}
             />
           </View>
           <PrimaryButton

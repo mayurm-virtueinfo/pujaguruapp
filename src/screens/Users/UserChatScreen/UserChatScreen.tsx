@@ -124,9 +124,14 @@ const UserChatScreen: React.FC = () => {
     }
   }, [messages]);
 
-  const handleSendMessage = (text: string) => {
+  const handleSendMessage = async (text: string) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({message: text}));
+      const messageData = {
+        message: text,
+        sender_id: userId,
+        receiver_id: uuid,
+      };
+      ws.current.send(JSON.stringify(messageData));
     } else {
       console.warn('WebSocket not connected');
     }

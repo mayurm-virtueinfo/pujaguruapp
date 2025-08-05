@@ -35,6 +35,7 @@ import ApiEndpoints, {
   POST_START_CHAT,
   GET_CHAT_MESSAGES,
   GET_PAST_BOOKINGS,
+  POST_REGISTER_FCM,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -105,6 +106,10 @@ export interface PoojaBookingAddress {
   id: number;
   name: string;
   description: string;
+  user_address_id?: number;
+  address_line1: string;
+  address_line2: string;
+  full_address: string;
 }
 
 export interface PoojaBookingTirthPlace {
@@ -1226,6 +1231,24 @@ export const getPastBookings = () => {
       })
       .catch(error => {
         console.error('Error in getting past bookings ::', error);
+        reject(error);
+      });
+  });
+};
+
+export const postRegisterFCMToken = (
+  device_token: string,
+  app_type: string,
+): Promise<any> => {
+  let apiUrl = POST_REGISTER_FCM;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, {device_token, app_type})
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error in registering fcm token :: ', error);
         reject(error);
       });
   });
