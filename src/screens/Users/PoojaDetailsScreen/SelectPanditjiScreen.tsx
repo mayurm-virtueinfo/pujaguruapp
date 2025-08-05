@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {COLORS, hp, wp} from '../../../theme/theme';
+import {COLORS, hp, THEMESHADOW, wp} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -291,7 +291,7 @@ const SelectPanditjiScreen: React.FC = () => {
             renderItem={renderPanditjiItem}
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={true}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={[styles.listContent, THEMESHADOW.shadow]}
             keyboardShouldPersistTaps="handled"
             ListEmptyComponent={() => (
               <View style={{alignItems: 'center', padding: 20}}>
@@ -306,14 +306,26 @@ const SelectPanditjiScreen: React.FC = () => {
               </View>
             )}
           />
-          <View style={styles.absoluteButtonContainer}>
-            <PrimaryButton
-              title={t('next')}
-              onPress={handleNextPress}
-              disabled={!selectedPanditji}
-              textStyle={styles.buttonText}
-            />
-          </View>
+        </View>
+        {/* Button absolutely fixed at the bottom */}
+        <View
+          style={[
+            styles.absoluteButtonContainer,
+            {
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              paddingBottom: verticalScale(14),
+              backgroundColor: COLORS.pujaBackground,
+            },
+          ]}>
+          <PrimaryButton
+            title={t('next')}
+            onPress={handleNextPress}
+            disabled={!selectedPanditji}
+            textStyle={styles.buttonText}
+          />
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -384,13 +396,8 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   listContent: {
-    backgroundColor: COLORS.white, // White background
-    borderRadius: moderateScale(20), // Border radius
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 4, // Shadow for Android
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(20),
     marginHorizontal: scale(24),
   },
   panditjiContainer: {
@@ -464,7 +471,7 @@ const styles = StyleSheet.create({
   },
   absoluteButtonContainer: {
     paddingHorizontal: scale(24),
-    paddingBottom: verticalScale(20),
+    // paddingBottom is set dynamically in the component for safe area
     backgroundColor: COLORS.pujaBackground,
   },
   nextButton: {

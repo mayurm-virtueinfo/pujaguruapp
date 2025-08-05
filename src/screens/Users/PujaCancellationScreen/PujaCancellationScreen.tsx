@@ -7,6 +7,7 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
@@ -131,40 +132,53 @@ const PujaCancellationScreen = () => {
   return (
     <View style={[styles.container, {paddingTop: inset.top}]}>
       <UserCustomHeader title={t('puja_cancellation')} showBackButton={true} />
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.content}>
-          <Text style={styles.heading}>{t('cancellation_reason')}</Text>
-          <Text style={styles.warningText}>
-            {t('descriprion_for_cancel_puja')}
-          </Text>
-          <View style={styles.reasonsContainer}>
-            {cancellationReasons.map((reason, index) =>
-              renderReasonOption(reason, index),
+      <View style={styles.flex1}>
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          <View style={styles.content}>
+            <Text style={styles.heading}>{t('cancellation_reason')}</Text>
+            <Text style={styles.warningText}>
+              {t('descriprion_for_cancel_puja')}
+            </Text>
+            <View style={styles.reasonsContainer}>
+              {cancellationReasons.map((reason, index) =>
+                renderReasonOption(reason, index),
+              )}
+            </View>
+            {showCustomInput && (
+              <View style={styles.customInputContainer}>
+                <TextInput
+                  style={styles.customInput}
+                  placeholder={t('enter_your_cancellation_reason')}
+                  placeholderTextColor={COLORS.inputLabelText}
+                  value={customReason}
+                  onChangeText={setCustomReason}
+                  multiline
+                  textAlignVertical="top"
+                />
+              </View>
+            )}
+            <TouchableOpacity
+              onPress={() => setIsCancellationPolicyModalVisible(true)}
+              style={styles.policyLinkContainer}>
+              <Text style={styles.policyLinkText}>
+                {t('cancellation_policy')}
+              </Text>
+            </TouchableOpacity>
+            {isSubmitting && (
+              <View style={{marginTop: 16, alignItems: 'center'}}>
+                <ActivityIndicator
+                  size="small"
+                  color={COLORS.primaryBackgroundButton}
+                />
+              </View>
             )}
           </View>
-          {showCustomInput && (
-            <View style={styles.customInputContainer}>
-              <TextInput
-                style={styles.customInput}
-                placeholder={t('enter_your_cancellation_reason')}
-                placeholderTextColor={COLORS.inputLabelText}
-                value={customReason}
-                onChangeText={setCustomReason}
-                multiline
-                textAlignVertical="top"
-              />
-            </View>
-          )}
-          <TouchableOpacity
-            onPress={() => setIsCancellationPolicyModalVisible(true)}
-            style={styles.policyLinkContainer}>
-            <Text style={styles.policyLinkText}>
-              {t('cancellation_policy')}
-            </Text>
-          </TouchableOpacity>
+        </ScrollView>
+        <View style={[styles.fixedButtonContainer, {paddingBottom: 24}]}>
           <PrimaryButton
             title={isSubmitting ? t('submitting') : t('submit_cancellation')}
             onPress={handleSubmit}
@@ -172,16 +186,8 @@ const PujaCancellationScreen = () => {
             textStyle={styles.submitButtonText}
             disabled={isSubmitting}
           />
-          {isSubmitting && (
-            <View style={{marginTop: 16, alignItems: 'center'}}>
-              <ActivityIndicator
-                size="small"
-                color={COLORS.primaryBackgroundButton}
-              />
-            </View>
-          )}
         </View>
-      </ScrollView>
+      </View>
 
       <CancellationPolicyModal
         visible={isCancellationPolicyModalVisible}
@@ -211,6 +217,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
+  flex1: {
+    flex: 1,
+  },
   scrollView: {
     flex: 1,
     backgroundColor: COLORS.white,
@@ -219,7 +228,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: verticalScale(20),
   },
   content: {
     flex: 1,
@@ -314,5 +322,14 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: -0.15,
     lineHeight: moderateScale(21),
+  },
+  fixedButtonContainer: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: scale(24),
+    paddingTop: 8,
+    // position: 'absolute', // not needed, use flex layout
+    // bottom: 0,
+    // left: 0,
+    // right: 0,
   },
 });

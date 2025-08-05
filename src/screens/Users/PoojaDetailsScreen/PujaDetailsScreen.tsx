@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -159,74 +160,83 @@ const PujaDetailsScreen: React.FC = () => {
         showBellButton={true}
         onNotificationPress={handleNotificationPress}
       />
-      <ScrollView
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        bounces={false}>
-        <View style={styles.contentWrapper}>
-          <View style={styles.imageContainer}>
-            <Image
-              source={{
-                uri: data?.image_url,
-              }}
-              style={styles.heroImage}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.detailsContainer}>
-            <Text style={styles.descriptionText}>
-              {data?.description || 'No description available'}
-            </Text>
-            <Text style={styles.sectionTitle}>{t('pricing_options')}</Text>
-            <View style={styles.pricingContainer}>
-              {data ? (
-                getPricingOptions(data).map((option, idx) => (
-                  <React.Fragment key={option.id}>
-                    <TouchableOpacity
-                      style={styles.pricingOption}
-                      activeOpacity={0.7}
-                      onPress={() =>
-                        handleCheckboxToggle(option.id, option.price)
-                      }>
-                      <Text style={styles.pricingText}>
-                        {option.priceDes} - Rs. {option.price}
-                      </Text>
-                      <Octicons
-                        name={
-                          selectedPricingId === option.id
-                            ? 'check-circle'
-                            : 'circle'
-                        }
-                        size={24}
-                        color={
-                          selectedPricingId === option.id
-                            ? COLORS.primary
-                            : COLORS.inputBoder
-                        }
-                      />
-                    </TouchableOpacity>
-                    {idx < getPricingOptions(data).length - 1 && (
-                      <View style={styles.divider} />
-                    )}
-                  </React.Fragment>
-                ))
-              ) : (
-                <Text style={styles.pricingText}>No pricing available</Text>
-              )}
+      <View style={styles.flexGrow}>
+        <ScrollView
+          style={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          contentContainerStyle={{paddingBottom: 30}}>
+          <View style={styles.contentWrapper}>
+            <View style={styles.imageContainer}>
+              <Image
+                source={{
+                  uri: data?.image_url,
+                }}
+                style={styles.heroImage}
+                resizeMode="contain"
+              />
             </View>
-            <Text style={styles.sectionTitle}>{t('visual_section')}</Text>
-            <Text style={styles.visualText}>
-              {data?.benifits?.join(', ') || 'No benefits available'}
-            </Text>
-            <PrimaryButton
-              title={t('next')}
-              onPress={handleBookNowPress}
-              style={styles.buttonContainer}
-              textStyle={styles.buttonText}
-            />
+            <View style={styles.detailsContainer}>
+              <Text style={styles.descriptionText}>
+                {data?.description || 'No description available'}
+              </Text>
+              <Text style={styles.sectionTitle}>{t('pricing_options')}</Text>
+              <View style={styles.pricingContainer}>
+                {data ? (
+                  getPricingOptions(data).map((option, idx) => (
+                    <React.Fragment key={option.id}>
+                      <TouchableOpacity
+                        style={styles.pricingOption}
+                        activeOpacity={0.7}
+                        onPress={() =>
+                          handleCheckboxToggle(option.id, option.price)
+                        }>
+                        <Text style={styles.pricingText}>
+                          {option.priceDes} - Rs. {option.price}
+                        </Text>
+                        <Octicons
+                          name={
+                            selectedPricingId === option.id
+                              ? 'check-circle'
+                              : 'circle'
+                          }
+                          size={24}
+                          color={
+                            selectedPricingId === option.id
+                              ? COLORS.primary
+                              : COLORS.inputBoder
+                          }
+                        />
+                      </TouchableOpacity>
+                      {idx < getPricingOptions(data).length - 1 && (
+                        <View style={styles.divider} />
+                      )}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <Text style={styles.pricingText}>No pricing available</Text>
+                )}
+              </View>
+              <Text style={styles.sectionTitle}>{t('visual_section')}</Text>
+              <Text style={styles.visualText}>
+                {data?.benifits?.join(', ') || 'No benefits available'}
+              </Text>
+            </View>
           </View>
+        </ScrollView>
+        <View
+          style={[
+            styles.bottomButtonContainer,
+            {paddingBottom: inset.bottom || (Platform.OS === 'ios' ? 16 : 12)},
+          ]}>
+          <PrimaryButton
+            title={t('next')}
+            onPress={handleBookNowPress}
+            style={styles.buttonContainer}
+            textStyle={styles.buttonText}
+          />
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -236,10 +246,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
+  flexGrow: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
   scrollContainer: {
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     backgroundColor: COLORS.white,
+    flexGrow: 1,
   },
   contentWrapper: {
     width: '100%',
@@ -309,11 +324,17 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     height: 46,
-    marginTop: 30,
+    // marginTop: 30, // Remove marginTop so button is flush to bottom
+    width: '100%',
   },
   buttonText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
+  },
+  bottomButtonContainer: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 24,
+    paddingTop: 8,
   },
 });
 

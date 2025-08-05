@@ -8,6 +8,7 @@ import {
   StatusBar,
   TouchableOpacity,
   Image,
+  Platform,
 } from 'react-native';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import PrimaryButton from '../../../components/PrimaryButton';
@@ -536,120 +537,135 @@ const PaymentScreen: React.FC = () => {
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <View style={styles.contentContainer}>
         <UserCustomHeader title={t('payment')} showBackButton={true} />
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContentContainer}
-          showsVerticalScrollIndicator={false}
-          bounces={true}
-          keyboardShouldPersistTaps="handled"
-          removeClippedSubviews={false}
-          scrollEventThrottle={16}>
-          {/* Total Amount Section */}
-          <View style={styles.totalSection}>
-            <View style={styles.totalRow}>
-              <View style={styles.totalInfo}>
-                <Text style={styles.totalAmountLabel}>{t('total_amount')}</Text>
-                <Text style={styles.pujaName}>{puja_name}</Text>
-              </View>
-              <View style={styles.amoutContainer}>
-                <Text style={styles.totalAmount}>₹ {price}</Text>
+        <View style={styles.flex1}>
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={[
+              styles.scrollContentContainer,
+              {paddingBottom: verticalScale(32)}, // add extra padding for button
+            ]}
+            showsVerticalScrollIndicator={false}
+            bounces={true}
+            keyboardShouldPersistTaps="handled"
+            removeClippedSubviews={false}
+            scrollEventThrottle={16}>
+            {/* Total Amount Section */}
+            <View style={styles.totalSection}>
+              <View style={styles.totalRow}>
+                <View style={styles.totalInfo}>
+                  <Text style={styles.totalAmountLabel}>
+                    {t('total_amount')}
+                  </Text>
+                  <Text style={styles.pujaName}>{puja_name}</Text>
+                </View>
+                <View style={styles.amoutContainer}>
+                  <Text style={styles.totalAmount}>₹ {price}</Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          {/* Use Points Section */}
-          <View style={styles.pointsSection}>
-            <View style={styles.pointsRow}>
-              <View style={styles.pointsLeft}>
-                <View style={styles.checkboxContainer}>
-                  <TouchableOpacity
-                    onPress={() => setUsePoints(!usePoints)}
-                    style={styles.customCheckbox}>
-                    {usePoints && (
-                      <MaterialIcons
-                        name="check"
-                        size={18}
-                        color={COLORS.primary}
-                      />
-                    )}
-                  </TouchableOpacity>
+            {/* Use Points Section */}
+            <View style={styles.pointsSection}>
+              <View style={styles.pointsRow}>
+                <View style={styles.pointsLeft}>
+                  <View style={styles.checkboxContainer}>
+                    <TouchableOpacity
+                      onPress={() => setUsePoints(!usePoints)}
+                      style={styles.customCheckbox}>
+                      {usePoints && (
+                        <MaterialIcons
+                          name="check"
+                          size={18}
+                          color={COLORS.primary}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.pointsLabel}>
+                    {t('use_available_points')}
+                  </Text>
                 </View>
-                <Text style={styles.pointsLabel}>
-                  {t('use_available_points')}
+                <View style={styles.pointsRight}>
+                  <Image source={Images.ic_coin} style={styles.pointsIcon} />
+                  <Text style={styles.pointsValue}>{walletData.balance}</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Payment Methods Section */}
+            <View style={styles.paymentMethodsSection}>
+              {paymentMethods.map((method, index) =>
+                renderPaymentMethod(method, index),
+              )}
+            </View>
+
+            {/* Suggested Puja Section */}
+            <View style={styles.suggestedSection}>
+              <TouchableOpacity
+                style={styles.suggestedPujaRow}
+                onPress={toggleExpand}
+                activeOpacity={0.7}>
+                <View style={styles.suggestedLeft}>
+                  <View style={styles.pujaImageContainer}>
+                    <Image
+                      source={{uri: puja_image}}
+                      style={styles.pujaImage}
+                    />
+                  </View>
+                  <Text style={styles.suggestedPujaName}>{puja_name}</Text>
+                </View>
+                <View
+                  style={{
+                    height: 24,
+                    width: 24,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Octicons
+                    name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                    size={20}
+                    color={COLORS.pujaCardSubtext}
+                  />
+                </View>
+              </TouchableOpacity>
+              {isExpanded && (
+                <View style={styles.bookingDataContainer}>
+                  {suggestedPuja.bookingdata.map((item, index) =>
+                    renderBookingData(item, index),
+                  )}
+                </View>
+              )}
+            </View>
+
+            {/* Terms and Conditions */}
+            <View style={styles.termsSection}>
+              <View style={styles.termsRow}>
+                <FontAwesome
+                  name={acceptTerms ? 'check-square-o' : 'square-o'}
+                  size={24}
+                  color={acceptTerms ? COLORS.primary : COLORS.borderColor}
+                  onPress={() => setAcceptTerms(!acceptTerms)}
+                />
+                <Text style={styles.termsText}>
+                  {t('accept_terms_and_conditions')}
                 </Text>
               </View>
-              <View style={styles.pointsRight}>
-                <Image source={Images.ic_coin} style={styles.pointsIcon} />
-                <Text style={styles.pointsValue}>{walletData.balance}</Text>
-              </View>
             </View>
+          </ScrollView>
+          <View
+            style={[
+              styles.fixedButtonContainer,
+              {paddingBottom: inset.bottom || (Platform.OS === 'ios' ? 16 : 8)},
+            ]}>
+            <PrimaryButton
+              title={t('confirm_booking')}
+              onPress={handleConfirmBooking}
+              style={styles.buttonContainer}
+              textStyle={styles.buttonText}
+              disabled={loading}
+            />
           </View>
-
-          {/* Payment Methods Section */}
-          <View style={styles.paymentMethodsSection}>
-            {paymentMethods.map((method, index) =>
-              renderPaymentMethod(method, index),
-            )}
-          </View>
-
-          {/* Suggested Puja Section */}
-          <View style={styles.suggestedSection}>
-            <TouchableOpacity
-              style={styles.suggestedPujaRow}
-              onPress={toggleExpand}
-              activeOpacity={0.7}>
-              <View style={styles.suggestedLeft}>
-                <View style={styles.pujaImageContainer}>
-                  <Image source={{uri: puja_image}} style={styles.pujaImage} />
-                </View>
-                <Text style={styles.suggestedPujaName}>{puja_name}</Text>
-              </View>
-              <View
-                style={{
-                  height: 24,
-                  width: 24,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}>
-                <Octicons
-                  name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                  size={20}
-                  color={COLORS.pujaCardSubtext}
-                />
-              </View>
-            </TouchableOpacity>
-            {isExpanded && (
-              <View style={styles.bookingDataContainer}>
-                {suggestedPuja.bookingdata.map((item, index) =>
-                  renderBookingData(item, index),
-                )}
-              </View>
-            )}
-          </View>
-
-          {/* Terms and Conditions */}
-          <View style={styles.termsSection}>
-            <View style={styles.termsRow}>
-              <FontAwesome
-                name={acceptTerms ? 'check-square-o' : 'square-o'}
-                size={24}
-                color={acceptTerms ? COLORS.primary : COLORS.borderColor}
-                onPress={() => setAcceptTerms(!acceptTerms)}
-              />
-              <Text style={styles.termsText}>
-                {t('accept_terms_and_conditions')}
-              </Text>
-            </View>
-          </View>
-
-          <PrimaryButton
-            title={t('confirm_booking')}
-            onPress={handleConfirmBooking}
-            style={styles.buttonContainer}
-            textStyle={styles.buttonText}
-            disabled={loading}
-          />
-        </ScrollView>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -663,6 +679,9 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: COLORS.primary,
+  },
+  flex1: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
@@ -882,10 +901,20 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     height: 46,
+    borderRadius: 8,
   },
   buttonText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
+  },
+  fixedButtonContainer: {
+    backgroundColor: COLORS.pujaBackground,
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    // position: 'absolute', // not needed, use flex layout
+    // bottom: 0,
+    // left: 0,
+    // right: 0,
   },
 });
 

@@ -402,7 +402,7 @@ const PujaBookingScreen: React.FC = () => {
             setSelectedDateString(dateString);
             setSelectedSlot('');
             setSelectedSlotObj(null);
-            setMuhurats([]);
+            setMuhurats([]); // Clear muhurats immediately
             setCurrentMonth(
               `${parsedDate.toLocaleString('default', {
                 month: 'long',
