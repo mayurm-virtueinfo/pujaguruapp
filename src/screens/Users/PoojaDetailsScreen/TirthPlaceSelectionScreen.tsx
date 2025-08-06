@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import CustomHeader from '../../../components/CustomHeader';
 import {COLORS} from '../../../theme/theme';
@@ -52,8 +53,6 @@ const TirthPlaceSelectionScreen: React.FC = () => {
     useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  console.log('selectedTirthPlaceName :: ', selectedTirthPlaceName);
-
   useEffect(() => {
     fetchTirthPlaces();
   }, []);
@@ -97,68 +96,77 @@ const TirthPlaceSelectionScreen: React.FC = () => {
       <CustomeLoader loading={isLoading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
-      <ScrollView
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        bounces={false}>
-        <View style={styles.contentWrapper}>
-          <View style={styles.detailsContainer}>
-            <Text style={styles.sectionTitle}>{t('select_tirth_place')}</Text>
-            <Text style={styles.descriptionText}>
-              {t('choose_tirth_place')}
-            </Text>
-            {!isLoading && (
-              <View style={styles.pricingContainer}>
-                {poojaPlaces.map((place, index) => (
-                  <React.Fragment key={place.id}>
-                    <TouchableOpacity
-                      style={styles.pricingOption}
-                      activeOpacity={0.7}
-                      onPress={() => handleTirthPlaceSelect(place)}>
-                      <View style={styles.textContainer}>
-                        <Text style={styles.pricingText}>
-                          {place.city_name}
-                        </Text>
-                        <Text
-                          style={styles.subtitleText}
-                          numberOfLines={2}
-                          ellipsizeMode="tail">
-                          {place.description}
-                        </Text>
-                      </View>
-                      <View style={styles.iconContainer}>
-                        <Octicons
-                          name={
-                            selectedTirthPlaceId === place.id
-                              ? 'check-circle'
-                              : 'circle'
-                          }
-                          size={24}
-                          color={
-                            selectedTirthPlaceId === place.id
-                              ? COLORS.primary
-                              : COLORS.inputBoder
-                          }
-                        />
-                      </View>
-                    </TouchableOpacity>
-                    {index !== poojaPlaces.length - 1 && (
-                      <View style={styles.divider} />
-                    )}
-                  </React.Fragment>
-                ))}
-              </View>
-            )}
-            <PrimaryButton
-              title={t('next')}
-              onPress={handleNextPress}
-              style={styles.buttonContainer}
-              textStyle={styles.buttonText}
-              disabled={!selectedTirthPlaceId}
-            />
+      <View style={styles.flexContainer}>
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContentContainer}
+          showsVerticalScrollIndicator={false}
+          bounces={false}>
+          <View style={styles.contentWrapper}>
+            <View style={styles.detailsContainer}>
+              <Text style={styles.sectionTitle}>{t('select_tirth_place')}</Text>
+              <Text style={styles.descriptionText}>
+                {t('choose_tirth_place')}
+              </Text>
+              {!isLoading && (
+                <View style={styles.pricingContainer}>
+                  {poojaPlaces.map((place, index) => (
+                    <React.Fragment key={place.id}>
+                      <TouchableOpacity
+                        style={styles.pricingOption}
+                        activeOpacity={0.7}
+                        onPress={() => handleTirthPlaceSelect(place)}>
+                        <View style={styles.textContainer}>
+                          <Text style={styles.pricingText}>
+                            {place.city_name}
+                          </Text>
+                          <Text
+                            style={styles.subtitleText}
+                            numberOfLines={2}
+                            ellipsizeMode="tail">
+                            {place.description}
+                          </Text>
+                        </View>
+                        <View style={styles.iconContainer}>
+                          <Octicons
+                            name={
+                              selectedTirthPlaceId === place.id
+                                ? 'check-circle'
+                                : 'circle'
+                            }
+                            size={24}
+                            color={
+                              selectedTirthPlaceId === place.id
+                                ? COLORS.primary
+                                : COLORS.inputBoder
+                            }
+                          />
+                        </View>
+                      </TouchableOpacity>
+                      {index !== poojaPlaces.length - 1 && (
+                        <View style={styles.divider} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </View>
+              )}
+            </View>
           </View>
+        </ScrollView>
+        <View
+          style={[
+            styles.buttonWrapper,
+            {paddingBottom: inset.bottom ? inset.bottom + 10 : 20},
+          ]}>
+          <PrimaryButton
+            title={t('next')}
+            onPress={handleNextPress}
+            style={styles.buttonContainer}
+            textStyle={styles.buttonText}
+            disabled={!selectedTirthPlaceId}
+          />
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -168,10 +176,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
+  flexContainer: {
+    flex: 1,
+    backgroundColor: COLORS.primaryBackground,
+  },
   scrollContainer: {
+    flex: 1,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     backgroundColor: COLORS.white,
+  },
+  scrollContentContainer: {
+    paddingBottom: 30,
   },
   contentWrapper: {
     width: '100%',
@@ -235,6 +251,11 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
+  },
+  buttonWrapper: {
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 24,
+    paddingTop: 10,
   },
   divider: {
     borderColor: COLORS.inputBoder,
