@@ -8,6 +8,7 @@ import {
   StatusBar,
   Platform,
   KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -329,139 +330,137 @@ const PujaBookingScreen: React.FC = () => {
       <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
-
       <KeyboardAvoidingView
         style={{flex: 1}}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
-        <View style={styles.content}>
-          {/* Puja Description */}
-          <Text style={styles.description}>
-            Ganesh Chaturthi Pooja is a Hindu festival celebrating the birth of
-            Lord Ganesha. It involves elaborate rituals, chanting of mantras,
-            and offerings to the deity. This pooja is believed to...
-          </Text>
+        <View style={styles.flex1}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}>
+            {/* Puja Description */}
+            <Text style={styles.description}>
+              Ganesh Chaturthi Pooja is a Hindu festival celebrating the birth
+              of Lord Ganesha. It involves elaborate rituals, chanting of
+              mantras, and offerings to the deity. This pooja is believed to...
+            </Text>
 
-          {/* Puja Place Section */}
-          <View style={styles.pujaPlaceContainer}>
-            <View style={styles.pujaPlaceContent}>
-              <View style={styles.pujaPlaceTextContainer}>
-                <Text style={styles.pujaPlaceLabel}>{t('puja_place')}</Text>
-                <Text style={styles.pujaPlaceValue}>
-                  {poojaName}: {poojaDescription}
-                </Text>
+            {/* Puja Place Section */}
+            <View style={styles.pujaPlaceContainer}>
+              <View style={styles.pujaPlaceContent}>
+                <View style={styles.pujaPlaceTextContainer}>
+                  <Text style={styles.pujaPlaceLabel}>{t('puja_place')}</Text>
+                  <Text style={styles.pujaPlaceValue}>
+                    {poojaName}: {poojaDescription}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={() => navigation.goBack()}>
+                  <Ionicons
+                    name="create-outline"
+                    size={20}
+                    color={COLORS.gradientEnd}
+                  />
+                </TouchableOpacity>
               </View>
-              <TouchableOpacity
-                style={styles.editButton}
-                onPress={() => navigation.goBack()}>
-                <Ionicons
-                  name="create-outline"
-                  size={20}
-                  color={COLORS.gradientEnd}
-                />
-              </TouchableOpacity>
             </View>
-          </View>
 
-          <Calendar
-            date={selectedDate}
-            onDateSelect={dateString => {
-              if (
-                !dateString ||
-                typeof dateString !== 'string' ||
-                !/^\d{4}-\d{2}-\d{2}$/.test(dateString)
-              ) {
-                showErrorToast(
-                  t('please_select_date') || 'Please select a valid date.',
-                );
-                return;
-              }
-              const parsedDate = new Date(dateString);
-              if (isNaN(parsedDate.getTime())) {
-                showErrorToast(
-                  t('please_select_date') || 'Please select a valid date.',
-                );
-                return;
-              }
-              setSelectedDate(parsedDate.getDate());
-              setSelectedDateString(dateString);
-              setSelectedSlot('');
-              setSelectedSlotObj(null);
-              setMuhurats([]); // Clear muhurats immediately
-              setCurrentMonth(
-                `${parsedDate.toLocaleString('default', {
-                  month: 'long',
-                })} ${parsedDate.getFullYear()}`,
-              );
-              if (!location) {
-                showErrorToast(
-                  t('location_not_found') ||
-                    'Location not found. Please set your location first.',
-                );
-              }
-            }}
-            month={currentMonth}
-            onMonthChange={direction => {
-              const [monthName, yearStr] = currentMonth.split(' ');
-              const monthIdx = new Date(
-                `${monthName} 1, ${yearStr}`,
-              ).getMonth();
-              let newMonthIdx = monthIdx;
-              let newYear = parseInt(yearStr, 10);
-              if (direction === 'prev') {
-                newMonthIdx -= 1;
-                if (newMonthIdx < 0) {
-                  newMonthIdx = 11;
-                  newYear -= 1;
+            <Calendar
+              date={selectedDate}
+              onDateSelect={dateString => {
+                if (
+                  !dateString ||
+                  typeof dateString !== 'string' ||
+                  !/^\d{4}-\d{2}-\d{2}$/.test(dateString)
+                ) {
+                  showErrorToast(
+                    t('please_select_date') || 'Please select a valid date.',
+                  );
+                  return;
                 }
-              } else {
-                newMonthIdx += 1;
-                if (newMonthIdx > 11) {
-                  newMonthIdx = 0;
-                  newYear += 1;
+                const parsedDate = new Date(dateString);
+                if (isNaN(parsedDate.getTime())) {
+                  showErrorToast(
+                    t('please_select_date') || 'Please select a valid date.',
+                  );
+                  return;
                 }
-              }
-              const newMonthName = new Date(
-                newYear,
-                newMonthIdx,
-              ).toLocaleString('default', {month: 'long'});
-              setCurrentMonth(`${newMonthName} ${newYear}`);
-              setSelectedDate(1);
-              const newDate = new Date(newYear, newMonthIdx, 1);
-              const formattedDate = formatDateYYYYMMDD(newDate);
-              setSelectedDateString(formattedDate);
-              setSelectedSlot('');
-              setSelectedSlotObj(null);
-              setMuhurats([]);
-              fetchMuhurat(formattedDate);
-            }}
-          />
-
-          {renderMuhuratSlots()}
-
-          {/* Additional Notes Section */}
-          <View style={styles.notesContainer}>
-            <Text style={styles.notesLabel}>{t('additional_notes')}</Text>
-            <TextInput
-              style={styles.notesInput}
-              value={additionalNotes}
-              onChangeText={setAdditionalNotes}
-              placeholder={t('please_arrange_for_flowers')}
-              placeholderTextColor={COLORS.inputLabelText}
-              multiline
-              textAlignVertical="top"
+                setSelectedDate(parsedDate.getDate());
+                setSelectedDateString(dateString);
+                setSelectedSlot('');
+                setSelectedSlotObj(null);
+                setMuhurats([]); // Clear muhurats immediately
+                setCurrentMonth(
+                  `${parsedDate.toLocaleString('default', {
+                    month: 'long',
+                  })} ${parsedDate.getFullYear()}`,
+                );
+                if (!location) {
+                  showErrorToast(
+                    t('location_not_found') ||
+                      'Location not found. Please set your location first.',
+                  );
+                }
+              }}
+              month={currentMonth}
+              onMonthChange={direction => {
+                const [monthName, yearStr] = currentMonth.split(' ');
+                const monthIdx = new Date(
+                  `${monthName} 1, ${yearStr}`,
+                ).getMonth();
+                let newMonthIdx = monthIdx;
+                let newYear = parseInt(yearStr, 10);
+                if (direction === 'prev') {
+                  newMonthIdx -= 1;
+                  if (newMonthIdx < 0) {
+                    newMonthIdx = 11;
+                    newYear -= 1;
+                  }
+                } else {
+                  newMonthIdx += 1;
+                  if (newMonthIdx > 11) {
+                    newMonthIdx = 0;
+                    newYear += 1;
+                  }
+                }
+                const newMonthName = new Date(
+                  newYear,
+                  newMonthIdx,
+                ).toLocaleString('default', {month: 'long'});
+                setCurrentMonth(`${newMonthName} ${newYear}`);
+                setSelectedDate(1);
+                const newDate = new Date(newYear, newMonthIdx, 1);
+                const formattedDate = formatDateYYYYMMDD(newDate);
+                setSelectedDateString(formattedDate);
+                setSelectedSlot('');
+                setSelectedSlotObj(null);
+                setMuhurats([]);
+                fetchMuhurat(formattedDate);
+              }}
             />
-          </View>
-        </View>
 
-        {/* Next Button at the bottom, outside scrollable area */}
-        <View style={styles.bottomButtonContainer}>
-          <PrimaryButton
-            title={t('next')}
-            onPress={handleNextButtonPress}
-            // style={styles.nextButton}
-            // textStyle={styles.nextButtonText}
-          />
+            {renderMuhuratSlots()}
+
+            {/* Additional Notes Section */}
+            <View style={styles.notesContainer}>
+              <Text style={styles.notesLabel}>{t('additional_notes')}</Text>
+              <TextInput
+                style={styles.notesInput}
+                value={additionalNotes}
+                onChangeText={setAdditionalNotes}
+                placeholder={t('please_arrange_for_flowers')}
+                placeholderTextColor={COLORS.inputLabelText}
+                multiline
+                textAlignVertical="top"
+              />
+            </View>
+          </ScrollView>
+          {/* Next Button at the bottom, fixed, not scrollable */}
+          <View style={styles.bottomButtonContainerFixed}>
+            <PrimaryButton title={t('next')} onPress={handleNextButtonPress} />
+          </View>
         </View>
       </KeyboardAvoidingView>
 
@@ -481,9 +480,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
+  flex1: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: moderateScale(24),
+    paddingBottom: verticalScale(50),
+    backgroundColor: COLORS.pujaBackground,
+  },
   content: {
     flex: 1,
-    backgroundColor: COLORS.pujaBackground,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
     marginBottom: 0,
@@ -606,11 +612,17 @@ const styles = StyleSheet.create({
     minHeight: verticalScale(100),
     textAlignVertical: 'top',
   },
-  bottomButtonContainer: {
+  // Remove old bottomButtonContainer, add fixed one
+  bottomButtonContainerFixed: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     paddingHorizontal: moderateScale(24),
     paddingBottom:
       Platform.OS === 'ios' ? verticalScale(24) : verticalScale(16),
     backgroundColor: COLORS.pujaBackground,
+    zIndex: 10,
   },
   nextButton: {
     backgroundColor: COLORS.primaryBackgroundButton,

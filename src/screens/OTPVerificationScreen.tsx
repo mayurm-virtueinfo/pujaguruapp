@@ -30,6 +30,7 @@ import {useAuth} from '../provider/AuthProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../utils/appConstant';
 import {getMessaging, getToken} from '@react-native-firebase/messaging';
+import {getFcmToken} from '../configuration/firebaseMessaging';
 
 type AuthNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -119,8 +120,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
             AppConstant.CURRENT_USER,
             JSON.stringify(response.user),
           );
-          const messaging = getMessaging();
-          const fcmToken = await getToken(messaging);
+          const fcmToken = await getFcmToken();
 
           if (fcmToken) {
             postRegisterFCMToken(fcmToken, 'user');

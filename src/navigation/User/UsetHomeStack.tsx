@@ -43,7 +43,7 @@ export type UserHomeParamList = {
   BookingSuccessfullyScreen: undefined;
   RateYourExperienceScreen: any;
   UserPujaDetailsScreen: undefined;
-  UserChatScreen: undefined;
+  UserChatScreen: any;
   AddAddressScreen: any;
 };
 

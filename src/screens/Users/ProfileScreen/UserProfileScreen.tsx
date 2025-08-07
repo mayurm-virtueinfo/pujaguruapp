@@ -42,6 +42,7 @@ import ThemedInput from '../../../components/ThemedInput';
 import {moderateScale} from 'react-native-size-matters';
 import {useCommonToast} from '../../../common/CommonToast';
 import {getMessaging, getToken} from '@react-native-firebase/messaging';
+import {getFcmToken} from '../../../configuration/firebaseMessaging';
 
 type CompleteProfileScreenRouteProp = NavigationProp<
   AuthStackParamList,
@@ -185,8 +186,7 @@ const UserProfileScreen: React.FC = () => {
         );
         const userID = response.user?.id;
         await AsyncStorage.setItem(AppConstant.USER_ID, String(userID));
-        const messaging = getMessaging();
-        const fcmToken = await getToken(messaging);
+        const fcmToken = await getFcmToken();
 
         if (fcmToken) {
           postRegisterFCMToken(fcmToken, 'user');

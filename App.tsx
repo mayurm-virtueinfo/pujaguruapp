@@ -32,6 +32,7 @@ LogBox.ignoreLogs([
 import {getAuth} from '@react-native-firebase/auth';
 import i18n, {initializeI18n} from './src/i18n';
 import {I18nextProvider} from 'react-i18next';
+import {navigationRef} from './src/utils/NavigationService';
 
 // Connect to emulator (do this ONCE at app startup)
 const auth = getAuth();
@@ -70,7 +71,7 @@ const App = () => {
         // icon={<SVGIcon iconType={SvgIconTypes.IcTick} />}
       >
         <AuthProvider>
-          <NavigationContainer>
+          <NavigationContainer ref={navigationRef}>
             <RootNavigator />
           </NavigationContainer>
         </AuthProvider>

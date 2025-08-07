@@ -37,7 +37,7 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const APP_URL = 'https://9b7ca0ac3b21.ngrok-free.app';
+export const APP_URL = 'https://3e9dc7059688.ngrok-free.app';
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';
@@ -71,7 +71,7 @@ export const POST_CANCEL_BOOKING = '/app/bookings/{id}/cancel/';
 export const GET_IN_PROGRESS = '/app/bookings/in_progress/';
 export const GET_EDIT_PROFILE = '/app/profile/me/';
 export const PUT_EDIT_PROFILE = '/app/profile/me/';
-export const POST_START_CHAT = '/api/chat/conversations/start/';
+export const POST_START_CHAT = '/api/chat/conversations/start-by-booking/';
 export const GET_CHAT_MESSAGES = '/api/chat/conversations/{id}/messages/';
 export const GET_PAST_BOOKINGS = '/app/bookings/past/';
 export const POST_REGISTER_FCM = '/app/register-device-token/';

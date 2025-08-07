@@ -77,6 +77,8 @@ const PujaDetailsScreen: React.FC = () => {
 
   const {poojaId} = route.params as {poojaId: string};
 
+  console.log('data :: ', data);
+
   useEffect(() => {
     if (poojaId) {
       fetchPoojaDetails(poojaId);
@@ -217,6 +219,7 @@ const PujaDetailsScreen: React.FC = () => {
                   <Text style={styles.pricingText}>No pricing available</Text>
                 )}
               </View>
+
               <Text style={styles.sectionTitle}>{t('visual_section')}</Text>
               <Text style={styles.visualText}>
                 {data?.benifits?.join(', ') || 'No benefits available'}

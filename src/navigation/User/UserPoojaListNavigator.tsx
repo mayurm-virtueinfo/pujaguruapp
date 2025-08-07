@@ -47,9 +47,10 @@ export type UserPoojaListParamList = {
   PujaCancellationScreen: {id: any};
   UserPujaDetailsScreen: any;
   UserChatScreen: {
-    uuid: string;
-    pandit_name: string;
-    profile_img_url: string;
+    booking_id: string;
+    pandit_name?: string;
+    profile_img_url?: string;
+    pandit_id: string;
   };
   AddAddressScreen: undefined;
 };

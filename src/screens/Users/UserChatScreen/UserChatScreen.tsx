@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState, useCallback} from 'react';
-import {View, StyleSheet, StatusBar, ScrollView} from 'react-native';
+import {View, StyleSheet, StatusBar, ScrollView, Text} from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {moderateScale} from 'react-native-size-matters';
 import {COLORS} from '../../../theme/theme';
@@ -21,7 +21,8 @@ export interface Message {
 
 const UserChatScreen: React.FC = () => {
   const route = useRoute();
-  const {uuid, pandit_name, profile_img_url} = route.params as any;
+  const {booking_id, pandit_name, profile_img_url, pandit_id} =
+    route.params as any;
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,9 +51,11 @@ const UserChatScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (accessToken && uuid) {
-      const socketURL = `ws://192.168.1.10:8081/ws/chat/${uuid}/?token=${accessToken}`;
+    if (accessToken && booking_id) {
+      const socketURL = `ws://192.168.1.10:8081/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
       ws.current = new WebSocket(socketURL);
+
+      console.log('socketURL : ', socketURL);
 
       ws.current.onopen = () => {
         console.log('✅ Connected to WebSocket');
@@ -93,7 +96,7 @@ const UserChatScreen: React.FC = () => {
       const fetchChatHistory = async () => {
         setLoading(true);
         try {
-          const response = await getChatHistory(uuid);
+          const response = await getChatHistory(booking_id);
           if (response) {
             const normalized = response.map((msg: any) => ({
               id: msg.uuid,
@@ -113,7 +116,7 @@ const UserChatScreen: React.FC = () => {
         }
       };
       fetchChatHistory();
-    }, [userId, uuid]),
+    }, [userId, booking_id]),
   );
 
   useEffect(() => {
@@ -129,7 +132,7 @@ const UserChatScreen: React.FC = () => {
       const messageData = {
         message: text,
         sender_id: userId,
-        receiver_id: uuid,
+        receiver_id: pandit_id,
       };
       ws.current.send(JSON.stringify(messageData));
     } else {
@@ -162,7 +165,13 @@ const UserChatScreen: React.FC = () => {
             style={styles.messagesContainer}
             contentContainerStyle={styles.contentContainer}
             showsVerticalScrollIndicator={false}>
-            <ChatMessages messages={messages} />
+            {messages.length === 0 && !loading ? (
+              <View style={styles.noMessagesContainer}>
+                <Text style={styles.noMessagesText}>No messages</Text>
+              </View>
+            ) : (
+              <ChatMessages messages={messages} />
+            )}
           </ScrollView>
           <ChatInput onSendMessage={handleSendMessage} />
         </View>
@@ -189,6 +198,16 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
     justifyContent: 'flex-end',
+  },
+  noMessagesContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  noMessagesText: {
+    fontSize: moderateScale(16),
+    color: COLORS.textSecondary,
+    fontWeight: '500',
   },
 });
 

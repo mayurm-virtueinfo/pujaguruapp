@@ -166,7 +166,7 @@ const AddressSelectionScreen: React.FC = () => {
                                 {place.name}
                               </Text>
                               <Text style={styles.subtitleText}>
-                                {place.description}
+                                {place.full_address}
                               </Text>
                             </View>
                             <Octicons

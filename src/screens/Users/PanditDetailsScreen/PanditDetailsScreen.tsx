@@ -13,7 +13,6 @@ import {
 import {moderateScale, verticalScale} from 'react-native-size-matters';
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import CustomHeader from '../../../components/CustomHeader';
 import {
   apiService,
   getPanditDetails,
@@ -118,28 +117,27 @@ const PanditDetailsScreen: React.FC = () => {
         setLoading(true);
         const response: PanditResponse = await getPanditDetails(panditId);
 
+        console.log('response :: ', response);
+
         if (response.success) {
-          // Map API response to match expected UI fields
           const mappedPujas: PujaListItemType[] =
             response.data.performed_pujas.map(puja => ({
               ...puja,
-              name: puja.pooja_title, // Map pooja_title to name for UI
-              pujaPurpose: puja.pooja_category, // Map pooja_category to pujaPurpose
-              price: parseFloat(puja.amount), // Convert string amount to number
-              image:
-                puja.image ||
-                'https://cdn.builder.io/api/v1/image/assets/e02e12c8254b4549b581b062ed0a5c7f/94c7341fbd9234bbb8e10341382dfaf1c28baf0d?placeholderIfAbsent=true', // Fallback image
+              name: puja.pooja_title,
+              pujaPurpose: puja.pooja_category,
+              price: parseFloat(puja.amount),
+              image: puja.profile_img,
             }));
 
           const mappedRatings: CommentData[] = response.data.ratings.map(
             rating => ({
               ...rating,
-              commenterName: rating.user_name, // Map user_name to commenterName
-              star: rating.rating, // Map rating to star
-              Comment: rating.review, // Map review to Comment
-              like: 0, // Default value as like is not in response
-              disLike: 0, // Default value as disLike is not in response
-              date: rating.created_at, // Map created_at to date
+              commenterName: rating.user_name,
+              star: rating.rating,
+              Comment: rating.review,
+              like: 0,
+              disLike: 0,
+              date: rating.created_at,
               image:
                 rating.image ||
                 'https://cdn.builder.io/api/v1/image/assets/e02e12c8254b4549b581b062ed0a5c7f/94c7341fbd9234bbb8e10341382dfaf1c28baf0d?placeholderIfAbsent=true', // Fallback image
@@ -164,9 +162,7 @@ const PanditDetailsScreen: React.FC = () => {
   const galleryPujas = recommendedPuja.slice(0, 2);
 
   const panditName = selectedPandit?.pandit_name || '';
-  const panditImage =
-    selectedPandit?.image ||
-    'https://cdn.builder.io/api/v1/image/assets/e02e12c8254b4549b581b062ed0a5c7f/94c7341fbd9234bbb8e10341382dfaf1c28baf0d?placeholderIfAbsent=true';
+  const panditImage = selectedPandit?.profile_img;
 
   const renderStars = (count: number) => {
     return (
@@ -268,11 +264,11 @@ const PanditDetailsScreen: React.FC = () => {
                   <React.Fragment key={puja.id}>
                     <View style={styles.poojaItem}>
                       <Image
-                        source={{uri: puja.image}}
+                        source={{uri: puja.pooja_image_url}}
                         style={styles.poojaImage}
                       />
                       <View style={styles.poojaDetails}>
-                        <Text style={styles.poojaName}>{puja.name}</Text>
+                        <Text style={styles.poojaName}>{puja.pooja_name}</Text>
                         <Text style={styles.poojaDescription}>
                           {puja.pujaPurpose}
                         </Text>

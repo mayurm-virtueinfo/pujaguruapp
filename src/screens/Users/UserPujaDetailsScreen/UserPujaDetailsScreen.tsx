@@ -73,17 +73,19 @@ const UserPujaDetailsScreen: React.FC = () => {
 
   const startChatConversation = async () => {
     const payload = {
-      other_user_id: pujaDetails?.assigned_pandit?.id,
+      booking_id: pujaDetails?.id,
     };
     setLoading(true);
     try {
       const response = await postStartChat(payload);
       if (response) {
         console.log('response for start chat :: ', response);
+
         navigation.navigate('UserChatScreen', {
-          uuid: response?.uuid,
-          pandit_name: response?.other_participant_name,
-          profile_img_url: response?.other_participant_profile_img,
+          booking_id: response?.data?.booking_id,
+          pandit_name: response?.data?.other_participant_name,
+          profile_img_url: response?.data?.other_participant_profile_img,
+          pandit_id: response?.data?.other_participant_id,
         });
       }
     } catch (error) {
@@ -299,7 +301,7 @@ const UserPujaDetailsScreen: React.FC = () => {
                 source={
                   pandit.profile_img_url
                     ? {uri: getPanditImageUrl(pandit.profile_img_url)}
-                    : Images.ic_pandit // fallback
+                    : Images.ic_pandit
                 }
                 style={styles.pujaIcon}
               />
