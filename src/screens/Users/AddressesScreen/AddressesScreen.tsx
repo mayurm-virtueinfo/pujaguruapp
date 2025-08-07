@@ -131,7 +131,7 @@ const AddressesScreen: React.FC = () => {
       <CustomeLoader loading={loading} />
 
       <UserCustomHeader
-        title={addressToEdit ? t('edit_address') : t('add_address')}
+        title={t('address')}
         showBackButton={true}
         showCirclePlusButton={true}
         onPlusPress={() => navigation.navigate('AddAddressScreen')}
