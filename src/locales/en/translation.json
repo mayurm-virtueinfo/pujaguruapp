@@ -204,5 +204,7 @@
   "address_line1_required": "Address line 1 is required",
   "address_line2_required": "Address line 2 is required",
   "address_type_required": "Address type is required",
-  "please_fill_all_required_fields": "Please fill all required fields"
+  "please_fill_all_required_fields": "Please fill all required fields",
+  "user_arranged_items": "User Arranged Items",
+  "pandit_arranged_items": "Pandit Arranged Items"
 }

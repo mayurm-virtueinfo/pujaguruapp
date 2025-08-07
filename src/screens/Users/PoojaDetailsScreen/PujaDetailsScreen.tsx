@@ -47,6 +47,8 @@ interface PujaDetails {
   pooja_category: number;
   pooja_type: number;
   slug: string;
+  user_arranged_items: {name: string; quantity: string | number}[];
+  pandit_arranged_items: {name: string; quantity: string | number}[];
 }
 
 interface PricingOption {
@@ -76,8 +78,6 @@ const PujaDetailsScreen: React.FC = () => {
   const [selectPrice, setSelectPrice] = useState<string>('');
 
   const {poojaId} = route.params as {poojaId: string};
-
-  console.log('data :: ', data);
 
   useEffect(() => {
     if (poojaId) {
@@ -219,7 +219,66 @@ const PujaDetailsScreen: React.FC = () => {
                   <Text style={styles.pricingText}>No pricing available</Text>
                 )}
               </View>
-
+              <Text style={styles.sectionTitle}>
+                {t('user_arranged_items')}
+              </Text>
+              <View style={styles.itemsContainer}>
+                {data?.user_arranged_items?.length ? (
+                  data.user_arranged_items.map((item, idx) => (
+                    <React.Fragment key={idx}>
+                      <View style={styles.itemRow}>
+                        <Octicons
+                          name="dot-fill"
+                          size={16}
+                          color={COLORS.primary}
+                          style={styles.itemIcon}
+                        />
+                        <View style={styles.itemTextContainer}>
+                          <Text style={styles.itemNameText}>{item.name}</Text>
+                          <Text style={styles.itemQuantityText}>
+                            Quantity: {item.quantity}
+                          </Text>
+                        </View>
+                      </View>
+                      {idx < data.user_arranged_items.length - 1 && (
+                        <View style={styles.itemDivider} />
+                      )}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <Text style={styles.itemText}>No items required</Text>
+                )}
+              </View>
+              <Text style={styles.sectionTitle}>
+                {t('pandit_arranged_items')}
+              </Text>
+              <View style={styles.itemsContainer}>
+                {data?.pandit_arranged_items?.length ? (
+                  data.pandit_arranged_items.map((item, idx) => (
+                    <React.Fragment key={idx}>
+                      <View style={styles.itemRow}>
+                        <Octicons
+                          name="dot-fill"
+                          size={16}
+                          color={COLORS.primary}
+                          style={styles.itemIcon}
+                        />
+                        <View style={styles.itemTextContainer}>
+                          <Text style={styles.itemNameText}>{item.name}</Text>
+                          <Text style={styles.itemQuantityText}>
+                            Quantity: {item.quantity}
+                          </Text>
+                        </View>
+                      </View>
+                      {idx < data.pandit_arranged_items.length - 1 && (
+                        <View style={styles.itemDivider} />
+                      )}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  <Text style={styles.itemText}>No items provided</Text>
+                )}
+              </View>
               <Text style={styles.sectionTitle}>{t('visual_section')}</Text>
               <Text style={styles.visualText}>
                 {data?.benifits?.join(', ') || 'No benefits available'}
@@ -291,7 +350,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 12,
     marginTop: 12,
-    padding: 10,
+    padding: 16,
     borderWidth: 1,
     borderColor: COLORS.inputBoder,
     marginBottom: 25,
@@ -318,6 +377,54 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginVertical: 10,
   },
+  itemsContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    marginTop: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.inputBoder,
+    marginBottom: 25,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 3,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 44,
+  },
+  itemIcon: {
+    marginRight: 12,
+  },
+  itemTextContainer: {
+    flex: 1,
+  },
+  itemNameText: {
+    fontSize: 15,
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primaryTextDark,
+  },
+  itemQuantityText: {
+    fontSize: 13,
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
+    opacity: 0.7,
+  },
+  itemDivider: {
+    borderColor: COLORS.inputBoder,
+    borderWidth: 0.5,
+    marginVertical: 8,
+  },
+  itemText: {
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
+  },
   visualText: {
     marginTop: 12,
     fontSize: 14,
@@ -327,7 +434,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     height: 46,
-    // marginTop: 30, // Remove marginTop so button is flush to bottom
     width: '100%',
   },
   buttonText: {

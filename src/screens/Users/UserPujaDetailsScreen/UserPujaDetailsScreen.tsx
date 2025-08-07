@@ -63,6 +63,8 @@ const UserPujaDetailsScreen: React.FC = () => {
     }, [id]),
   );
 
+  console.log('pujaDetails :: ', pujaDetails);
+
   const handlePujaItemsPress = () => {
     setIsPujaItemsModalVisible(true);
   };
