@@ -75,3 +75,4 @@ export const POST_START_CHAT = '/api/chat/conversations/start-by-booking/';
 export const GET_CHAT_MESSAGES = '/api/chat/conversations/{id}/messages/';
 export const GET_PAST_BOOKINGS = '/app/bookings/past/';
 export const POST_REGISTER_FCM = '/app/register-device-token/';
+export const GET_STATE = "/app/states/"

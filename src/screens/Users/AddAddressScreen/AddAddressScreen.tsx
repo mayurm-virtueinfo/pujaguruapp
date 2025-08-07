@@ -19,6 +19,7 @@ import {
   postAddAddress,
   updateAddress,
   getAddressType,
+  getState, // <-- Import getState
 } from '../../../api/apiService';
 import {useCommonToast} from '../../../common/CommonToast';
 import {requestLocationPermission} from '../../../utils/locationUtils';
@@ -52,11 +53,14 @@ const AddAddressScreen = () => {
     pincode: '',
     addressType: '',
   });
-
+  console.log('formData', formData);
   const navigation = useNavigation();
   const [location, setLocation] = useState({latitude: 0, longitude: 0});
   const [isLoading, setIsLoading] = useState(false);
   const [cityOptions, setCityOptions] = useState<
+    {label: string; value: string; id?: number}[]
+  >([]);
+  const [stateOptions, setStateOptions] = useState<
     {label: string; value: string; id?: number}[]
   >([]);
   const [addressTypeOptions, setAddressTypeOptions] = useState<
@@ -118,7 +122,7 @@ const AddAddressScreen = () => {
       errors.city = t('city_required');
       isValid = false;
     }
-    if (!formData.state.trim()) {
+    if (!formData.state) {
       errors.state = t('state_required');
       isValid = false;
     }
@@ -140,9 +144,15 @@ const AddAddressScreen = () => {
 
   useEffect(() => {
     let isMounted = true;
-    const fetchCitiesAndTypes = async () => {
+    const fetchCitiesTypesStates = async () => {
       try {
-        const cities: any = await getCity();
+        const [cities, states, types]: any = await Promise.all([
+          getCity(),
+          getState(),
+          getAddressType(),
+        ]);
+
+        // Cities
         let cityList: any[] = Array.isArray(cities)
           ? cities
           : cities?.data || [];
@@ -153,7 +163,18 @@ const AddAddressScreen = () => {
         }));
         if (isMounted) setCityOptions(cityOptions);
 
-        const types: any = await getAddressType();
+        // States
+        let stateList: any[] = Array.isArray(states)
+          ? states
+          : states?.data || [];
+        let stateOptions = stateList.map((state: any) => ({
+          label: state.name,
+          value: String(state.id),
+          id: state.id,
+        }));
+        if (isMounted) setStateOptions(stateOptions);
+
+        // Address Types
         let typeList: any[] = Array.isArray(types) ? types : types?.data || [];
         let typeOptions = typeList.map((type: any) => ({
           label: type.name,
@@ -166,6 +187,7 @@ const AddAddressScreen = () => {
           addressToEdit &&
           !didSetEditData.current &&
           cityOptions.length > 0 &&
+          stateOptions.length > 0 &&
           typeOptions.length > 0
         ) {
           let matchedCityId = '';
@@ -181,6 +203,21 @@ const AddAddressScreen = () => {
                   opt.label.toLowerCase() === String(cityValue).toLowerCase(),
               ) || null;
             matchedCityId = foundCity ? String(foundCity.value) : '';
+          }
+
+          let matchedStateId = '';
+          if (addressToEdit.state) {
+            let stateValue = addressToEdit.state;
+            if (typeof stateValue === 'object' && stateValue !== null) {
+              stateValue = (stateValue as any).id ?? (stateValue as any).name;
+            }
+            const foundState =
+              stateOptions.find(
+                opt =>
+                  String(opt.id) === String(stateValue) ||
+                  opt.label.toLowerCase() === String(stateValue).toLowerCase(),
+              ) || null;
+            matchedStateId = foundState ? String(foundState.value) : '';
           }
 
           let matchedTypeId = '';
@@ -204,7 +241,7 @@ const AddAddressScreen = () => {
             addressLine1: addressToEdit.address_line1 || '',
             addressLine2: addressToEdit.address_line2 || '',
             city: matchedCityId,
-            state: addressToEdit.state || '',
+            state: matchedStateId,
             pincode: addressToEdit.pincode || '',
             addressType: matchedTypeId,
           });
@@ -215,13 +252,14 @@ const AddAddressScreen = () => {
           didSetEditData.current = true;
         }
       } catch (error) {
-        showErrorToast('Failed to fetch cities or address types');
+        showErrorToast('Failed to fetch cities, states, or address types');
         setCityOptions([]);
+        setStateOptions([]);
         setAddressTypeOptions([]);
       }
     };
 
-    fetchCitiesAndTypes();
+    fetchCitiesTypesStates();
 
     return () => {
       isMounted = false;
@@ -257,6 +295,7 @@ const AddAddressScreen = () => {
     }
 
     let cityId = Number(formData.city) || 0;
+    let stateId = Number(formData.state) || 0;
     let addressTypeId = Number(formData.addressType) || 0;
 
     const addressPayload = {
@@ -266,7 +305,7 @@ const AddAddressScreen = () => {
       address_line2: formData.addressLine2,
       phone_number: formData.phoneNumber,
       city: cityId,
-      state: formData.state,
+      state: stateId,
       pincode: formData.pincode,
       latitude: location.latitude,
       longitude: location.longitude,
@@ -375,21 +414,22 @@ const AddAddressScreen = () => {
           <View style={styles.rowContainer}>
             <View style={styles.halfInputGroup}>
               <CustomDropdown
+                items={stateOptions}
+                selectedValue={formData.state}
+                onSelect={value => handleInputChange('state', value)}
+                label={t('state') + ' *'}
+                placeholder={t('enter_state')}
+                error={formErrors.state}
+              />
+            </View>
+            <View style={styles.halfInputGroup}>
+              <CustomDropdown
                 items={cityOptions}
                 selectedValue={formData.city}
                 onSelect={value => handleInputChange('city', value)}
                 label={t('city') + ' *'}
                 placeholder={t('enter_city')}
                 error={formErrors.city}
-              />
-            </View>
-            <View style={styles.halfInputGroup}>
-              <CustomTextInput
-                label={t('state') + ' *'}
-                value={formData.state}
-                onChangeText={value => handleInputChange('state', value)}
-                placeholder={t('enter_state')}
-                error={formErrors.state}
               />
             </View>
           </View>
