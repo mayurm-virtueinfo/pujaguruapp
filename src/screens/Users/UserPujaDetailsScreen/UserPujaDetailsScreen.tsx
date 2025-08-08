@@ -403,17 +403,21 @@ const UserPujaDetailsScreen: React.FC = () => {
             )}
           </ScrollView>
         </View>
-        {Platform.OS !== 'ios' && (
+        {Platform.OS !== 'ios' && pujaDetails && (
           <PujaItemsModal
             visible={isPujaItemsModalVisible}
             onClose={handleModalClose}
+            userItems={pujaDetails?.user_arranged_items || []}
+            panditjiItems={pujaDetails?.pandit_arranged_items || []}
           />
         )}
       </SafeAreaView>
-      {Platform.OS === 'ios' && (
+      {Platform.OS === 'ios' && pujaDetails && (
         <PujaItemsModal
           visible={isPujaItemsModalVisible}
           onClose={handleModalClose}
+          userItems={pujaDetails?.user_arranged_item || []}
+          panditjiItems={pujaDetails?.pandit_arranged_items || []}
         />
       )}
     </>

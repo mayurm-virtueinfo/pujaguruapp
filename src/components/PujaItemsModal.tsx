@@ -7,192 +7,167 @@ import {
   TouchableOpacity,
   ScrollView,
   ModalProps,
-  ActivityIndicator,
+  Animated,
 } from 'react-native';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {apiService} from '../api/apiService';
 import {useTranslation} from 'react-i18next';
 
 interface PujaItemsModalProps extends Partial<ModalProps> {
   visible: boolean;
   onClose: () => void;
-}
-
-interface PujaItemsApiItem {
-  id: number;
-  item: string;
-}
-
-interface PujaItemsApiResponse {
-  userItems: PujaItemsApiItem[];
-  panditjiItems: PujaItemsApiItem[];
+  userItems: {name: string; quantity: string | number}[];
+  panditjiItems: {name: string; quantity: string | number}[];
 }
 
 const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
   visible,
   onClose,
+  userItems,
+  panditjiItems,
   ...modalProps
 }) => {
-  const [userItems, setUserItems] = useState<PujaItemsApiItem[]>([]);
-  const [panditjiItems, setPanditjiItems] = useState<PujaItemsApiItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const {t, i18n} = useTranslation();
+  const {t} = useTranslation();
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
-  // Helper to fetch and set data
-  const fetchPujaItems = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      // The API now returns an object: { userItems: [...], panditjiItems: [...] }
-      const data: PujaItemsApiResponse = await apiService.getPujaItemsData();
-      console.log('Data', data);
-      if (
-        data &&
-        typeof data === 'object' &&
-        Array.isArray(data.userItems) &&
-        Array.isArray(data.panditjiItems)
-      ) {
-        setUserItems(data.userItems);
-        setPanditjiItems(data.panditjiItems);
-        if (data.userItems.length === 0 && data.panditjiItems.length === 0) {
-          setError('No puja items found.');
-        }
-      } else {
-        setUserItems([]);
-        setPanditjiItems([]);
-        setError('No puja items found.');
-      }
-    } catch (err) {
-      setUserItems([]);
-      setPanditjiItems([]);
-      setError('Failed to fetch puja items. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Fetch puja items from API
-  useEffect(() => {
+  // Animation for modal fade-in
+  React.useEffect(() => {
     if (visible) {
-      fetchPujaItems();
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
     } else {
-      // Reset data when modal is closed
-      setUserItems([]);
-      setPanditjiItems([]);
-      setError(null);
-      setLoading(false);
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
     }
-  }, [visible, fetchPujaItems]);
+  }, [visible]);
+
+  // Animation for close button press
+  const handleClosePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.9,
+      friction: 5,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handleClosePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      friction: 5,
+      useNativeDriver: true,
+    }).start();
+    onClose();
+  };
 
   const CloseIcon = () => (
-    <View style={styles.closeIconContainer}>
-      <View style={styles.closeXContainer}>
-        <TouchableOpacity onPress={onClose}>
-          <MaterialIcons name="close" size={20} color="#191313" />
-        </TouchableOpacity>
-      </View>
-    </View>
+    <Animated.View
+      style={[styles.closeIconContainer, {transform: [{scale: scaleAnim}]}]}>
+      <TouchableOpacity
+        onPressIn={handleClosePressIn}
+        onPressOut={handleClosePressOut}
+        accessibilityLabel={t('close_modal')}
+        accessibilityRole="button">
+        <MaterialIcons name="close" size={24} color={COLORS.primaryTextDark} />
+      </TouchableOpacity>
+    </Animated.View>
   );
 
-  const ItemsList = ({items}: {items: PujaItemsApiItem[]}) => (
+  const ItemsList = ({
+    items,
+    index,
+  }: {
+    items: {name: string; quantity: string | number}[];
+  }) => (
     <View style={styles.itemsList}>
       {items.map((item, index) => (
-        <Text key={item.id ?? index} style={styles.itemText}>
-          {index + 1}. {item.item}
-        </Text>
+        <View key={index} style={styles.itemRow}>
+          {/* <MaterialIcons
+            name="fiber-manual-record"
+            size={moderateScale(8)}
+            color={COLORS.textPrimary}
+            style={styles.itemBullet}
+          /> */}
+          <Text style={styles.itemNumber}>{index + 1}.</Text>
+          <Text style={styles.itemText}>
+            {item.name}
+            <Text style={styles.quantityBadge}> ({item.quantity})</Text>
+          </Text>
+        </View>
       ))}
     </View>
   );
+
+  console.log('panditjiItems :: ', panditjiItems);
+  console.log('userItems :: ', userItems);
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="slide"
+      animationType="none"
       onRequestClose={onClose}
       {...modalProps}>
-      <View style={styles.modalOverlay}>
+      <Animated.View style={[styles.modalOverlay, {opacity: fadeAnim}]}>
         <View style={styles.modalContainer}>
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>{t('list_of_puja_items')}</Text>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <CloseIcon />
-            </TouchableOpacity>
+            <CloseIcon />
           </View>
 
           {/* Content */}
           <ScrollView
             style={styles.content}
-            showsVerticalScrollIndicator={false}>
-            {loading ? (
-              <View
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginTop: 40,
-                }}>
-                <ActivityIndicator
-                  size="large"
-                  color={COLORS.primaryTextDark}
-                />
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.contentContainer}>
+            {/* Items to be Arranged by You */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                {t('items_to_be_arranged_by_you')}
+              </Text>
+              <Text style={styles.sectionDescription}>
+                {t('arrenged_item_by_you')}
+              </Text>
+              <View style={styles.itemsContainer}>
+                {userItems.length > 0 ? (
+                  <ItemsList items={userItems} />
+                ) : (
+                  <Text style={styles.noItemsText}>{t('no_items_found')}</Text>
+                )}
               </View>
-            ) : error ? (
-              <View style={{alignItems: 'center', marginTop: 40}}>
-                <Text
-                  style={{
-                    color: COLORS.primary || 'red',
-                    fontFamily: Fonts.Sen_Medium,
-                    fontSize: moderateScale(15),
-                  }}>
-                  {error}
-                </Text>
-              </View>
-            ) : (
-              <>
-                {/* Items to be Arranged by You */}
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    {t('items_to_be_arranged_by_you')}
-                  </Text>
-                  <Text style={styles.sectionDescription}>
-                    {t('arrenged_item_by_you')}
-                  </Text>
-                  <View style={styles.itemsContainer}>
-                    {userItems.length > 0 ? (
-                      <ItemsList items={userItems} />
-                    ) : (
-                      <Text style={styles.itemText}>{t('no_items_found')}</Text>
-                    )}
-                  </View>
-                </View>
+            </View>
 
-                {/* Items will be brought by the Panditji */}
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>
-                    {t('items_will_be_brought_by_the_panditji')}
-                  </Text>
-                  <Text style={styles.sectionDescription}>
-                    {t('arrenged_item_by_panditji')}
-                  </Text>
-                  <View style={styles.itemsContainer}>
-                    {panditjiItems.length > 0 ? (
-                      <ItemsList items={panditjiItems} />
-                    ) : (
-                      <Text style={styles.itemText}>{t('no_items_found')}</Text>
-                    )}
-                  </View>
-                </View>
-              </>
-            )}
+            {/* Divider */}
+            <View style={styles.divider} />
+
+            {/* Items will be brought by the Panditji */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>
+                {t('items_will_be_brought_by_the_panditji')}
+              </Text>
+              <Text style={styles.sectionDescription}>
+                {t('arrenged_item_by_panditji')}
+              </Text>
+              <View style={styles.itemsContainer}>
+                {panditjiItems.length > 0 ? (
+                  <ItemsList items={panditjiItems} />
+                ) : (
+                  <Text style={styles.noItemsText}>{t('no_items_found')}</Text>
+                )}
+              </View>
+            </View>
           </ScrollView>
         </View>
-      </View>
+      </Animated.View>
     </Modal>
   );
 };
@@ -200,92 +175,123 @@ const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
     width: '100%',
-    height: '100%',
+    height: '95%',
     backgroundColor: COLORS.pujaBackground,
-    borderTopLeftRadius: moderateScale(30),
-    borderTopRightRadius: moderateScale(30),
-    paddingTop: moderateScale(24),
-    paddingBottom: moderateScale(24),
+    borderTopLeftRadius: moderateScale(20),
+    borderTopRightRadius: moderateScale(20),
+    paddingTop: verticalScale(16),
+    shadowColor: COLORS.black,
+    shadowOffset: {width: 0, height: -2},
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: moderateScale(24),
-    marginBottom: verticalScale(24),
+    paddingHorizontal: moderateScale(20),
+    paddingVertical: verticalScale(12),
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.separatorColor,
   },
   headerTitle: {
-    fontSize: moderateScale(18),
+    fontSize: moderateScale(20),
     fontFamily: Fonts.Sen_Bold,
     color: COLORS.primaryTextDark,
-    textAlign: 'left',
-  },
-  closeButton: {
-    width: scale(30),
-    height: scale(30),
-    justifyContent: 'center',
-    alignItems: 'center',
+    letterSpacing: moderateScale(0.5),
   },
   closeIconContainer: {
-    width: scale(30),
-    height: scale(30),
-    position: 'relative',
+    width: scale(40),
+    height: scale(40),
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  closeXContainer: {
-    position: 'absolute',
-    left: scale(5),
-    top: scale(5),
-    width: scale(20),
-    height: scale(20),
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(20),
+    shadowColor: COLORS.black,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   content: {
     flex: 1,
-    paddingHorizontal: moderateScale(24),
+    paddingHorizontal: moderateScale(20),
+  },
+  contentContainer: {
+    paddingBottom: verticalScale(20),
   },
   section: {
-    marginBottom: verticalScale(24),
+    marginBottom: verticalScale(18),
   },
   sectionTitle: {
-    fontSize: moderateScale(16),
-    fontFamily: Fonts.Sen_SemiBold,
+    fontSize: moderateScale(18),
+    fontFamily: Fonts.Sen_Bold,
     color: COLORS.primaryTextDark,
     marginBottom: verticalScale(8),
   },
   sectionDescription: {
     fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.inputLabelText,
+    fontFamily: Fonts.Sen_Regular,
+    color: '#666666',
     marginBottom: verticalScale(12),
-    lineHeight: moderateScale(20),
+    lineHeight: moderateScale(22),
   },
   itemsContainer: {
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(10),
-    paddingHorizontal: moderateScale(14),
-    paddingVertical: moderateScale(14),
-    // Shadow for iOS
+    borderRadius: moderateScale(12),
+    padding: moderateScale(16),
     shadowColor: COLORS.black,
     shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.15,
     shadowRadius: 6,
-    // Shadow for Android
     elevation: 4,
   },
   itemsList: {
-    // gap: verticalScale(6),
+    gap: verticalScale(8),
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: verticalScale(4),
+  },
+  itemBullet: {
+    marginRight: moderateScale(8),
+  },
+  itemNumber: {
+    fontSize: moderateScale(16),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primaryTextDark,
+    marginRight: moderateScale(8),
   },
   itemText: {
-    fontSize: moderateScale(15),
+    flex: 1,
+    fontSize: moderateScale(16),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
     lineHeight: moderateScale(24),
+  },
+  quantityBadge: {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primary,
+  },
+  noItemsText: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Medium,
+    color: '#666666',
+    textAlign: 'center',
+    paddingVertical: verticalScale(10),
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.separatorColor,
+    marginVertical: verticalScale(16),
   },
 });
 

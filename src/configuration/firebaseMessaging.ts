@@ -121,7 +121,27 @@ export async function registerNotificationListeners() {
   messaging.getInitialNotification().then((remoteMessage: any) => {
     if (remoteMessage) {
       console.log('🚀 Opened from quit state:', remoteMessage.notification);
-      handleNotificationNavigation(remoteMessage);
+      if (remoteMessage?.data?.navigation) {
+        const {booking_id, sender_id, screen} = remoteMessage.data;
+
+        const navigation = useNavigation();
+
+        // navigate(targetScreen, {
+        //   booking_id: booking_id,
+        //   pandit_id: sender_id,
+        // });
+
+        navigation.navigate(
+          'UserHomeNavigator',
+          remoteMessage.data?.navigation,
+          {
+            params: {
+              booking_id: booking_id,
+              pandit_id: sender_id,
+            },
+          },
+        );
+      }
     }
   });
 }

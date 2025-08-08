@@ -21,7 +21,11 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import {useTranslation} from 'react-i18next';
-import {getCity, getEditProfile, putEditProfile} from '../../../api/apiService';
+import {
+  getEditProfile,
+  getOldCityApi,
+  putEditProfile,
+} from '../../../api/apiService';
 import CustomDropdown from '../../../components/CustomDropdown';
 import CustomeLoader from '../../../components/CustomeLoader';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -87,7 +91,7 @@ const UserEditProfileScreen: React.FC = () => {
       try {
         const [profile, cities] = await Promise.all([
           getEditProfile(),
-          getCity(),
+          getOldCityApi(),
         ]);
         profileResponse = profile;
         cityResponse = cities;
@@ -239,7 +243,6 @@ const UserEditProfileScreen: React.FC = () => {
         );
         navigation.goBack();
       } else {
-        console.log('-=-=-=-=-=-=---=-=-=-==-=-=-=-==-=-');
         showErrorToast(t('profile_update_failed') || 'Profile update failed');
       }
     } catch (error: any) {
@@ -302,18 +305,22 @@ const UserEditProfileScreen: React.FC = () => {
 
   const processImage = async (image: any) => {
     try {
+      const uri =
+        Platform.OS === 'ios'
+          ? image.path.replace('file://', '')
+          : image.path.startsWith('file://')
+          ? image.path
+          : `file://${image.path}`;
+
       const imageData = {
-        uri:
-          Platform.OS === 'ios'
-            ? image.path.replace('file://', '')
-            : image.path,
+        uri: uri,
         type: image.mime,
         name: `profile_${Date.now()}.${image.mime.split('/')[1]}`,
       };
       setProfileImage(imageData);
     } catch (error) {
       console.log('Error processing image:', error);
-      showErrorToast(t('image_processing_failed') || 'Image processing failed');
+      showErrorToast('Image processing failed');
     }
   };
 

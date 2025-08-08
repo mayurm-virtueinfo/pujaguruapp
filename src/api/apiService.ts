@@ -37,6 +37,7 @@ import ApiEndpoints, {
   GET_PAST_BOOKINGS,
   POST_REGISTER_FCM,
   GET_STATE,
+  GET_OLD_CITY_API,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -586,16 +587,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return { pandits: [], puja: [] };
+      return {pandits: [], puja: []};
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || { recommendedPuja: [], pujaList: [] };
+      return response.data?.record || {recommendedPuja: [], pujaList: []};
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return { recommendedPuja: [], pujaList: [] };
+      return {recommendedPuja: [], pujaList: []};
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -646,10 +647,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -677,10 +678,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
 };
@@ -717,8 +718,8 @@ export const postSignUp = (data: SignupRequest): Promise<SignUpResponse> => {
   });
 };
 
-export const getCity = () => {
-  let apiUrl = GET_CITY;
+export const getCity = (id: string) => {
+  const apiUrl = GET_CITY.replace('{id}', id);
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)
@@ -853,7 +854,7 @@ export const deleteAddress = (data: deleteAddress) => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, { data })
+      .delete(apiUrl, {data})
       .then(response => {
         resolve(response);
       })
@@ -1244,7 +1245,7 @@ export const postRegisterFCMToken = (
   let apiUrl = POST_REGISTER_FCM;
   return new Promise((resolve, reject) => {
     apiDev
-      .post(apiUrl, { device_token, app_type })
+      .post(apiUrl, {device_token, app_type})
       .then(response => {
         resolve(response.data);
       })
@@ -1254,7 +1255,6 @@ export const postRegisterFCMToken = (
       });
   });
 };
-
 
 export const getState = () => {
   let apiUrl = GET_STATE;
@@ -1266,6 +1266,21 @@ export const getState = () => {
       })
       .catch(error => {
         console.error('Error in getting state ::', error);
+        reject(error);
+      });
+  });
+};
+
+export const getOldCityApi = () => {
+  let apiUrl = GET_OLD_CITY_API;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching old city data:', error);
         reject(error);
       });
   });

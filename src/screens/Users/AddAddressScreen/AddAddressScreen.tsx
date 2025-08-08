@@ -19,7 +19,7 @@ import {
   postAddAddress,
   updateAddress,
   getAddressType,
-  getState, // <-- Import getState
+  getState,
 } from '../../../api/apiService';
 import {useCommonToast} from '../../../common/CommonToast';
 import {requestLocationPermission} from '../../../utils/locationUtils';
@@ -53,7 +53,6 @@ const AddAddressScreen = () => {
     pincode: '',
     addressType: '',
   });
-  console.log('formData', formData);
   const navigation = useNavigation();
   const [location, setLocation] = useState({latitude: 0, longitude: 0});
   const [isLoading, setIsLoading] = useState(false);
@@ -67,11 +66,8 @@ const AddAddressScreen = () => {
     {label: string; value: string; id: number}[]
   >([]);
   const didSetEditData = useRef(false);
-
   const route = useRoute<any>();
   const addressToEdit: Address | undefined = route.params?.addressToEdit;
-
-  console.log('addressToEdit :: ', addressToEdit);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -83,6 +79,11 @@ const AddAddressScreen = () => {
       ...prev,
       [field]: '',
     }));
+
+    if (field === 'state') {
+      setFormData(prev => ({...prev, city: ''}));
+      setCityOptions([]);
+    }
   };
 
   const validatePhoneNumber = (phone: string) => {
@@ -118,12 +119,12 @@ const AddAddressScreen = () => {
       errors.addressLine2 = t('address_line2_required');
       isValid = false;
     }
-    if (!formData.city) {
-      errors.city = t('city_required');
-      isValid = false;
-    }
     if (!formData.state) {
       errors.state = t('state_required');
+      isValid = false;
+    }
+    if (!formData.city) {
+      errors.city = t('city_required');
       isValid = false;
     }
     if (!formData.pincode.trim()) {
@@ -142,26 +143,58 @@ const AddAddressScreen = () => {
     return isValid;
   };
 
+  const fetchCities = async (stateId: string) => {
+    if (!stateId) return;
+
+    setIsLoading(true);
+    try {
+      const response: any = await getCity(stateId);
+      let cityList: any[] = Array.isArray(response)
+        ? response
+        : response?.data || [];
+      const cityOptions = cityList.map((city: any) => ({
+        label: city.name,
+        value: String(city.id),
+        id: city.id,
+      }));
+      setCityOptions(cityOptions);
+
+      // For edit mode, set the city after fetching cities
+      if (addressToEdit && !didSetEditData.current && addressToEdit.city) {
+        let cityValue = addressToEdit.city;
+        if (typeof cityValue === 'object' && cityValue !== null) {
+          cityValue = (cityValue as any).id ?? (cityValue as any).name;
+        }
+        const foundCity = cityOptions.find(
+          opt =>
+            String(opt.id) === String(cityValue) ||
+            opt.label.toLowerCase() === String(cityValue).toLowerCase(),
+        );
+        if (foundCity) {
+          setFormData(prev => ({
+            ...prev,
+            city: foundCity.value,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching city data:', error);
+      showErrorToast(t('failed_to_fetch_cities'));
+      setCityOptions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
-    const fetchCitiesTypesStates = async () => {
+
+    const fetchStatesAndTypes = async () => {
       try {
-        const [cities, states, types]: any = await Promise.all([
-          getCity(),
+        const [states, types]: any = await Promise.all([
           getState(),
           getAddressType(),
         ]);
-
-        // Cities
-        let cityList: any[] = Array.isArray(cities)
-          ? cities
-          : cities?.data || [];
-        let cityOptions = cityList.map((city: any) => ({
-          label: city.name,
-          value: String(city.id),
-          id: city.id,
-        }));
-        if (isMounted) setCityOptions(cityOptions);
 
         // States
         let stateList: any[] = Array.isArray(states)
@@ -183,40 +216,19 @@ const AddAddressScreen = () => {
         }));
         if (isMounted) setAddressTypeOptions(typeOptions);
 
-        if (
-          addressToEdit &&
-          !didSetEditData.current &&
-          cityOptions.length > 0 &&
-          stateOptions.length > 0 &&
-          typeOptions.length > 0
-        ) {
-          let matchedCityId = '';
-          if (addressToEdit.city) {
-            let cityValue = addressToEdit.city;
-            if (typeof cityValue === 'object' && cityValue !== null) {
-              cityValue = (cityValue as any).id ?? (cityValue as any).name;
-            }
-            const foundCity =
-              cityOptions.find(
-                opt =>
-                  String(opt.id) === String(cityValue) ||
-                  opt.label.toLowerCase() === String(cityValue).toLowerCase(),
-              ) || null;
-            matchedCityId = foundCity ? String(foundCity.value) : '';
-          }
-
+        // Handle edit case
+        if (addressToEdit && !didSetEditData.current) {
           let matchedStateId = '';
           if (addressToEdit.state) {
             let stateValue = addressToEdit.state;
             if (typeof stateValue === 'object' && stateValue !== null) {
               stateValue = (stateValue as any).id ?? (stateValue as any).name;
             }
-            const foundState =
-              stateOptions.find(
-                opt =>
-                  String(opt.id) === String(stateValue) ||
-                  opt.label.toLowerCase() === String(stateValue).toLowerCase(),
-              ) || null;
+            const foundState = stateOptions.find(
+              opt =>
+                String(opt.id) === String(stateValue) ||
+                opt.label.toLowerCase() === String(stateValue).toLowerCase(),
+            );
             matchedStateId = foundState ? String(foundState.value) : '';
           }
 
@@ -226,12 +238,11 @@ const AddAddressScreen = () => {
             if (typeof typeValue === 'object' && typeValue !== null) {
               typeValue = (typeValue as any).id ?? (typeValue as any).name;
             }
-            const foundType =
-              typeOptions.find(
-                opt =>
-                  String(opt.id) === String(typeValue) ||
-                  opt.label.toLowerCase() === String(typeValue).toLowerCase(),
-              ) || null;
+            const foundType = typeOptions.find(
+              opt =>
+                String(opt.id) === String(typeValue) ||
+                opt.label.toLowerCase() === String(typeValue).toLowerCase(),
+            );
             matchedTypeId = foundType ? String(foundType.value) : '';
           }
 
@@ -240,7 +251,7 @@ const AddAddressScreen = () => {
             phoneNumber: addressToEdit.phone_number || '',
             addressLine1: addressToEdit.address_line1 || '',
             addressLine2: addressToEdit.address_line2 || '',
-            city: matchedCityId,
+            city: '',
             state: matchedStateId,
             pincode: addressToEdit.pincode || '',
             addressType: matchedTypeId,
@@ -249,22 +260,32 @@ const AddAddressScreen = () => {
             latitude: addressToEdit.latitude || 0,
             longitude: addressToEdit.longitude || 0,
           });
+
+          // Fetch cities for the selected state in edit mode
+          if (matchedStateId) {
+            await fetchCities(matchedStateId);
+          }
           didSetEditData.current = true;
         }
       } catch (error) {
-        showErrorToast('Failed to fetch cities, states, or address types');
-        setCityOptions([]);
+        showErrorToast(t('failed_to_fetch_data'));
         setStateOptions([]);
         setAddressTypeOptions([]);
       }
     };
 
-    fetchCitiesTypesStates();
+    fetchStatesAndTypes();
 
     return () => {
       isMounted = false;
     };
   }, [addressToEdit]);
+
+  useEffect(() => {
+    if (formData.state && !addressToEdit) {
+      fetchCities(formData.state);
+    }
+  }, [formData.state]);
 
   useEffect(() => {
     didSetEditData.current = false;
@@ -310,13 +331,13 @@ const AddAddressScreen = () => {
       latitude: location.latitude,
       longitude: location.longitude,
     };
+
     try {
       if (addressToEdit) {
         const response: any = await updateAddress({
           id: addressToEdit.id,
           ...addressPayload,
         });
-        console.log('response for update address :: ', response.data);
         if (response?.data?.success) {
           showSuccessToast(t('address_updated_successfully'));
           setFormData({
@@ -333,9 +354,7 @@ const AddAddressScreen = () => {
           handleBack();
         }
       } else {
-        console.log('======= Add Address Api called =======');
         const response: any = await postAddAddress(addressPayload);
-        console.log('response for add address :: ', response);
         if (response.data.success) {
           showSuccessToast(t('address_added_successfully'));
           setFormData({
@@ -411,27 +430,26 @@ const AddAddressScreen = () => {
               error={formErrors.addressLine2}
             />
           </View>
-          <View style={styles.rowContainer}>
-            <View style={styles.halfInputGroup}>
-              <CustomDropdown
-                items={stateOptions}
-                selectedValue={formData.state}
-                onSelect={value => handleInputChange('state', value)}
-                label={t('state') + ' *'}
-                placeholder={t('enter_state')}
-                error={formErrors.state}
-              />
-            </View>
-            <View style={styles.halfInputGroup}>
-              <CustomDropdown
-                items={cityOptions}
-                selectedValue={formData.city}
-                onSelect={value => handleInputChange('city', value)}
-                label={t('city') + ' *'}
-                placeholder={t('enter_city')}
-                error={formErrors.city}
-              />
-            </View>
+          <View style={styles.inputGroup}>
+            <CustomDropdown
+              items={stateOptions}
+              selectedValue={formData.state}
+              onSelect={value => handleInputChange('state', value)}
+              label={t('state') + ' *'}
+              placeholder={t('select_state')}
+              error={formErrors.state}
+            />
+          </View>
+          <View style={styles.inputGroup}>
+            <CustomDropdown
+              items={cityOptions}
+              selectedValue={formData.city}
+              onSelect={value => handleInputChange('city', value)}
+              label={t('city') + ' *'}
+              placeholder={t('select_city')}
+              error={formErrors.city}
+              disabled={!formData.state}
+            />
           </View>
           <View style={styles.rowContainer}>
             <View style={styles.halfInputGroup}>
