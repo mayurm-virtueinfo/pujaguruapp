@@ -4,74 +4,69 @@ import {NavigationContainer} from '@react-navigation/native';
 import SplashScreen from 'react-native-splash-screen';
 import RootNavigator from './src/navigation/RootNavigator';
 import {LogBox} from 'react-native';
-
-// It's good practice to import gesture handler at the top
 import 'react-native-gesture-handler';
 import {AuthProvider} from './src/provider/AuthProvider';
 import {ToastProvider} from 'react-native-toast-notifications';
 import {moderateScale} from 'react-native-size-matters';
 import {COLORS} from './src/theme/theme';
-import {
-  registerNotificationListeners,
-  requestUserPermission,
-} from './src/configuration/firebaseMessaging';
-
-// Ignore specific warnings if necessary, for example, from reanimated
-LogBox.ignoreLogs([
-  "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
-  'Non-serializable values were found in the navigation state', // This can happen with some params
-]);
-// import { getApp } from '@react-native-firebase/app';
-// // import { getReactNativePersistence } from 'firebase/auth/react-native';
-// import { initializeAuth } from '@react-native-firebase/auth';
-
-// // Export auth instance
-// const app = getApp();
-
-// export const firebaseAuth = initializeAuth(app);
+import {requestUserPermission} from './src/configuration/firebaseMessaging';
 import {getAuth} from '@react-native-firebase/auth';
 import i18n, {initializeI18n} from './src/i18n';
 import {I18nextProvider} from 'react-i18next';
 import {navigationRef} from './src/utils/NavigationService';
+import {
+  handleNotificationNavigation,
+  setupNotifications,
+} from './src/configuration/notificationSetup';
+import {getMessaging} from '@react-native-firebase/messaging';
 
-// Connect to emulator (do this ONCE at app startup)
 const auth = getAuth();
 if (__DEV__) {
-  auth.useEmulator('http://127.0.0.1:9099'); // or 'http://localhost:9099'
+  auth.useEmulator('http://127.0.0.1:9099');
 }
+
+setupNotifications();
+
 const App = () => {
   useEffect(() => {
-    // Hide splash screen after a delay
     const timer = setTimeout(async () => {
-      // Initializing app local ( en | hi )
       await initializeI18n();
       SplashScreen.hide();
-    }, 2500); // Show splash for 2.5 seconds
+    }, 2500);
 
     requestUserPermission();
-    registerNotificationListeners();
 
-    return () => clearTimeout(timer); // Cleanup timer on unmount
+    return () => clearTimeout(timer);
   }, []);
+
+  const handleInitialNotification = async () => {
+    try {
+      const remoteMessage = await getMessaging().getInitialNotification();
+      if (remoteMessage) {
+        console.log('🚀 Opened from quit state:', remoteMessage);
+        handleNotificationNavigation(remoteMessage.data);
+      }
+    } catch (error) {
+      console.error('Error handling initial notification:', error);
+    }
+  };
 
   return (
     <I18nextProvider i18n={i18n}>
       <ToastProvider
         style={{
-          // borderRadius: 20,
           backgroundColor: COLORS.primary,
-          // borderWidth: 1,
-          // borderColor: Colors.tertiaryGrey,
         }}
         textStyle={{
-          // fontFamily: fonts.nunitoRegular,
           fontSize: moderateScale(16),
           color: COLORS.textPrimary,
-        }}
-        // icon={<SVGIcon iconType={SvgIconTypes.IcTick} />}
-      >
+        }}>
         <AuthProvider>
-          <NavigationContainer ref={navigationRef}>
+          <NavigationContainer
+            ref={navigationRef}
+            onReady={() => {
+              handleInitialNotification();
+            }}>
             <RootNavigator />
           </NavigationContainer>
         </AuthProvider>
