@@ -169,11 +169,11 @@ const WalletScreen: React.FC = () => {
           </View>
 
           {/* Top Up Button */}
-          <PrimaryButton
+          {/* <PrimaryButton
             title={t('top_up_wallet')}
             onPress={handleTopUpWallet}
             style={styles.topUpButton}
-          />
+          /> */}
 
           {/* Transaction History Section */}
           <View style={styles.transactionContainer}>

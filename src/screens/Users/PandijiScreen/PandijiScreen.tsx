@@ -126,10 +126,7 @@ const PanditjiScreen: React.FC = () => {
         activeOpacity={0.7}>
         <View style={styles.panditjiContent}>
           <View style={styles.imageContainer}>
-            <Image
-              source={{uri: item.profile_img}}
-              style={styles.panditjiImage}
-            />
+            <Image source={{uri: item.image}} style={styles.panditjiImage} />
             {item.isVerified && (
               <View style={styles.verifiedBadge}>
                 <MaterialIcons

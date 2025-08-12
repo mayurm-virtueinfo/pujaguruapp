@@ -10,11 +10,10 @@ import {
   Image,
 } from 'react-native';
 import {COLORS} from '../../../theme/theme';
-import {getPujaList} from '../../../api/apiService';
+import {getPanditPujaList} from '../../../api/apiService';
 import Fonts from '../../../theme/fonts';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {moderateScale} from 'react-native-size-matters';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -26,11 +25,13 @@ import Octicons from 'react-native-vector-icons/Octicons';
 import PrimaryButton from '../../../components/PrimaryButton';
 
 type PujaItem = {
-  id: any;
-  title: any;
-  image_url: any;
-  base_price: number;
-  description: any;
+  pooja_id: number;
+  pooja_name: string;
+  pooja_image: string;
+  pooja_caption: string;
+  price_with_samagri: string;
+  price_without_samagri: string;
+  system_price: number;
 };
 
 type ScreenNavigationProp = StackNavigationProp<
@@ -45,34 +46,27 @@ const SelectPujaScreen: React.FC = () => {
 
   const [pujaList, setPujaList] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedPujaId, setSelectedPujaId] = useState<any>(null);
+  const [selectedPujaId, setSelectedPujaId] = useState<number | null>(null);
   const navigation = useNavigation<ScreenNavigationProp>();
-
-  console.log('navigation :: ', navigation.getState());
+  const route = useRoute() as any;
+  const {panditId} = route?.params;
 
   useEffect(() => {
     fetchPujaList();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchPujaList = async () => {
     setLoading(true);
     try {
-      const data: any = await getPujaList();
-      if (data.success) {
-        const pujaItems = data.data.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          image_url: item.image_url,
-          base_price: parseFloat(item.base_price),
-          description: item.description,
-        }));
-        setPujaList(pujaItems);
+      const data: any = await getPanditPujaList(panditId);
+      if (data.success && Array.isArray(data.data)) {
+        setPujaList(data.data);
       } else {
         setPujaList([]);
       }
     } catch (error: any) {
-      console.log('Error fetching puja list ::: ', error);
-      showErrorToast(error.message || 'Failed to fetch puja list');
+      showErrorToast(error?.message || 'Failed to fetch puja list');
       setPujaList([]);
     } finally {
       setLoading(false);
@@ -83,13 +77,16 @@ const SelectPujaScreen: React.FC = () => {
     navigation.goBack();
   };
 
-  const handleSelectPuja = (pujaId: any) => {
+  const handleSelectPuja = (pujaId: number) => {
     setSelectedPujaId(pujaId);
   };
 
   const handleNext = () => {
     if (selectedPujaId) {
-      navigation.navigate('PoojaDetailScreen', {poojaId: selectedPujaId});
+      navigation.navigate('PoojaDetailScreen', {
+        poojaId: selectedPujaId,
+        panditId: panditId,
+      });
     }
   };
 
@@ -111,7 +108,7 @@ const SelectPujaScreen: React.FC = () => {
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollViewContent,
-            {paddingBottom: 100 + inset.bottom}, // add space for button
+            {paddingBottom: 100 + inset.bottom},
           ]}
           showsVerticalScrollIndicator={false}>
           <View style={styles.pujaListSection}>
@@ -120,57 +117,81 @@ const SelectPujaScreen: React.FC = () => {
               {t('choose_the_puja_you_wish_to_book_from_the_list_below')}
             </Text>
             <View style={styles.pujaListContainer}>
-              {pujaList.map((puja, idx) => (
-                <React.Fragment key={puja.id}>
-                  <TouchableOpacity
-                    style={styles.item}
-                    activeOpacity={0.7}
-                    onPress={() => handleSelectPuja(puja.id)}>
-                    <View style={styles.imageContainer}>
-                      <Image
-                        source={{uri: puja.image_url}}
-                        style={styles.image}
-                      />
-                    </View>
-                    <View style={{flex: 1, marginLeft: 14}}>
-                      <View style={styles.content}>
-                        <Text style={styles.title}>{puja.title}</Text>
-                        <Text style={styles.description}>
-                          {puja.description}
-                        </Text>
+              {pujaList.length === 0 ? (
+                <View style={{padding: 24, alignItems: 'center'}}>
+                  <Text
+                    style={{
+                      color: COLORS.pujaTextSecondary,
+                      fontFamily: Fonts.Sen_Regular,
+                    }}>
+                    {t('no_puja_found') || 'No puja found.'}
+                  </Text>
+                </View>
+              ) : (
+                pujaList.map((puja, idx) => (
+                  <React.Fragment key={puja.pooja_id}>
+                    <TouchableOpacity
+                      style={styles.item}
+                      activeOpacity={0.7}
+                      onPress={() => handleSelectPuja(puja.pooja_id)}>
+                      <View style={styles.imageContainer}>
+                        <Image
+                          source={{uri: puja.pooja_image}}
+                          style={styles.image}
+                        />
                       </View>
-                      <View style={styles.row}>
-                        <Text style={styles.price}>
-                          ₹{puja.base_price.toFixed(2)}
-                        </Text>
+                      <View style={{flex: 1, marginLeft: 14}}>
+                        <View style={styles.content}>
+                          <Text style={styles.title}>{puja.pooja_name}</Text>
+                          <Text style={styles.description}>
+                            {puja.pooja_caption}
+                          </Text>
+                        </View>
+                        <View style={styles.row}>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                            }}>
+                            <Text style={styles.price}>
+                              ₹{parseFloat(puja.price_with_samagri).toFixed(2)}
+                            </Text>
+                            <Text style={styles.priceLabel}>
+                              {' '}
+                              {t('with_samagri')}
+                            </Text>
+                          </View>
+                        </View>
                       </View>
-                    </View>
-                    <View
-                      style={{
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginLeft: 8,
-                      }}>
-                      <Octicons
-                        name={
-                          selectedPujaId === puja.id ? 'check-circle' : 'circle'
-                        }
-                        size={24}
-                        color={
-                          selectedPujaId === puja.id
-                            ? COLORS.primary
-                            : COLORS.inputBoder
-                        }
-                      />
-                    </View>
-                  </TouchableOpacity>
-                  {idx < pujaList.length - 1 && (
-                    <View style={{marginHorizontal: 12}}>
-                      <View style={styles.separator} />
-                    </View>
-                  )}
-                </React.Fragment>
-              ))}
+                      <View
+                        style={{
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          marginLeft: 8,
+                        }}>
+                        <Octicons
+                          name={
+                            selectedPujaId === puja.pooja_id
+                              ? 'check-circle'
+                              : 'circle'
+                          }
+                          size={24}
+                          color={
+                            selectedPujaId === puja.pooja_id
+                              ? COLORS.primary
+                              : COLORS.inputBoder
+                          }
+                        />
+                      </View>
+                    </TouchableOpacity>
+                    {idx < pujaList.length - 1 && (
+                      <View style={{marginHorizontal: 12}}>
+                        <View style={styles.separator} />
+                      </View>
+                    )}
+                  </React.Fragment>
+                ))
+              )}
             </View>
           </View>
         </ScrollView>
@@ -180,8 +201,6 @@ const SelectPujaScreen: React.FC = () => {
             title={t('next')}
             onPress={handleNext}
             disabled={!selectedPujaId}
-            // style={[styles.nextButton, {opacity: selectedPujaId ? 1 : 0.5}]}
-            // textStyle={styles.nextButtonText}
           />
         </View>
       </View>
@@ -270,6 +289,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
+    marginTop: 8,
   },
   title: {
     color: COLORS.primaryTextDark,
@@ -287,7 +307,19 @@ const styles = StyleSheet.create({
   price: {
     color: COLORS.pujaCardPrice,
     fontFamily: Fonts.Sen_Bold,
-    fontSize: 18,
+    fontSize: 16,
+  },
+  priceWithout: {
+    color: COLORS.pujaCardSubtext,
+    fontFamily: Fonts.Sen_Bold,
+    fontSize: 15,
+    marginLeft: 8,
+  },
+  priceLabel: {
+    color: COLORS.pujaCardSubtext,
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: 12,
+    marginLeft: 2,
   },
   button: {
     backgroundColor: COLORS.primaryBackgroundButton,

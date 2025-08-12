@@ -9,6 +9,9 @@ import {
   StatusBar,
   TouchableOpacity,
   Platform,
+  FlatList,
+  Modal,
+  Pressable,
 } from 'react-native';
 import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -23,6 +26,8 @@ import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {getPoojaDetails} from '../../../api/apiService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from '../../../utils/appConstant';
 
 interface PujaDetails {
   id: number;
@@ -31,24 +36,43 @@ interface PujaDetails {
   short_description: string;
   image_url: string;
   base_price: string;
-  price_with_samagri: string;
-  price_without_samagri: string;
-  benifits: string[];
-  features: string[];
-  requirements: string[];
-  retual_steps: string[];
-  suggested_day: string;
-  suggested_tithi: string;
-  duration_minutes: number;
-  is_enabled: boolean;
+  price_with_samagri?: string;
+  price_without_samagri?: string;
+  benifits?: string[];
+  features?: string[];
+  requirements?: string[];
+  retual_steps?: string[];
+  suggested_day?: string;
+  suggested_tithi?: string;
+  duration_minutes?: number;
+  is_enabled?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  uuid?: string;
+  pooja_category?: number;
+  pooja_type?: number;
+  slug?: string;
+  user_arranged_items?: {name: string; quantity: string | number}[];
+  pandit_arranged_items?: {name: string; quantity: string | number}[];
+  user_reviews?: UserReview[];
+}
+
+interface UserReview {
+  id: number;
+  booking: number;
+  user_name: string;
+  rating: number;
+  pandit_id: number;
+  pandit_name: string;
+  review: string;
   created_at: string;
-  updated_at: string;
-  uuid: string;
-  pooja_category: number;
-  pooja_type: number;
-  slug: string;
-  user_arranged_items: {name: string; quantity: string | number}[];
-  pandit_arranged_items: {name: string; quantity: string | number}[];
+  images: {
+    id: number;
+    image: string;
+    uploaded_at: string;
+    booking: number;
+    pooja_name: string;
+  }[];
 }
 
 interface PricingOption {
@@ -67,7 +91,7 @@ const PujaDetailsScreen: React.FC = () => {
   const {t} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
-  const route = useRoute();
+  const route = useRoute() as any;
   const {showErrorToast} = useCommonToast();
 
   const [data, setData] = useState<PujaDetails | null>(null);
@@ -77,8 +101,17 @@ const PujaDetailsScreen: React.FC = () => {
   );
   const [selectPrice, setSelectPrice] = useState<string>('');
 
-  const {poojaId} = route.params as {poojaId: string};
+  // State for expand/collapse
+  const [userItemsExpanded, setUserItemsExpanded] = useState<boolean>(false);
+  const [panditItemsExpanded, setPanditItemsExpanded] =
+    useState<boolean>(false);
 
+  // State for image modal
+  const [imageModalVisible, setImageModalVisible] = useState(false);
+  const [modalImageUri, setModalImageUri] = useState<string | null>(null);
+
+  const {poojaId, panditId} = route?.params;
+  console.log('data', data);
   useEffect(() => {
     if (poojaId) {
       fetchPoojaDetails(poojaId);
@@ -88,7 +121,7 @@ const PujaDetailsScreen: React.FC = () => {
   const fetchPoojaDetails = async (id: string) => {
     setLoading(true);
     try {
-      const response: any = await getPoojaDetails(id);
+      const response: any = await getPoojaDetails(panditId, id);
       if (response.success) {
         setData(response.data);
       } else {
@@ -136,20 +169,240 @@ const PujaDetailsScreen: React.FC = () => {
   };
 
   const getPricingOptions = (data: PujaDetails): PricingOption[] => {
+    // Fallback to base_price if price_with_samagri/price_without_samagri not present
     return [
       {
         id: 1,
         priceDes: 'With Puja Items',
-        price: data.price_with_samagri,
+        price: data.price_with_samagri || data.base_price,
         withPujaItem: true,
       },
       {
         id: 2,
         priceDes: 'Without Puja Items',
-        price: data.price_without_samagri,
+        price: data.price_without_samagri || data.base_price,
         withPujaItem: false,
       },
     ];
+  };
+
+  // --- User Review Section ---
+  const handleReviewImagePress = (uri: string) => {
+    setModalImageUri(uri);
+    setImageModalVisible(true);
+  };
+
+  const renderReviewImages = (images: UserReview['images']) => {
+    if (!images || images.length === 0) return null;
+    return (
+      <View style={styles.reviewImagesRow}>
+        {images.map(img => (
+          <TouchableOpacity
+            key={img.id}
+            onPress={() => handleReviewImagePress(img.image)}
+            activeOpacity={0.8}>
+            <Image
+              source={{uri: img.image}}
+              style={styles.reviewImage}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
+  const renderUserReview = ({item}: {item: UserReview}) => (
+    <View style={styles.reviewCard}>
+      <View style={styles.reviewHeader}>
+        <Text style={styles.reviewUserName}>{item.user_name}</Text>
+        <View style={styles.reviewRatingRow}>
+          {[1, 2, 3, 4, 5].map(i => (
+            <Octicons
+              key={i}
+              name="star-fill"
+              size={16}
+              color={
+                i <= item.rating
+                  ? COLORS.primaryBackgroundButton
+                  : COLORS.inputBoder
+              }
+              style={styles.reviewStar}
+            />
+          ))}
+        </View>
+      </View>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() =>
+          navigation.navigate('UserPanditjiNavigator', {
+            screen: 'PanditDetailsScreen',
+            params: {panditId: item.pandit_id},
+          })
+        }
+        style={{flexDirection: 'row', gap: 5}}>
+        <Text style={styles.PanditName}>
+          {item.pandit_name ? `Pandit :` : ''}
+        </Text>
+        <Text style={styles.reviewPanditName}>
+          {item.pandit_name ? `${item.pandit_name}` : ''}
+        </Text>
+      </TouchableOpacity>
+      {item.review ? (
+        <Text style={styles.reviewText}>{item.review}</Text>
+      ) : null}
+      {renderReviewImages(item.images)}
+      <Text style={styles.reviewDate}>
+        {new Date(item.created_at).toLocaleDateString()}
+      </Text>
+    </View>
+  );
+
+  const renderReviewsSection = () => {
+    if (!data?.user_reviews || data.user_reviews.length === 0) {
+      return (
+        <View style={styles.reviewsContainer}>
+          <Text style={styles.sectionTitle}>
+            {t('user_reviews') || 'User Reviews'}
+          </Text>
+          <Text style={styles.noReviewsText}>No reviews yet.</Text>
+        </View>
+      );
+    }
+    return (
+      <View style={styles.reviewsContainer}>
+        <Text style={styles.sectionTitle}>
+          {t('user_reviews') || 'User Reviews'}
+        </Text>
+        <FlatList
+          data={data.user_reviews}
+          keyExtractor={item => item.id.toString()}
+          renderItem={renderUserReview}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{paddingVertical: 8}}
+        />
+      </View>
+    );
+  };
+
+  // Expandable Section Component (shows first item with chevron, expands to show all)
+  const ExpandableSection = ({
+    title,
+    expanded,
+    onPress,
+    items,
+    emptyText,
+    testID,
+  }: {
+    title: string;
+    expanded: boolean;
+    onPress: () => void;
+    items: {name: string; quantity: string | number}[] | undefined;
+    emptyText: string;
+    testID?: string;
+  }) => {
+    if (!items || items.length === 0) {
+      return (
+        <View style={styles.expandableSectionWrapper}>
+          <TouchableOpacity
+            style={styles.expandableHeader}
+            onPress={onPress}
+            activeOpacity={0.7}
+            testID={testID}>
+            <Text style={styles.sectionTitle}>{title}</Text>
+          </TouchableOpacity>
+          <View style={styles.itemsContainer}>
+            <Text style={styles.itemText}>{emptyText}</Text>
+          </View>
+        </View>
+      );
+    }
+
+    // Show only the first item with chevron and "more..." if not expanded
+    return (
+      <View style={styles.expandableSectionWrapper}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <View style={styles.itemsContainer}>
+          {!expanded ? (
+            <>
+              <TouchableOpacity
+                style={styles.itemRow}
+                onPress={onPress}
+                activeOpacity={0.7}
+                testID={testID ? `${testID}-first-row` : undefined}>
+                <View style={styles.itemTextContainer}>
+                  <Text style={styles.itemNameText}>{items[0].name}</Text>
+                  <Text style={styles.itemQuantityText}>
+                    Quantity: {items[0].quantity}
+                  </Text>
+                </View>
+                <Octicons
+                  name={expanded ? 'chevron-up' : 'chevron-down'}
+                  size={20}
+                  color={COLORS.primary}
+                  style={styles.chevronIcon}
+                />
+              </TouchableOpacity>
+              {items.length > 1 && (
+                <TouchableOpacity
+                  onPress={onPress}
+                  activeOpacity={0.7}
+                  style={styles.moreTextWrapper}
+                  testID={testID ? `${testID}-more` : undefined}>
+                  <Text style={styles.moreText}>more...</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          ) : (
+            items.map((item, idx) => (
+              <React.Fragment key={idx}>
+                <View style={styles.itemRow}>
+                  <Octicons
+                    name="dot-fill"
+                    size={16}
+                    color={COLORS.primary}
+                    style={styles.itemIcon}
+                  />
+                  <View style={styles.itemTextContainer}>
+                    <Text style={styles.itemNameText}>{item.name}</Text>
+                    <Text style={styles.itemQuantityText}>
+                      Quantity: {item.quantity}
+                    </Text>
+                  </View>
+                </View>
+                {idx < items.length - 1 && <View style={styles.itemDivider} />}
+              </React.Fragment>
+            ))
+          )}
+          {expanded && items.length > 1 && (
+            <TouchableOpacity
+              onPress={onPress}
+              activeOpacity={0.7}
+              style={styles.collapseTextWrapper}
+              testID={testID ? `${testID}-collapse` : undefined}>
+              <View style={styles.collapseRow}>
+                <Octicons
+                  name="chevron-up"
+                  size={18}
+                  color={COLORS.primary}
+                  style={styles.chevronIcon}
+                />
+                <Text style={styles.collapseText}>Show less</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  // Handler for main puja image click
+  const handleMainImagePress = () => {
+    if (data?.image_url) {
+      setModalImageUri(data.image_url);
+      setImageModalVisible(true);
+    }
   };
 
   return (
@@ -170,17 +423,25 @@ const PujaDetailsScreen: React.FC = () => {
           contentContainerStyle={{paddingBottom: 30}}>
           <View style={styles.contentWrapper}>
             <View style={styles.imageContainer}>
-              <Image
-                source={{
-                  uri: data?.image_url,
-                }}
-                style={styles.heroImage}
-                resizeMode="contain"
-              />
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={handleMainImagePress}
+                testID="main-puja-image">
+                <Image
+                  source={{
+                    uri: data?.image_url,
+                  }}
+                  style={styles.heroImage}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
             </View>
+            <Text style={styles.titelText}>{data?.title ?? ''}</Text>
             <View style={styles.detailsContainer}>
               <Text style={styles.descriptionText}>
-                {data?.description || 'No description available'}
+                {data?.description ||
+                  data?.short_description ||
+                  'No description available'}
               </Text>
               <Text style={styles.sectionTitle}>{t('pricing_options')}</Text>
               <View style={styles.pricingContainer}>
@@ -219,70 +480,33 @@ const PujaDetailsScreen: React.FC = () => {
                   <Text style={styles.pricingText}>No pricing available</Text>
                 )}
               </View>
-              <Text style={styles.sectionTitle}>
-                {t('user_arranged_items')}
-              </Text>
-              <View style={styles.itemsContainer}>
-                {data?.user_arranged_items?.length ? (
-                  data.user_arranged_items.map((item, idx) => (
-                    <React.Fragment key={idx}>
-                      <View style={styles.itemRow}>
-                        <Octicons
-                          name="dot-fill"
-                          size={16}
-                          color={COLORS.primary}
-                          style={styles.itemIcon}
-                        />
-                        <View style={styles.itemTextContainer}>
-                          <Text style={styles.itemNameText}>{item.name}</Text>
-                          <Text style={styles.itemQuantityText}>
-                            Quantity: {item.quantity}
-                          </Text>
-                        </View>
-                      </View>
-                      {idx < data.user_arranged_items.length - 1 && (
-                        <View style={styles.itemDivider} />
-                      )}
-                    </React.Fragment>
-                  ))
-                ) : (
-                  <Text style={styles.itemText}>No items required</Text>
-                )}
-              </View>
-              <Text style={styles.sectionTitle}>
-                {t('pandit_arranged_items')}
-              </Text>
-              <View style={styles.itemsContainer}>
-                {data?.pandit_arranged_items?.length ? (
-                  data.pandit_arranged_items.map((item, idx) => (
-                    <React.Fragment key={idx}>
-                      <View style={styles.itemRow}>
-                        <Octicons
-                          name="dot-fill"
-                          size={16}
-                          color={COLORS.primary}
-                          style={styles.itemIcon}
-                        />
-                        <View style={styles.itemTextContainer}>
-                          <Text style={styles.itemNameText}>{item.name}</Text>
-                          <Text style={styles.itemQuantityText}>
-                            Quantity: {item.quantity}
-                          </Text>
-                        </View>
-                      </View>
-                      {idx < data.pandit_arranged_items.length - 1 && (
-                        <View style={styles.itemDivider} />
-                      )}
-                    </React.Fragment>
-                  ))
-                ) : (
-                  <Text style={styles.itemText}>No items provided</Text>
-                )}
-              </View>
-              <Text style={styles.sectionTitle}>{t('visual_section')}</Text>
+
+              {/* User Arranged Items Expandable */}
+              <ExpandableSection
+                title={t('user_arranged_items')}
+                expanded={userItemsExpanded}
+                onPress={() => setUserItemsExpanded(prev => !prev)}
+                items={data?.user_arranged_items}
+                emptyText="No items required"
+                testID="user-arranged-items-section"
+              />
+
+              {/* Pandit Arranged Items Expandable */}
+              <ExpandableSection
+                title={t('pandit_arranged_items')}
+                expanded={panditItemsExpanded}
+                onPress={() => setPanditItemsExpanded(prev => !prev)}
+                items={data?.pandit_arranged_items}
+                emptyText="No items provided"
+                testID="pandit-arranged-items-section"
+              />
+
+              {/* <Text style={styles.sectionTitle}>{t('visual_section')}</Text>
               <Text style={styles.visualText}>
                 {data?.benifits?.join(', ') || 'No benefits available'}
-              </Text>
+              </Text> */}
+              {/* User Reviews Section */}
+              {renderReviewsSection()}
             </View>
           </View>
         </ScrollView>
@@ -299,6 +523,35 @@ const PujaDetailsScreen: React.FC = () => {
           />
         </View>
       </View>
+      {/* Image Modal for full screen preview */}
+      <Modal
+        visible={imageModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setImageModalVisible(false)}>
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setImageModalVisible(false)}>
+          <View style={styles.modalContent}>
+            {modalImageUri ? (
+              <>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setImageModalVisible(false)}
+                  activeOpacity={0.8}
+                  testID="close-image-modal">
+                  <Octicons name="x" size={20} color="#fff" />
+                </TouchableOpacity>
+                <Image
+                  source={{uri: modalImageUri}}
+                  style={styles.fullScreenImage}
+                  resizeMode="contain"
+                />
+              </>
+            ) : null}
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -311,6 +564,8 @@ const styles = StyleSheet.create({
   flexGrow: {
     flex: 1,
     backgroundColor: COLORS.white,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
   },
   scrollContainer: {
     borderTopLeftRadius: 30,
@@ -338,13 +593,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.Sen_Regular,
     marginBottom: 20,
-    marginTop: 20,
+    marginTop: 10,
     textAlign: 'justify',
+  },
+  titelText: {
+    fontSize: 18,
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+    marginHorizontal: 24,
+    marginTop: 24,
   },
   sectionTitle: {
     fontSize: 18,
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
+    marginBottom: 4,
   },
   pricingContainer: {
     backgroundColor: COLORS.white,
@@ -374,7 +637,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     borderColor: COLORS.inputBoder,
-    borderWidth: 1,
+    borderBottomWidth: 1,
     marginVertical: 10,
   },
   itemsContainer: {
@@ -399,6 +662,9 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   itemIcon: {
+    marginRight: 12,
+  },
+  chevronIcon: {
     marginRight: 12,
   },
   itemTextContainer: {
@@ -444,6 +710,155 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     paddingHorizontal: 24,
     paddingTop: 8,
+  },
+  // --- User Review Styles ---
+  reviewsContainer: {
+    // marginBottom: 8,
+  },
+  noReviewsText: {
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
+    opacity: 0.7,
+    marginTop: 8,
+  },
+  reviewCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 14,
+    margin: 14,
+    minWidth: 220,
+    maxWidth: 260,
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.12,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  reviewHeader: {
+    marginBottom: 5,
+    gap: 8,
+  },
+  reviewUserName: {
+    fontSize: 15,
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+  },
+  reviewRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  reviewStar: {
+    marginLeft: 1,
+  },
+  PanditName: {
+    fontSize: 13,
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.black,
+    opacity: 0.7,
+    marginBottom: 2,
+  },
+  reviewPanditName: {
+    fontSize: 13,
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryBackgroundButton,
+    opacity: 0.7,
+    marginBottom: 2,
+    borderBottomWidth: 1,
+    borderColor: COLORS.primaryBackgroundButton,
+  },
+  reviewText: {
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
+    marginBottom: 4,
+    marginTop: 2,
+  },
+  reviewImagesRow: {
+    flexDirection: 'row',
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  reviewImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    marginRight: 6,
+    backgroundColor: COLORS.inputBoder,
+  },
+  reviewDate: {
+    fontSize: 12,
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
+    opacity: 0.5,
+    marginTop: 2,
+  },
+  // --- Expandable Section Styles ---
+  expandableSectionWrapper: {
+    marginBottom: 10,
+  },
+  expandableHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    paddingHorizontal: 0,
+    backgroundColor: 'transparent',
+  },
+  moreTextWrapper: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  moreText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Medium,
+    textDecorationLine: 'underline',
+  },
+  collapseTextWrapper: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  collapseRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  collapseText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Medium,
+    marginLeft: 4,
+    textDecorationLine: 'underline',
+  },
+  // --- Modal Styles ---
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    height: '70%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  fullScreenImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+    backgroundColor: COLORS.inputBoder,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    zIndex: 2,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 50,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
 });
 

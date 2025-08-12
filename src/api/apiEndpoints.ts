@@ -37,7 +37,7 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const APP_URL = 'https://f605e3f27d5c.ngrok-free.app';
+export const APP_URL = 'https://d64080c9ec16.ngrok-free.app';
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';
@@ -54,7 +54,7 @@ export const GET_ADDRESS_TYPE = '/app/address-types/';
 export const GET_TIRTH_PLACE = '/app/tirth-places/';
 export const GET_MUHRAT =
   '/app/choghadiya?date={date}&latitude={latitude}&longitude={longitude}';
-export const GET_POOJA_DETAILS = '/app/puja-detail/{id}/';
+export const GET_POOJA_DETAILS = '/app/puja-detail/{panditId}/{id}/';
 export const POST_BOOKING = '/app/booking/';
 export const GET_AUTO_MANUAL_PANDIT_SELECTION =
   '/app/auto-assign-panditji?puja_id={puja_id}&latitude={latitude}&longitude={longitude}&mode={mode}&booking_date={booking_date}';
@@ -77,3 +77,5 @@ export const GET_PAST_BOOKINGS = '/app/bookings/past/';
 export const POST_REGISTER_FCM = '/app/register-device-token/';
 export const GET_STATE = '/app/states/';
 export const GET_OLD_CITY_API = '/app/areas/';
+export const POST_REVIEW_IMAGES = "/panditji/reviews/pandit-rating/{id}/upload-image/";
+export const GET_PANDIT_PUJA_LIST = "/app/pandits/{panditId}/poojas/"

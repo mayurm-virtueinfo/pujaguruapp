@@ -36,28 +36,6 @@ import {
   postVerrifyPayment,
 } from '../../../api/apiService';
 
-interface PaymentMethod {
-  id: string;
-  name: string;
-  type: 'credit' | 'debit' | 'upi';
-}
-
-interface PujaItem {
-  id: string;
-  name: string;
-  image: string;
-  selected: boolean;
-  bookingdata: {
-    address: string;
-    date: string;
-    time: string;
-    pandit: {
-      name: string;
-      image: string;
-    };
-  }[];
-}
-
 const PaymentScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
@@ -93,8 +71,6 @@ const PaymentScreen: React.FC = () => {
   const {showErrorToast, showSuccessToast} = useCommonToast();
 
   const [usePoints, setUsePoints] = useState<boolean>(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState<string>('');
   const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -130,6 +106,18 @@ const PaymentScreen: React.FC = () => {
       setIsLoading(false);
     }
   }, []);
+
+  // Helper to get wallet balance as number (default 0)
+  const getWalletBalance = () => {
+    if (
+      walletData &&
+      (typeof walletData.balance === 'number' ||
+        typeof walletData.balance === 'string')
+    ) {
+      return Number(walletData.balance) || 0;
+    }
+    return 0;
+  };
 
   const buildBookingData = () => {
     let bookingData: any = {
@@ -185,9 +173,13 @@ const PaymentScreen: React.FC = () => {
       razorpayOrderInProgress.current = true;
       setIsLoading(true);
       try {
-        const data = {
+        // Pass amount_to_pay_from_wallet_input if usePoints is true
+        const data: any = {
           booking_id: bookingIdForOrder,
         };
+        if (usePoints) {
+          data.amount_to_pay_from_wallet_input = getWalletBalance();
+        }
         const response: any = await postCreateRazorpayOrder(data as any);
         if (response && response.data && response.data.order_id) {
           setOrderId(response.data.order_id);
@@ -212,31 +204,9 @@ const PaymentScreen: React.FC = () => {
     [orderId, showSuccessToast, showErrorToast],
   );
 
-  const paymentMethods: PaymentMethod[] = [
-    {id: 'credit', name: t('credit_card'), type: 'credit'},
-    {id: 'debit', name: t('debit_card'), type: 'debit'},
-    {id: 'upi', name: t('upi'), type: 'upi'},
-  ];
+  // Remove paymentMethods and related logic
 
-  const suggestedPuja: PujaItem = {
-    id: '1',
-    name: 'Ganpati Puja',
-    image:
-      'https://cdn.builder.io/api/v1/image/assets/TEMP/24292f0e9447973408fd61ab1331433de4ed2bb8?placeholderIfAbsent=true',
-    selected: false,
-    bookingdata: [
-      {
-        address: 'Home: Primary residence',
-        date: '15/09/2025',
-        time: '10:00 AM',
-        pandit: {
-          name: 'Pandit Ram Sharma',
-          image:
-            'https://cdn.builder.io/api/v1/image/assets/TEMP/24292f0e9447973408fd61ab1331433de4ed2bb8?placeholderIfAbsent=true',
-        },
-      },
-    ],
-  };
+  // suggestedPuja removed as per instruction
 
   const handleVerifyPayment = async ({
     booking_id,
@@ -335,102 +305,70 @@ const PaymentScreen: React.FC = () => {
       });
   };
 
-  const handlePaymentMethodSelect = (methodId: string) => {
-    setSelectedPaymentMethod(methodId);
-  };
+  // Remove handlePaymentMethodSelect and selectedPaymentMethod logic
 
   const handleConfirmBooking = async () => {
     if (!acceptTerms) {
       showErrorToast('Please accept the terms and conditions to proceed.');
       return;
     }
-    if (!selectedPaymentMethod) {
-      showErrorToast('Please select a payment method.');
-      return;
+
+    // Always use Razorpay for payment, no payment method selection
+    // Calculate amount to pay: if usePoints, deduct wallet balance from price
+    const walletBalance = getWalletBalance();
+    const totalPrice = Number(price) || 0;
+    let amount = totalPrice * 100; // Razorpay expects paise
+    if (usePoints) {
+      // If wallet balance is more than price, only pay the difference (never negative)
+      const remaining = Math.max(totalPrice - walletBalance, 0);
+      amount = remaining * 100;
     }
 
-    if (
-      selectedPaymentMethod === 'credit' ||
-      selectedPaymentMethod === 'debit' ||
-      selectedPaymentMethod === 'upi'
-    ) {
-      const amount = 500000;
+    setIsLoading(true);
+    try {
+      const bookingData = buildBookingData();
+      const bookingResponse: any = await postBooking(bookingData as any);
+      if (
+        bookingResponse &&
+        bookingResponse.data &&
+        bookingResponse.data.status &&
+        bookingResponse.data.data &&
+        bookingResponse.data.data.id
+      ) {
+        const newBookingId = bookingResponse.data.data.id;
+        setBookingId(newBookingId);
 
-      setIsLoading(true);
-      try {
-        const bookingData = buildBookingData();
-        const bookingResponse: any = await postBooking(bookingData as any);
+        let currentOrderId = orderId;
         if (
-          bookingResponse &&
-          bookingResponse.data &&
-          bookingResponse.data.status &&
-          bookingResponse.data.data &&
-          bookingResponse.data.data.id
+          !currentOrderId ||
+          razorpayOrderBookingId.current !== newBookingId
         ) {
-          const newBookingId = bookingResponse.data.data.id;
-          setBookingId(newBookingId);
-
-          let currentOrderId = orderId;
-          if (
-            !currentOrderId ||
-            razorpayOrderBookingId.current !== newBookingId
-          ) {
-            const razorpayOrder = await handleCreateRazorpayOrder(newBookingId);
-            if (!razorpayOrder || !razorpayOrder.order_id) {
-              showErrorToast('Order ID not found. Please try again.');
-              setIsLoading(false);
-              return;
-            }
-            currentOrderId = razorpayOrder.order_id;
-            setOrderId(currentOrderId);
-            razorpayOrderBookingId.current = newBookingId;
+          const razorpayOrder = await handleCreateRazorpayOrder(newBookingId);
+          if (!razorpayOrder || !razorpayOrder.order_id) {
+            showErrorToast('Order ID not found. Please try again.');
+            setIsLoading(false);
+            return;
           }
-          await handlePayment(amount, newBookingId, currentOrderId!);
-        } else {
-          if (bookingResponse && bookingResponse.errors) {
-            console.error('Error Booking', bookingResponse.errors);
-          } else {
-            showErrorToast(bookingResponse?.message || 'Booking failed.');
-          }
+          currentOrderId = razorpayOrder.order_id;
+          setOrderId(currentOrderId);
+          razorpayOrderBookingId.current = newBookingId;
         }
-      } catch (error: any) {
-        if (error?.response?.data) {
-          console.log('Error Booking', error.response.data);
+        await handlePayment(amount, newBookingId, currentOrderId!);
+      } else {
+        if (bookingResponse && bookingResponse.errors) {
+          console.error('Error Booking', bookingResponse.errors);
         } else {
-          showErrorToast(error?.message || 'Booking failed.');
+          showErrorToast(bookingResponse?.message || 'Booking failed.');
         }
-      } finally {
-        setIsLoading(false);
       }
-    } else {
-      setIsLoading(true);
-      try {
-        const bookingData = buildBookingData();
-        console.log('bookingData', bookingData);
-        const response: any = await postBooking(bookingData as any);
-        if (response && response.success) {
-          setBookingId(response.data.id);
-          showSuccessToast('Booking successful!');
-        } else {
-          if (response && response.errors) {
-            showErrorToast(
-              `Booking failed: ${JSON.stringify(response.errors)}`,
-            );
-          } else {
-            showErrorToast(response?.message || 'Booking failed.');
-          }
-        }
-      } catch (error: any) {
-        if (error?.response?.data) {
-          showErrorToast(
-            `Error Booking: ${JSON.stringify(error.response.data)}`,
-          );
-        } else {
-          showErrorToast(error?.message || 'Booking failed.');
-        }
-      } finally {
-        setIsLoading(false);
+    } catch (error: any) {
+      if (error?.response?.data) {
+        console.log('Error Booking', error.response.data);
+      } else {
+        showErrorToast(error?.message || 'Booking failed.');
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -438,33 +376,12 @@ const PaymentScreen: React.FC = () => {
     setIsExpanded(!isExpanded);
   };
 
-  const renderPaymentMethod = (method: PaymentMethod, index: number) => (
-    <View key={method.id}>
-      <TouchableOpacity
-        style={styles.paymentMethodRow}
-        onPress={() => handlePaymentMethodSelect(method.id)}
-        activeOpacity={0.7}>
-        <Text style={styles.paymentMethodText}>{method.name}</Text>
-        <Octicons
-          name={selectedPaymentMethod === method.id ? 'check-circle' : 'circle'}
-          size={24}
-          color={
-            selectedPaymentMethod === method.id
-              ? COLORS.primary
-              : COLORS.borderColor
-          }
-          style={styles.radioButton}
-        />
-      </TouchableOpacity>
-      {index < paymentMethods.length - 1 && <View style={styles.divider} />}
-    </View>
-  );
+  // Remove renderPaymentMethod
 
-  const renderBookingData = (
-    item: PujaItem['bookingdata'][0],
-    index: number,
-  ) => (
-    <View key={`${item.address}-${index}`} style={styles.bookingDataItem}>
+  // Remove suggestedPuja and its usage, so renderBookingData will use booking data from props/state
+
+  const renderBookingData = () => (
+    <View style={styles.bookingDataItem}>
       <View style={styles.textContainer}>
         <View
           style={{
@@ -592,18 +509,11 @@ const PaymentScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Payment Methods Section */}
-            <View style={styles.paymentMethodsSection}>
-              {paymentMethods.map((method, index) =>
-                renderPaymentMethod(method, index),
-              )}
-            </View>
-
-            {/* Suggested Puja Section */}
+            {/* Booking Data Section (was Suggested Puja Section) */}
             <View style={styles.suggestedSection}>
               <TouchableOpacity
                 style={styles.suggestedPujaRow}
-                onPress={toggleExpand}
+                // onPress={toggleExpand}
                 activeOpacity={0.7}>
                 <View style={styles.suggestedLeft}>
                   <View style={styles.pujaImageContainer}>
@@ -621,20 +531,18 @@ const PaymentScreen: React.FC = () => {
                     justifyContent: 'center',
                     alignItems: 'center',
                   }}>
-                  <Octicons
+                  {/* <Octicons
                     name={isExpanded ? 'chevron-up' : 'chevron-down'}
                     size={20}
                     color={COLORS.pujaCardSubtext}
-                  />
+                  /> */}
                 </View>
               </TouchableOpacity>
-              {isExpanded && (
-                <View style={styles.bookingDataContainer}>
-                  {suggestedPuja.bookingdata.map((item, index) =>
-                    renderBookingData(item, index),
-                  )}
-                </View>
-              )}
+              {/* {isExpanded && ( */}
+              <View style={styles.bookingDataContainer}>
+                {renderBookingData()}
+              </View>
+              {/* )} */}
             </View>
 
             {/* Terms and Conditions */}
@@ -784,6 +692,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
   },
+  // paymentMethodsSection and related styles can be kept or removed, but not used in render
   paymentMethodsSection: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),

@@ -142,8 +142,11 @@ const UserHomeScreen: React.FC = () => {
     }
   };
 
-  const handleBookPandit = (panditName: string) => {
-    navigation.navigate('SelectPujaScreen');
+  // Fix: Pass correct panditId to navigation
+  const handleBookPandit = (panditId: number) => {
+    navigation.navigate('SelectPujaScreen', {
+      panditId: panditId,
+    });
   };
 
   const handleNavigation = (route: string) => {
@@ -227,7 +230,7 @@ const UserHomeScreen: React.FC = () => {
                   <View style={{alignSelf: 'center'}}>
                     <PrimaryButton
                       title={t('book')}
-                      onPress={() => handleBookPandit(pandit.full_name)}
+                      onPress={() => handleBookPandit(pandit.pandit_id)}
                       style={{
                         maxWidth: 90,
                         maxHeight: 40,
@@ -284,7 +287,7 @@ const UserHomeScreen: React.FC = () => {
                     />
                     <View style={styles.pujaTextContainer}>
                       <Text style={styles.pujaName}>{puja.pooja_name}</Text>
-                      <Text style={styles.pujaDate}>{puja.when_is_pooja}</Text>
+                      <Text style={styles.pujaDate}>{puja.booking_date}</Text>
                     </View>
                   </TouchableOpacity>
                   {idx !== inProgressPujas.length - 1 && (

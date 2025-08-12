@@ -38,6 +38,8 @@ import ApiEndpoints, {
   POST_REGISTER_FCM,
   GET_STATE,
   GET_OLD_CITY_API,
+  POST_REVIEW_IMAGES,
+  GET_PANDIT_PUJA_LIST,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -385,6 +387,16 @@ export interface bookingCancellation {
   cancellation_reason_other?: string;
 }
 
+export interface ReviewImageUpload {
+  images: {
+    profile_img: {
+      uri: string;
+      type: string;
+      name: string;
+    };
+  }
+}
+
 export const apiService = {
   // Fetch cities based on pincode
   getCities: async (pincode: string): Promise<DropdownItem[]> => {
@@ -587,16 +599,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return {pandits: [], puja: []};
+      return { pandits: [], puja: [] };
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || {recommendedPuja: [], pujaList: []};
+      return response.data?.record || { recommendedPuja: [], pujaList: [] };
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return {recommendedPuja: [], pujaList: []};
+      return { recommendedPuja: [], pujaList: [] };
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -647,10 +659,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -678,10 +690,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
 };
@@ -854,7 +866,7 @@ export const deleteAddress = (data: deleteAddress) => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, {data})
+      .delete(apiUrl, { data })
       .then(response => {
         resolve(response);
       })
@@ -926,8 +938,8 @@ export const updateAddress = (data: EditAddress) => {
   });
 };
 
-export const getPoojaDetails = (id: string): Promise<any> => {
-  const apiUrl = GET_POOJA_DETAILS.replace('{id}', id);
+export const getPoojaDetails = (panditId: string, id: string): Promise<any> => {
+  const apiUrl = GET_POOJA_DETAILS.replace('{panditId}', panditId).replace('{id}', id);
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)
@@ -1245,7 +1257,7 @@ export const postRegisterFCMToken = (
   let apiUrl = POST_REGISTER_FCM;
   return new Promise((resolve, reject) => {
     apiDev
-      .post(apiUrl, {device_token, app_type})
+      .post(apiUrl, { device_token, app_type })
       .then(response => {
         resolve(response.data);
       })
@@ -1281,6 +1293,43 @@ export const getOldCityApi = () => {
       })
       .catch(error => {
         console.error('Error fetching old city data:', error);
+        reject(error);
+      });
+  });
+};
+
+export const postReviewImageUpload = (data: any, id: string): Promise<any> => {
+  // data should be a FormData instance with one or more 'images' fields
+  const apiUrl = POST_REVIEW_IMAGES.replace('{id}', id);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        // If you need to send auth, add Authorization header here
+      })
+      .then(response => {
+        console.log("response", response);
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error uploading review image:', error?.response?.data || error);
+        reject(error);
+      });
+  });
+};
+
+export const getPanditPujaList = (panditId: string): Promise<any> => {
+  const apiUrl = GET_PANDIT_PUJA_LIST.replace('{panditId}', panditId);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching puja details:', error);
         reject(error);
       });
   });

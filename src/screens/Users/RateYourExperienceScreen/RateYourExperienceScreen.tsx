@@ -25,16 +25,18 @@ import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavi
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
-import {postRatePandit} from '../../../api/apiService';
+import {postRatePandit, postReviewImageUpload} from '../../../api/apiService';
+import ImagePicker from 'react-native-image-crop-picker';
 
 const RateYourExperienceScreen: React.FC = () => {
   const [rating, setRating] = useState<number>(0);
   const [feedback, setFeedback] = useState<string>('');
-
+  const [photos, setPhotos] = useState<any[]>([]);
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'UserPujaDetailsScreen'
   >;
+  console.log('photos', photos);
   const {t, i18n} = useTranslation();
 
   const inset = useSafeAreaInsets();
@@ -59,6 +61,35 @@ const RateYourExperienceScreen: React.FC = () => {
       const ratingValue = rating;
       const reviewText = feedback;
 
+      let uploadedPhotoUrls: string[] = [];
+
+      if (photos.length > 0) {
+        // Upload each photo using postReviewImageUpload
+        // Assume postReviewImageUpload returns { url: string }
+        const uploadPromises = photos.map(async photo => {
+          // Prepare FormData for each image
+          const formData = new FormData();
+          formData.append('images', {
+            uri: photo.uri,
+            type: photo.mime,
+            name: `review_photo_${Date.now()}.${
+              photo.mime?.split('/')[1] || 'jpg'
+            }`,
+          });
+          console.log('formData', formData);
+          // Call the API
+          const res = await postReviewImageUpload(formData, bookingId);
+          console.log('res', res);
+          // Support both {url} and {data: {url}}
+          if (res?.url) return res.url;
+          if (res?.data?.url) return res.data.url;
+          return null;
+        });
+
+        const results = await Promise.all(uploadPromises);
+        uploadedPhotoUrls = results.filter(Boolean) as string[];
+      }
+
       await postRatePandit({
         booking: bookingId,
         rating: ratingValue,
@@ -72,6 +103,35 @@ const RateYourExperienceScreen: React.FC = () => {
       // Optionally handle error, e.g. show a toast
       console.error('Failed to submit rating:', error);
     }
+  };
+
+  const handleAddPhotos = async () => {
+    try {
+      const images = await ImagePicker.openPicker({
+        multiple: true,
+        mediaType: 'photo',
+        maxFiles: 10 - photos.length,
+        compressImageQuality: 0.8,
+        cropping: false,
+      });
+      let selectedImages = Array.isArray(images) ? images : [images];
+      const formatted = selectedImages.map(img => ({
+        uri: Platform.OS === 'ios' ? img.sourceURL || img.path : img.path,
+        mime: img.mime,
+        width: img.width,
+        height: img.height,
+        size: img.size,
+      }));
+      setPhotos(prev => [...prev, ...formatted].slice(0, 10));
+    } catch (error: any) {
+      if (error?.code !== 'E_PICKER_CANCELLED') {
+        console.error('Failed to pick images:', error);
+      }
+    }
+  };
+
+  const handleRemovePhoto = (index: number) => {
+    setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   const renderStar = (index: number) => {
@@ -153,6 +213,45 @@ const RateYourExperienceScreen: React.FC = () => {
               <View style={styles.starsContainer}>
                 {[0, 1, 2, 3, 4].map(renderStar)}
               </View>
+            </View>
+          </View>
+
+          {/* Add multiple photos */}
+          <View style={styles.photoSection}>
+            <Text style={styles.photoSectionTitle}>
+              {t('add_photos_optional') || 'Add Photos (optional)'}
+            </Text>
+            <View style={styles.photoList}>
+              {photos.map((photo, idx) => (
+                <View key={idx} style={styles.photoItem}>
+                  <Image
+                    source={{uri: photo.uri}}
+                    style={styles.photoImage}
+                    resizeMode="cover"
+                  />
+                  <TouchableOpacity
+                    style={styles.removePhotoBtn}
+                    onPress={() => handleRemovePhoto(idx)}>
+                    <AntDesign
+                      name="closecircle"
+                      size={20}
+                      color={COLORS.error}
+                    />
+                  </TouchableOpacity>
+                </View>
+              ))}
+              <TouchableOpacity
+                style={styles.addPhotoBtn}
+                onPress={handleAddPhotos}>
+                <AntDesign
+                  name="pluscircleo"
+                  size={32}
+                  color={COLORS.primary}
+                />
+                <Text style={styles.addPhotoText}>
+                  {t('add_photo') || 'Add'}
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -329,6 +428,59 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Regular,
     marginHorizontal: scale(4),
     marginTop: 8,
+  },
+  photoSection: {
+    marginTop: verticalScale(12),
+    marginBottom: verticalScale(8),
+  },
+  photoSectionTitle: {
+    color: COLORS.textPrimary,
+    fontSize: 15,
+    fontFamily: Fonts.Sen_Medium,
+    marginBottom: verticalScale(6),
+    marginLeft: scale(4),
+  },
+  photoList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: scale(8),
+  },
+  photoItem: {
+    position: 'relative',
+    marginRight: scale(8),
+    marginBottom: scale(8),
+  },
+  photoImage: {
+    width: scale(60),
+    height: scale(60),
+    borderRadius: moderateScale(8),
+    backgroundColor: COLORS.pujaCardSubtext,
+  },
+  removePhotoBtn: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    zIndex: 2,
+  },
+  addPhotoBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: scale(60),
+    height: scale(60),
+    borderRadius: moderateScale(8),
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    borderStyle: 'dashed',
+    backgroundColor: COLORS.white,
+  },
+  addPhotoText: {
+    fontSize: 12,
+    color: COLORS.primary,
+    fontFamily: Fonts.Sen_Regular,
+    marginTop: 2,
   },
   buttonContainer: {
     height: 46,

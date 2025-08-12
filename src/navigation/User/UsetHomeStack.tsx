@@ -34,7 +34,7 @@ export type UserHomeParamList = {
     puja_name: string;
   };
   SelectPujaScreen: undefined;
-  PoojaDetailScreen: {poojaId: any};
+  PoojaDetailScreen: any;
   PlaceSelectionScreen: any;
   AddressSelectionScreen: any;
   TirthPlaceSelectionScreen: any;

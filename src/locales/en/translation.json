@@ -206,5 +206,15 @@
   "address_type_required": "Address type is required",
   "please_fill_all_required_fields": "Please fill all required fields",
   "user_arranged_items": "User Arranged Items",
-  "pandit_arranged_items": "Pandit Arranged Items"
+  "pandit_arranged_items": "Pandit Arranged Items",
+  "add_photos_optional": "Add photos (optional)",
+  "add_photo": "Add Photo",
+  "no_city_found": "No city found.",
+  "no_area_found": "No area found.",
+  "no_language_found": "No language found.",
+  "no_pooja_found": "No pooja found.",
+  "rate_submit_successfully": "Rating submitted successfully.",
+  "please_give_rating": "Please give a rating",
+  "user_reviews": "User Reviews",
+  "with_samagri": "with samagri"
 }
