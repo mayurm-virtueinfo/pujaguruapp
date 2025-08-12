@@ -25,7 +25,10 @@ import {useCommonToast} from '../../../common/CommonToast';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
-import {getPoojaDetails} from '../../../api/apiService';
+import {
+  getPoojaDetails,
+  getPoojaDetailsForPujaList,
+} from '../../../api/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 
@@ -110,7 +113,7 @@ const PujaDetailsScreen: React.FC = () => {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [modalImageUri, setModalImageUri] = useState<string | null>(null);
 
-  const {poojaId, panditId} = route?.params;
+  const {poojaId, panditId, panditName, panditImage} = route?.params;
   console.log('data', data);
   useEffect(() => {
     if (poojaId) {
@@ -118,10 +121,16 @@ const PujaDetailsScreen: React.FC = () => {
     }
   }, [poojaId]);
 
+  // Modified fetchPoojaDetails to only pass panditId if it exists
   const fetchPoojaDetails = async (id: string) => {
     setLoading(true);
     try {
-      const response: any = await getPoojaDetails(panditId, id);
+      let response: any;
+      if (panditId) {
+        response = await getPoojaDetails(panditId, id);
+      } else {
+        response = await getPoojaDetailsForPujaList(id);
+      }
       if (response.success) {
         setData(response.data);
       } else {
@@ -156,6 +165,9 @@ const PujaDetailsScreen: React.FC = () => {
       puja_image: data?.image_url ?? '',
       puja_name: data?.title ?? '',
       price: selectPrice,
+      panditId: panditId,
+      panditName: panditName,
+      panditImage: panditImage,
     });
   };
 

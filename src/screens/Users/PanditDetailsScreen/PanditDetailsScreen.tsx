@@ -26,8 +26,9 @@ import Feather from 'react-native-vector-icons/Feather';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {useCommonToast} from '../../../common/CommonToast';
+import {useTranslation} from 'react-i18next';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
@@ -70,31 +71,44 @@ interface PanditDetails {
   profile_img: string;
   pandit_photo_gallery: PanditPhotoGalleryItem[];
   user_reviews: UserReview[];
+  pandit_poojas: PanditList[];
 }
 
 interface PanditResponse {
   success: boolean;
   data: PanditDetails;
 }
+interface PanditList {
+  pooja: number;
+  pooja_title: string;
+  pooja_image_url: string;
+  price_with_samagri: string;
+  price_without_samagri: string;
+  price_status: number;
+  // surcharge_distance_km: number;
+  // custom_samagri_list: string;
+  // is_enabled: boolean;
+}
 
 const PanditDetailsScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const route = useRoute();
   const {panditId} = route.params as {panditId: string};
-
+  const {t} = useTranslation();
   const {showErrorToast} = useCommonToast();
-
+  const navigation = useNavigation();
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedPandit, setSelectedPandit] = useState<PanditDetails | null>(
     null,
   );
   const [gallery, setGallery] = useState<PanditPhotoGalleryItem[]>([]);
   const [reviews, setReviews] = useState<UserReview[]>([]);
-
+  const [pujaList, setPujaList] = useState<PanditList[]>([]);
+  const [showAllPuja, setShowAllPuja] = useState<boolean>(false);
   // For full image modal
   const [modalVisible, setModalVisible] = useState(false);
   const [modalImageUri, setModalImageUri] = useState<string | null>(null);
-
+  console.log('pujaList', pujaList);
   useEffect(() => {
     if (panditId) {
       fetchPanditDetails(panditId);
@@ -113,6 +127,7 @@ const PanditDetailsScreen: React.FC = () => {
           setSelectedPandit(response.data);
           setGallery(response.data.pandit_photo_gallery || []);
           setReviews(response.data.user_reviews || []);
+          setPujaList(response.data.pandit_poojas || []);
         }
       } catch (error: any) {
         showErrorToast(
@@ -207,11 +222,72 @@ const PanditDetailsScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
+  // Render item for FlatList puja performed
+  const renderPujaItem = ({item}: {item: PanditList}) => (
+    console.log('item :::::: ', item.pooja),
+    (
+      <TouchableOpacity
+        style={styles.poojaItem}
+        onPress={() =>
+          navigation.navigate('UserHomeNavigator', {
+            screen: 'PoojaDetailScreen',
+            params: {poojaId: item?.pooja}, // Pass any required params here
+          })
+        }>
+        <Image
+          source={{uri: item.pooja_image_url}}
+          style={styles.poojaImage}
+          resizeMode="cover"
+        />
+        <View style={styles.poojaDetails}>
+          <Text style={styles.poojaName}>{item.pooja_title}</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: moderateScale(4),
+            }}>
+            {/* {item.price_status === 1 && ( */}
+            <>
+              <Text style={styles.poojaPrice}>₹{item.price_with_samagri}</Text>
+              <Text
+                style={{
+                  marginLeft: 8,
+                  color: COLORS.textSecondary,
+                  fontSize: moderateScale(13),
+                }}>
+                {t('with_samagri')}
+              </Text>
+            </>
+            {/* )} */}
+          </View>
+          {/* {item.price_status === 1 && ( */}
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <Text style={styles.poojaPrice}>₹{item.price_without_samagri}</Text>
+            <Text
+              style={{
+                marginLeft: 8,
+                color: COLORS.textSecondary,
+                fontSize: moderateScale(13),
+              }}>
+              {t('without_samagri')}
+            </Text>
+          </View>
+          {/* )} */}
+        </View>
+      </TouchableOpacity>
+    )
+  );
+
+  // Only show first 3 pujas unless showAllPuja is true
+  const displayedPujaList =
+    showAllPuja || pujaList.length <= 3 ? pujaList : pujaList.slice(0, 3);
+
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
-      <UserCustomHeader title="Panditji Details" showBackButton={true} />
+      <UserCustomHeader title={t('panditji_details')} showBackButton={true} />
 
       {/* Full Image Modal */}
       <Modal
@@ -296,7 +372,36 @@ const PanditDetailsScreen: React.FC = () => {
             )}
           </View>
           {/* Pooja Performed Section */}
-          {/* You can add performed puja section here if needed, based on new API */}
+          <View style={styles.poojaSection}>
+            <Text style={styles.sectionTitle}>{t('puja_list')}</Text>
+            {pujaList && pujaList.length > 0 ? (
+              <View style={styles.poojaList}>
+                {displayedPujaList.map((item, idx) => (
+                  <React.Fragment key={item.pooja}>
+                    {renderPujaItem({item})}
+                    {idx < displayedPujaList.length - 1 && (
+                      <View style={styles.separator} />
+                    )}
+                  </React.Fragment>
+                ))}
+                {/* Show "More..." button if there are more than 3 pujas and not showing all */}
+                {!showAllPuja && pujaList.length > 3 && (
+                  <TouchableOpacity
+                    style={styles.moreButton}
+                    onPress={() => setShowAllPuja(true)}
+                    activeOpacity={0.7}>
+                    <Text style={styles.moreButtonText}>More...</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : (
+              <View style={[THEMESHADOW.shadow, styles.forNodata]}>
+                <Text style={styles.forNoDataText}>
+                  No puja performed data available.
+                </Text>
+              </View>
+            )}
+          </View>
           {/* Reviews Section */}
           <View style={styles.reviewsSection}>
             <Text style={styles.sectionTitle}>Reviews</Text>
@@ -652,6 +757,20 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     borderRadius: 20,
     padding: 4,
+  },
+  moreButton: {
+    marginTop: moderateScale(10),
+    alignSelf: 'center',
+    paddingVertical: moderateScale(6),
+    paddingHorizontal: moderateScale(18),
+    backgroundColor: COLORS.primaryBackgroundButton,
+    borderRadius: moderateScale(20),
+  },
+  moreButtonText: {
+    color: COLORS.white,
+    fontFamily: Fonts.Sen_SemiBold,
+    fontSize: moderateScale(14),
+    fontWeight: '600',
   },
 });
 

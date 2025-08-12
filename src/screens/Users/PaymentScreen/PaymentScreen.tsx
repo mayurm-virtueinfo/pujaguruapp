@@ -56,8 +56,8 @@ const PaymentScreen: React.FC = () => {
     muhurat_type,
     notes,
     pandit,
-    pandit_name,
-    pandit_image,
+    panditName,
+    panditImage,
     puja_name,
     puja_image,
     price,
@@ -234,6 +234,8 @@ const PaymentScreen: React.FC = () => {
           booking: booking_id,
           panditjiData: panditjiData,
           selectManualPanitData: selectManualPanitData,
+          panditName: panditName,
+          panditImage: panditImage,
         });
       } else {
         showErrorToast(response?.message || 'Payment verification failed===>.');
@@ -438,12 +440,17 @@ const PaymentScreen: React.FC = () => {
             uri:
               selectManualPanitData?.image ||
               panditjiData?.profile_img ||
+              panditImage ||
               'https://via.placeholder.com/150',
           }}
           style={styles.panditImage}
         />
         <Text style={styles.bookingDataText}>
-          {panditjiData?.full_name || selectManualPanitData?.name || 'Panditji'}
+          {panditjiData?.full_name ||
+            selectManualPanitData?.name ||
+            panditName ||
+            'Panditji'}{' '}
+          {'Panditji'}
         </Text>
       </View>
     </View>

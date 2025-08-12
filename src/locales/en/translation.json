@@ -216,5 +216,17 @@
   "rate_submit_successfully": "Rating submitted successfully.",
   "please_give_rating": "Please give a rating",
   "user_reviews": "User Reviews",
-  "with_samagri": "with samagri"
+  "with_samagri": "with samagri",
+  "without_samagri": "Without samagri",
+  "panditji_details": "Panditji Details",
+  "current_date": "Current Date",
+  "available_date": "Pandit Available Date",
+  "no_puja_found": "No puja found.",
+  "search_pandit_screen_title": "Find Nearby Pandit",
+  "search_pandit_screen_heading": "Searching for Pandits Near You",
+  "search_pandit_screen_subheading": "We are connecting you with the best available Pandits in your area.",
+  "search_pandit_screen_scanning_location": "Scanning your location...",
+  "search_pandit_screen_finding_nearby_pandits": "Finding nearby Pandits...",
+  "search_pandit_screen_matching_requirements": "Matching your requirements...",
+  "search_pandit_screen_almost_there": "Almost there..."
 }

@@ -49,7 +49,7 @@ const SelectPujaScreen: React.FC = () => {
   const [selectedPujaId, setSelectedPujaId] = useState<number | null>(null);
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute() as any;
-  const {panditId} = route?.params;
+  const {panditId, panditName, panditImage} = route?.params;
 
   useEffect(() => {
     fetchPujaList();
@@ -86,6 +86,8 @@ const SelectPujaScreen: React.FC = () => {
       navigation.navigate('PoojaDetailScreen', {
         poojaId: selectedPujaId,
         panditId: panditId,
+        panditName: panditName,
+        panditImage: panditImage,
       });
     }
   };

@@ -40,6 +40,8 @@ import ApiEndpoints, {
   GET_OLD_CITY_API,
   POST_REVIEW_IMAGES,
   GET_PANDIT_PUJA_LIST,
+  GET_POOJA_DETAIL_FOR_PUJA_LIST,
+  GET_PANDIT_AVAILABILITY,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -953,6 +955,21 @@ export const getPoojaDetails = (panditId: string, id: string): Promise<any> => {
   });
 };
 
+export const getPoojaDetailsForPujaList = (id: string): Promise<any> => {
+  const apiUrl = GET_POOJA_DETAIL_FOR_PUJA_LIST.replace('{id}', id);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching puja details:', error);
+        reject(error);
+      });
+  });
+};
+
 export const postBooking = (data: Booking) => {
   let apiUrl = POST_BOOKING;
   return new Promise((resolve, reject) => {
@@ -1329,7 +1346,22 @@ export const getPanditPujaList = (panditId: string): Promise<any> => {
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error fetching puja details:', error);
+        console.error('Error fetching pandit puja list:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getPanditAvailability = (panditId: any): Promise<any> => {
+  const apiUrl = GET_PANDIT_AVAILABILITY.replace('{pandit_id}', panditId);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching pandit available date:', error);
         reject(error);
       });
   });

@@ -10,6 +10,8 @@ interface CalendarProps {
   month?: string;
   onMonthChange?: (direction: 'prev' | 'next') => void;
   date: number;
+  selectableDates?: string[]; // New prop for available/selectable dates
+  disableMonthChange?: boolean; // New prop to disable month changing
 }
 
 function getMonthYearFromString(monthStr: string) {
@@ -61,6 +63,8 @@ const Calendar: React.FC<CalendarProps> = ({
   onDateSelect,
   month,
   onMonthChange,
+  selectableDates,
+  disableMonthChange,
 }) => {
   const [currentSelected, setCurrentSelected] = useState<string>();
 
@@ -123,7 +127,33 @@ const Calendar: React.FC<CalendarProps> = ({
     };
   }
 
+  // Optionally mark available dates with a dot or different style
+  if (selectableDates) {
+    selectableDates.forEach(date => {
+      if (!markedDates[date]) {
+        markedDates[date] = {
+          customStyles: {
+            container: {
+              borderWidth: 1,
+              borderColor: COLORS.gradientEnd,
+              borderRadius: 9999,
+              width: wp(8),
+              height: wp(8),
+              alignItems: 'center',
+              justifyContent: 'center',
+              alignSelf: 'center',
+            },
+            text: {
+              color: COLORS.primaryTextDark,
+            },
+          },
+        };
+      }
+    });
+  }
+
   const handleMonthChange = (dateObj: CalendarDayObject) => {
+    if (disableMonthChange) return; // Prevent month change if disabled
     if (!onMonthChange) return;
     const currentMonth = monthIdx + 1;
     if (dateObj.month < currentMonth || dateObj.year < year) {
@@ -134,6 +164,10 @@ const Calendar: React.FC<CalendarProps> = ({
   };
 
   const handleDayPress = (day: CalendarDayObject) => {
+    // Only allow selection if date is in selectableDates (if provided)
+    if (selectableDates && !selectableDates.includes(day.dateString)) {
+      return;
+    }
     setCurrentSelected(day.dateString);
     onDateSelect?.(day.dateString);
   };
@@ -184,7 +218,7 @@ const Calendar: React.FC<CalendarProps> = ({
           </Text>
         )}
         firstDay={0}
-        enableSwipeMonths={true}
+        enableSwipeMonths={!disableMonthChange} // Disable swiping if month change is disabled
       />
     </View>
   );

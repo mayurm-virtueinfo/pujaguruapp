@@ -34,7 +34,13 @@ const BookingSuccessfullyScreen: React.FC = () => {
   const route = useRoute();
   // Check if route.params exists and has the expected property
   // Always extract booking from route.params, even if it's null/undefined
-  const {booking, panditjiData, selectManualPanitData} = route.params as any;
+  const {
+    booking,
+    panditjiData,
+    selectManualPanitData,
+    panditName,
+    panditImage,
+  } = route.params as any;
 
   console.log('booking-1', booking);
 
@@ -66,6 +72,8 @@ const BookingSuccessfullyScreen: React.FC = () => {
                   booking: booking,
                   panditjiData: panditjiData,
                   selectManualPanitData: selectManualPanitData,
+                  panditName: panditName,
+                  panditImage: panditImage,
                 })
               }
               style={styles.buttonContainer}

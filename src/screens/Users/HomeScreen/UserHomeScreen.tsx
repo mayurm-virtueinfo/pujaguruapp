@@ -142,10 +142,16 @@ const UserHomeScreen: React.FC = () => {
     }
   };
 
-  // Fix: Pass correct panditId to navigation
-  const handleBookPandit = (panditId: number) => {
+  // Fix: Pass correct panditId, PanditName, and panditImage to navigation
+  const handleBookPandit = (
+    panditId: number,
+    panditName: string,
+    panditImage: string,
+  ) => {
     navigation.navigate('SelectPujaScreen', {
       panditId: panditId,
+      panditName: panditName,
+      panditImage: panditImage,
     });
   };
 
@@ -197,54 +203,63 @@ const UserHomeScreen: React.FC = () => {
             style={styles.panditCardsContainer}
             contentContainerStyle={styles.panditCardsContentContainer}>
             {recomendedPandits && recomendedPandits.length > 0 ? (
-              recomendedPandits.map((pandit: any) => (
-                <View style={styles.panditCard} key={pandit.id}>
-                  <View style={styles.panditImageWrapper}>
-                    <Image
-                      source={{
-                        uri:
-                          pandit.profile_img ||
-                          'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg',
-                      }}
-                      style={styles.panditImage}
-                      accessibilityLabel={`Profile image of ${pandit.full_name}`}
-                    />
-                    <View style={styles.ratingContainerAbsolute}>
-                      <Ionicons
-                        name="star"
-                        size={16}
-                        color={COLORS.primaryBackgroundButton}
-                        style={{marginRight: 5}}
+              recomendedPandits.map((pandit: any) => {
+                const panditImage =
+                  pandit.profile_img ||
+                  'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg';
+                return (
+                  <View style={styles.panditCard} key={pandit.id}>
+                    <View style={styles.panditImageWrapper}>
+                      <Image
+                        source={{
+                          uri: panditImage,
+                        }}
+                        style={styles.panditImage}
+                        accessibilityLabel={`Profile image of ${pandit.full_name}`}
                       />
-                      <Text style={styles.ratingText}>
-                        {pandit.average_rating}
-                      </Text>
+                      <View style={styles.ratingContainerAbsolute}>
+                        <Ionicons
+                          name="star"
+                          size={16}
+                          color={COLORS.primaryBackgroundButton}
+                          style={{marginRight: 5}}
+                        />
+                        <Text style={styles.ratingText}>
+                          {pandit.average_rating}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text
+                      style={styles.panditName}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      {pandit.full_name}
+                    </Text>
+                    <View style={{alignSelf: 'center'}}>
+                      <PrimaryButton
+                        title={t('book')}
+                        onPress={() =>
+                          handleBookPandit(
+                            pandit.pandit_id,
+                            pandit.full_name,
+                            panditImage,
+                          )
+                        }
+                        style={{
+                          maxWidth: 90,
+                          maxHeight: 40,
+                        }}
+                        textStyle={{
+                          paddingHorizontal: 12,
+                          textAlign: 'center',
+                          fontSize: 15,
+                          fontFamily: Fonts.Sen_Medium,
+                        }}
+                      />
                     </View>
                   </View>
-                  <Text
-                    style={styles.panditName}
-                    numberOfLines={1}
-                    ellipsizeMode="tail">
-                    {pandit.full_name}
-                  </Text>
-                  <View style={{alignSelf: 'center'}}>
-                    <PrimaryButton
-                      title={t('book')}
-                      onPress={() => handleBookPandit(pandit.pandit_id)}
-                      style={{
-                        maxWidth: 90,
-                        maxHeight: 40,
-                      }}
-                      textStyle={{
-                        paddingHorizontal: 12,
-                        textAlign: 'center',
-                        fontSize: 15,
-                        fontFamily: Fonts.Sen_Medium,
-                      }}
-                    />
-                  </View>
-                </View>
-              ))
+                );
+              })
             ) : (
               <View
                 style={[
@@ -270,7 +285,7 @@ const UserHomeScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>
             {t('in_progress_pujas') || 'In-progress Pujas'}
           </Text>
-          <View style={styles.pujaCardsContainer}>
+          <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
             {inProgressPujas && inProgressPujas.length > 0 ? (
               inProgressPujas.map((puja, idx) => (
                 <View key={puja.id}>
@@ -310,7 +325,7 @@ const UserHomeScreen: React.FC = () => {
         <View style={styles.pujaSection}>
           <Text style={styles.sectionTitle}>{t('upcoming_pujas')}</Text>
 
-          <View style={styles.pujaCardsContainer}>
+          <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
             {pujas && pujas.length > 0 ? (
               pujas.map((puja, idx) => (
                 <View key={puja.id}>
@@ -476,19 +491,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(10),
     paddingHorizontal: moderateScale(14),
     paddingVertical: moderateScale(14),
-    marginTop: moderateScale(12),
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.18,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-        shadowColor: '#000',
-      },
-    }),
+    marginVertical: moderateScale(12),
   },
   pujaCard: {
     flexDirection: 'row',

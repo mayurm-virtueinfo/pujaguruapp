@@ -45,7 +45,7 @@ const PujaListScreen: React.FC = () => {
 
   const [pujaList, setPujaList] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-
+  console.log('pujaList', pujaList);
   const navigation = useNavigation<ScreenNavigationProp>();
 
   useEffect(() => {

@@ -17,6 +17,7 @@ import BookedPujaDetailsScreen from '../../screens/Users/UserPujaDetailsScreen/U
 import UserChatScreen from '../../screens/Users/UserChatScreen/UserChatScreen';
 import UserPujaDetailsScreen from '../../screens/Users/UserPujaDetailsScreen/UserPujaDetailsScreen';
 import AddAddressScreen from '../../screens/Users/AddAddressScreen/AddAddressScreen';
+import SearchPanditScreen from '../../screens/Users/SearchPanditScreen/SearchPanditScreen';
 
 export type UserPoojaListParamList = {
   goBack(): void;
@@ -34,6 +35,7 @@ export type UserPoojaListParamList = {
     price: string;
     selectAddressName?: string;
     selectTirthPlaceName?: string;
+    panditId: string;
   };
   UserPoojaDetails: {poojaId: string};
   PlaceSelectionScreen: any;
@@ -53,6 +55,7 @@ export type UserPoojaListParamList = {
     pandit_id: string;
   };
   AddAddressScreen: undefined;
+  SearchPanditScreen: undefined;
 };
 
 const Stack = createStackNavigator<UserPoojaListParamList>();
@@ -109,6 +112,7 @@ const UserPoojaListNavigator = () => {
       />
       <Stack.Screen name="UserChatScreen" component={UserChatScreen} />
       <Stack.Screen name="AddAddressScreen" component={AddAddressScreen} />
+      <Stack.Screen name="SearchPanditScreen" component={SearchPanditScreen} />
     </Stack.Navigator>
   );
 };

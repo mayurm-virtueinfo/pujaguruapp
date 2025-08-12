@@ -44,7 +44,13 @@ const RateYourExperienceScreen: React.FC = () => {
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const route = useRoute();
-  const {booking, panditjiData, selectManualPanitData} = route.params as any;
+  const {
+    booking,
+    panditjiData,
+    selectManualPanitData,
+    panditName,
+    panditImage,
+  } = route.params as any;
   console.log('booking=====>', booking);
   const handleStarPress = (starIndex: number) => {
     setRating(starIndex + 1);
@@ -172,6 +178,7 @@ const RateYourExperienceScreen: React.FC = () => {
                   uri:
                     panditjiData?.profile_img ||
                     selectManualPanitData?.image ||
+                    panditImage ||
                     'https://cdn.builder.io/api/v1/image/assets/TEMP/db9492299c701c6ca2a23d6de9fc258e7ec2b5fd?width=160',
                 }}
                 style={styles.panditImage}
@@ -180,7 +187,9 @@ const RateYourExperienceScreen: React.FC = () => {
             </View>
             <View style={styles.panditInfo}>
               <Text style={styles.panditName}>
-                {panditjiData?.full_name || selectManualPanitData?.name}
+                {panditjiData?.full_name ||
+                  selectManualPanitData?.name ||
+                  panditName}
               </Text>
               <Text style={styles.panditPurpose}>For family well-being</Text>
               <PrimaryButton

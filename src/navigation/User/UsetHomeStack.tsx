@@ -20,7 +20,7 @@ import AddAddressScreen from '../../screens/Users/AddAddressScreen/AddAddressScr
 export type UserHomeParamList = {
   goBack(): unknown;
   navigate(arg0: string, arg1: {poojaId: any}): unknown;
-  UserHomeScreen: undefined;
+  UserHomeScreen: any;
   PujaCancellationScreen: undefined;
   NotificationScreen: undefined;
   PujaBooking: {
@@ -32,8 +32,11 @@ export type UserHomeParamList = {
     poojaDescription?: any;
     puja_image: string;
     puja_name: string;
+    panditId: string;
+    panditName: string;
+    panditImage: string;
   };
-  SelectPujaScreen: undefined;
+  SelectPujaScreen: any;
   PoojaDetailScreen: any;
   PlaceSelectionScreen: any;
   AddressSelectionScreen: any;

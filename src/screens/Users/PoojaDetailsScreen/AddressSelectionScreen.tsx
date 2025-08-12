@@ -43,8 +43,16 @@ const AddressSelectionScreen: React.FC = () => {
 
   const route = useRoute();
 
-  const {poojaId, samagri_required, puja_image, puja_name, price} =
-    route.params as any;
+  const {
+    poojaId,
+    samagri_required,
+    puja_image,
+    puja_name,
+    price,
+    panditId,
+    panditName,
+    panditImage,
+  } = route?.params as any;
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingAddress[]>([]);
 
@@ -107,6 +115,9 @@ const AddressSelectionScreen: React.FC = () => {
       puja_name: puja_name,
       price: price,
       selectAddressName: selectedAddress?.name || '',
+      panditId: panditId,
+      panditName: panditName,
+      panditImage: panditImage,
     });
   };
 

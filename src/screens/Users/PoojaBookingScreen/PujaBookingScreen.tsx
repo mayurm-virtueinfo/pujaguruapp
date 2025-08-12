@@ -24,7 +24,11 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
-import {getMuhrat, getPanditji} from '../../../api/apiService';
+import {
+  getMuhrat,
+  getPanditji,
+  getPanditAvailability,
+} from '../../../api/apiService';
 import {useCommonToast} from '../../../common/CommonToast';
 import CustomeLoader from '../../../components/CustomeLoader';
 import PrimaryButton from '../../../components/PrimaryButton';
@@ -69,8 +73,11 @@ const PujaBookingScreen: React.FC = () => {
     price,
     selectTirthPlaceName,
     selectAddressName,
-  } = route.params as any;
-
+    panditId,
+    panditName,
+    panditImage,
+  } = route?.params as any;
+  console.log('panditId', panditId);
   const {showErrorToast, showSuccessToast} = useCommonToast();
 
   const [selectedSlot, setSelectedSlot] = useState<string>('');
@@ -93,10 +100,31 @@ const PujaBookingScreen: React.FC = () => {
   const [location, setLocation] = useState<any>(null);
   const [muhurats, setMuhurats] = useState<any[]>([]);
   const [panditjiData, setPanditjiData] = useState({});
-
+  const [availableDates, setAvailableDates] = useState<string[] | null>(null);
+  console.log('availableDates', availableDates);
+  // If panditId is present, fetch available dates for that pandit
   useEffect(() => {
     fetchLocation();
   }, []);
+
+  useEffect(() => {
+    if (panditId) {
+      fetchPanditAvailableDate();
+    }
+  }, [panditId]);
+
+  useEffect(() => {
+    if (
+      location &&
+      (!panditId ||
+        (panditId &&
+          availableDates &&
+          availableDates.includes(selectedDateString)))
+    ) {
+      fetchMuhurat(selectedDateString);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDateString, location, availableDates, panditId]);
 
   const fetchLocation = async () => {
     try {
@@ -107,6 +135,61 @@ const PujaBookingScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching  location ::', error);
+    }
+  };
+
+  // Fetch available dates for the given panditId and poojaId
+  const fetchPanditAvailableDate = async () => {
+    try {
+      setLoading(true);
+
+      const response = await getPanditAvailability(panditId);
+
+      if (response && Array.isArray(response)) {
+        // Get all available dates from the response
+        const availableDatesList = response
+          .filter((item: any) => item.is_available && item.date)
+          .map((item: any) => item.date);
+
+        console.log('All available dates:', availableDatesList);
+
+        if (availableDatesList.length > 0) {
+          // Set all available dates as an array
+          setAvailableDates(availableDatesList);
+
+          // Set the first available date as selected by default
+          const firstAvailable = availableDatesList[0];
+          setSelectedDateString(firstAvailable);
+          const parsedDate = new Date(firstAvailable);
+          setSelectedDate(parsedDate.getDate());
+          setCurrentMonth(
+            `${parsedDate.toLocaleString('default', {
+              month: 'long',
+            })} ${parsedDate.getFullYear()}`,
+          );
+        } else {
+          setAvailableDates(null);
+          showErrorToast(
+            t('no_available_date_for_pandit') ||
+              'No available date for selected pandit.',
+          );
+        }
+      } else {
+        setAvailableDates(null);
+        showErrorToast(
+          t('no_available_date_for_pandit') ||
+            'No available date for selected pandit.',
+        );
+      }
+    } catch (error: any) {
+      setAvailableDates(null);
+      showErrorToast(
+        error?.message ||
+          t('no_available_date_for_pandit') ||
+          'No available date for selected pandit.',
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -144,16 +227,6 @@ const PujaBookingScreen: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    // console.log('muhurats updated:', muhurats);
-  }, [muhurats]);
-
-  useEffect(() => {
-    if (location) {
-      fetchMuhurat(selectedDateString);
-    }
-  }, [selectedDateString, location]);
-
   const fetchMuhurat = async (dateString?: string) => {
     try {
       setLoading(true);
@@ -181,6 +254,7 @@ const PujaBookingScreen: React.FC = () => {
     setSelectedSlotObj(slot);
   };
 
+  // Modified handleNextButtonPress to directly navigate to PaymentScreen if panditId exists
   const handleNextButtonPress = () => {
     if (!selectedDateString) {
       showErrorToast(t('please_select_date') || 'Please select a date.');
@@ -192,6 +266,45 @@ const PujaBookingScreen: React.FC = () => {
       );
       return;
     }
+
+    // Prepare selected date in YYYY-MM-DD format
+    let selectedDateISO = selectedDateString;
+    if (!selectedDateISO) {
+      selectedDateISO = formatDateYYYYMMDD(today);
+    } else {
+      selectedDateISO = formatDateYYYYMMDD(selectedDateISO);
+    }
+
+    // Prepare muhurat time and type
+    let muhuratTime = '';
+    let muhuratType = '';
+    if (selectedSlotObj) {
+      muhuratTime = `${selectedSlotObj.start} - ${selectedSlotObj.end}`;
+      muhuratType = selectedSlotObj.type;
+    }
+
+    // If panditId exists, navigate directly to PaymentScreen
+    if (panditId) {
+      navigation.navigate('PaymentScreen', {
+        poojaId: poojaId,
+        samagri_required: samagri_required,
+        address: address,
+        tirth: tirth,
+        booking_date: selectedDateISO,
+        muhurat_time: muhuratTime,
+        muhurat_type: muhuratType,
+        notes: additionalNotes,
+        puja_image: puja_image,
+        puja_name: puja_name,
+        price: price,
+        selectAddress: selectTirthPlaceName || selectAddressName,
+        pandit: panditId,
+        panditName: panditName,
+        panditImage: panditImage,
+      });
+      return;
+    }
+
     setModalVisible(true);
   };
 
@@ -294,7 +407,12 @@ const PujaBookingScreen: React.FC = () => {
             <View key={slotKey}>
               <TouchableOpacity
                 style={styles.slotItem}
-                onPress={() => handleSlotSelect(slot)}>
+                onPress={() => handleSlotSelect(slot)}
+                disabled={
+                  panditId &&
+                  availableDates &&
+                  !availableDates.includes(selectedDateString)
+                }>
                 <View style={styles.slotContent}>
                   <View style={styles.slotTextContainer}>
                     <Text style={styles.slotName}>{slot.type}</Text>
@@ -324,6 +442,105 @@ const PujaBookingScreen: React.FC = () => {
       </View>
     </View>
   );
+
+  // Calendar props for panditId: only show availableDates as selectable
+  const calendarProps =
+    panditId && availableDates && availableDates.length > 0
+      ? {
+          date: new Date(availableDates[0]).getDate(),
+          month: `${new Date(availableDates[0]).toLocaleString('default', {
+            month: 'long',
+          })} ${new Date(availableDates[0]).getFullYear()}`,
+          onDateSelect: (dateString: string) => {
+            // Only allow selection if dateString is in availableDates
+            if (!availableDates.includes(dateString)) {
+              showErrorToast(
+                t('only_this_date_available') ||
+                  'Only available dates can be selected for this pandit.',
+              );
+              return;
+            }
+            setSelectedDate(new Date(dateString).getDate());
+            setSelectedDateString(dateString);
+            setSelectedSlot('');
+            setSelectedSlotObj(null);
+            setMuhurats([]);
+          },
+          onMonthChange: () => {}, // Disable month change if all dates are in one month; adjust if needed
+          selectableDates: availableDates,
+          disableMonthChange: true,
+        }
+      : {
+          date: selectedDate,
+          month: currentMonth,
+          onDateSelect: (dateString: string) => {
+            if (
+              !dateString ||
+              typeof dateString !== 'string' ||
+              !/^\d{4}-\d{2}-\d{2}$/.test(dateString)
+            ) {
+              showErrorToast(
+                t('please_select_date') || 'Please select a valid date.',
+              );
+              return;
+            }
+            const parsedDate = new Date(dateString);
+            if (isNaN(parsedDate.getTime())) {
+              showErrorToast(
+                t('please_select_date') || 'Please select a valid date.',
+              );
+              return;
+            }
+            setSelectedDate(parsedDate.getDate());
+            setSelectedDateString(dateString);
+            setSelectedSlot('');
+            setSelectedSlotObj(null);
+            setMuhurats([]); // Clear muhurats immediately
+            setCurrentMonth(
+              `${parsedDate.toLocaleString('default', {
+                month: 'long',
+              })} ${parsedDate.getFullYear()}`,
+            );
+            if (!location) {
+              showErrorToast(
+                t('location_not_found') ||
+                  'Location not found. Please set your location first.',
+              );
+            }
+          },
+          onMonthChange: (direction: 'prev' | 'next') => {
+            const [monthName, yearStr] = currentMonth.split(' ');
+            const monthIdx = new Date(`${monthName} 1, ${yearStr}`).getMonth();
+            let newMonthIdx = monthIdx;
+            let newYear = parseInt(yearStr, 10);
+            if (direction === 'prev') {
+              newMonthIdx -= 1;
+              if (newMonthIdx < 0) {
+                newMonthIdx = 11;
+                newYear -= 1;
+              }
+            } else {
+              newMonthIdx += 1;
+              if (newMonthIdx > 11) {
+                newMonthIdx = 0;
+                newYear += 1;
+              }
+            }
+            const newMonthName = new Date(newYear, newMonthIdx).toLocaleString(
+              'default',
+              {month: 'long'},
+            );
+            setCurrentMonth(`${newMonthName} ${newYear}`);
+            setSelectedDate(1);
+            const newDate = new Date(newYear, newMonthIdx, 1);
+            const formattedDate = formatDateYYYYMMDD(newDate);
+            setSelectedDateString(formattedDate);
+            setSelectedSlot('');
+            setSelectedSlotObj(null);
+            setMuhurats([]);
+            fetchMuhurat(formattedDate);
+          },
+        };
 
   return (
     <SafeAreaView style={[styles.container]}>
@@ -367,80 +584,54 @@ const PujaBookingScreen: React.FC = () => {
               </View>
             </View>
 
-            <Calendar
-              date={selectedDate}
-              onDateSelect={dateString => {
-                if (
-                  !dateString ||
-                  typeof dateString !== 'string' ||
-                  !/^\d{4}-\d{2}-\d{2}$/.test(dateString)
-                ) {
-                  showErrorToast(
-                    t('please_select_date') || 'Please select a valid date.',
-                  );
-                  return;
-                }
-                const parsedDate = new Date(dateString);
-                if (isNaN(parsedDate.getTime())) {
-                  showErrorToast(
-                    t('please_select_date') || 'Please select a valid date.',
-                  );
-                  return;
-                }
-                setSelectedDate(parsedDate.getDate());
-                setSelectedDateString(dateString);
-                setSelectedSlot('');
-                setSelectedSlotObj(null);
-                setMuhurats([]); // Clear muhurats immediately
-                setCurrentMonth(
-                  `${parsedDate.toLocaleString('default', {
-                    month: 'long',
-                  })} ${parsedDate.getFullYear()}`,
-                );
-                if (!location) {
-                  showErrorToast(
-                    t('location_not_found') ||
-                      'Location not found. Please set your location first.',
-                  );
-                }
-              }}
-              month={currentMonth}
-              onMonthChange={direction => {
-                const [monthName, yearStr] = currentMonth.split(' ');
-                const monthIdx = new Date(
-                  `${monthName} 1, ${yearStr}`,
-                ).getMonth();
-                let newMonthIdx = monthIdx;
-                let newYear = parseInt(yearStr, 10);
-                if (direction === 'prev') {
-                  newMonthIdx -= 1;
-                  if (newMonthIdx < 0) {
-                    newMonthIdx = 11;
-                    newYear -= 1;
-                  }
-                } else {
-                  newMonthIdx += 1;
-                  if (newMonthIdx > 11) {
-                    newMonthIdx = 0;
-                    newYear += 1;
-                  }
-                }
-                const newMonthName = new Date(
-                  newYear,
-                  newMonthIdx,
-                ).toLocaleString('default', {month: 'long'});
-                setCurrentMonth(`${newMonthName} ${newYear}`);
-                setSelectedDate(1);
-                const newDate = new Date(newYear, newMonthIdx, 1);
-                const formattedDate = formatDateYYYYMMDD(newDate);
-                setSelectedDateString(formattedDate);
-                setSelectedSlot('');
-                setSelectedSlotObj(null);
-                setMuhurats([]);
-                fetchMuhurat(formattedDate);
-              }}
-            />
+            <Calendar {...calendarProps} />
 
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginBottom: verticalScale(12),
+              }}>
+              {/* Current date legend */}
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  backgroundColor: '#FA1927',
+                  marginRight: 6,
+                  borderWidth: 1,
+                  borderColor: '#FA1927',
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: moderateScale(12),
+                  color: COLORS.primaryTextDark,
+                  marginRight: 16,
+                }}>
+                {t('current_date')}
+              </Text>
+              {/* Available date legend */}
+              <View
+                style={{
+                  width: 18,
+                  height: 18,
+                  borderRadius: 9,
+                  borderWidth: 1,
+                  borderColor: COLORS.gradientEnd,
+                  marginRight: 6,
+                  backgroundColor: '#fff',
+                }}
+              />
+              <Text
+                style={{
+                  fontSize: moderateScale(12),
+                  color: COLORS.primaryTextDark,
+                }}>
+                {t('available_date')}
+              </Text>
+            </View>
             {renderMuhuratSlots()}
 
             {/* Additional Notes Section */}
