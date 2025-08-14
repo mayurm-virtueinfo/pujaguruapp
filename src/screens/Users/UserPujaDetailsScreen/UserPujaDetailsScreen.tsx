@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Image,
   Platform,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {
@@ -32,7 +33,7 @@ import {getUpcomingPujaDetails, postStartChat} from '../../../api/apiService';
 const UserPujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
-    'PujaCancellationScreen' | 'UserChatScreen'
+    'PujaCancellationScreen' | 'UserChatScreen' | 'RateYourExperienceScreen'
   >;
   const route = useRoute();
   const {id} = route.params as any;
@@ -42,28 +43,73 @@ const UserPujaDetailsScreen: React.FC = () => {
 
   const [pujaDetails, setPujaDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  console.log('pujaDetail :: ', pujaDetails);
+
+  // Track the previous booking status to detect changes
+  const prevBookingStatus = useRef<string | null>(null);
+  // Track if we've navigated to RateYourExperienceScreen for this booking
+  const hasNavigatedToRate = useRef(false);
+
+  // Track if we've already handled the in-progress pin logic
+  const hasHandledInProgressPin = useRef(false);
+
+  // Helper to reload puja details
+  const fetchPujaDetails = async () => {
+    setLoading(true);
+    try {
+      const details = await getUpcomingPujaDetails(id?.toString());
+      setPujaDetails(details);
+    } catch (error) {
+      setPujaDetails(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useFocusEffect(
     React.useCallback(() => {
-      const fetchPujaDetails = async () => {
-        setLoading(true);
-        try {
-          const details = await getUpcomingPujaDetails(id?.toString());
-          setPujaDetails(details);
-        } catch (error) {
-          setPujaDetails(null);
-        } finally {
-          setLoading(false);
-        }
-      };
-      if (id) {
-        fetchPujaDetails();
-      }
+      fetchPujaDetails();
+      // Reset navigation flag and previous booking status when screen is focused
+      hasNavigatedToRate.current = false;
+      prevBookingStatus.current = null;
+      hasHandledInProgressPin.current = false;
     }, [id]),
   );
 
-  console.log('pujaDetails :: ', pujaDetails);
+  // Effect to handle status changes
+  useEffect(() => {
+    if (
+      pujaDetails &&
+      pujaDetails.booking_status &&
+      pujaDetails.assigned_pandit
+    ) {
+      // 1. If booking_status changed to 'completed' and we haven't navigated yet
+      if (
+        pujaDetails.booking_status === 'completed' &&
+        prevBookingStatus.current !== 'completed' &&
+        !hasNavigatedToRate.current
+      ) {
+        hasNavigatedToRate.current = true;
+        navigation.navigate('RateYourExperienceScreen', {
+          booking: pujaDetails.id,
+          panditjiData: pujaDetails.assigned_pandit,
+        });
+      }
+
+      // 2. If booking_status changed from 'accepted' to 'in_progress', reload details to get completion pin
+      if (
+        prevBookingStatus.current === 'accepted' &&
+        pujaDetails.booking_status === 'in_progress' &&
+        !hasHandledInProgressPin.current
+      ) {
+        hasHandledInProgressPin.current = true;
+        // Refetch details to get the completion pin
+        fetchPujaDetails();
+      }
+
+      // Update previous booking status for next render
+      prevBookingStatus.current = pujaDetails.booking_status;
+    }
+  }, [pujaDetails, navigation]);
 
   const handlePujaItemsPress = () => {
     setIsPujaItemsModalVisible(true);

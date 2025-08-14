@@ -66,16 +66,8 @@ const BookingSuccessfullyScreen: React.FC = () => {
               {t('booking_completed_successfully')}
             </Text>
             <PrimaryButton
-              title={t('rate_your_experience')}
-              onPress={() =>
-                navigation.navigate('RateYourExperienceScreen', {
-                  booking: booking,
-                  panditjiData: panditjiData,
-                  selectManualPanitData: selectManualPanitData,
-                  panditName: panditName,
-                  panditImage: panditImage,
-                })
-              }
+              title={t('go_to_home')}
+              onPress={() => navigation.replace('UserHomeScreen')}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}
             />

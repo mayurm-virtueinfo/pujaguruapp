@@ -27,6 +27,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import {postRatePandit, postReviewImageUpload} from '../../../api/apiService';
 import ImagePicker from 'react-native-image-crop-picker';
+import {useCommonToast} from '../../../common/CommonToast';
 
 const RateYourExperienceScreen: React.FC = () => {
   const [rating, setRating] = useState<number>(0);
@@ -40,7 +41,7 @@ const RateYourExperienceScreen: React.FC = () => {
   const {t, i18n} = useTranslation();
 
   const inset = useSafeAreaInsets();
-
+  const {showErrorToast, showSuccessToast} = useCommonToast();
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const route = useRoute();
@@ -104,9 +105,11 @@ const RateYourExperienceScreen: React.FC = () => {
 
       setRating(0);
       setFeedback('');
+      showSuccessToast(t('rate_submit_successfully'));
       navigation.navigate('UserPujaDetailsScreen', {id: booking});
     } catch (error) {
       // Optionally handle error, e.g. show a toast
+      showErrorToast(error?.response?.data?.message);
       console.error('Failed to submit rating:', error);
     }
   };
@@ -176,7 +179,7 @@ const RateYourExperienceScreen: React.FC = () => {
               <Image
                 source={{
                   uri:
-                    panditjiData?.profile_img ||
+                    panditjiData?.profile_img_url ||
                     selectManualPanitData?.image ||
                     panditImage ||
                     'https://cdn.builder.io/api/v1/image/assets/TEMP/db9492299c701c6ca2a23d6de9fc258e7ec2b5fd?width=160',
@@ -187,7 +190,7 @@ const RateYourExperienceScreen: React.FC = () => {
             </View>
             <View style={styles.panditInfo}>
               <Text style={styles.panditName}>
-                {panditjiData?.full_name ||
+                {panditjiData?.pandit_name ||
                   selectManualPanitData?.name ||
                   panditName}
               </Text>

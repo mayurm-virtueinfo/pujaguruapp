@@ -1084,7 +1084,7 @@ export const postRatePandit = (data: RatePandit) => {
         resolve(response);
       })
       .catch(error => {
-        console.error('Error rate pandit', error);
+        console.error('Error rate pandit', error.response.data);
         reject(error);
       });
   });

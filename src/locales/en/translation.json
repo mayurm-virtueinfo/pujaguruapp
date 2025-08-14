@@ -228,5 +228,8 @@
   "search_pandit_screen_scanning_location": "Scanning your location...",
   "search_pandit_screen_finding_nearby_pandits": "Finding nearby Pandits...",
   "search_pandit_screen_matching_requirements": "Matching your requirements...",
-  "search_pandit_screen_almost_there": "Almost there..."
+  "search_pandit_screen_almost_there": "Almost there...",
+  "go_to_home": "GO TO HOME",
+  "puja_items_list": "Puja Items List",
+  "past_bookings": "Past Bookings"
 }
