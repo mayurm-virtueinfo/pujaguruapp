@@ -10,6 +10,7 @@ import UserEditProfileScreen from '../../screens/Users/ProfileScreen/EditProfile
 import UpcomingPuja from '../../screens/Users/BottomProfileScreen/UpcomingPuja';
 import PastPujaScreen from '../../screens/Users/BottomProfileScreen/PastPujaScreen';
 import UserPujaDetailsScreen from '../../screens/Users/UserPujaDetailsScreen/UserPujaDetailsScreen';
+import SearchPanditScreen from '../../screens/Users/SearchPanditScreen/SearchPanditScreen';
 
 export type UserProfileParamList = {
   goBack(): void;
@@ -26,6 +27,7 @@ export type UserProfileParamList = {
   UserPujaDetailsScreen: {
     id: string;
   };
+  SearchPanditScreen: any;
 };
 
 const Stack = createStackNavigator<UserProfileParamList>();
@@ -36,6 +38,8 @@ const UserProfileNavigator = () => {
       screenOptions={{
         headerShown: false,
       }}>
+      <Stack.Screen name="SearchPanditScreen" component={SearchPanditScreen} />
+
       <Stack.Screen
         name="BottomUserProfileScreen"
         component={BottomUserProfileScreen}

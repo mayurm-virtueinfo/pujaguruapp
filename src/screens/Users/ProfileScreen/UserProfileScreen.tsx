@@ -30,6 +30,7 @@ import {useTranslation} from 'react-i18next';
 import {AuthStackParamList} from '../../../navigation/AuthNavigator';
 import {
   getCity,
+  getState,
   postRegisterFCMToken,
   postSignUp,
 } from '../../../api/apiService';
@@ -58,6 +59,7 @@ interface FormErrors {
   userName?: string;
   email?: string;
   phone?: string;
+  state?: string;
   location?: string;
 }
 
@@ -71,7 +73,9 @@ const UserProfileScreen: React.FC = () => {
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState(phoneNumber);
+  const [selectState, setSelectState] = useState('');
   const [location, setLocation] = useState('');
+  const [state, setState] = useState([]);
   const [city, setCity] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
@@ -83,13 +87,39 @@ const UserProfileScreen: React.FC = () => {
 
   const {showErrorToast} = useCommonToast();
 
-  console.log(firstName, lastName, address, uid, latitude, longitude);
+  useEffect(() => {
+    const getStateData = async () => {
+      setIsLoading(true);
+      try {
+        const response: any = await getState();
+        if (Array.isArray(response?.data)) {
+          const stateData: any = response?.data.map((item: any) => ({
+            label: item.name,
+            value: item.id,
+          }));
+          setState(stateData);
+        } else {
+          setState([]);
+        }
+      } catch (error: any) {
+        console.log('error in get state data :: ', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    getStateData();
+  }, []);
 
   useEffect(() => {
     const getCityData = async () => {
+      if (!selectState) {
+        setCity([]);
+        return;
+      }
+
       setIsLoading(true);
       try {
-        const response = await getCity();
+        const response = await getCity(selectState);
         if (Array.isArray(response)) {
           const cityData: any = response.map((item: any) => ({
             label: item.name,
@@ -101,12 +131,14 @@ const UserProfileScreen: React.FC = () => {
         }
       } catch (error: any) {
         console.log('error in get city data :: ', error);
+        setCity([]);
       } finally {
         setIsLoading(false);
       }
     };
+
     getCityData();
-  }, []);
+  }, [selectState]);
 
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
@@ -124,8 +156,12 @@ const UserProfileScreen: React.FC = () => {
       errors.phone = t('invalid_phone');
     }
 
+    if (!selectState) {
+      errors.state = t('state_required');
+    }
+
     if (!location) {
-      errors.location = t('location_required');
+      errors.location = t('city_required');
     }
 
     setFormErrors(errors);
@@ -154,6 +190,7 @@ const UserProfileScreen: React.FC = () => {
       params.append('address', address);
       params.append('role', 1);
       params.append('email', email);
+      params.append('state', selectState);
       params.append('city', location);
       params.append('latitude', latitude?.toString() || '0');
       params.append('longitude', longitude?.toString() || '0');
@@ -333,16 +370,35 @@ const UserProfileScreen: React.FC = () => {
               error={formErrors.phone}
             />
             <CustomDropdown
-              label={t('location')}
+              label={t('state')}
+              items={state}
+              selectedValue={selectState}
+              onSelect={value => {
+                setSelectState(value);
+                setLocation('');
+                setFormErrors(prev => ({
+                  ...prev,
+                  state: undefined,
+                  location: undefined,
+                }));
+              }}
+              placeholder={t('enter_your_State')}
+              error={formErrors.state}
+            />
+            <CustomDropdown
+              label={t('city')}
               items={city}
               selectedValue={location}
               onSelect={value => {
                 setLocation(value);
                 setFormErrors(prev => ({...prev, location: undefined}));
               }}
-              placeholder={t('enter_your_location')}
+              placeholder={
+                selectState ? t('enter_your_location') : t('select_state_first')
+              }
               error={formErrors.location}
             />
+
             <PrimaryButton
               title={t('save_changes')}
               onPress={handleSignUp}

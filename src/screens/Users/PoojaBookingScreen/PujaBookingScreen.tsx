@@ -183,6 +183,8 @@ const PujaBookingScreen: React.FC = () => {
       }
     } catch (error: any) {
       setAvailableDates(null);
+      console.log('error :: ', error?.response?.data);
+
       showErrorToast(
         error?.message ||
           t('no_available_date_for_pandit') ||

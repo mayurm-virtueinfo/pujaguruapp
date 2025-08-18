@@ -78,6 +78,8 @@ export const GET_PAST_BOOKINGS = '/app/bookings/past/';
 export const POST_REGISTER_FCM = '/app/register-device-token/';
 export const GET_STATE = '/app/states/';
 export const GET_OLD_CITY_API = '/app/areas/';
-export const POST_REVIEW_IMAGES = "/panditji/reviews/pandit-rating/{id}/upload-image/";
-export const GET_PANDIT_PUJA_LIST = "/app/pandits/{panditId}/poojas/";
-export const GET_PANDIT_AVAILABILITY = "/panditji/availability/?pandit_id={pandit_id}"
+export const POST_REVIEW_IMAGES =
+  '/panditji/reviews/pandit-rating/{id}/upload-image/';
+export const GET_PANDIT_PUJA_LIST = '/app/pandits/{panditId}/poojas/';
+export const GET_PANDIT_AVAILABILITY =
+  '/panditji/availability/?pandit_id={pandit_id}';

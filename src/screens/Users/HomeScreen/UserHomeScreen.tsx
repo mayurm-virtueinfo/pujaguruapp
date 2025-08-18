@@ -47,7 +47,7 @@ const UserHomeScreen: React.FC = () => {
     RecommendedPandit[]
   >([]);
 
-  console.log('recomendedPandits :: ', recomendedPandits);
+  console.log('location :: ', location);
 
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();

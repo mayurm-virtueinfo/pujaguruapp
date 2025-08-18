@@ -231,5 +231,8 @@
   "search_pandit_screen_almost_there": "Almost there...",
   "go_to_home": "GO TO HOME",
   "puja_items_list": "Puja Items List",
-  "past_bookings": "Past Bookings"
+  "past_bookings": "Past Bookings",
+  "enter_your_State": "Select your State",
+  "invalid_user_name": "Invalid user name",
+  "search_pandit_screen_finding_perfect_pandits": "Finding perfect Pandits..."
 }
