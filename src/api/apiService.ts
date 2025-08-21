@@ -42,6 +42,7 @@ import ApiEndpoints, {
   GET_PANDIT_PUJA_LIST,
   GET_POOJA_DETAIL_FOR_PUJA_LIST,
   GET_PANDIT_AVAILABILITY,
+  POST_AUTO_BOOKING,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -396,7 +397,7 @@ export interface ReviewImageUpload {
       type: string;
       name: string;
     };
-  }
+  };
 }
 
 export const apiService = {
@@ -601,16 +602,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return { pandits: [], puja: [] };
+      return {pandits: [], puja: []};
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || { recommendedPuja: [], pujaList: [] };
+      return response.data?.record || {recommendedPuja: [], pujaList: []};
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return { recommendedPuja: [], pujaList: [] };
+      return {recommendedPuja: [], pujaList: []};
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -661,10 +662,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -692,10 +693,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
 };
@@ -868,7 +869,7 @@ export const deleteAddress = (data: deleteAddress) => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, { data })
+      .delete(apiUrl, {data})
       .then(response => {
         resolve(response);
       })
@@ -941,7 +942,10 @@ export const updateAddress = (data: EditAddress) => {
 };
 
 export const getPoojaDetails = (panditId: string, id: string): Promise<any> => {
-  const apiUrl = GET_POOJA_DETAILS.replace('{panditId}', panditId).replace('{id}', id);
+  const apiUrl = GET_POOJA_DETAILS.replace('{panditId}', panditId).replace(
+    '{id}',
+    id,
+  );
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)
@@ -1060,8 +1064,15 @@ export const postCreateRazorpayOrder = (data: CreateRazorpayOrder) => {
   });
 };
 
-export const postVerrifyPayment = (data: VerrifyPayment) => {
-  let apiUrl = POST_VERIFY_PAYMENT;
+export const postVerrifyPayment = (
+  data: VerrifyPayment,
+  latitude: string,
+  longitude: string,
+) => {
+  let apiUrl = POST_VERIFY_PAYMENT.replace('{latitude}', latitude).replace(
+    '{longitude}',
+    longitude,
+  );
   return new Promise((resolve, reject) => {
     apiDev
       .post(apiUrl, data)
@@ -1274,7 +1285,7 @@ export const postRegisterFCMToken = (
   let apiUrl = POST_REGISTER_FCM;
   return new Promise((resolve, reject) => {
     apiDev
-      .post(apiUrl, { device_token, app_type })
+      .post(apiUrl, {device_token, app_type})
       .then(response => {
         resolve(response.data);
       })
@@ -1327,11 +1338,14 @@ export const postReviewImageUpload = (data: any, id: string): Promise<any> => {
         // If you need to send auth, add Authorization header here
       })
       .then(response => {
-        console.log("response", response);
+        console.log('response', response);
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error uploading review image:', error?.response?.data || error);
+        console.error(
+          'Error uploading review image:',
+          error?.response?.data || error,
+        );
         reject(error);
       });
   });
@@ -1362,6 +1376,28 @@ export const getPanditAvailability = (panditId: any): Promise<any> => {
       })
       .catch(error => {
         console.error('Error fetching pandit available date:', error);
+        reject(error);
+      });
+  });
+};
+
+export const postAutoBooking = (
+  data: any,
+  latitude: any,
+  longitude: any,
+): Promise<any> => {
+  let apiUrl = POST_AUTO_BOOKING.replace('{latitude}', latitude).replace(
+    '{longitude}',
+    longitude,
+  );
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error in auto booking ::', error);
         reject(error);
       });
   });

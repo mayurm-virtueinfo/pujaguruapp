@@ -4,12 +4,8 @@ import ApiEndpoints, {APP_URL, POST_REFRESH_TOKEN} from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 import {postRefreshToken} from './apiService';
 
-// Create an axios instance
-
 const apiDev = axios.create({
-  // baseURL: Config.BASE_URL,
   baseURL: APP_URL,
-  // baseURL: ApiEndpoints.BASE_URL,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

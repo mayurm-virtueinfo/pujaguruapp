@@ -37,7 +37,7 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const APP_URL = 'https://0b298eeec150.ngrok-free.app';
+export const APP_URL = 'https://f4d097afd7b1.ngrok-free.app';
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';
@@ -62,7 +62,8 @@ export const GET_AUTO_MANUAL_PANDIT_SELECTION =
 export const GET_ALL_PANDIT_LIST = '/app/panditji-list/';
 export const GET_PANDIT_DETAILS = '/panditji/my-details/{id}/';
 export const POST_CREATE_RAZORPAY_ORDER = '/app/booking/create-razorpay-order/';
-export const POST_VERIFY_PAYMENT = '/app/booking/verify-payment/';
+export const POST_VERIFY_PAYMENT =
+  '/app/booking/verify-payment/?latitude={latitude}&longitude={longitude}';
 export const POST_RATE_PANDIT = '/app/rate-pandit/';
 export const GET_UPCOMING_PUJA = '/app/upcoming-pujas/';
 export const GET_UPCOMING_PUJA_DETAILS = '/app/bookings/{id}/';
@@ -83,3 +84,5 @@ export const POST_REVIEW_IMAGES =
 export const GET_PANDIT_PUJA_LIST = '/app/pandits/{panditId}/poojas/';
 export const GET_PANDIT_AVAILABILITY =
   '/panditji/availability/?pandit_id={pandit_id}';
+export const POST_AUTO_BOOKING =
+  '/app/booking-auto/create/?latitude={latitude}&longitude={longitude}';

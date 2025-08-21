@@ -110,7 +110,7 @@ const AddressSelectionScreen: React.FC = () => {
       samagri_required: samagri_required,
       address: selectedUserAddressId,
       poojaName: selectedAddress?.name || '',
-      poojaDescription: selectedAddress?.description || '',
+      poojaDescription: selectedAddress?.full_address || '',
       puja_image: puja_image,
       puja_name: puja_name,
       price: price,

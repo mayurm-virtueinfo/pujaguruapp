@@ -12,7 +12,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {COLORS, hp, THEMESHADOW, wp} from '../../../theme/theme';
+import {COLORS, THEMESHADOW, wp} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -20,9 +20,8 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Octicons from 'react-native-vector-icons/Octicons';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {apiService, getPanditji} from '../../../api/apiService';
+import {getPanditji, postAutoBooking} from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
@@ -80,8 +79,6 @@ const SelectPanditjiScreen: React.FC = () => {
     longitude: string;
   } | null>(null);
 
-  console.log('selectPanditData :: ', selectPanditData);
-
   useEffect(() => {
     fetchLocation();
   }, []);
@@ -98,8 +95,6 @@ const SelectPanditjiScreen: React.FC = () => {
     }
   };
 
-  console.log('booking_date :: ', booking_date);
-
   useEffect(() => {
     if (location && poojaId && booking_date) {
       fetchPanditji(
@@ -111,6 +106,22 @@ const SelectPanditjiScreen: React.FC = () => {
       );
     }
   }, [location, poojaId]);
+
+  const postPujaBookingData = async (
+    data: any,
+    latitude: string,
+    longitude: string,
+  ) => {
+    setIsLoading(true);
+    try {
+      const response = await postAutoBooking(data, latitude, longitude);
+      return response;
+    } catch (error: any) {
+      showErrorToast(error?.response?.data?.message || 'Failed to book puja');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const fetchPanditji = async (
     pooja_id: string,
@@ -179,26 +190,46 @@ const SelectPanditjiScreen: React.FC = () => {
     );
   };
 
-  const handleNextPress = () => {
-    if (selectedPanditji) {
-      navigation.navigate('PaymentScreen', {
-        poojaId: poojaId,
-        samagri_required: samagri_required,
-        address: address,
-        tirth: tirth,
-        booking_date: booking_date,
-        muhurat_time: muhurat_time,
-        muhurat_type: muhurat_type,
-        notes: notes,
-        pandit: selectedPanditji,
-        pandit_name: selectedPanditjiName,
-        pandit_image: selectedPanditjiImage,
-        puja_image: puja_image,
-        puja_name: puja_name,
-        price: price,
-        selectAddress: selectAddress,
-        selectManualPanitData: selectPanditData,
-      });
+  const handleNextPress = async () => {
+    const data = {
+      pooja: poojaId,
+      assignment_mode: 2,
+      samagri_required: samagri_required,
+      address: address,
+      tirth_place: tirth,
+      booking_date: booking_date,
+      muhurat_time: muhurat_time,
+      muhurat_type: muhurat_type,
+      pandit: selectedPanditji,
+    };
+    if (data) {
+      const response: any = await postPujaBookingData(
+        data,
+        location?.latitude || '',
+        location?.longitude || '',
+      );
+
+      if (response) {
+        navigation.navigate('PaymentScreen', {
+          poojaId: poojaId,
+          samagri_required: samagri_required,
+          address: address,
+          tirth: tirth,
+          booking_date: booking_date,
+          muhurat_time: muhurat_time,
+          muhurat_type: muhurat_type,
+          notes: notes,
+          pandit: selectedPanditji,
+          pandit_name: selectedPanditjiName,
+          pandit_image: selectedPanditjiImage,
+          puja_image: puja_image,
+          puja_name: puja_name,
+          price: price,
+          selectAddress: selectAddress,
+          selectManualPanitData: selectPanditData,
+          booking_Id: response?.data?.booking_id,
+        });
+      }
     }
   };
 
@@ -307,7 +338,6 @@ const SelectPanditjiScreen: React.FC = () => {
             )}
           />
         </View>
-        {/* Button absolutely fixed at the bottom */}
         <View
           style={[
             styles.absoluteButtonContainer,

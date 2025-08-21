@@ -15,7 +15,7 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
+import {moderateScale, verticalScale} from 'react-native-size-matters';
 import Calendar from '../../../components/Calendar';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
@@ -28,6 +28,7 @@ import {
   getMuhrat,
   getPanditji,
   getPanditAvailability,
+  postAutoBooking,
 } from '../../../api/apiService';
 import {useCommonToast} from '../../../common/CommonToast';
 import CustomeLoader from '../../../components/CustomeLoader';
@@ -77,8 +78,10 @@ const PujaBookingScreen: React.FC = () => {
     panditName,
     panditImage,
   } = route?.params as any;
-  console.log('panditId', panditId);
+
   const {showErrorToast, showSuccessToast} = useCommonToast();
+
+  console.log('params in puja booking screen :: ', route?.params);
 
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [selectedSlotObj, setSelectedSlotObj] = useState<any>(null);
@@ -101,8 +104,7 @@ const PujaBookingScreen: React.FC = () => {
   const [muhurats, setMuhurats] = useState<any[]>([]);
   const [panditjiData, setPanditjiData] = useState({});
   const [availableDates, setAvailableDates] = useState<string[] | null>(null);
-  console.log('availableDates', availableDates);
-  // If panditId is present, fetch available dates for that pandit
+
   useEffect(() => {
     fetchLocation();
   }, []);
@@ -123,7 +125,6 @@ const PujaBookingScreen: React.FC = () => {
     ) {
       fetchMuhurat(selectedDateString);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDateString, location, availableDates, panditId]);
 
   const fetchLocation = async () => {
@@ -138,7 +139,6 @@ const PujaBookingScreen: React.FC = () => {
     }
   };
 
-  // Fetch available dates for the given panditId and poojaId
   const fetchPanditAvailableDate = async () => {
     try {
       setLoading(true);
@@ -195,35 +195,17 @@ const PujaBookingScreen: React.FC = () => {
     }
   };
 
-  const fetchPanditji = async (
-    pooja_id: string,
+  const postPujaBookingData = async (
+    data: any,
     latitude: string,
     longitude: string,
-    mode: 'auto',
-    booking_date: string,
   ) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await getPanditji(
-        pooja_id,
-        latitude,
-        longitude,
-        mode,
-        booking_date,
-      );
-      if (response.success) {
-        if (Object.keys(response.data).length === 0) {
-          showSuccessToast(response.message);
-          return {};
-        } else {
-          setPanditjiData(response.data);
-          return response.data;
-        }
-      }
-      return [];
+      const response = await postAutoBooking(data, latitude, longitude);
+      return response;
     } catch (error: any) {
-      showErrorToast(error.message || 'Failed to fetch panditji');
-      return [];
+      showErrorToast(error?.response?.data?.message || 'Failed to book puja');
     } finally {
       setLoading(false);
     }
@@ -256,8 +238,7 @@ const PujaBookingScreen: React.FC = () => {
     setSelectedSlotObj(slot);
   };
 
-  // Modified handleNextButtonPress to directly navigate to PaymentScreen if panditId exists
-  const handleNextButtonPress = () => {
+  const handleNextButtonPress = async () => {
     if (!selectedDateString) {
       showErrorToast(t('please_select_date') || 'Please select a date.');
       return;
@@ -269,7 +250,6 @@ const PujaBookingScreen: React.FC = () => {
       return;
     }
 
-    // Prepare selected date in YYYY-MM-DD format
     let selectedDateISO = selectedDateString;
     if (!selectedDateISO) {
       selectedDateISO = formatDateYYYYMMDD(today);
@@ -277,7 +257,6 @@ const PujaBookingScreen: React.FC = () => {
       selectedDateISO = formatDateYYYYMMDD(selectedDateISO);
     }
 
-    // Prepare muhurat time and type
     let muhuratTime = '';
     let muhuratType = '';
     if (selectedSlotObj) {
@@ -285,25 +264,47 @@ const PujaBookingScreen: React.FC = () => {
       muhuratType = selectedSlotObj.type;
     }
 
-    // If panditId exists, navigate directly to PaymentScreen
     if (panditId) {
-      navigation.navigate('PaymentScreen', {
-        poojaId: poojaId,
+      const data = {
+        pooja: poojaId,
+        assignment_mode: 2,
         samagri_required: samagri_required,
         address: address,
-        tirth: tirth,
+        tirth_place: tirth,
         booking_date: selectedDateISO,
         muhurat_time: muhuratTime,
         muhurat_type: muhuratType,
-        notes: additionalNotes,
-        puja_image: puja_image,
-        puja_name: puja_name,
-        price: price,
-        selectAddress: selectTirthPlaceName || selectAddressName,
         pandit: panditId,
-        panditName: panditName,
-        panditImage: panditImage,
-      });
+      };
+
+      if (data) {
+        const response: any = await postPujaBookingData(
+          data,
+          location?.latitude,
+          location?.longitude,
+        );
+
+        if (response) {
+          navigation.navigate('PaymentScreen', {
+            poojaId: poojaId,
+            samagri_required: samagri_required,
+            address: address,
+            tirth: tirth,
+            booking_date: selectedDateISO,
+            muhurat_time: muhuratTime,
+            muhurat_type: muhuratType,
+            notes: additionalNotes,
+            puja_image: puja_image,
+            puja_name: puja_name,
+            price: price,
+            selectAddress: selectTirthPlaceName || selectAddressName,
+            booking_Id: response?.data?.booking_id,
+            pandit: panditId,
+            panditName: panditName,
+            panditImage: panditImage,
+          });
+        }
+      }
       return;
     }
 
@@ -314,22 +315,20 @@ const PujaBookingScreen: React.FC = () => {
     setModalVisible(false);
   };
 
-  const handlePanditjiSelectionConfirm = (
+  const handlePanditjiSelectionConfirm = async (
     selection: 'automatic' | 'manual',
   ) => {
     setPanditjiSelection(selection);
     setModalVisible(false);
 
-    // Prepare selected date in YYYY-MM-DD format
     let selectedDateISO = selectedDateString;
-    // If selectedDateString is not set, fallback to today
+
     if (!selectedDateISO) {
       selectedDateISO = formatDateYYYYMMDD(today);
     } else {
       selectedDateISO = formatDateYYYYMMDD(selectedDateISO);
     }
 
-    // Prepare muhurat time and type
     let muhuratTime = '';
     let muhuratType = '';
     if (selectedSlotObj) {
@@ -337,7 +336,6 @@ const PujaBookingScreen: React.FC = () => {
       muhuratType = selectedSlotObj.type;
     }
 
-    // Final validation before navigation
     if (!selectedDateISO) {
       showErrorToast(t('please_select_date') || 'Please select a date.');
       return;
@@ -364,14 +362,25 @@ const PujaBookingScreen: React.FC = () => {
       selectAddress: selectTirthPlaceName || selectAddressName,
     };
     if (selection === 'automatic') {
-      fetchPanditji(
-        poojaId,
-        location?.latitude,
-        location?.longitude,
-        'auto',
-        selectedDateISO,
-      ).then(data => {
-        if (Object.keys(data).length > 0) {
+      const data = {
+        pooja: poojaId,
+        assignment_mode: 1,
+        samagri_required: samagri_required,
+        address: address,
+        tirth_place: tirth,
+        booking_date: selectedDateISO,
+        muhurat_time: muhuratTime,
+        muhurat_type: muhuratType,
+      };
+
+      if (data) {
+        const response: any = await postPujaBookingData(
+          data,
+          location?.latitude,
+          location?.longitude,
+        );
+
+        if (response) {
           navigation.navigate('PaymentScreen', {
             poojaId: poojaId,
             samagri_required: samagri_required,
@@ -385,14 +394,10 @@ const PujaBookingScreen: React.FC = () => {
             puja_name: puja_name,
             price: price,
             selectAddress: selectTirthPlaceName || selectAddressName,
-            panditjiData: data,
+            booking_Id: response?.data?.booking_id,
           });
-        } else {
-          showErrorToast(
-            'No panditji available for selected date and location.',
-          );
         }
-      });
+      }
     } else if (selection === 'manual') {
       navigation.navigate('SelectPanditjiScreen', navigationParams);
     }
@@ -445,7 +450,6 @@ const PujaBookingScreen: React.FC = () => {
     </View>
   );
 
-  // Calendar props for panditId: only show availableDates as selectable
   const calendarProps =
     panditId && availableDates && availableDates.length > 0
       ? {
@@ -468,7 +472,7 @@ const PujaBookingScreen: React.FC = () => {
             setSelectedSlotObj(null);
             setMuhurats([]);
           },
-          onMonthChange: () => {}, // Disable month change if all dates are in one month; adjust if needed
+          onMonthChange: () => {},
           selectableDates: availableDates,
           disableMonthChange: true,
         }
@@ -497,7 +501,7 @@ const PujaBookingScreen: React.FC = () => {
             setSelectedDateString(dateString);
             setSelectedSlot('');
             setSelectedSlotObj(null);
-            setMuhurats([]); // Clear muhurats immediately
+            setMuhurats([]);
             setCurrentMonth(
               `${parsedDate.toLocaleString('default', {
                 month: 'long',

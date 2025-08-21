@@ -38,7 +38,7 @@ const UserProfileNavigator = () => {
       screenOptions={{
         headerShown: false,
       }}>
-      <Stack.Screen name="SearchPanditScreen" component={SearchPanditScreen} />
+      {/* <Stack.Screen name="SearchPanditScreen" component={SearchPanditScreen} /> */}
 
       <Stack.Screen
         name="BottomUserProfileScreen"

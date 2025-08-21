@@ -81,6 +81,8 @@ const UserEditProfileScreen: React.FC = () => {
     type: string;
   } | null>(null);
 
+  console.log(' profileImage :: ', profileImage);
+
   useEffect(() => {
     let isMounted = true;
     let profileResponse: any = null;

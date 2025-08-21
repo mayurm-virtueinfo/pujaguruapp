@@ -73,6 +73,11 @@ const UserHomeScreen: React.FC = () => {
     try {
       const user = await AsyncStorage.getItem(AppConstant.USER_ID);
       const location = await AsyncStorage.getItem(AppConstant.LOCATION);
+      const refreshToken = await AsyncStorage.getItem(
+        AppConstant.REFRESH_TOKEN,
+      );
+      console.log('refreshToken :: ', refreshToken);
+
       setUser(user);
       if (location) {
         const parsedLocation = JSON.parse(location);
