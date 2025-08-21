@@ -66,6 +66,9 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   const inputRefs = useRef<Array<TextInput | null>>([]);
   const [timer, setTimer] = useState(RESEND_OTP_WAIT_TIME);
 
+  // Track if navigation has occurred to avoid showing error toast after navigation
+  const hasNavigatedRef = useRef(false);
+
   useEffect(() => {
     if (timer > 0) {
       const interval = setInterval(() => {
@@ -74,8 +77,11 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       return () => clearInterval(interval);
     } else {
       setIsOtpExpired(true);
-      setOtpConfirmation(null);
-      showErrorToast('OTP has expired. Please request a new one.');
+      setOtpConfirmation(null as any); // avoid type error
+      // Only show error toast if we haven't navigated away
+      if (!hasNavigatedRef.current) {
+        showErrorToast('OTP has expired. Please request a new one.');
+      }
     }
   }, [timer, t]);
 
@@ -107,6 +113,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       const response = await postSignIn(params);
       if (response) {
         if (response?.is_register === false) {
+          hasNavigatedRef.current = true;
           navigation.navigate('CompleteProfileScreen', {phoneNumber});
         } else {
           signIn(response.access_token, response.refresh_token);
@@ -125,11 +132,15 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
           if (fcmToken) {
             postRegisterFCMToken(fcmToken, 'user');
           }
+          hasNavigatedRef.current = true;
           navigation.navigate('UserAppBottomTabNavigator');
         }
       }
     } catch (error: any) {
-      showErrorToast(error?.message);
+      // Only show error if we haven't navigated away
+      if (!hasNavigatedRef.current) {
+        showErrorToast(error?.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -154,7 +165,10 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       if (error.code === 'auth/invalid-verification-code') {
         showErrorToast(t('invalid_otp'));
       } else {
-        showErrorToast(error?.message);
+        // Only show error if we haven't navigated away
+        if (!hasNavigatedRef.current) {
+          showErrorToast(error?.message);
+        }
       }
     } finally {
       setLoading(false);

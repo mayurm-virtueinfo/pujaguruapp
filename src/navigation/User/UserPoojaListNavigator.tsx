@@ -55,7 +55,7 @@ export type UserPoojaListParamList = {
     pandit_id: string;
   };
   AddAddressScreen: undefined;
-  SearchPanditScreen: undefined;
+  SearchPanditScreen: any;
 };
 
 const Stack = createStackNavigator<UserPoojaListParamList>();

@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {View, Text, StyleSheet, Dimensions} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {View, Text, StyleSheet, Dimensions, Alert} from 'react-native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import LinearGradient from 'react-native-linear-gradient';
 import {COLORS} from '../../../theme/theme';
@@ -12,12 +12,19 @@ import {useTranslation} from 'react-i18next';
 
 const {width} = Dimensions.get('window');
 
+const SEARCH_SCREEN_DURATION_MS = 2 * 60 * 1000; // 2 minutes in milliseconds
+
 const SearchPanditScreen: React.FC = () => {
+  const route = useRoute();
+  // Accept both camelCase and snake_case for panditName/panditImage
+  const {booking_Id, booking_id} = route.params as any;
+  const bookingId = booking_Id || booking_id;
   const {t} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(0);
+  const [wsError, setWsError] = useState<string | null>(null);
 
   // Use translation keys for search steps
   const SEARCH_STEPS = [
@@ -31,6 +38,10 @@ const SearchPanditScreen: React.FC = () => {
   const pulseRef = useRef<Animatable.View & View>(null);
   const circle1Ref = useRef<Animatable.View & View>(null);
   const circle2Ref = useRef<Animatable.View & View>(null);
+  const ws = useRef<WebSocket | null>(null);
+
+  // Track if navigation has already happened to avoid duplicate navigation
+  const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
     // Recompute SEARCH_STEPS on language change
@@ -39,21 +50,101 @@ const SearchPanditScreen: React.FC = () => {
   }, [t]);
 
   useEffect(() => {
+    if (bookingId) {
+      // Try both ws:// and wss:// for local/dev/prod
+      let socketURL = `ws://192.168.1.20:9000/ws/bookings/${bookingId}/`;
+      // If running on production, you may want to use wss://
+      if (socketURL.startsWith('ws://') && !__DEV__) {
+        socketURL = socketURL.replace('ws://', 'wss://');
+      }
+
+      let socket: WebSocket | null = null;
+      try {
+        socket = new WebSocket(socketURL);
+        ws.current = socket;
+      } catch (err) {
+        setWsError('WebSocket initialization failed');
+        console.error('WebSocket initialization error:', err);
+        return;
+      }
+
+      console.log('socketURL : ', socketURL);
+
+      socket.onopen = () => {
+        console.log('✅ Connected to WebSocket');
+        setWsError(null);
+      };
+
+      socket.onerror = e => {
+        setWsError('WebSocket connection error');
+        console.error('WebSocket error:', e?.message || e);
+        // Optionally show alert
+        // Alert.alert('WebSocket Error', e?.message || 'WebSocket connection error');
+      };
+
+      socket.onclose = e => {
+        console.log('WebSocket closed:', e.code, e.reason);
+        if (!hasNavigatedRef.current && !wsError) {
+          setWsError('WebSocket connection closed');
+        }
+      };
+
+      socket.onmessage = event => {
+        try {
+          const data = JSON.parse(event.data);
+          // If the status is accepted, navigate to BookingSuccessfullyScreen
+          if (
+            data &&
+            (data.status === 'accepted' || data.status === 'ACCEPTED') &&
+            !hasNavigatedRef.current
+          ) {
+            hasNavigatedRef.current = true;
+            setLoading(false);
+            navigation.navigate('BookingSuccessfullyScreen', {
+              booking: bookingId,
+              auto: 'true',
+            } as any);
+          }
+        } catch (err) {
+          // Ignore parse errors
+        }
+      };
+
+      return () => {
+        if (ws.current) {
+          ws.current.close();
+        }
+      };
+    }
+  }, [bookingId, navigation, wsError]);
+
+  useEffect(() => {
     let timers: NodeJS.Timeout[] = [];
+    // Calculate the interval for each step so that all steps fit within 2 minutes
+    const stepInterval = Math.floor(
+      SEARCH_SCREEN_DURATION_MS / (SEARCH_STEPS.length + 1),
+    );
     SEARCH_STEPS.forEach((text, idx) => {
       timers.push(
         setTimeout(() => {
           setStep(idx);
           setSearchText(text);
-        }, idx * 1200),
+        }, idx * stepInterval),
       );
     });
+    // Final timer for navigation after 2 minutes
     timers.push(
       setTimeout(() => {
         setLoading(false);
-        // Only navigate to PaymentScreen
-        navigation.navigate('PaymentScreen' as never);
-      }, SEARCH_STEPS.length * 1200),
+        // Only navigate to BookingSuccessfullyScreen if not already navigated by websocket
+        if (!hasNavigatedRef.current) {
+          hasNavigatedRef.current = true;
+          navigation.navigate('BookingSuccessfullyScreen', {
+            booking: bookingId,
+            auto: 'true',
+          } as any);
+        }
+      }, SEARCH_SCREEN_DURATION_MS),
     );
     return () => {
       timers.forEach(clearTimeout);
@@ -95,44 +186,68 @@ const SearchPanditScreen: React.FC = () => {
         <Text style={styles.subheading}>
           {t('search_pandit_screen_subheading')}
         </Text>
-        <View style={styles.radarWrapper}>
-          <Animatable.View
-            ref={circle1Ref}
-            style={[styles.radarCircle, {borderColor: COLORS.primary + '50'}]}
-          />
-          <Animatable.View
-            ref={circle2Ref}
-            style={[
-              styles.radarCircle,
-              {borderColor: COLORS.gradientEnd + '40'},
-            ]}
-          />
-          <Animatable.View
-            ref={pulseRef}
-            animation={pulseAnimation}
-            iterationCount="infinite"
-            duration={1500}
-            style={styles.iconContainer}>
-            <LinearGradient
-              colors={[COLORS.primary, COLORS.gradientEnd]}
-              style={styles.iconGradient}>
-              <Ionicons
-                name="search"
-                size={moderateScale(60)}
-                color="#fff"
-                style={{alignSelf: 'center'}}
+        {wsError ? (
+          <View style={{marginVertical: 20}}>
+            <Text
+              style={{color: 'red', textAlign: 'center', fontWeight: 'bold'}}>
+              {t('search_pandit_screen_ws_error') ||
+                'Unable to connect to server. Please check your internet connection or try again later.'}
+            </Text>
+            <Text
+              style={{
+                color: COLORS.textGray,
+                textAlign: 'center',
+                marginTop: 8,
+                fontSize: 13,
+              }}>
+              {wsError}
+            </Text>
+          </View>
+        ) : (
+          <>
+            <View style={styles.radarWrapper}>
+              <Animatable.View
+                ref={circle1Ref}
+                style={[
+                  styles.radarCircle,
+                  {borderColor: COLORS.primary + '50'},
+                ]}
               />
-            </LinearGradient>
-          </Animatable.View>
-        </View>
-        <Animatable.Text
-          animation="pulse"
-          easing="ease-in-out"
-          iterationCount="infinite"
-          duration={2000}
-          style={styles.loadingText}>
-          {searchText}
-        </Animatable.Text>
+              <Animatable.View
+                ref={circle2Ref}
+                style={[
+                  styles.radarCircle,
+                  {borderColor: COLORS.gradientEnd + '40'},
+                ]}
+              />
+              <Animatable.View
+                ref={pulseRef}
+                animation={pulseAnimation}
+                iterationCount="infinite"
+                duration={1500}
+                style={styles.iconContainer}>
+                <LinearGradient
+                  colors={[COLORS.primary, COLORS.gradientEnd]}
+                  style={styles.iconGradient}>
+                  <Ionicons
+                    name="search"
+                    size={moderateScale(60)}
+                    color="#fff"
+                    style={{alignSelf: 'center'}}
+                  />
+                </LinearGradient>
+              </Animatable.View>
+            </View>
+            <Animatable.Text
+              animation="pulse"
+              easing="ease-in-out"
+              iterationCount="infinite"
+              duration={2000}
+              style={styles.loadingText}>
+              {searchText}
+            </Animatable.Text>
+          </>
+        )}
       </View>
     </View>
   );

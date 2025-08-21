@@ -34,18 +34,10 @@ const BookingSuccessfullyScreen: React.FC = () => {
   const route = useRoute();
   // Check if route.params exists and has the expected property
   // Always extract booking from route.params, even if it's null/undefined
-  const {
-    booking,
-    panditjiData,
-    selectManualPanitData,
-    panditName,
-    panditImage,
-  } = route.params as any;
+  const {booking, auto} = route.params as any;
 
-  console.log('booking-1', booking);
+  console.log('auto', auto);
 
-  console.log('panditjiData :: ', panditjiData);
-  console.log('selectManualPanitData :: ', selectManualPanitData);
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" />
@@ -67,7 +59,11 @@ const BookingSuccessfullyScreen: React.FC = () => {
             </Text>
             <PrimaryButton
               title={t('go_to_home')}
-              onPress={() => navigation.replace('UserHomeScreen')}
+              onPress={() =>
+                navigation.replace(
+                  auto === 'true' ? 'PujaList' : 'UserHomeScreen',
+                )
+              }
               style={styles.buttonContainer}
               textStyle={styles.buttonText}
             />

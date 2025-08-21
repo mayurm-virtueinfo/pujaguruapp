@@ -45,18 +45,17 @@ const PaymentScreen: React.FC = () => {
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const route = useRoute();
+  // Accept both camelCase and snake_case for panditName/panditImage
   const {
-    poojaId,
-    samagri_required,
-    address,
-    tirth,
     booking_date,
     muhurat_time,
     muhurat_type,
     notes,
     pandit,
     panditName,
+    pandit_name,
     panditImage,
+    pandit_image,
     puja_name,
     puja_image,
     price,
@@ -65,6 +64,20 @@ const PaymentScreen: React.FC = () => {
     selectManualPanitData,
     booking_Id,
   } = route.params as any;
+
+  // Prefer camelCase, fallback to snake_case
+  const displayPanditName =
+    panditName ||
+    pandit_name ||
+    selectManualPanitData?.name ||
+    panditjiData?.full_name ||
+    '';
+  const displayPanditImage =
+    selectManualPanitData?.image ||
+    panditjiData?.profile_img ||
+    panditImage ||
+    pandit_image ||
+    'https://via.placeholder.com/150';
 
   console.log('oute.params :: ', route.params);
 
@@ -77,6 +90,23 @@ const PaymentScreen: React.FC = () => {
   const [loading, setIsLoading] = useState<boolean>(false);
   const [walletData, setWalletData] = useState<any>({});
   const [location, setLocation] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        const user = await AsyncStorage.getItem(AppConstant.CURRENT_USER);
+        if (user) {
+          // You can parse and use the user object as needed
+          // Example: setCurrentUser(JSON.parse(user));
+          setCurrentUser(user);
+        }
+      } catch (error) {
+        console.error('Error fetching CURRENT_USER:', error);
+      }
+    };
+    fetchCurrentUser();
+  }, []);
 
   const razorpayOrderInProgress = useRef(false);
 
@@ -126,90 +156,6 @@ const PaymentScreen: React.FC = () => {
     return 0;
   };
 
-  // const buildBookingData = () => {
-  //   let bookingData: any = {
-  //     pooja: typeof poojaId === 'string' ? parseInt(poojaId, 10) : poojaId,
-  //     pandit:
-  //       typeof pandit === 'string'
-  //         ? parseInt(pandit, 10)
-  //         : pandit || panditjiData?.pandit_id,
-  //     samagri_required: samagri_required,
-  //     booking_date: booking_date,
-  //     muhurat_time: muhurat_time,
-  //     muhurat_type: muhurat_type,
-  //     notes: notes,
-  //   };
-
-  //   if (
-  //     address &&
-  //     address !== '' &&
-  //     address !== null &&
-  //     address !== undefined
-  //   ) {
-  //     bookingData.address = address;
-  //   } else if (tirth && tirth !== '' && tirth !== null && tirth !== undefined) {
-  //     bookingData.tirth_place = tirth;
-  //   }
-
-  //   if (
-  //     bookingData.address === '' ||
-  //     bookingData.address === null ||
-  //     bookingData.address === undefined
-  //   ) {
-  //     delete bookingData.address;
-  //   }
-  //   if (
-  //     bookingData.tirth === '' ||
-  //     bookingData.tirth === null ||
-  //     bookingData.tirth === undefined
-  //   ) {
-  //     delete bookingData.tirth;
-  //   }
-
-  //   return bookingData;
-  // };
-
-  // const handleCreateRazorpayOrder = useCallback(
-  //   async (bookingIdForOrder: string) => {
-  //     if (razorpayOrderBookingId.current === bookingIdForOrder && orderId) {
-  //       return {order_id: orderId};
-  //     }
-  //     if (razorpayOrderInProgress.current) {
-  //       return null;
-  //     }
-  //     razorpayOrderInProgress.current = true;
-  //     setIsLoading(true);
-  //     try {
-  //       const data: any = {
-  //         booking_id: bookingIdForOrder,
-  //       };
-  //       if (usePoints) {
-  //         data.amount_to_pay_from_wallet_input = getWalletBalance();
-  //       }
-  //       const response: any = await postCreateRazorpayOrder(data as any);
-  //       if (response && response.data && response.data.order_id) {
-  //         setOrderId(response.data.order_id);
-  //         razorpayOrderBookingId.current = bookingIdForOrder;
-  //         showSuccessToast('Razorpay order created successfully!');
-  //         return response.data;
-  //       } else {
-  //         showErrorToast(
-  //           response?.message || 'Failed to create Razorpay order.',
-  //         );
-  //         return null;
-  //       }
-  //     } catch (error: any) {
-  //       console.error('error in create booking :: ', error?.response.data);
-  //       showErrorToast(error?.message || 'Failed to create Razorpay order.');
-  //       return null;
-  //     } finally {
-  //       setIsLoading(false);
-  //       razorpayOrderInProgress.current = false;
-  //     }
-  //   },
-  //   [orderId, showSuccessToast, showErrorToast],
-  // );
-
   const handleCreateRazorpayOrder = useCallback(
     async (bookingIdForOrder: string) => {
       if (razorpayOrderBookingId.current === bookingIdForOrder && orderId) {
@@ -255,49 +201,6 @@ const PaymentScreen: React.FC = () => {
     [orderId, usePoints, showSuccessToast, showErrorToast, getWalletBalance],
   );
 
-  // const handleVerifyPayment = async ({
-  //   booking_id,
-  //   razorpay_payment_id,
-  //   razorpay_order_id,
-  //   razorpay_signature,
-  // }: {
-  //   booking_id: string;
-  //   razorpay_payment_id: string;
-  //   razorpay_order_id: string;
-  //   razorpay_signature: string;
-  // }) => {
-  //   setIsLoading(true);
-  //   try {
-  //     const data: any = {
-  //       booking_id,
-  //       razorpay_payment_id,
-  //       razorpay_order_id,
-  //       razorpay_signature,
-  //     };
-  //     const response: any = await postVerrifyPayment(
-  //       data,
-  //       location.latitude,
-  //       location.longitude,
-  //     );
-  //     if (response && response.data.success) {
-  //       showSuccessToast('Payment verified successfully!');
-  //       navigation.navigate('BookingSuccessfullyScreen', {
-  //         booking: booking_id,
-  //         panditjiData: panditjiData,
-  //         selectManualPanitData: selectManualPanitData,
-  //         panditName: panditName,
-  //         panditImage: panditImage,
-  //       });
-  //     } else {
-  //       showErrorToast(response?.message || 'Payment verification failed===>.');
-  //     }
-  //   } catch (error: any) {
-  //     showErrorToast(error?.message || 'Payment verification failed------>.');
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   const handleVerifyPayment = async (paymentData: any) => {
     const {
       booking_id,
@@ -325,12 +228,8 @@ const PaymentScreen: React.FC = () => {
         showSuccessToast('Payment verified successfully!');
 
         // Navigate to success screen
-        navigation.navigate('BookingSuccessfullyScreen', {
-          booking: booking_id,
-          panditjiData,
-          selectManualPanitData,
-          panditName,
-          panditImage,
+        navigation.navigate('SearchPanditScreen', {
+          booking_id: booking_id,
         });
       } else {
         throw new Error(response?.message || 'Payment verification failed');
@@ -343,117 +242,6 @@ const PaymentScreen: React.FC = () => {
       setIsLoading(false);
     }
   };
-
-  // const handlePayment = async () => {
-  //   const razorpayOrder = await handleCreateRazorpayOrder(booking_Id);
-  //   if (!razorpayOrder || !razorpayOrder.order_id) {
-  //     showErrorToast('Order ID not found. Please try again.');
-  //     return;
-  //   }
-
-  //   const options: any = {
-  //     description: 'Puja Booking Payment',
-  //     image: 'https://your-logo-url.com/logo.png',
-  //     currency: 'INR',
-  //     key: 'rzp_test_birUVdrhV4Jm7l',
-  //     amount: price * 100,
-  //     name: 'PujaGuru App',
-  //     order_id: razorpayOrder.order_id,
-  //     prefill: {
-  //       email: 'user@example.com',
-  //       contact: '9999999999',
-  //       name: 'User Name',
-  //     },
-  //     theme: {color: COLORS.primary},
-  //   };
-
-  //   RazorpayCheckout.open(options)
-  //     .then(async (data: any) => {
-  //       if (
-  //         data &&
-  //         data.razorpay_payment_id &&
-  //         data.razorpay_order_id &&
-  //         data.razorpay_signature &&
-  //         booking_Id
-  //       ) {
-  //         await handleVerifyPayment({
-  //           booking_id: booking_Id,
-  //           razorpay_payment_id: data.razorpay_payment_id,
-  //           razorpay_order_id: data.razorpay_order_id,
-  //           razorpay_signature: data.razorpay_signature,
-  //         });
-  //       } else {
-  //         showErrorToast('Payment verification data missing.');
-  //       }
-  //     })
-  //     .catch((error: {code: any}) => {
-  //       showErrorToast(`Payment failed: ${error.code}`);
-  //     });
-  // };
-
-  // const handleConfirmBooking = async () => {
-  //   if (!acceptTerms) {
-  //     showErrorToast('Please accept the terms and conditions to proceed.');
-  //     return;
-  //   }
-
-  //   const walletBalance = getWalletBalance();
-  //   const totalPrice = Number(price) || 0;
-  //   let amount = totalPrice * 100;
-  //   if (usePoints) {
-  //     const remaining = Math.max(totalPrice - walletBalance, 0);
-  //     amount = remaining * 100;
-  //   }
-
-  //   setIsLoading(true);
-  //   try {
-  //     const bookingData = buildBookingData();
-  //     console.log('bookingData :: ', bookingData);
-
-  //     const bookingResponse: any = await postBooking(bookingData as any);
-  //     if (
-  //       bookingResponse &&
-  //       bookingResponse.data &&
-  //       bookingResponse.data.status &&
-  //       bookingResponse.data.data &&
-  //       bookingResponse.data.data.id
-  //     ) {
-  //       const newBookingId = bookingResponse.data.data.id;
-  //       setBookingId(newBookingId);
-
-  //       let currentOrderId = orderId;
-  //       if (
-  //         !currentOrderId ||
-  //         razorpayOrderBookingId.current !== newBookingId
-  //       ) {
-  //         const razorpayOrder = await handleCreateRazorpayOrder(newBookingId);
-  //         if (!razorpayOrder || !razorpayOrder.order_id) {
-  //           showErrorToast('Order ID not found. Please try again.');
-  //           setIsLoading(false);
-  //           return;
-  //         }
-  //         currentOrderId = razorpayOrder.order_id;
-  //         setOrderId(currentOrderId);
-  //         razorpayOrderBookingId.current = newBookingId;
-  //       }
-  //       await handlePayment(amount, newBookingId, currentOrderId!);
-  //     } else {
-  //       if (bookingResponse && bookingResponse.errors) {
-  //         console.error('Error Booking', bookingResponse.errors);
-  //       } else {
-  //         showErrorToast(bookingResponse?.message || 'Booking failed.');
-  //       }
-  //     }
-  //   } catch (error: any) {
-  //     if (error?.response?.data) {
-  //       console.log('Error Booking', error.response.data?.message);
-  //     } else {
-  //       showErrorToast(error?.message || 'Booking failed.');
-  //     }
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   const handlePayment = async () => {
     if (!acceptTerms) {
@@ -480,9 +268,9 @@ const PaymentScreen: React.FC = () => {
         name: 'PujaGuru App',
         order_id: razorpayOrder.order_id,
         prefill: {
-          email: 'user@example.com',
-          contact: '9999999999',
-          name: 'User Name',
+          email: currentUser.email,
+          contact: currentUser.mobile,
+          name: `${currentUser.first_name}${currentUser.last_name}`,
         },
         theme: {color: COLORS.primary},
       };
@@ -518,6 +306,7 @@ const PaymentScreen: React.FC = () => {
     }
   };
 
+  // --- REWRITE: Show pandit name and image if any pandit is present ---
   const renderBookingData = () => (
     <View style={styles.bookingDataItem}>
       <View style={styles.textContainer}>
@@ -550,7 +339,14 @@ const PaymentScreen: React.FC = () => {
           <Text style={styles.bookingDataText}>{booking_date}</Text>
         </View>
       </View>
-      <View style={styles.textContainer}>
+
+      <View
+        style={[
+          styles.textContainer,
+          !(displayPanditName || displayPanditImage) && {
+            borderBottomWidth: 0,
+          },
+        ]}>
         <View
           style={{
             width: 40,
@@ -565,7 +361,8 @@ const PaymentScreen: React.FC = () => {
           <Text style={styles.bookingDataText}>{muhurat_time}</Text>
         </View>
       </View>
-      {panditName && (
+      {/* Show pandit info if any of the possible pandit fields are present */}
+      {(displayPanditName || displayPanditImage) && (
         <View
           style={{
             flexDirection: 'row',
@@ -574,20 +371,12 @@ const PaymentScreen: React.FC = () => {
           }}>
           <Image
             source={{
-              uri:
-                selectManualPanitData?.image ||
-                panditjiData?.profile_img ||
-                panditImage ||
-                'https://via.placeholder.com/150',
+              uri: displayPanditImage,
             }}
             style={styles.panditImage}
           />
           <Text style={styles.bookingDataText}>
-            {panditjiData?.full_name ||
-              selectManualPanitData?.name ||
-              panditName ||
-              'Panditji'}{' '}
-            {'Panditji'}
+            {displayPanditName ? displayPanditName : 'Panditji'}
           </Text>
         </View>
       )}
