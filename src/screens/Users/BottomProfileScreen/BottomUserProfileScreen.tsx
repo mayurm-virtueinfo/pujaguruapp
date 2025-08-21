@@ -25,6 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomModal from '../../../components/CustomModal';
 import CustomeLoader from '../../../components/CustomeLoader';
+import {getFcmToken} from '../../../configuration/firebaseMessaging';
 
 interface ProfileFieldProps {
   label: string;
@@ -100,8 +101,11 @@ const BottomUserProfileScreen: React.FC = () => {
     try {
       const refreshToken =
         (await AsyncStorage.getItem(AppConstant.REFRESH_TOKEN)) || '';
+      const fcmToken = await getFcmToken();
+
       const params = {
         refresh_token: refreshToken,
+        device_token: fcmToken,
       };
       const response: any = await postLogout(params);
       if (response.data.success) {
