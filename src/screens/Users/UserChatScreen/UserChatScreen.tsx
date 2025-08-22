@@ -52,7 +52,7 @@ const UserChatScreen: React.FC = () => {
 
   useEffect(() => {
     if (accessToken && booking_id) {
-      const socketURL = `ws://172.30.78.249:8081/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
+      const socketURL = `ws://192.168.1.20:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
       ws.current = new WebSocket(socketURL);
 
       console.log('socketURL : ', socketURL);

@@ -59,6 +59,7 @@ const SelectPanditjiScreen: React.FC = () => {
     puja_image,
     price,
     selectAddress,
+    AutoModeSelection,
   } = route.params as any;
   const {showErrorToast, showSuccessToast} = useCommonToast();
 
@@ -228,6 +229,7 @@ const SelectPanditjiScreen: React.FC = () => {
           selectAddress: selectAddress,
           selectManualPanitData: selectPanditData,
           booking_Id: response?.data?.booking_id,
+          AutoModeSelection,
         });
       }
     }

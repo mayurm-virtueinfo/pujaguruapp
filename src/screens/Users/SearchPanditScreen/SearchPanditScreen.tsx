@@ -10,13 +10,10 @@ import {moderateScale, verticalScale} from 'react-native-size-matters';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 
-const {width} = Dimensions.get('window');
-
-const SEARCH_SCREEN_DURATION_MS = 2 * 60 * 1000; // 2 minutes in milliseconds
+const SEARCH_SCREEN_DURATION_MS = 1 * 60 * 1000;
 
 const SearchPanditScreen: React.FC = () => {
   const route = useRoute();
-  // Accept both camelCase and snake_case for panditName/panditImage
   const {booking_Id, booking_id} = route.params as any;
   const bookingId = booking_Id || booking_id;
   const {t} = useTranslation();
@@ -26,7 +23,6 @@ const SearchPanditScreen: React.FC = () => {
   const [step, setStep] = useState(0);
   const [wsError, setWsError] = useState<string | null>(null);
 
-  // Use translation keys for search steps
   const SEARCH_STEPS = [
     t('search_pandit_screen_scanning_location'),
     t('search_pandit_screen_finding_nearby_pandits'),
@@ -40,20 +36,15 @@ const SearchPanditScreen: React.FC = () => {
   const circle2Ref = useRef<Animatable.View & View>(null);
   const ws = useRef<WebSocket | null>(null);
 
-  // Track if navigation has already happened to avoid duplicate navigation
   const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
-    // Recompute SEARCH_STEPS on language change
     setSearchText(SEARCH_STEPS[0]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [t]);
 
   useEffect(() => {
     if (bookingId) {
-      // Try both ws:// and wss:// for local/dev/prod
       let socketURL = `ws://192.168.1.20:9000/ws/bookings/${bookingId}/`;
-      // If running on production, you may want to use wss://
       if (socketURL.startsWith('ws://') && !__DEV__) {
         socketURL = socketURL.replace('ws://', 'wss://');
       }
@@ -78,8 +69,6 @@ const SearchPanditScreen: React.FC = () => {
       socket.onerror = e => {
         setWsError('WebSocket connection error');
         console.error('WebSocket error:', e?.message || e);
-        // Optionally show alert
-        // Alert.alert('WebSocket Error', e?.message || 'WebSocket connection error');
       };
 
       socket.onclose = e => {
@@ -92,7 +81,6 @@ const SearchPanditScreen: React.FC = () => {
       socket.onmessage = event => {
         try {
           const data = JSON.parse(event.data);
-          // If the status is accepted, navigate to BookingSuccessfullyScreen
           if (
             data &&
             (data.status === 'accepted' || data.status === 'ACCEPTED') &&
@@ -106,7 +94,7 @@ const SearchPanditScreen: React.FC = () => {
             } as any);
           }
         } catch (err) {
-          // Ignore parse errors
+          console.error('Error parsing WebSocket message:', err);
         }
       };
 
@@ -120,7 +108,6 @@ const SearchPanditScreen: React.FC = () => {
 
   useEffect(() => {
     let timers: NodeJS.Timeout[] = [];
-    // Calculate the interval for each step so that all steps fit within 2 minutes
     const stepInterval = Math.floor(
       SEARCH_SCREEN_DURATION_MS / (SEARCH_STEPS.length + 1),
     );
@@ -132,11 +119,9 @@ const SearchPanditScreen: React.FC = () => {
         }, idx * stepInterval),
       );
     });
-    // Final timer for navigation after 2 minutes
     timers.push(
       setTimeout(() => {
         setLoading(false);
-        // Only navigate to BookingSuccessfullyScreen if not already navigated by websocket
         if (!hasNavigatedRef.current) {
           hasNavigatedRef.current = true;
           navigation.navigate('BookingSuccessfullyScreen', {
@@ -149,17 +134,14 @@ const SearchPanditScreen: React.FC = () => {
     return () => {
       timers.forEach(clearTimeout);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [SEARCH_STEPS.join('|')]);
 
-  // Pulse animation for the icon
   const pulseAnimation = {
     0: {scale: 1, opacity: 0.7},
     0.5: {scale: 1.2, opacity: 1},
     1: {scale: 1, opacity: 0.7},
   };
 
-  // Radar circle animation (expanding and fading)
   const radarAnimation = {
     0: {scale: 0.5, opacity: 1},
     1: {scale: 2.5, opacity: 0},

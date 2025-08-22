@@ -302,6 +302,7 @@ const PujaBookingScreen: React.FC = () => {
             pandit: panditId,
             panditName: panditName,
             panditImage: panditImage,
+            AutoModeSelection: false,
           });
         }
       }
@@ -360,6 +361,7 @@ const PujaBookingScreen: React.FC = () => {
       puja_name: puja_name,
       price: price,
       selectAddress: selectTirthPlaceName || selectAddressName,
+      AutoModeSelection: false,
     };
     if (selection === 'automatic') {
       const data = {
@@ -395,6 +397,7 @@ const PujaBookingScreen: React.FC = () => {
             price: price,
             selectAddress: selectTirthPlaceName || selectAddressName,
             booking_Id: response?.data?.booking_id,
+            AutoModeSelection: true,
           });
         }
       }

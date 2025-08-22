@@ -45,7 +45,6 @@ const PaymentScreen: React.FC = () => {
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const route = useRoute();
-  // Accept both camelCase and snake_case for panditName/panditImage
   const {
     booking_date,
     muhurat_time,
@@ -63,9 +62,9 @@ const PaymentScreen: React.FC = () => {
     panditjiData,
     selectManualPanitData,
     booking_Id,
+    AutoModeSelection,
   } = route.params as any;
 
-  // Prefer camelCase, fallback to snake_case
   const displayPanditName =
     panditName ||
     pandit_name ||
@@ -97,8 +96,6 @@ const PaymentScreen: React.FC = () => {
       try {
         const user = await AsyncStorage.getItem(AppConstant.CURRENT_USER);
         if (user) {
-          // You can parse and use the user object as needed
-          // Example: setCurrentUser(JSON.parse(user));
           setCurrentUser(user);
         }
       } catch (error) {
@@ -218,7 +215,7 @@ const PaymentScreen: React.FC = () => {
         razorpay_signature,
       };
 
-      const response = await postVerrifyPayment(
+      const response: any = await postVerrifyPayment(
         verificationData,
         location?.latitude,
         location?.longitude,
@@ -227,10 +224,19 @@ const PaymentScreen: React.FC = () => {
       if (response?.data?.success) {
         showSuccessToast('Payment verified successfully!');
 
-        // Navigate to success screen
-        navigation.navigate('SearchPanditScreen', {
-          booking_id: booking_id,
-        });
+        if (AutoModeSelection == true) {
+          navigation.navigate('SearchPanditScreen', {
+            booking_id: booking_id,
+          });
+        } else {
+          navigation.navigate('BookingSuccessfullyScreen', {
+            booking: booking_id,
+            panditjiData,
+            selectManualPanitData,
+            panditName,
+            panditImage,
+          });
+        }
       } else {
         throw new Error(response?.message || 'Payment verification failed');
       }
@@ -306,7 +312,6 @@ const PaymentScreen: React.FC = () => {
     }
   };
 
-  // --- REWRITE: Show pandit name and image if any pandit is present ---
   const renderBookingData = () => (
     <View style={styles.bookingDataItem}>
       <View style={styles.textContainer}>
@@ -343,7 +348,9 @@ const PaymentScreen: React.FC = () => {
       <View
         style={[
           styles.textContainer,
-          !(displayPanditName || displayPanditImage) && {
+          (AutoModeSelection == true ||
+            (AutoModeSelection == false &&
+              !(displayPanditName || displayPanditImage))) && {
             borderBottomWidth: 0,
           },
         ]}>
@@ -361,25 +368,25 @@ const PaymentScreen: React.FC = () => {
           <Text style={styles.bookingDataText}>{muhurat_time}</Text>
         </View>
       </View>
-      {/* Show pandit info if any of the possible pandit fields are present */}
-      {(displayPanditName || displayPanditImage) && (
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingTop: 12,
-          }}>
-          <Image
-            source={{
-              uri: displayPanditImage,
-            }}
-            style={styles.panditImage}
-          />
-          <Text style={styles.bookingDataText}>
-            {displayPanditName ? displayPanditName : 'Panditji'}
-          </Text>
-        </View>
-      )}
+
+      {AutoModeSelection == false &&
+        displayPanditImage &&
+        displayPanditName && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingTop: 12,
+            }}>
+            <Image
+              source={{
+                uri: displayPanditImage,
+              }}
+              style={styles.panditImage}
+            />
+            <Text style={styles.bookingDataText}>{displayPanditName}</Text>
+          </View>
+        )}
     </View>
   );
 
