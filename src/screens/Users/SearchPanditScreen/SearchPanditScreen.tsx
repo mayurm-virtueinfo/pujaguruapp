@@ -88,10 +88,13 @@ const SearchPanditScreen: React.FC = () => {
           ) {
             hasNavigatedRef.current = true;
             setLoading(false);
-            navigation.navigate('BookingSuccessfullyScreen', {
-              booking: bookingId,
-              auto: 'true',
-            } as any);
+            // navigation.navigate('BookingSuccessfullyScreen', {
+            //   booking: bookingId,
+            //   auto: 'true',
+            // } as any);
+            navigation.reset('ConfirmPujaDetails', {
+              bookingId,
+            });
           }
         } catch (err) {
           console.error('Error parsing WebSocket message:', err);

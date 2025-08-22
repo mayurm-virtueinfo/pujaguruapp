@@ -1,0 +1,36 @@
+[debug] [2025-08-22T07:27:14.694Z] ----------------------------------------------------------------------
+[debug] [2025-08-22T07:27:14.697Z] Command:       /Users/apple/.nvm/versions/node/v22.17.1/bin/node /Users/apple/.nvm/versions/node/v22.17.1/bin/firebase emulators:start --only auth
+[debug] [2025-08-22T07:27:14.697Z] CLI Version:   14.11.1
+[debug] [2025-08-22T07:27:14.698Z] Platform:      darwin
+[debug] [2025-08-22T07:27:14.698Z] Node Version:  v22.17.1
+[debug] [2025-08-22T07:27:14.698Z] Time:          Fri Aug 22 2025 12:57:14 GMT+0530 (India Standard Time)
+[debug] [2025-08-22T07:27:14.698Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-08-22T07:27:14.701Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-08-22T07:27:14.974Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2025-08-22T07:27:14.981Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] Failed to authenticate, have you run firebase login?
+[warn] ⚠  emulators: You are not currently authenticated so some features may not work correctly. Please run firebase login to authenticate the CLI. 
+[info] i  emulators: Starting emulators: auth {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: auth"}}
+[debug] [2025-08-22T07:27:17.265Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-08-22T07:27:17.266Z] assigned listening specs for emulators {"user":{"auth":[{"address":"0.0.0.0","family":"IPv4","port":9099}],"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2025-08-22T07:27:17.269Z] [hub] writing locator at /var/folders/1y/5fr5z4js2897c00n1lsl0rq40000gn/T/hub-panditji-42b4a.json
+[debug] [2025-08-22T07:27:24.002Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌────────────────┬──────────────┬────────────────────────────┐
+│ Emulator       │ Host:Port    │ View in Emulator UI        │
+├────────────────┼──────────────┼────────────────────────────┤
+│ Authentication │ 0.0.0.0:9099 │ http://127.0.0.1:4000/auth │
+└────────────────┴──────────────┴────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2025-08-22T07:27:24.807Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-08-22T07:27:24.807Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
