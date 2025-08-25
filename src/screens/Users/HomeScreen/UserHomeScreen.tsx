@@ -18,6 +18,7 @@ import {
   getRecommendedPandit,
   getUpcomingPujas,
   getInProgress,
+  getActivePuja,
   PanditItem,
   PujaItem,
   RecommendedPandit,
@@ -36,19 +37,30 @@ import PrimaryButton from '../../../components/PrimaryButton';
 import axios from 'axios';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 
+// Define TypeScript interface for PendingPuja
+interface PendingPuja {
+  id: number;
+  pooja: {
+    title?: string;
+    image_url?: string;
+    pooja_name?: string;
+    pooja_image_url?: string;
+  };
+  booking_date?: string;
+  when_is_pooja?: string;
+}
+
 const UserHomeScreen: React.FC = () => {
-  const navigation = useNavigation<UserPoojaListParamList>();
+  const navigation = useNavigation<UserHomeParamList>();
   const [pujas, setPujas] = useState<PujaItem[]>([]);
   const [inProgressPujas, setInProgressPujas] = useState<PujaItem[]>([]);
+  const [pendingPujas, setPendingPujas] = useState<PendingPuja[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<string | null>(null);
   const [location, setLocation] = useState<any | null>(null);
   const [recomendedPandits, setRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
-
-  console.log('location :: ', location);
-
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
 
@@ -58,8 +70,10 @@ const UserHomeScreen: React.FC = () => {
 
   useFocusEffect(
     React.useCallback(() => {
+      console.log('useFocusEffect triggered');
       fetchUpcomingPujas();
       fetchInProgressPujas();
+      fetchPendingPujas();
     }, []),
   );
 
@@ -76,15 +90,15 @@ const UserHomeScreen: React.FC = () => {
       const refreshToken = await AsyncStorage.getItem(
         AppConstant.REFRESH_TOKEN,
       );
-      console.log('refreshToken :: ', refreshToken);
 
       setUser(user);
+
       if (location) {
         const parsedLocation = JSON.parse(location);
         setLocation(parsedLocation);
       }
     } catch (error) {
-      console.error('Error fetching user and location ::', error);
+      console.error('Error fetching user and location:', error);
     }
   };
 
@@ -92,7 +106,6 @@ const UserHomeScreen: React.FC = () => {
     setLoading(true);
     try {
       const response: any = await getUpcomingPujas();
-      console.log('response for upcoming puja :: ', response);
       setPujas(response || []);
     } catch (error) {
       console.error('Error fetching upcoming puja data:', error);
@@ -106,11 +119,36 @@ const UserHomeScreen: React.FC = () => {
     setLoading(true);
     try {
       const response: any = await getInProgress();
-      console.log('response for in-progress puja :: ', response);
+      console.log('In-progress Puja Response:', response);
       setInProgressPujas(response || []);
     } catch (error) {
       console.error('Error fetching in-progress puja data:', error);
       setInProgressPujas([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchPendingPujas = async () => {
+    setLoading(true);
+    try {
+      console.log('Fetching pending pujas...');
+      const response: any = await getActivePuja();
+      console.log('Pending Puja Response:', response);
+      // Handle different response structures
+      let bookings: PendingPuja[] = [];
+      if (Array.isArray(response?.booking)) {
+        bookings = response.booking;
+      } else if (response?.booking) {
+        bookings = [response.booking]; // Wrap single object in array
+      } else {
+        bookings = [];
+      }
+      setPendingPujas(bookings);
+      console.log('Set Pending Pujas:', bookings);
+    } catch (error) {
+      console.error('Error fetching pending puja data:', error);
+      setPendingPujas([]);
     } finally {
       setLoading(false);
     }
@@ -123,7 +161,6 @@ const UserHomeScreen: React.FC = () => {
         location.latitude,
         location.longitude,
       );
-      console.log('response for recommended pandit :: ', response);
       if (response && Array.isArray(response.data)) {
         setRecomendedPandits(response.data || []);
       }
@@ -141,13 +178,15 @@ const UserHomeScreen: React.FC = () => {
         );
         return;
       }
-      console.error('Error fetching recommended pandits:', error.response.data);
+      console.error(
+        'Error fetching recommended pandits:',
+        error.response?.data,
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // Fix: Pass correct panditId, PanditName, and panditImage to navigation
   const handleBookPandit = (
     panditId: number,
     panditName: string,
@@ -175,14 +214,13 @@ const UserHomeScreen: React.FC = () => {
         backgroundColor={COLORS.primaryBackground}
         barStyle="light-content"
       />
-
       <UserCustomHeader
         title={t('home')}
         showBellButton={true}
         onNotificationPress={handleNotificationPress}
       />
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Recommended Panditji Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t('recomended_panditji')}</Text>
@@ -197,11 +235,9 @@ const UserHomeScreen: React.FC = () => {
               />
             </TouchableOpacity>
           </View>
-
           <Text style={styles.subtitle}>
             {t('today_is_kartik_shukla_paksha')}
           </Text>
-
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -216,9 +252,7 @@ const UserHomeScreen: React.FC = () => {
                   <View style={styles.panditCard} key={pandit.id}>
                     <View style={styles.panditImageWrapper}>
                       <Image
-                        source={{
-                          uri: panditImage,
-                        }}
+                        source={{uri: panditImage}}
                         style={styles.panditImage}
                         accessibilityLabel={`Profile image of ${pandit.full_name}`}
                       />
@@ -316,20 +350,65 @@ const UserHomeScreen: React.FC = () => {
                 </View>
               ))
             ) : (
-              <Text
-                style={{
-                  color: '#888',
-                  textAlign: 'center',
-                }}>
+              <Text style={{color: '#888', textAlign: 'center'}}>
                 {t('no_in_progress_pujas') || 'No in-progress pujas'}
               </Text>
             )}
           </View>
         </View>
 
+        {/* Pending Puja Section */}
+        <View style={styles.pujaSection}>
+          <Text style={styles.sectionTitle}>
+            {t('pending_pujas') || 'Pending Pujas'}
+          </Text>
+          <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
+            {Array.isArray(pendingPujas) && pendingPujas.length > 0 ? (
+              pendingPujas.map((puja, idx) => {
+                console.log('Rendering Puja:', puja);
+                const pooja = puja.pooja || {};
+                const imageUrl =
+                  pooja.image_url ||
+                  'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg';
+                const poojaName = pooja.title || 'Unknown Puja';
+                const poojaDate =
+                  puja.when_is_pooja || puja.booking_date || 'No Date';
+
+                return (
+                  <View key={puja.id || idx}>
+                    <TouchableOpacity
+                      style={styles.pujaCard}
+                      onPress={() =>
+                        navigation.navigate('ConfirmPujaDetails', {
+                          bookingId: puja.id,
+                        })
+                      }>
+                      <Image
+                        source={{uri: imageUrl}}
+                        style={styles.pujaImage}
+                      />
+                      <View style={styles.pujaTextContainer}>
+                        <Text style={styles.pujaName}>{poojaName}</Text>
+                        <Text style={styles.pujaDate}>{poojaDate}</Text>
+                      </View>
+                    </TouchableOpacity>
+                    {idx !== pendingPujas.length - 1 && (
+                      <View style={styles.divider} />
+                    )}
+                  </View>
+                );
+              })
+            ) : (
+              <Text style={{color: '#888', textAlign: 'center'}}>
+                {t('no_pending_pujas') || 'No pending pujas'}
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* Upcoming Puja Section */}
         <View style={styles.pujaSection}>
           <Text style={styles.sectionTitle}>{t('upcoming_pujas')}</Text>
-
           <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
             {pujas && pujas.length > 0 ? (
               pujas.map((puja, idx) => (
@@ -354,12 +433,7 @@ const UserHomeScreen: React.FC = () => {
                 </View>
               ))
             ) : (
-              <Text
-                style={{
-                  color: '#888',
-                  // marginTop: 10,
-                  textAlign: 'center',
-                }}>
+              <Text style={{color: '#888', textAlign: 'center'}}>
                 {t('no_upcoming_pujas')}
               </Text>
             )}

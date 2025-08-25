@@ -1,56 +1,50 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   StatusBar,
   Image,
-  Platform,
   ActivityIndicator,
-  Modal,
+  TouchableOpacity,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {COLORS} from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
-import PujaItemsModal from '../../../components/PujaItemsModal';
 import Fonts from '../../../theme/fonts';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {Images} from '../../../theme/Images';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {useTranslation} from 'react-i18next';
-import {getUpcomingPujaDetails, postStartChat} from '../../../api/apiService';
+import {getUpcomingPujaDetails} from '../../../api/apiService';
+import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 const ConfirmPujaDetails: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
-    UserPoojaListParamList,
+    UserHomeParamList,
     'PujaCancellationScreen' | 'UserChatScreen' | 'RateYourExperienceScreen'
   >;
   const route = useRoute();
-  const {bookingId} = route.params as any;
+  const {bookingId, search} = route.params as any;
   const {t} = useTranslation();
   const navigation = useNavigation<ScreenNavigationProp>();
-  const [isPujaItemsModalVisible, setIsPujaItemsModalVisible] = useState(false);
 
   const [pujaDetails, setPujaDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  console.log('bookingId :: ', bookingId);
-  console.log('pujaDetails :: ', pujaDetails);
+  // State for show more/less for arranged items
+  const [showMorePanditArranged, setShowMorePanditArranged] = useState(false);
+  const [showMoreUserArranged, setShowMoreUserArranged] = useState(false);
 
   useEffect(() => {
     fetchPujaDetails();
   }, [bookingId]);
 
+  console.log('pujaDetails', pujaDetails);
   const fetchPujaDetails = async () => {
     setLoading(true);
     try {
@@ -61,14 +55,6 @@ const ConfirmPujaDetails: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handlePujaItemsPress = () => {
-    setIsPujaItemsModalVisible(true);
-  };
-
-  const handleModalClose = () => {
-    setIsPujaItemsModalVisible(false);
   };
 
   const formatDate = (dateStr: string | null | undefined) => {
@@ -99,6 +85,107 @@ const ConfirmPujaDetails: React.FC = () => {
     return `https://pujapaath.com${url}`;
   };
 
+  const renderArrangedItemsSection = () => {
+    if (!pujaDetails) return null;
+
+    const {pandit_arranged_items, user_arranged_items} = pujaDetails;
+
+    // Only show if at least one of the arrays has items
+    if (
+      (!Array.isArray(pandit_arranged_items) ||
+        pandit_arranged_items.length === 0) &&
+      (!Array.isArray(user_arranged_items) || user_arranged_items.length === 0)
+    ) {
+      return null;
+    }
+
+    return (
+      <View style={styles.arrangedItemsContainer}>
+        {/* Pandit Arranged Items */}
+        {Array.isArray(pandit_arranged_items) &&
+          pandit_arranged_items.length > 0 && (
+            <View style={styles.arrangedSection}>
+              <Text style={styles.arrangedSectionTitle}>
+                {t('pandit_arranged_items') || 'Pandit Arranged Items'}
+              </Text>
+              <View style={styles.arrangedList}>
+                {(showMorePanditArranged
+                  ? pandit_arranged_items
+                  : pandit_arranged_items.slice(0, 1)
+                ).map((item: any, idx: number) => (
+                  <View
+                    key={`pandit-item-${idx}`}
+                    style={styles.arrangedItemRow}>
+                    <Text style={styles.arrangedItemName}>{item.name}</Text>
+                    <Text style={styles.arrangedItemQty}>
+                      {item.quantity} {item.units}
+                    </Text>
+                  </View>
+                ))}
+                {pandit_arranged_items.length > 1 && (
+                  <TouchableOpacity
+                    onPress={() =>
+                      setShowMorePanditArranged(!showMorePanditArranged)
+                    }
+                    style={{paddingVertical: 6}}>
+                    <Text
+                      style={{
+                        color: COLORS.primaryBackgroundButton,
+                        fontFamily: Fonts.Sen_Medium,
+                      }}>
+                      {showMorePanditArranged
+                        ? t('show_less') || 'Show Less'
+                        : t('show_more') || 'Show More'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
+
+        {/* User Arranged Items */}
+        {Array.isArray(user_arranged_items) &&
+          user_arranged_items.length > 0 && (
+            <View style={styles.arrangedSection}>
+              <Text style={styles.arrangedSectionTitle}>
+                {t('user_arranged_items') || 'Your Arranged Items'}
+              </Text>
+              <View style={styles.arrangedList}>
+                {(showMoreUserArranged
+                  ? user_arranged_items
+                  : user_arranged_items.slice(0, 1)
+                ).map((item: any, idx: number) => (
+                  <View key={`user-item-${idx}`} style={styles.arrangedItemRow}>
+                    <Text style={styles.arrangedItemName}>{item.name}</Text>
+                    <Text style={styles.arrangedItemQty}>
+                      {item.quantity} {item.units}
+                    </Text>
+                  </View>
+                ))}
+                {user_arranged_items.length > 1 && (
+                  <TouchableOpacity
+                    onPress={() =>
+                      setShowMoreUserArranged(!showMoreUserArranged)
+                    }
+                    style={{paddingVertical: 6}}>
+                    <Text
+                      style={{
+                        color: COLORS.primaryBackgroundButton,
+                        fontFamily: Fonts.Sen_Medium,
+                      }}>
+                      {showMoreUserArranged
+                        ? t('show_less') || 'Show Less'
+                        : t('show_more') || 'Show More'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
+      </View>
+    );
+  };
+
   const renderPujaDetails = () => {
     if (!pujaDetails) return null;
     return (
@@ -112,7 +199,7 @@ const ConfirmPujaDetails: React.FC = () => {
                   source={
                     pujaDetails.pooja_image_url
                       ? {uri: getPujaImageUrl(pujaDetails.pooja_image_url)}
-                      : Images.ic_puja
+                      : Images.ic_app_logo
                   }
                   style={styles.pujaIcon}
                 />
@@ -223,7 +310,7 @@ const ConfirmPujaDetails: React.FC = () => {
                 source={
                   pandit.profile_img_url
                     ? {uri: getPanditImageUrl(pandit.profile_img_url)}
-                    : Images.ic_pandit
+                    : Images.ic_app_logo
                 }
                 style={styles.pujaIcon}
               />
@@ -263,13 +350,12 @@ const ConfirmPujaDetails: React.FC = () => {
     );
   };
 
-  const handleCancelBooking = () => {
-    navigation.navigate('PujaCancellationScreen', {id: id});
-  };
   const renderCancelButton = () => (
     <PrimaryButton
-      title={t('cancel_booking')}
-      onPress={handleCancelBooking}
+      title={t('go_to_home')}
+      onPress={() => {
+        navigation.replace('UserHomeScreen');
+      }}
       style={styles.cancelButton}
       textStyle={styles.cancelButtonText}
     />
@@ -306,8 +392,9 @@ const ConfirmPujaDetails: React.FC = () => {
                 {renderPanditDetails()}
                 {renderPanditjiSection()}
                 {renderPujaDetails()}
+                {renderArrangedItemsSection()}
                 {renderTotalAmount()}
-                {renderCancelButton()}
+                {search === 'true' && renderCancelButton()}
               </>
             )}
           </ScrollView>
@@ -333,12 +420,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
-    // overflow: 'hidden',
   },
   contentContainer: {
     flexGrow: 1,
     padding: moderateScale(24),
-    // paddingBottom: verticalScale(100),
   },
   detailsContainer: {
     marginBottom: verticalScale(24),
@@ -355,9 +440,7 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  detailsContent: {
-    // padding: moderateScale(14),
-  },
+  detailsContent: {},
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -391,9 +474,6 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
     flex: 1,
   },
-  viewButton: {
-    padding: scale(8),
-  },
   separator: {
     height: 1,
     backgroundColor: COLORS.separatorColor,
@@ -401,7 +481,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 14,
   },
   totalContainer: {
-    marginBottom: verticalScale(24),
+    // marginBottom: verticalScale(24),
   },
   totalCard: {
     backgroundColor: COLORS.white,
@@ -483,7 +563,6 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(10),
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.white,
     shadowColor: COLORS.white,
   },
   cancelButtonText: {
@@ -492,6 +571,50 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
     textTransform: 'uppercase',
     letterSpacing: -0.15,
+  },
+  // Arranged Items styles
+  arrangedItemsContainer: {
+    marginBottom: verticalScale(12),
+  },
+  arrangedSection: {
+    marginBottom: verticalScale(12),
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(10),
+    padding: moderateScale(14),
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.08,
+    shadowRadius: 1.5,
+    elevation: 1,
+  },
+  arrangedSectionTitle: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+    marginBottom: verticalScale(8),
+  },
+  arrangedList: {},
+  arrangedItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: verticalScale(4),
+    borderBottomWidth: 0.5,
+    borderBottomColor: COLORS.separatorColor,
+  },
+  arrangedItemName: {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
+    flex: 1,
+  },
+  arrangedItemQty: {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.pujaCardSubtext,
+    marginLeft: scale(10),
+    minWidth: scale(60),
+    textAlign: 'right',
   },
 });
 

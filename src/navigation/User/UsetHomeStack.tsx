@@ -21,7 +21,7 @@ import ConfirmPujaDetails from '../../screens/Users/ConfirmPujaDetails/ConfirmPu
 
 export type UserHomeParamList = {
   goBack(): unknown;
-  navigate(arg0: string, arg1: {poojaId: any}): unknown;
+  navigate: any;
   UserHomeScreen: any;
   PujaCancellationScreen: undefined;
   NotificationScreen: undefined;

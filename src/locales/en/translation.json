@@ -49,7 +49,7 @@
   "today_is_kartik_shukla_paksha": "Today is Kartik Shukla Paksha, Trayodashi",
   "no_panditji_found": "No Panditji found.",
   "upcoming_pujas": "Upcoming Puja's",
-  "no_upcoming_pujas": "No upcoming pujas.",
+  "no_upcoming_pujas": "No upcoming puja's.",
   "panditji": "Panditji",
   "search_panditji": "Search Panditji",
   "name": "Name",
@@ -184,7 +184,7 @@
   "please_enter_cancellation_reason": "Please enter your cancellation reason.",
   "cancellation_submitted_successfully": "Cancellation submitted successfully.",
   "in_progress_pujas": "In-progress Puja's",
-  "no_in_progress_pujas": "No in-progress pujas.",
+  "no_in_progress_pujas": "No in-progress puja's.",
   "error_fetching_profile_city_data": "Error fetching profile/city data",
   "invalid_first_name": "Invalid first name",
   "invalid_last_name": "Invalid last name",
@@ -234,5 +234,9 @@
   "past_bookings": "Past Bookings",
   "enter_your_State": "Select your State",
   "invalid_user_name": "Invalid user name",
-  "search_pandit_screen_finding_perfect_pandits": "Finding perfect Pandits..."
+  "search_pandit_screen_finding_perfect_pandits": "Finding perfect Pandits...",
+  "pending_pujas": "Pending Puja's",
+  "no_pending_pujas": "No pending puja's.",
+  "show_less": "Show Less",
+  "show_more": "Show More"
 }
