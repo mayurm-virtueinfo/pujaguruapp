@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* PujaGuruAppTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* PujaGuruAppTests.m */; };
-		04C10EC52E01756C007C3E6D /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 04C10EC42E01756C007C3E6D /* GoogleService-Info.plist */; };
+		04C518F02E5DA7CD0029F6D9 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 04C518EF2E5DA7CD0029F6D9 /* GoogleService-Info.plist */; };
 		0FDA41D631BE665BC6DD5A12 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
@@ -37,7 +37,7 @@
 		00E356EE1AD99517003FC87E /* PujaGuruAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PujaGuruAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* PujaGuruAppTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PujaGuruAppTests.m; sourceTree = "<group>"; };
-		04C10EC42E01756C007C3E6D /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		04C518EF2E5DA7CD0029F6D9 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		04EC08AB2E01725F00067906 /* PujaGuruApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = PujaGuruApp.entitlements; path = PujaGuruApp/PujaGuruApp.entitlements; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* PujaGuruApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PujaGuruApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = PujaGuruApp/AppDelegate.h; sourceTree = "<group>"; };
@@ -133,7 +133,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				04C10EC42E01756C007C3E6D /* GoogleService-Info.plist */,
+				04C518EF2E5DA7CD0029F6D9 /* GoogleService-Info.plist */,
 				13B07FAE1A68108700A75B9A /* PujaGuruApp */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				00E356EF1AD99517003FC87E /* PujaGuruAppTests */,
@@ -274,8 +274,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
-				04C10EC52E01756C007C3E6D /* GoogleService-Info.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				04C518F02E5DA7CD0029F6D9 /* GoogleService-Info.plist in Resources */,
 				0FDA41D631BE665BC6DD5A12 /* PrivacyInfo.xcprivacy in Resources */,
 				6165E3080EE940D981741AE0 /* Sen-Bold.ttf in Resources */,
 				C1FFB0C6CD564A869B6C449F /* Sen-ExtraBold.ttf in Resources */,
@@ -651,10 +651,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -734,10 +731,7 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

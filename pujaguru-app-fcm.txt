@@ -1,0 +1,7 @@
+Name : PujaGuruAppFCM
+Key Usage Description : Pandit App FCM sandbox production
+Key ID : 3769UA69WR
+Services : Apple Push Notifications service (APNs)
+Enabled Services : 
+Name	    Configuration
+APNsApple   Push Notifications service (APNs)	Team scoped (All topics) [Sandbox & Production]
