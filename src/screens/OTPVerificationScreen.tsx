@@ -31,6 +31,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../utils/appConstant';
 import {getMessaging, getToken} from '@react-native-firebase/messaging';
 import {getFcmToken} from '../configuration/firebaseMessaging';
+import CustomeLoader from '../components/CustomeLoader';
 
 type AuthNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -63,10 +64,8 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   );
   const [isOtpExpired, setIsOtpExpired] = useState(false);
   const {phoneNumber} = route.params;
-  const inputRefs = useRef<Array<TextInput | null>>([]);
+  const inputRefs = useRef<TextInput[]>([]);
   const [timer, setTimer] = useState(RESEND_OTP_WAIT_TIME);
-
-  // Track if navigation has occurred to avoid showing error toast after navigation
   const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
@@ -77,8 +76,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       return () => clearInterval(interval);
     } else {
       setIsOtpExpired(true);
-      setOtpConfirmation(null as any); // avoid type error
-      // Only show error toast if we haven't navigated away
+      setOtpConfirmation(null as any);
       if (!hasNavigatedRef.current) {
         showErrorToast('OTP has expired. Please request a new one.');
       }
@@ -128,7 +126,6 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
             JSON.stringify(response.user),
           );
           const fcmToken = await getFcmToken();
-
           if (fcmToken) {
             postRegisterFCMToken(fcmToken, 'user');
           }
@@ -137,7 +134,6 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
         }
       }
     } catch (error: any) {
-      // Only show error if we haven't navigated away
       if (!hasNavigatedRef.current) {
         showErrorToast(error?.message);
       }
@@ -153,6 +149,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
         showErrorToast('OTP has expired. Please request a new one.');
         return;
       }
+
       const userCredential = await otpConfirmation.confirm(code);
       if (userCredential?.user) {
         await handleSignIn(phoneNumber, userCredential.user.uid);
@@ -165,7 +162,6 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       if (error.code === 'auth/invalid-verification-code') {
         showErrorToast(t('invalid_otp'));
       } else {
-        // Only show error if we haven't navigated away
         if (!hasNavigatedRef.current) {
           showErrorToast(error?.message);
         }
@@ -181,12 +177,20 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       showErrorToast(t('invalid_otp_length'));
       return;
     }
+
     await verifyOtp(otpValue);
   };
 
   const handleResendOTP = async () => {
     try {
       setLoading(true);
+      console.log('Resending OTP to:', phoneNumber);
+      const auth = getAuth();
+      if (auth.currentUser) {
+        console.log('Clearing auth state before resend');
+        await auth.signOut();
+      }
+
       const confirmation = await signInWithPhoneNumber(getAuth(), phoneNumber);
       setOtpConfirmation(confirmation);
       setIsOtpExpired(false);
@@ -197,39 +201,55 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
         inputRefs.current[0]?.focus();
       }, 100);
     } catch (error: any) {
-      showErrorToast(error?.message || t('resend_otp_failed'));
+      console.error('Resend OTP error:', error);
+      let errorMessage = t('resend_otp_failed');
+      if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many requests. Please wait and try again.';
+      } else if (error.code === 'auth/quota-exceeded') {
+        errorMessage = 'SMS quota exceeded. Please try again later.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      showErrorToast(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ImageBackground
-      source={Images.ic_splash_background}
-      style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}>
-        <Loader loading={isLoading} />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ImageBackground
+        source={Images.ic_splash_background}
+        style={styles.container}
+        resizeMode="cover">
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
-          <View style={[styles.content, {paddingTop: inset.top}]}>
-            <View style={styles.header}>
+          <View style={styles.content}>
+            <View
+              style={[
+                styles.header,
+                {paddingTop: inset.top + moderateScale(20)},
+              ]}>
               <Image source={Images.ic_app_logo} style={styles.logo} />
               <Text style={styles.title}>{t('hi_welcome')}</Text>
             </View>
-            <View style={[styles.body, {paddingBottom: inset.bottom}]}>
+
+            <View style={styles.body}>
               <Text style={styles.mainTitle}>{t('otp_verification')}</Text>
               <Text style={styles.subtitle}>
                 {t('6_digit_code_has_been_sent')}
               </Text>
               <Text style={styles.phoneNumber}>{phoneNumber}</Text>
+
               <View style={styles.otpContainer}>
                 {otp.map((digit, index) => (
                   <TextInput
                     key={index}
-                    ref={ref => (inputRefs.current[index] = ref)}
+                    ref={ref => (inputRefs.current[index] = ref!)}
                     style={styles.otpInput}
                     value={digit}
                     onChangeText={value => handleOtpChange(value, index)}
@@ -241,10 +261,12 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
                   />
                 ))}
               </View>
-              <PrimaryButton onPress={handleVerification} title={t('verify')} />
+
               {timer > 0 ? (
                 <View style={styles.timerContainer}>
-                  <Text style={styles.timerText}>00: {timer}</Text>
+                  <Text style={styles.timerText}>
+                    00: {timer < 10 ? `0${timer}` : timer}
+                  </Text>
                 </View>
               ) : (
                 <View style={styles.resendContainer}>
@@ -252,20 +274,31 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
                     {t('did_not_receive_code')}
                   </Text>
                   <PrimaryButtonLabeled
-                    onPress={handleResendOTP}
                     title={t('resend_otp')}
+                    onPress={handleResendOTP}
                   />
                 </View>
               )}
+
+              <PrimaryButton
+                title={t('verify_otp')}
+                onPress={handleVerification}
+              />
+
               <PrimaryButtonOutlined
-                onPress={() => navigation.goBack()}
+                onPress={() =>
+                  navigation.replace('SignIn', {
+                    previousPhoneNumber: phoneNumber,
+                  })
+                }
                 title={t('change_mobile_number')}
               />
             </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </ImageBackground>
+        {isLoading && <CustomeLoader loading={isLoading} />}
+      </ImageBackground>
+    </KeyboardAvoidingView>
   );
 };
 

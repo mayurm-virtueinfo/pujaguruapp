@@ -86,5 +86,6 @@ export const GET_PANDIT_AVAILABILITY =
   '/panditji/availability/?pandit_id={pandit_id}';
 export const POST_AUTO_BOOKING =
   '/app/booking-auto/create/?latitude={latitude}&longitude={longitude}';
-export const GET_ACTIVE_PUJA = "/app/booking-active/"
-export const GET_NEW_PANDITJI = "/app/new-panditji-list/?latitude={latitude}&longitude={longitude}&booking_id={booking_Id}"
+export const GET_ACTIVE_PUJA = '/app/booking-active/';
+export const GET_NEW_PANDITJI =
+  '/app/new-panditji-list/?latitude={latitude}&longitude={longitude}&booking_id={booking_Id}';
