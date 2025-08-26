@@ -14,7 +14,7 @@ import UserProfileScreen from '../screens/Users/ProfileScreen/UserProfileScreen'
 import UserAppBottomTabNavigator from './User/UserBottomTabNavigator';
 
 export type AuthStackParamList = {
-  SignIn: undefined;
+  SignIn: any;
   OTPVerification: {
     phoneNumber: string;
     confirmation: FirebaseAuthTypes.ConfirmationResult;

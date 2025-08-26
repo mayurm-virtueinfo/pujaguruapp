@@ -1,28 +1,21 @@
-import React, {useState, useTransition} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
-  TextInput,
   StyleSheet,
-  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
-  ActivityIndicator,
   Image,
   ImageBackground,
+  Alert,
 } from 'react-native';
 import {StackNavigationProp} from '@react-navigation/stack';
+import {RouteProp} from '@react-navigation/native';
 import {AuthStackParamList} from '../navigation/AuthNavigator';
 import ThemedInput from '../components/ThemedInput';
-import {
-  getAuth,
-  onAuthStateChanged,
-  signInWithPhoneNumber,
-} from '@react-native-firebase/auth';
+import {getAuth, signInWithPhoneNumber} from '@react-native-firebase/auth';
 import {validatePhoneNumber} from '../helper/Validation';
-import Loader from '../components/Loader';
 import {moderateScale} from 'react-native-size-matters';
 import {useCommonToast} from '../common/CommonToast';
 import {COLORS} from '../theme/theme';
@@ -31,42 +24,123 @@ import {Images} from '../theme/Images';
 import Fonts from '../theme/fonts';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
-// import { firebaseAuth } from '../../App';
+import {useFocusEffect} from '@react-navigation/native';
+import CustomeLoader from '../components/CustomeLoader';
+
 type SignInScreenNavigationProp = StackNavigationProp<
   AuthStackParamList,
   'SignIn'
 >;
 
+type SignInScreenRouteProp = RouteProp<AuthStackParamList, 'SignIn'>;
+
 interface Props {
   navigation: SignInScreenNavigationProp;
+  route: SignInScreenRouteProp;
 }
 
-const SignInScreen: React.FC<Props> = ({navigation}) => {
-  const {t, i18n} = useTranslation();
+const SignInScreen: React.FC<Props> = ({navigation, route}) => {
+  const {t} = useTranslation();
   const inset = useSafeAreaInsets();
   const {showErrorToast, showSuccessToast} = useCommonToast();
   const [phoneNumber, setPhoneNumber] = useState('1111111111');
   const [isLoading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<any>({});
+  const [errors, setErrors] = useState<{phoneNumber?: string}>({});
+  const [previousPhoneNumber, setPreviousPhoneNumber] = useState<string>('');
+
+  useFocusEffect(
+    React.useCallback(() => {
+      setErrors({});
+      setLoading(false);
+
+      if (route.params?.previousPhoneNumber) {
+        setPreviousPhoneNumber(route.params.previousPhoneNumber);
+      }
+    }, [route.params]),
+  );
+
+  const proceedWithOTP = async (formattedPhone: string) => {
+    try {
+      setLoading(true);
+
+      const auth = getAuth();
+      if (auth.currentUser) {
+        await auth.signOut();
+      }
+
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      const confirmation = await signInWithPhoneNumber(
+        getAuth(),
+        formattedPhone,
+      );
+
+      setLoading(false);
+      showSuccessToast('OTP has been sent to your phone.');
+      navigation.navigate('OTPVerification', {
+        phoneNumber: formattedPhone,
+        confirmation,
+      });
+    } catch (error: any) {
+      console.error('Full error object:', error);
+      setLoading(false);
+      let errorMessage = 'Failed to send OTP. Please try again.';
+      if (error.code === 'auth/too-many-requests') {
+        errorMessage =
+          'Too many requests. Please wait a few minutes and try again.';
+      } else if (error.code === 'auth/invalid-phone-number') {
+        errorMessage =
+          'Invalid phone number format. Please check and try again.';
+      } else if (error.code === 'auth/quota-exceeded') {
+        errorMessage = 'SMS quota exceeded. Please try again later.';
+      } else if (error.code === 'auth/app-not-authorized') {
+        errorMessage = 'App not authorized for phone authentication.';
+      } else if (error.code === 'auth/captcha-check-failed') {
+        errorMessage = 'Captcha verification failed. Please try again.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      showErrorToast(errorMessage);
+    }
+  };
 
   const handleSignIn = async () => {
-    console.log('---1');
     const cleanPhoneNumber = phoneNumber.trim().replace(/\s+/g, '');
-    console.log('---2');
+
     if (!cleanPhoneNumber) {
       const newErrors: any = {};
       newErrors.phoneNumber = 'Please enter your phone number.';
       setErrors(newErrors);
       return;
     }
-    console.log('---3');
-    // Ensure it has +country code
+
     const formattedPhone = cleanPhoneNumber.startsWith('+')
       ? cleanPhoneNumber
       : `+91${cleanPhoneNumber}`;
-    console.log('---4');
+
+    if (previousPhoneNumber && formattedPhone === previousPhoneNumber) {
+      Alert.alert(
+        'Same Number Detected',
+        'You entered the same phone number. What would you like to do?',
+        [
+          {
+            text: 'Enter Different Number',
+            onPress: () => {
+              setPhoneNumber('');
+              setPreviousPhoneNumber('');
+            },
+            style: 'default',
+          },
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+        ],
+      );
+      return;
+    }
+
     if (!validatePhoneNumber(formattedPhone)) {
-      // Alert.alert('Validation Error', 'Please enter a valid phone number in international format.');
       const newErrors: any = {};
       newErrors.phoneNumber =
         'Please enter a valid phone number in international format.';
@@ -75,75 +149,56 @@ const SignInScreen: React.FC<Props> = ({navigation}) => {
     }
 
     setErrors({});
-    console.log('---5-new');
-    try {
-      // const confirmation = await auth().signInWithPhoneNumber(formattedPhone);
-      setLoading(true);
-      const confirmation = await signInWithPhoneNumber(
-        getAuth(),
-        formattedPhone,
-      );
-      setLoading(false);
-      // Alert.alert('Success', 'OTP has been sent to your phone.');
-      showSuccessToast('OTP has been sent to your phone.');
-      // console.log('---6 : ',confirmation)
-      navigation.navigate('OTPVerification', {
-        phoneNumber: formattedPhone,
-        confirmation,
-      });
-      console.log('---7');
-    } catch (error: any) {
-      console.log('---8');
-      console.error(error);
-      setLoading(false);
-      // Alert.alert('Error', error?.message || 'Failed to send OTP. Please try again.');
-      showErrorToast(error?.message || 'Failed to send OTP. Please try again.');
-    }
+    await proceedWithOTP(formattedPhone);
   };
 
   return (
-    <ImageBackground
-      source={Images.ic_splash_background}
-      style={styles.container}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}>
-        <Loader loading={isLoading} />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ImageBackground
+        source={Images.ic_splash_background}
+        style={styles.container}
+        resizeMode="cover">
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
-          <View style={[styles.content, {paddingTop: inset.top}]}>
-            <View style={styles.containerHeader}>
-              <Image
-                source={Images.ic_app_logo}
-                style={{width: '33%', resizeMode: 'contain'}}></Image>
+          <View style={styles.content}>
+            <View
+              style={[
+                styles.containerHeader,
+                {paddingTop: inset.top + moderateScale(20)},
+              ]}>
+              <Image source={Images.ic_app_logo} style={styles.logo} />
               <Text style={styles.title}>{t('hi_welcome')}</Text>
             </View>
 
-            <View style={[styles.containerBody, {paddingBottom: inset.bottom}]}>
+            <View style={styles.containerBody}>
               <Text style={styles.mainTitle}>{t('sign_in')}</Text>
               <Text style={styles.subtitle}>
                 {t('please_enter_your_credential')}
               </Text>
 
-              <ThemedInput
-                // label={t('mobile_number')}
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                placeholder={t('enter_mobile_number')}
-                keyboardType="phone-pad"
-                autoComplete="tel"
-                textContentType="telephoneNumber"
-                maxLength={10}
-                error={errors.phoneNumber}
-              />
+              <View style={styles.inputContainer}>
+                <ThemedInput
+                  placeholder={t('phone_number')}
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                />
+                {errors.phoneNumber && (
+                  <Text style={styles.errorText}>{errors.phoneNumber}</Text>
+                )}
+              </View>
 
-              <PrimaryButton onPress={handleSignIn} title={t('send_otp')} />
+              <PrimaryButton title={t('send_otp')} onPress={handleSignIn} />
 
-              {/* <Text style={styles.termsText}>
+              {/* Commented out terms and conditions section
+              <Text style={styles.termsText}>
                 {t('by_signing_in_you_agree_to_our')}
                 <Text
-                  style={{color: COLORS.primary, fontFamily: Fonts.Sen_Bold}}
+                  style={{color: COLORS.primaryBackgroundButton}}
                   onPress={() => {
                     Alert.alert(
                       t('terms_of_service'),
@@ -154,7 +209,7 @@ const SignInScreen: React.FC<Props> = ({navigation}) => {
                 </Text>
                 {` ${t('and')}`}
                 <Text
-                  style={{color: COLORS.primary, fontFamily: Fonts.Sen_Bold}}
+                  style={{color: COLORS.primaryBackgroundButton}}
                   onPress={() => {
                     Alert.alert(
                       t('privacy_policy'),
@@ -163,12 +218,14 @@ const SignInScreen: React.FC<Props> = ({navigation}) => {
                   }}>
                   {` ${t('privacy_policy')}`}
                 </Text>
-              </Text> */}
+              </Text>
+              */}
             </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </ImageBackground>
+        {isLoading && <CustomeLoader loading={isLoading} />}
+      </ImageBackground>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -181,8 +238,11 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    // padding: 20,
     justifyContent: 'center',
+  },
+  logo: {
+    width: '33%',
+    resizeMode: 'contain',
   },
   title: {
     fontSize: moderateScale(32),
@@ -209,14 +269,12 @@ const styles = StyleSheet.create({
   containerHeader: {
     height: moderateScale(220),
     alignItems: 'center',
-    // justifyContent: 'center',
   },
   containerBody: {
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
     flex: 1,
     padding: moderateScale(24),
-    // justifyContent: 'center',
     backgroundColor: '#FFFFFF',
   },
   termsText: {
@@ -229,6 +287,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#ef4444',
     fontSize: 12,
+    marginTop: 4,
   },
 });
 
