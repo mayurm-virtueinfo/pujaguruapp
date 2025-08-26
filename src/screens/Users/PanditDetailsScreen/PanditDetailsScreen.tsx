@@ -210,7 +210,7 @@ const PanditDetailsScreen: React.FC = () => {
   // Render item for FlatList photo gallery
   const renderGalleryItem = ({item}: {item: PanditPhotoGalleryItem}) => (
     <TouchableOpacity
-      style={styles.galleryItemHorizontal}
+      style={[styles.galleryItemHorizontal, THEMESHADOW.shadow]}
       onPress={() => {
         setModalImageUri(item.image);
         setModalVisible(true);
@@ -325,7 +325,7 @@ const PanditDetailsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled">
         <View style={styles.contentContainer}>
-          <View style={styles.panditCard}>
+          <View style={[styles.panditCard, THEMESHADOW.shadow]}>
             <Image source={{uri: panditImage}} style={styles.panditImage} />
             <View style={styles.panditInfo}>
               <Text style={styles.panditName}>
@@ -375,7 +375,7 @@ const PanditDetailsScreen: React.FC = () => {
           <View style={styles.poojaSection}>
             <Text style={styles.sectionTitle}>{t('puja_list')}</Text>
             {pujaList && pujaList.length > 0 ? (
-              <View style={styles.poojaList}>
+              <View style={[styles.poojaList, THEMESHADOW.shadow]}>
                 {displayedPujaList.map((item, idx) => (
                   <React.Fragment key={item.pooja}>
                     {renderPujaItem({item})}
@@ -521,11 +521,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: moderateScale(16),
     marginBottom: moderateScale(24),
-    shadowColor: COLORS.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
   },
   panditImage: {
     width: moderateScale(80),
@@ -583,11 +578,6 @@ const styles = StyleSheet.create({
     paddingVertical: moderateScale(16),
     paddingHorizontal: moderateScale(10),
     marginRight: moderateScale(14),
-    shadowColor: COLORS.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
   },
   galleryImageHorizontal: {
     width: moderateScale(80),
@@ -611,11 +601,6 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(12),
     padding: moderateScale(16),
     marginTop: moderateScale(12),
-    shadowColor: COLORS.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
   },
   poojaItem: {
     flexDirection: 'row',

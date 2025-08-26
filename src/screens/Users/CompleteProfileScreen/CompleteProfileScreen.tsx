@@ -346,11 +346,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: moderateScale(30),
     paddingHorizontal: moderateScale(24),
     paddingTop: moderateScale(24),
-    shadowColor: COLORS.black,
-    shadowOffset: {width: 0, height: -2},
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
   },
   scrollView: {
     flex: 1,
@@ -399,11 +394,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: moderateScale(24),
     minHeight: moderateScale(46),
-    shadowColor: COLORS.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   nextButtonText: {
     color: COLORS.primaryTextDark,

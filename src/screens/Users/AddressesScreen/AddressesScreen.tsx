@@ -7,7 +7,7 @@ import {
   useRoute,
   useFocusEffect,
 } from '@react-navigation/native';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
@@ -149,7 +149,7 @@ const AddressesScreen: React.FC = () => {
             </View>
           ) : (
             <ScrollView
-              style={styles.addressList}
+              style={[styles.addressList, THEMESHADOW.shadow]}
               showsVerticalScrollIndicator={false}>
               {addresses.map((address, idx) => (
                 <AddressCard
@@ -208,11 +208,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 14,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
   },
   noDataContainer: {
     alignItems: 'center',

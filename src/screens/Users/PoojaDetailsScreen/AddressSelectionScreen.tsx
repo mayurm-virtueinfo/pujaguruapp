@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Octicons from 'react-native-vector-icons/Octicons';
@@ -153,7 +153,7 @@ const AddressSelectionScreen: React.FC = () => {
                   {t('choose_puja_place')}
                 </Text>
                 {!isLoading && (
-                  <View style={styles.pricingContainer}>
+                  <View style={[styles.pricingContainer, THEMESHADOW.shadow]}>
                     {poojaPlaces.length === 0 ? (
                       <View style={{alignItems: 'center', paddingVertical: 24}}>
                         <Text
@@ -264,13 +264,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.inputBoder,
     marginBottom: 25,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 3,
   },
   pricingOption: {
     flexDirection: 'row',

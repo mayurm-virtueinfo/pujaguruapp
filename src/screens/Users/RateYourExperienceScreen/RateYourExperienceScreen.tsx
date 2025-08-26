@@ -15,7 +15,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import CustomHeader from '../../../components/CustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
@@ -28,14 +28,15 @@ import {useTranslation} from 'react-i18next';
 import {postRatePandit, postReviewImageUpload} from '../../../api/apiService';
 import ImagePicker from 'react-native-image-crop-picker';
 import {useCommonToast} from '../../../common/CommonToast';
+import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 const RateYourExperienceScreen: React.FC = () => {
   const [rating, setRating] = useState<number>(0);
   const [feedback, setFeedback] = useState<string>('');
   const [photos, setPhotos] = useState<any[]>([]);
   type ScreenNavigationProp = StackNavigationProp<
-    UserPoojaListParamList,
-    'UserPujaDetailsScreen'
+    UserHomeParamList,
+    'UserHomeScreen'
   >;
   console.log('photos', photos);
   const {t, i18n} = useTranslation();
@@ -106,7 +107,7 @@ const RateYourExperienceScreen: React.FC = () => {
       setRating(0);
       setFeedback('');
       showSuccessToast(t('rate_submit_successfully'));
-      navigation.navigate('UserPujaDetailsScreen', {id: booking});
+      navigation.navigate('UserHomeScreen');
     } catch (error) {
       // Optionally handle error, e.g. show a toast
       showErrorToast(error?.response?.data?.message);
@@ -174,7 +175,7 @@ const RateYourExperienceScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled">
         <View style={styles.mainContent}>
           {/* Pandit Details Card */}
-          <View style={styles.panditCard}>
+          <View style={[styles.panditCard, THEMESHADOW.shadow]}>
             <View style={styles.panditImageContainer}>
               <Image
                 source={{
@@ -205,7 +206,7 @@ const RateYourExperienceScreen: React.FC = () => {
           </View>
 
           {/* Dakshina Section */}
-          <View style={styles.dakshinaCard}>
+          <View style={[styles.dakshinaCard, THEMESHADOW.shadow]}>
             <Text style={styles.dakshinaText}>{t('dakshina_to_panditji')}</Text>
             <TouchableOpacity
               activeOpacity={0.7}
@@ -221,7 +222,7 @@ const RateYourExperienceScreen: React.FC = () => {
             <Text style={styles.ratingTitle}>
               {t('how_was_your_experience')}
             </Text>
-            <View style={styles.ratingCard}>
+            <View style={[styles.ratingCard, THEMESHADOW.shadow]}>
               <View style={styles.starsContainer}>
                 {[0, 1, 2, 3, 4].map(renderStar)}
               </View>
@@ -322,13 +323,6 @@ const styles = StyleSheet.create({
     padding: scale(16),
     alignItems: 'center',
     marginHorizontal: scale(4),
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   panditImageContainer: {
     width: scale(70),
@@ -376,13 +370,6 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(12),
     padding: 14,
     marginHorizontal: scale(4),
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   dakshinaText: {
     color: COLORS.textPrimary,
@@ -406,13 +393,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: scale(20),
     alignItems: 'center',
     marginHorizontal: scale(4),
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   starsContainer: {
     flexDirection: 'row',

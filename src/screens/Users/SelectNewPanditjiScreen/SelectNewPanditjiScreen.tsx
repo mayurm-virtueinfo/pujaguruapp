@@ -16,16 +16,20 @@ import {COLORS, THEMESHADOW, wp} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {useNavigation} from '@react-navigation/native';
+import Octicons from 'react-native-vector-icons/Octicons';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPanditjiParamList} from '../../../navigation/User/UserPanditjiNavigator';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {getAllPanditji} from '../../../api/apiService';
+import {getAllPanditji, getNewPanditji} from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {useCommonToast} from '../../../common/CommonToast';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from '../../../utils/appConstant';
+import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 interface PanditjiItem {
   id: string;
@@ -39,19 +43,24 @@ interface PanditjiItem {
 interface PanditjiResponse {
   success: boolean;
   message: string;
-  data: PanditjiItem[];
+  latitude: string;
+  longitude: string;
+  pandits: PanditjiItem[];
 }
 
-const PanditjiScreen: React.FC = () => {
+const SelectNewPanditjiScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
+  const route = useRoute();
+  const {booking_id} = route?.params as any;
 
-  const navigation =
-    useNavigation<StackNavigationProp<UserPanditjiParamList>>();
+  const navigation = useNavigation<StackNavigationProp<UserHomeParamList>>();
   const [searchText, setSearchText] = useState('');
   const [panditjiData, setPanditjiData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedPanditId, setSelectedPanditId] = useState<string | null>(null);
 
+  const location = AsyncStorage.getItem(AppConstant.LOCATION);
   const {showErrorToast} = useCommonToast();
 
   const handleNotificationPress = () => {
@@ -61,10 +70,26 @@ const PanditjiScreen: React.FC = () => {
   const fetchAllPanditji = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = (await getAllPanditji()) as PanditjiResponse;
+      const locationStr = await AsyncStorage.getItem(AppConstant.LOCATION);
+      let latitude = '';
+      let longitude = '';
+      if (locationStr) {
+        try {
+          const locObj = JSON.parse(locationStr);
+          latitude = locObj.latitude;
+          longitude = locObj.longitude;
+        } catch (e) {
+          // fallback: keep empty
+        }
+      }
+      const response = (await getNewPanditji(
+        booking_id,
+        latitude,
+        longitude,
+      )) as PanditjiResponse;
       if (response.success) {
         setPanditjiData(
-          response.data
+          response.pandits
             .filter(item =>
               item.full_name.toLowerCase().includes(searchText.toLowerCase()),
             )
@@ -85,17 +110,15 @@ const PanditjiScreen: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchText]);
+  }, []);
 
   useEffect(() => {
     fetchAllPanditji();
   }, [fetchAllPanditji]);
 
   const handlePanditjiSelect = (id: string) => {
-    console.log('pandit id pass :: ', id);
-    navigation.navigate('PanditDetailsScreen', {
-      panditId: id,
-    });
+    setSelectedPanditId(id);
+    // You can add any additional logic here if needed, e.g., API call to select the pandit
   };
 
   const renderSearchInput = () => (
@@ -118,44 +141,55 @@ const PanditjiScreen: React.FC = () => {
     </View>
   );
 
-  const renderPanditjiItem = ({item, index}: {item: any; index: number}) => (
-    <View style={styles.panditjiContainer}>
-      <TouchableOpacity
-        style={styles.panditjiItem}
-        onPress={() => handlePanditjiSelect(item.pandit_id)}
-        activeOpacity={0.7}>
-        <View style={styles.panditjiContent}>
-          <View style={styles.imageContainer}>
-            <Image source={{uri: item.image}} style={styles.panditjiImage} />
-            {item.isVerified && (
-              <View style={styles.verifiedBadge}>
-                <MaterialIcons
-                  name="verified"
-                  size={16}
-                  color={COLORS.success}
+  const renderPanditjiItem = ({item, index}: {item: any; index: number}) => {
+    const isSelected = selectedPanditId === item.pandit_id;
+    return (
+      <View style={styles.panditjiContainer}>
+        <TouchableOpacity
+          style={styles.panditjiItem}
+          onPress={() => handlePanditjiSelect(item.pandit_id)}
+          activeOpacity={0.7}>
+          <View style={styles.panditjiContent}>
+            <View style={styles.imageContainer}>
+              <Image source={{uri: item.image}} style={styles.panditjiImage} />
+              {item.isVerified && (
+                <View style={styles.verifiedBadge}>
+                  <MaterialIcons
+                    name="verified"
+                    size={16}
+                    color={COLORS.success}
+                  />
+                </View>
+              )}
+            </View>
+            <View style={styles.panditjiDetails}>
+              <Text style={styles.panditjiName}>{item.name}</Text>
+              <Text style={styles.panditjiLocation}>{item.location}</Text>
+              <Text style={styles.panditjiLanguages}>{item.languages}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.selectionButton}
+              onPress={() => handlePanditjiSelect(item.pandit_id)}>
+              {isSelected ? (
+                <Octicons
+                  name={'check-circle'}
+                  size={24}
+                  color={COLORS.primary}
                 />
-              </View>
-            )}
+              ) : (
+                <MaterialIcons
+                  name={'radio-button-unchecked'}
+                  size={24}
+                  color={COLORS.pujaTextSecondary}
+                />
+              )}
+            </TouchableOpacity>
           </View>
-          <View style={styles.panditjiDetails}>
-            <Text style={styles.panditjiName}>{item.name}</Text>
-            <Text style={styles.panditjiLocation}>{item.location}</Text>
-            <Text style={styles.panditjiLanguages}>{item.languages}</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.selectionButton}
-            onPress={() => handlePanditjiSelect(item.pandit_id)}>
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={COLORS.pujaTextSecondary}
-            />
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-      {index !== panditjiData.length - 1 && <View style={styles.separator} />}
-    </View>
-  );
+        </TouchableOpacity>
+        {index !== panditjiData.length - 1 && <View style={styles.separator} />}
+      </View>
+    );
+  };
 
   const renderEmptyComponent = () => (
     <View style={styles.emptyContainer}>
@@ -171,8 +205,10 @@ const PanditjiScreen: React.FC = () => {
         backgroundColor={COLORS.gradientStart}
       />
       <UserCustomHeader
-        title={t('panditji')}
+        title={t('select_panditji')}
         showBellButton={true}
+        showBackButton={true}
+        onBackPress={() => navigation.replace('UserHomeScreen')}
         onNotificationPress={handleNotificationPress}
       />
       <KeyboardAvoidingView
@@ -189,7 +225,7 @@ const PanditjiScreen: React.FC = () => {
               showsVerticalScrollIndicator={true}
               contentContainerStyle={styles.listContent}
               keyboardShouldPersistTaps="handled"
-              ListEmptyComponent={renderEmptyComponent} // Add this prop
+              ListEmptyComponent={renderEmptyComponent}
             />
           </View>
         </View>
@@ -309,7 +345,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: verticalScale(100),
+    paddingVertical: verticalScale(30),
   },
   emptyText: {
     fontSize: moderateScale(18),
@@ -319,4 +355,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PanditjiScreen;
+export default SelectNewPanditjiScreen;

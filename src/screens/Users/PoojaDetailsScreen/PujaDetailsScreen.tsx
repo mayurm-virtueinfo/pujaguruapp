@@ -22,7 +22,7 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {useCommonToast} from '../../../common/CommonToast';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {
@@ -225,7 +225,7 @@ const PujaDetailsScreen: React.FC = () => {
   };
 
   const renderUserReview = ({item}: {item: UserReview}) => (
-    <View style={styles.reviewCard}>
+    <View style={[styles.reviewCard, THEMESHADOW.shadow]}>
       <View style={styles.reviewHeader}>
         <Text style={styles.reviewUserName}>{item.user_name}</Text>
         <View style={styles.reviewRatingRow}>
@@ -324,7 +324,7 @@ const PujaDetailsScreen: React.FC = () => {
             testID={testID}>
             <Text style={styles.sectionTitle}>{title}</Text>
           </TouchableOpacity>
-          <View style={styles.itemsContainer}>
+          <View style={[styles.itemsContainer, THEMESHADOW.shadow]}>
             <Text style={styles.itemText}>{emptyText}</Text>
           </View>
         </View>
@@ -335,7 +335,7 @@ const PujaDetailsScreen: React.FC = () => {
     return (
       <View style={styles.expandableSectionWrapper}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        <View style={styles.itemsContainer}>
+        <View style={[styles.itemsContainer, THEMESHADOW.shadow]}>
           {!expanded ? (
             <>
               <TouchableOpacity
@@ -456,7 +456,7 @@ const PujaDetailsScreen: React.FC = () => {
                   'No description available'}
               </Text>
               <Text style={styles.sectionTitle}>{t('pricing_options')}</Text>
-              <View style={styles.pricingContainer}>
+              <View style={[styles.pricingContainer, THEMESHADOW.shadow]}>
                 {data ? (
                   getPricingOptions(data).map((option, idx) => (
                     <React.Fragment key={option.id}>
@@ -629,13 +629,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.inputBoder,
     marginBottom: 25,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 3,
   },
   pricingOption: {
     flexDirection: 'row',
@@ -660,13 +653,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.inputBoder,
     marginBottom: 25,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 3,
   },
   itemRow: {
     flexDirection: 'row',
@@ -741,10 +727,6 @@ const styles = StyleSheet.create({
     margin: 14,
     minWidth: 220,
     maxWidth: 260,
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.12,
-    shadowRadius: 2,
-    elevation: 2,
   },
   reviewHeader: {
     marginBottom: 5,

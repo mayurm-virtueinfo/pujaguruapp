@@ -19,7 +19,7 @@ import {
 } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
 import PujaItemsModal from '../../../components/PujaItemsModal';
 import Fonts from '../../../theme/fonts';
@@ -82,10 +82,9 @@ const UserPujaDetailsScreen: React.FC = () => {
       pujaDetails.booking_status &&
       pujaDetails.assigned_pandit
     ) {
-      // 1. If booking_status changed to 'completed' and we haven't navigated yet
+      // 1. If booking_status is 'completed' and we haven't navigated yet, navigate to RateYourExperienceScreen
       if (
         pujaDetails.booking_status === 'completed' &&
-        prevBookingStatus.current !== 'completed' &&
         !hasNavigatedToRate.current
       ) {
         hasNavigatedToRate.current = true;
@@ -175,7 +174,7 @@ const UserPujaDetailsScreen: React.FC = () => {
     if (!pujaDetails) return null;
     return (
       <View style={styles.detailsContainer}>
-        <View style={styles.detailsCard}>
+        <View style={[styles.detailsCard, THEMESHADOW.shadow]}>
           <View style={styles.detailsContent}>
             {/* Puja Name & Image */}
             <View style={styles.detailRow}>
@@ -184,7 +183,7 @@ const UserPujaDetailsScreen: React.FC = () => {
                   source={
                     pujaDetails.pooja_image_url
                       ? {uri: getPujaImageUrl(pujaDetails.pooja_image_url)}
-                      : Images.ic_puja
+                      : Images.ic_app_logo
                   }
                   style={styles.pujaIcon}
                 />
@@ -307,7 +306,7 @@ const UserPujaDetailsScreen: React.FC = () => {
     if (!pujaDetails) return null;
     return (
       <View style={styles.totalContainer}>
-        <View style={styles.totalCard}>
+        <View style={[styles.totalCard, THEMESHADOW.shadow]}>
           <View style={styles.totalContent}>
             <View style={{gap: 6}}>
               <Text style={styles.totalLabel}>{t('total_amount')}</Text>
@@ -337,7 +336,7 @@ const UserPujaDetailsScreen: React.FC = () => {
     if (!pandit) return null;
     return (
       <View style={styles.totalContainer}>
-        <View style={styles.totalCard}>
+        <View style={[styles.totalCard, THEMESHADOW.shadow]}>
           <View style={styles.totalContent}>
             <View
               style={{
@@ -349,7 +348,7 @@ const UserPujaDetailsScreen: React.FC = () => {
                 source={
                   pandit.profile_img_url
                     ? {uri: getPanditImageUrl(pandit.profile_img_url)}
-                    : Images.ic_pandit
+                    : Images.ic_app_logo
                 }
                 style={styles.pujaIcon}
               />
@@ -379,7 +378,7 @@ const UserPujaDetailsScreen: React.FC = () => {
     if (pujaDetails.assigned_pandit) return null;
     return (
       <View style={styles.panditjiContainer}>
-        <View style={styles.panditjiCard}>
+        <View style={[styles.panditjiCard, THEMESHADOW.shadow]}>
           <View style={styles.panditjiContent}>
             <View style={styles.panditjiAvatarContainer}>
               <View style={styles.panditjiAvatar}>
@@ -499,14 +498,6 @@ const styles = StyleSheet.create({
   detailsCard: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   detailsContent: {
     // padding: moderateScale(14),
@@ -559,14 +550,6 @@ const styles = StyleSheet.create({
   totalCard: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   totalContent: {
     padding: moderateScale(14),
@@ -597,14 +580,6 @@ const styles = StyleSheet.create({
   panditjiCard: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   panditjiContent: {
     padding: moderateScale(14),

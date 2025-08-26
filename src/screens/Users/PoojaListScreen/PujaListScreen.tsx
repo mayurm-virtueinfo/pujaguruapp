@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import PujaCard from '../../../components/PujaCard';
 import PujaListItem from '../../../components/PujaListItem';
 import {
@@ -133,7 +133,7 @@ const PujaListScreen: React.FC = () => {
 
           <View style={styles.pujaListSection}>
             <Text style={styles.sectionTitle}>{t('puja_list')}</Text>
-            <View style={styles.pujaListContainer}>
+            <View style={[styles.pujaListContainer, THEMESHADOW.shadow]}>
               {pujaList.map((puja, idx) => (
                 <PujaListItem
                   key={puja.id}
@@ -207,11 +207,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 14,
     marginTop: 10,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
   },
 });
 

@@ -44,6 +44,7 @@ import ApiEndpoints, {
   GET_PANDIT_AVAILABILITY,
   POST_AUTO_BOOKING,
   GET_ACTIVE_PUJA,
+  GET_NEW_PANDITJI,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -1415,6 +1416,31 @@ export const getActivePuja = (): Promise<any> => {
       })
       .catch(error => {
         console.error('Error fetching active puja:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getNewPanditji = (
+  bookingId: string,
+  latitude: string,
+  longitude: string,
+): Promise<any> => {
+  const apiUrl = GET_NEW_PANDITJI
+    .replace('{latitude}', latitude)
+    .replace('{longitude}', longitude)
+    .replace('{booking_Id}', bookingId);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error(
+          'Error fetching new panditji list:',
+          JSON.stringify(error.response.data),
+        );
         reject(error);
       });
   });

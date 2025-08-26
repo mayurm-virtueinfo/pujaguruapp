@@ -13,7 +13,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {postCancelBooking} from '../../../api/apiService';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
 import CancellationPolicyModal from '../../../components/CancellationPolicyModal';
 import Fonts from '../../../theme/fonts';
@@ -143,7 +143,7 @@ const PujaCancellationScreen = () => {
             <Text style={styles.warningText}>
               {t('descriprion_for_cancel_puja')}
             </Text>
-            <View style={styles.reasonsContainer}>
+            <View style={[styles.reasonsContainer, THEMESHADOW.shadow]}>
               {cancellationReasons.map((reason, index) =>
                 renderReasonOption(reason, index),
               )}
@@ -255,14 +255,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
     marginBottom: verticalScale(24),
-    shadowColor: COLORS.black,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.01,
-    shadowRadius: 2,
-    elevation: 3,
   },
   reasonOption: {
     flexDirection: 'row',

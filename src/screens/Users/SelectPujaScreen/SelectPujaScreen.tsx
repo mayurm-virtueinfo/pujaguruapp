@@ -9,7 +9,7 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import {getPanditPujaList} from '../../../api/apiService';
 import Fonts from '../../../theme/fonts';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -118,7 +118,7 @@ const SelectPujaScreen: React.FC = () => {
             <Text style={styles.sectionSubtitle}>
               {t('choose_the_puja_you_wish_to_book_from_the_list_below')}
             </Text>
-            <View style={styles.pujaListContainer}>
+            <View style={[styles.pujaListContainer, THEMESHADOW.shadow]}>
               {pujaList.length === 0 ? (
                 <View style={{padding: 24, alignItems: 'center'}}>
                   <Text
@@ -259,11 +259,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: 14,
     marginTop: 10,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 6},
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
   },
   detailContainer: {
     width: '100%',

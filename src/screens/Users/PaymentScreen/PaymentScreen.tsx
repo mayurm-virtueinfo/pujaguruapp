@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import PrimaryButton from '../../../components/PrimaryButton';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {Images} from '../../../theme/Images';
@@ -408,7 +408,7 @@ const PaymentScreen: React.FC = () => {
             removeClippedSubviews={false}
             scrollEventThrottle={16}>
             {/* Total Amount Section */}
-            <View style={styles.totalSection}>
+            <View style={[styles.totalSection, THEMESHADOW.shadow]}>
               <View style={styles.totalRow}>
                 <View style={styles.totalInfo}>
                   <Text style={styles.totalAmountLabel}>
@@ -423,7 +423,7 @@ const PaymentScreen: React.FC = () => {
             </View>
 
             {/* Use Points Section */}
-            <View style={styles.pointsSection}>
+            <View style={[styles.pointsSection, THEMESHADOW.shadow]}>
               <View style={styles.pointsRow}>
                 <View style={styles.pointsLeft}>
                   <View style={styles.checkboxContainer}>
@@ -451,7 +451,7 @@ const PaymentScreen: React.FC = () => {
             </View>
 
             {/* Booking Data Section (was Suggested Puja Section) */}
-            <View style={styles.suggestedSection}>
+            <View style={[styles.suggestedSection, THEMESHADOW.shadow]}>
               <TouchableOpacity
                 style={styles.suggestedPujaRow}
                 activeOpacity={0.7}>
@@ -478,7 +478,7 @@ const PaymentScreen: React.FC = () => {
             </View>
 
             {/* Terms and Conditions */}
-            <View style={styles.termsSection}>
+            <View style={[styles.termsSection, THEMESHADOW.shadow]}>
               <View style={styles.termsRow}>
                 <FontAwesome
                   name={acceptTerms ? 'check-square-o' : 'square-o'}
@@ -540,10 +540,6 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: verticalScale(20),
     marginHorizontal: scale(4),
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
     justifyContent: 'center',
   },
   totalRow: {
@@ -580,10 +576,6 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: verticalScale(20),
     marginHorizontal: scale(4),
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   pointsRow: {
     flexDirection: 'row',
@@ -631,10 +623,6 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: verticalScale(20),
     marginHorizontal: scale(4),
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   paymentMethodRow: {
     flexDirection: 'row',
@@ -660,10 +648,6 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(12),
     marginBottom: verticalScale(20),
     marginHorizontal: scale(4),
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
     padding: 12,
   },
   suggestedPujaRow: {
@@ -722,10 +706,6 @@ const styles = StyleSheet.create({
     padding: 14,
     marginBottom: verticalScale(24),
     marginHorizontal: scale(4),
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   termsRow: {
     flexDirection: 'row',

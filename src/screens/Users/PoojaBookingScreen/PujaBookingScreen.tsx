@@ -13,7 +13,7 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {moderateScale, verticalScale} from 'react-native-size-matters';
 import Calendar from '../../../components/Calendar';
@@ -409,7 +409,7 @@ const PujaBookingScreen: React.FC = () => {
   const renderMuhuratSlots = () => (
     <View style={styles.slotsContainer}>
       <Text style={styles.slotsTitle}>{t('select_muhurat_time_slot')}</Text>
-      <View style={styles.slotsListContainer}>
+      <View style={[styles.slotsListContainer, THEMESHADOW.shadow]}>
         {muhurats.map((slot, index) => {
           const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
           const isSelected = selectedSlot === slotKey;
@@ -573,7 +573,7 @@ const PujaBookingScreen: React.FC = () => {
             </Text>
 
             {/* Puja Place Section */}
-            <View style={styles.pujaPlaceContainer}>
+            <View style={[styles.pujaPlaceContainer, THEMESHADOW.shadow]}>
               <View style={styles.pujaPlaceContent}>
                 <View style={styles.pujaPlaceTextContainer}>
                   <Text style={styles.pujaPlaceLabel}>{t('puja_place')}</Text>
@@ -707,14 +707,6 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(10),
     padding: moderateScale(14),
     marginBottom: verticalScale(24),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   pujaPlaceContent: {
     flexDirection: 'row',
@@ -752,14 +744,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: moderateScale(10),
     padding: moderateScale(14),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   slotItem: {
     paddingVertical: verticalScale(12),

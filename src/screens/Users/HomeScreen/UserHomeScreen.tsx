@@ -249,14 +249,20 @@ const UserHomeScreen: React.FC = () => {
                   pandit.profile_img ||
                   'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg';
                 return (
-                  <View style={styles.panditCard} key={pandit.id}>
+                  <View
+                    style={[styles.panditCard, THEMESHADOW.shadow]}
+                    key={pandit.id}>
                     <View style={styles.panditImageWrapper}>
                       <Image
                         source={{uri: panditImage}}
                         style={styles.panditImage}
                         accessibilityLabel={`Profile image of ${pandit.full_name}`}
                       />
-                      <View style={styles.ratingContainerAbsolute}>
+                      <View
+                        style={[
+                          styles.ratingContainerAbsolute,
+                          THEMESHADOW.shadow,
+                        ]}>
                         <Ionicons
                           name="star"
                           size={16}
@@ -506,14 +512,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(12),
     paddingVertical: moderateScale(12),
     marginRight: moderateScale(12),
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
   },
   panditImageWrapper: {
     alignItems: 'center',
@@ -535,14 +533,6 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(12),
     paddingHorizontal: moderateScale(8),
     paddingVertical: moderateScale(3),
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
   },
   panditName: {
     fontSize: 15,

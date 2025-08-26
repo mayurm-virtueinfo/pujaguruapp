@@ -192,7 +192,7 @@
   "profile_update_failed": "Profile update failed",
   "error_getting_location": "Error getting location",
   "location_permission_denied": "Location permission denied",
-  "no_pandit_found": "No pandit found",
+  "no_pandit_found": "No pandit found.",
   "full_name_required": "Full name is required",
   "address_required": "Address is required",
   "city_required": "City is required",

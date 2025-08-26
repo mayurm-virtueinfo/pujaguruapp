@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import {moderateScale} from 'react-native-size-matters';
 import {getUpcomingPujas, PujaItem} from '../../../api/apiService';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -61,7 +61,7 @@ const UpcomingPuja: React.FC = () => {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.pujaSection}>
-          <View style={styles.pujaCardsContainer}>
+          <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
             {pujas && pujas.length > 0 ? (
               pujas.map((puja, idx) => (
                 <View key={puja.id}>
@@ -123,18 +123,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(14),
     paddingVertical: moderateScale(14),
     marginTop: moderateScale(12),
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.18,
-        shadowRadius: 8,
-      },
-      android: {
-        elevation: 3,
-        shadowColor: '#000',
-      },
-    }),
   },
   pujaCard: {
     flexDirection: 'row',

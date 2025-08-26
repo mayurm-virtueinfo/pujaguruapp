@@ -1,8 +1,8 @@
-import notifee, {EventType, AndroidImportance} from '@notifee/react-native';
-import {getMessaging} from '@react-native-firebase/messaging';
-import {getApp} from '@react-native-firebase/app';
-import {navigate, navigationRef} from '../utils/NavigationService';
-import {COLORS} from '../theme/theme';
+import notifee, { EventType, AndroidImportance } from '@notifee/react-native';
+import { getMessaging } from '@react-native-firebase/messaging';
+import { getApp } from '@react-native-firebase/app';
+import { navigate, navigationRef } from '../utils/NavigationService';
+import { COLORS } from '../theme/theme';
 
 const messaging = getMessaging(getApp());
 
@@ -28,7 +28,7 @@ export async function setupNotifications() {
   messaging.onMessage(async (remoteMessage: any) => {
     console.log('📩 Foreground FCM message:', remoteMessage);
 
-    const {title, body} = remoteMessage.notification || {};
+    const { title, body } = remoteMessage.notification || {};
     await notifee.displayNotification({
       id: remoteMessage.messageId,
       title: title || 'New Notification',
@@ -37,7 +37,7 @@ export async function setupNotifications() {
       android: {
         channelId,
         smallIcon: 'ic_notification',
-        pressAction: {id: 'default'},
+        pressAction: { id: 'default' },
         color: COLORS.primary,
       },
       ios: {},
@@ -45,7 +45,7 @@ export async function setupNotifications() {
   });
 
   // Handle notification press in foreground
-  foregroundUnsubscribe = notifee.onForegroundEvent(({type, detail}) => {
+  foregroundUnsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
     if (type === EventType.PRESS) {
       console.log('Notification pressed in foreground', detail);
       const data = detail.notification?.data || {};
@@ -71,36 +71,64 @@ export async function setupNotifications() {
 export function handleNotificationNavigation(data: any) {
   console.log('data of notification :: ', data);
 
-  const targetScreen = data?.navigation;
-  const booking_id = data?.booking_id;
-  const pandit_id = data?.sender_id;
+  if (data?.screen === 'FilteredPanditListScreen') {
+    const targetScreen = data?.screen;
+    const booking_id = data?.booking_id;
 
-  const nestedParams = {
-    screen: 'UserAppBottomTabNavigator',
-    params: {
-      screen: 'UserHomeNavigator',
-      params: targetScreen
-        ? {
+    const nestedParams = {
+      screen: 'UserAppBottomTabNavigator',
+      params: {
+        screen: 'UserHomeNavigator',
+        params: {
+          screen: targetScreen,
+          params: {
+            booking_id,
+          },
+        },
+      },
+    };
+
+    setTimeout(() => {
+      if (navigationRef.isReady()) {
+        navigate('Main', nestedParams);
+      } else {
+        console.warn('Navigation not ready yet');
+      }
+    }, 500);
+  } else if (data?.screen === 'ChatScreen') {
+    const targetScreen = data?.navigation;
+    const booking_id = data?.booking_id;
+    const pandit_id = data?.sender_id;
+
+    const nestedParams = {
+      screen: 'UserAppBottomTabNavigator',
+      params: {
+        screen: 'UserHomeNavigator',
+        params: targetScreen
+          ? {
             screen: targetScreen,
             params: {
               booking_id,
               pandit_id,
             },
           }
-        : {
+          : {
             booking_id,
             pandit_id,
           },
-    },
-  };
+      },
+    };
 
-  setTimeout(() => {
-    if (navigationRef.isReady()) {
-      navigate('Main', nestedParams);
-    } else {
-      console.warn('Navigation not ready yet');
-    }
-  }, 500);
+    setTimeout(() => {
+      if (navigationRef.isReady()) {
+        navigate('Main', nestedParams);
+      } else {
+        console.warn('Navigation not ready yet');
+      }
+    }, 500);
+  }
+
+
 }
 
 export function cleanupNotifications() {

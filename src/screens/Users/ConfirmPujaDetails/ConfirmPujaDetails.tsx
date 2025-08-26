@@ -13,7 +13,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {COLORS} from '../../../theme/theme';
+import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Fonts from '../../../theme/fonts';
 import UserCustomHeader from '../../../components/UserCustomHeader';
@@ -104,7 +104,7 @@ const ConfirmPujaDetails: React.FC = () => {
         {/* Pandit Arranged Items */}
         {Array.isArray(pandit_arranged_items) &&
           pandit_arranged_items.length > 0 && (
-            <View style={styles.arrangedSection}>
+            <View style={[styles.arrangedSection, THEMESHADOW.shadow]}>
               <Text style={styles.arrangedSectionTitle}>
                 {t('pandit_arranged_items') || 'Pandit Arranged Items'}
               </Text>
@@ -146,7 +146,7 @@ const ConfirmPujaDetails: React.FC = () => {
         {/* User Arranged Items */}
         {Array.isArray(user_arranged_items) &&
           user_arranged_items.length > 0 && (
-            <View style={styles.arrangedSection}>
+            <View style={[styles.arrangedSection, THEMESHADOW.shadow]}>
               <Text style={styles.arrangedSectionTitle}>
                 {t('user_arranged_items') || 'Your Arranged Items'}
               </Text>
@@ -190,7 +190,7 @@ const ConfirmPujaDetails: React.FC = () => {
     if (!pujaDetails) return null;
     return (
       <View style={styles.detailsContainer}>
-        <View style={styles.detailsCard}>
+        <View style={[styles.detailsCard, THEMESHADOW.shadow]}>
           <View style={styles.detailsContent}>
             {/* Puja Name & Image */}
             <View style={styles.detailRow}>
@@ -268,7 +268,7 @@ const ConfirmPujaDetails: React.FC = () => {
     if (!pujaDetails) return null;
     return (
       <View style={styles.totalContainer}>
-        <View style={styles.totalCard}>
+        <View style={[styles.totalCard, THEMESHADOW.shadow]}>
           <View style={styles.totalContent}>
             <View style={{gap: 6}}>
               <Text style={styles.totalLabel}>{t('total_amount')}</Text>
@@ -298,7 +298,7 @@ const ConfirmPujaDetails: React.FC = () => {
     if (!pandit) return null;
     return (
       <View style={styles.totalContainer}>
-        <View style={styles.totalCard}>
+        <View style={[styles.totalCard, THEMESHADOW.shadow]}>
           <View style={styles.totalContent}>
             <View
               style={{
@@ -330,7 +330,7 @@ const ConfirmPujaDetails: React.FC = () => {
     if (pujaDetails.assigned_pandit) return null;
     return (
       <View style={styles.panditjiContainer}>
-        <View style={styles.panditjiCard}>
+        <View style={[styles.panditjiCard, THEMESHADOW.shadow]}>
           <View style={styles.panditjiContent}>
             <View style={styles.panditjiAvatarContainer}>
               <View style={styles.panditjiAvatar}>
@@ -431,14 +431,6 @@ const styles = StyleSheet.create({
   detailsCard: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   detailsContent: {},
   detailRow: {
@@ -486,14 +478,6 @@ const styles = StyleSheet.create({
   totalCard: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   totalContent: {
     padding: moderateScale(14),
@@ -524,14 +508,6 @@ const styles = StyleSheet.create({
   panditjiCard: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   panditjiContent: {
     padding: moderateScale(14),
@@ -581,17 +557,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
     padding: moderateScale(14),
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.08,
-    shadowRadius: 1.5,
-    elevation: 1,
   },
   arrangedSectionTitle: {
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    marginBottom: verticalScale(8),
+    // marginBottom: verticalScale(8),
   },
   arrangedList: {},
   arrangedItemRow: {
