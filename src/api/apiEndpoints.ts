@@ -37,7 +37,7 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const APP_URL = 'https://70f865707f26.ngrok-free.app';
+export const APP_URL = 'https://585e714cfd62.ngrok-free.app';
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';
@@ -89,3 +89,4 @@ export const POST_AUTO_BOOKING =
 export const GET_ACTIVE_PUJA = '/app/booking-active/';
 export const GET_NEW_PANDITJI =
   '/app/new-panditji-list/?latitude={latitude}&longitude={longitude}&booking_id={booking_Id}';
+export const POST_NEW_PANDITJI_OFFER = "/app/new-pandit-offer/"

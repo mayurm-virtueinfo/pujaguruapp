@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 14,
   },
   totalContainer: {
-    // marginBottom: verticalScale(24),
+    marginBottom: verticalScale(24),
   },
   totalCard: {
     backgroundColor: COLORS.white,
