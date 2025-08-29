@@ -21,7 +21,11 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPanditjiParamList} from '../../../navigation/User/UserPanditjiNavigator';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {getAllPanditji, getNewPanditji} from '../../../api/apiService';
+import {
+  getAllPanditji,
+  getNewPanditji,
+  postNewPanditOffer,
+} from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
@@ -30,22 +34,24 @@ import {useCommonToast} from '../../../common/CommonToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
+import PrimaryButton from '../../../components/PrimaryButton';
 
 interface PanditjiItem {
-  id: string;
-  pandit_id: string;
-  full_name: string;
-  profile_img: string;
+  pandit_id: number | string;
+  name: string;
+  profile_image: string;
+  languages?: string[];
   city: string;
-  supported_languages: Array<string>;
+  // pricing?: any; // not used here
 }
 
 interface PanditjiResponse {
   success: boolean;
-  message: string;
-  latitude: string;
-  longitude: string;
+  message?: string;
+  latitude?: string;
+  longitude?: string;
   pandits: PanditjiItem[];
+  // other fields omitted
 }
 
 const SelectNewPanditjiScreen: React.FC = () => {
@@ -58,10 +64,11 @@ const SelectNewPanditjiScreen: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [panditjiData, setPanditjiData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedPanditId, setSelectedPanditId] = useState<string | null>(null);
+  const [selectedPanditId, setSelectedPanditId] = useState<
+    string | number | null
+  >(null);
 
-  const location = AsyncStorage.getItem(AppConstant.LOCATION);
-  const {showErrorToast} = useCommonToast();
+  const {showErrorToast, showSuccessToast} = useCommonToast();
 
   const handleNotificationPress = () => {
     navigation.navigate('NotificationScreen');
@@ -88,18 +95,24 @@ const SelectNewPanditjiScreen: React.FC = () => {
         longitude,
       )) as PanditjiResponse;
       if (response.success) {
+        // Filter and map the data according to the actual API response
+        console.log('response', response);
         setPanditjiData(
           response.pandits
             .filter(item =>
-              item.full_name.toLowerCase().includes(searchText.toLowerCase()),
+              (item.name || '')
+                .toLowerCase()
+                .includes(searchText.toLowerCase()),
             )
-            .map((item: any) => ({
-              id: item.id,
+            .map((item: PanditjiItem) => ({
+              id: item.pandit_id, // Use pandit_id as unique id
               pandit_id: item.pandit_id,
-              name: item.full_name,
-              image: item.profile_img,
-              location: item.city,
-              languages: item.supported_languages.join(', '),
+              name: item.name,
+              image: item.profile_image,
+              city: item.city,
+              languages: Array.isArray(item.languages)
+                ? item.languages.join(', ')
+                : '',
               isVerified: false,
               isSelected: false,
             })),
@@ -110,15 +123,52 @@ const SelectNewPanditjiScreen: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [booking_id, searchText, showErrorToast]);
 
   useEffect(() => {
     fetchAllPanditji();
-  }, [fetchAllPanditji]);
+    // Only re-fetch when searchText or booking_id changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchText, booking_id]);
 
-  const handlePanditjiSelect = (id: string) => {
+  const handlePanditjiSelect = (id: string | number) => {
     setSelectedPanditId(id);
     // You can add any additional logic here if needed, e.g., API call to select the pandit
+  };
+
+  const handlePostPanditOffer = async () => {
+    if (!selectedPanditId) {
+      showErrorToast(t('please_select_panditji') || 'Please select a Panditji');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const data = {
+        booking_id: booking_id,
+        pandit_id: selectedPanditId,
+      };
+      const response = await postNewPanditOffer(data);
+      if (response && response.success) {
+        showSuccessToast(
+          response.message ||
+            t('panditji_selected_successfully') ||
+            'Panditji selected successfully',
+        );
+        navigation.replace('UserHomeScreen');
+      } else {
+        showErrorToast(
+          response?.message ||
+            t('something_went_wrong') ||
+            'Something went wrong',
+        );
+      }
+    } catch (error: any) {
+      showErrorToast(
+        error?.message || t('something_went_wrong') || 'Something went wrong',
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderSearchInput = () => (
@@ -164,7 +214,7 @@ const SelectNewPanditjiScreen: React.FC = () => {
             </View>
             <View style={styles.panditjiDetails}>
               <Text style={styles.panditjiName}>{item.name}</Text>
-              <Text style={styles.panditjiLocation}>{item.location}</Text>
+              <Text style={styles.panditjiLocation}>{item.city}</Text>
               <Text style={styles.panditjiLanguages}>{item.languages}</Text>
             </View>
             <TouchableOpacity
@@ -221,11 +271,23 @@ const SelectNewPanditjiScreen: React.FC = () => {
             <FlatList
               data={panditjiData}
               renderItem={renderPanditjiItem}
-              keyExtractor={item => item.id}
+              keyExtractor={item => String(item.id)}
               showsVerticalScrollIndicator={true}
               contentContainerStyle={styles.listContent}
               keyboardShouldPersistTaps="handled"
               ListEmptyComponent={renderEmptyComponent}
+            />
+          </View>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'flex-end',
+            }}>
+            <PrimaryButton
+              title={t('select_panditji')}
+              onPress={handlePostPanditOffer}
+              disabled={!selectedPanditId || isLoading}
+              style={{marginHorizontal: 16, marginBottom: 16, marginTop: 10}}
             />
           </View>
         </View>

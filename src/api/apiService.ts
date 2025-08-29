@@ -45,6 +45,7 @@ import ApiEndpoints, {
   POST_AUTO_BOOKING,
   GET_ACTIVE_PUJA,
   GET_NEW_PANDITJI,
+  POST_NEW_PANDITJI_OFFER,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -1441,6 +1442,23 @@ export const getNewPanditji = (
           'Error fetching new panditji list:',
           JSON.stringify(error.response.data),
         );
+        reject(error);
+      });
+  });
+};
+
+export const postNewPanditOffer = (
+  data: any
+): Promise<any> => {
+  let apiUrl = POST_NEW_PANDITJI_OFFER;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error in registering fcm token :: ', error);
         reject(error);
       });
   });

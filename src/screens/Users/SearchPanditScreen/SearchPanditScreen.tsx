@@ -44,7 +44,7 @@ const SearchPanditScreen: React.FC = () => {
 
   useEffect(() => {
     if (bookingId) {
-      let socketURL = `ws://192.168.1.20:9000/ws/bookings/${bookingId}/`;
+      let socketURL = `ws://192.168.1.39:9000/ws/bookings/${bookingId}/`;
       if (socketURL.startsWith('ws://') && !__DEV__) {
         socketURL = socketURL.replace('ws://', 'wss://');
       }
