@@ -63,6 +63,7 @@ const PaymentScreen: React.FC = () => {
     selectManualPanitData,
     booking_Id,
     AutoModeSelection,
+    auto,
   } = route.params as any;
 
   const displayPanditName =
@@ -155,6 +156,12 @@ const PaymentScreen: React.FC = () => {
 
   const handleCreateRazorpayOrder = useCallback(
     async (bookingIdForOrder: string) => {
+      console.log(
+        'called ====>',
+        razorpayOrderBookingId.current,
+        bookingIdForOrder,
+        orderId,
+      );
       if (razorpayOrderBookingId.current === bookingIdForOrder && orderId) {
         return {order_id: orderId};
       }
@@ -170,14 +177,14 @@ const PaymentScreen: React.FC = () => {
         const requestData: any = {
           booking_id: bookingIdForOrder,
           ...(usePoints && {
-            amount_to_pay_from_wallet_input: getWalletBalance(),
+            amount_to_pay_from_wallet_input: price,
           }),
         };
-
+        console.log('requestData ====>', requestData);
         const response: any = await postCreateRazorpayOrder(requestData);
-
-        if (response?.data?.order_id) {
-          setOrderId(response.data.order_id);
+        console.log('response?.data =====>', response?.data);
+        if (response?.data?.order_id || response?.data?.booking_id) {
+          setOrderId(response.data.order_id || response?.data?.booking_id);
           razorpayOrderBookingId.current = bookingIdForOrder;
           showSuccessToast('Order created successfully!');
           return response.data;
@@ -235,6 +242,7 @@ const PaymentScreen: React.FC = () => {
             selectManualPanitData,
             panditName,
             panditImage,
+            auto,
           });
         }
       } else {
@@ -250,6 +258,7 @@ const PaymentScreen: React.FC = () => {
   };
 
   const handlePayment = async () => {
+    console.log('razorpayOrder called =====>');
     if (!acceptTerms) {
       showErrorToast('Please accept the terms and conditions to proceed.');
       return;
@@ -258,7 +267,7 @@ const PaymentScreen: React.FC = () => {
     try {
       // Step 1: Create Razorpay order
       const razorpayOrder = await handleCreateRazorpayOrder(booking_Id);
-
+      console.log('razorpayOrder =====>', razorpayOrder);
       if (!razorpayOrder?.order_id) {
         showErrorToast('Unable to create payment order. Please try again.');
         return;

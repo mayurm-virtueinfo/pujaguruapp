@@ -1001,12 +1001,15 @@ export const getPanditji = (
   longitude: string,
   mode: 'auto' | 'manual',
   bookingDate: string,
+  tirth: number,
 ): Promise<any> => {
+  console.log("tirth :::: ", tirth)
   const apiUrl = GET_AUTO_MANUAL_PANDIT_SELECTION.replace('{puja_id}', puja_id)
     .replace('{latitude}', latitude)
     .replace('{longitude}', longitude)
     .replace('{mode}', mode)
-    .replace('{booking_date}', bookingDate);
+    .replace('{booking_date}', bookingDate)
+    .replace('{tirth_id}', tirth);
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)
@@ -1054,6 +1057,7 @@ export const getPanditDetails = (id: string): Promise<any> => {
 };
 
 export const postCreateRazorpayOrder = (data: CreateRazorpayOrder) => {
+  console.log("data", data)
   let apiUrl = POST_CREATE_RAZORPAY_ORDER;
   return new Promise((resolve, reject) => {
     apiDev
@@ -1062,7 +1066,8 @@ export const postCreateRazorpayOrder = (data: CreateRazorpayOrder) => {
         resolve(response);
       })
       .catch(error => {
-        console.error('Error create razorpay order', error);
+        console.error("error ====>", JSON.stringify(error.message))
+        // console.error('Error create razorpay order', error);
         reject(error);
       });
   });

@@ -59,11 +59,13 @@ const BookingSuccessfullyScreen: React.FC = () => {
             </Text>
             <PrimaryButton
               title={t('go_to_home')}
-              onPress={() =>
-                navigation.replace(
-                  auto === 'true' ? 'PujaList' : 'UserHomeScreen',
-                )
-              }
+              onPress={() => {
+                if (auto === 'true') {
+                  navigation.replace('PujaList');
+                } else {
+                  navigation.replace('UserHomeScreen');
+                }
+              }}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}
             />
