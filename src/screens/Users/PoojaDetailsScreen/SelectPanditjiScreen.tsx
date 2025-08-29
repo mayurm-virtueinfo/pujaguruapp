@@ -104,6 +104,7 @@ const SelectPanditjiScreen: React.FC = () => {
         location.longitude,
         'manual',
         booking_date,
+        tirth || null,
       );
     }
   }, [location, poojaId]);
@@ -123,13 +124,14 @@ const SelectPanditjiScreen: React.FC = () => {
       setIsLoading(false);
     }
   };
-
+  console.log('tirth', tirth);
   const fetchPanditji = async (
     pooja_id: string,
     latitude: string,
     longitude: string,
     mode: 'manual',
     booking_date: string,
+    tirth: number,
   ) => {
     try {
       setIsLoading(true);
@@ -139,6 +141,7 @@ const SelectPanditjiScreen: React.FC = () => {
         longitude,
         mode,
         booking_date,
+        tirth,
       );
       console.log('Fetched Panditji :: ', response);
       if (response.success) {
@@ -230,6 +233,7 @@ const SelectPanditjiScreen: React.FC = () => {
           selectManualPanitData: selectPanditData,
           booking_Id: response?.data?.booking_id,
           AutoModeSelection,
+          auto: 'true',
         });
       }
     }
