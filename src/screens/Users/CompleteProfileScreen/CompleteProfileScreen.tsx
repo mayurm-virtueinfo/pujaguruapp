@@ -12,7 +12,6 @@ import {COLORS} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {moderateScale} from 'react-native-size-matters';
 import {AuthStackParamList} from '../../../navigation/AuthNavigator';
-import {requestLocationPermission} from '../../../utils/locationUtils';
 import PrimaryButton from '../../../components/PrimaryButton';
 import ThemedInput from '../../../components/ThemedInput';
 import UserCustomHeader from '../../../components/UserCustomHeader';
@@ -22,8 +21,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {useRoute} from '@react-navigation/native';
-import Geolocation from '@react-native-community/geolocation';
 import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
+import {getCurrentLocation, LocationData} from '../../../utils/locationUtils';
 
 interface FormData {
   phoneNumber: string;
@@ -151,22 +150,23 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
 
   const handleFetchGPS = async () => {
     setIsLoading(true);
-    const hasPermission = await requestLocationPermission();
-    if (hasPermission) {
-      Geolocation.getCurrentPosition(
-        position => {
-          const {latitude, longitude} = position.coords;
-          setLocation({latitude, longitude});
-          setIsLoading(false);
-        },
-        error => {
-          console.warn('Error getting location:', error.message);
-          setIsLoading(false);
-        },
-        {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-      );
-    } else {
-      console.warn('Location permission denied');
+    try {
+      console.log('🎯 Fetching current location...');
+
+      const locationData = await getCurrentLocation();
+      setLocation(locationData);
+
+      console.log('📍 Location fetched successfully:', {
+        lat: locationData.latitude.toFixed(4),
+        lng: locationData.longitude.toFixed(4),
+      });
+    } catch (error: any) {
+      console.warn('❌ Error getting location:', error.message);
+      setFormErrors(prev => ({
+        ...prev,
+        address: t('location_fetch_failed'),
+      }));
+    } finally {
       setIsLoading(false);
     }
   };

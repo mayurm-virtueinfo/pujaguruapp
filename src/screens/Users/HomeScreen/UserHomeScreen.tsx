@@ -10,17 +10,16 @@ import {
   Platform,
   SafeAreaView,
   Alert,
+  AppState,
 } from 'react-native';
 import {moderateScale} from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
-  apiService,
   getRecommendedPandit,
   getUpcomingPujas,
   getInProgress,
   getActivePuja,
   getPanchang,
-  PanditItem,
   PujaItem,
   RecommendedPandit,
 } from '../../../api/apiService';
@@ -35,8 +34,7 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import PrimaryButton from '../../../components/PrimaryButton';
-import axios from 'axios';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import {getLocationForAPI} from '../../../helper/helper';
 
 // Define TypeScript interface for PendingPuja
 interface PendingPuja {
@@ -68,6 +66,21 @@ const UserHomeScreen: React.FC = () => {
 
   useEffect(() => {
     fetchUserAndLocation();
+
+    // Add app state listener for location refresh
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active') {
+        console.log('App active - refreshing location data');
+        fetchRecommendedPandits();
+        fetchTodayPanchang();
+      }
+    };
+
+    const subscription = AppState.addEventListener(
+      'change',
+      handleAppStateChange,
+    );
+    return () => subscription?.remove();
   }, []);
 
   useFocusEffect(
@@ -76,29 +89,19 @@ const UserHomeScreen: React.FC = () => {
       fetchUpcomingPujas();
       fetchInProgressPujas();
       fetchPendingPujas();
-    }, []),
-  );
-
-  useEffect(() => {
-    if (location) {
       fetchRecommendedPandits();
       fetchTodayPanchang();
-    }
-  }, [location]);
+    }, []),
+  );
 
   const fetchUserAndLocation = async () => {
     try {
       const user = await AsyncStorage.getItem(AppConstant.USER_ID);
-      const location = await AsyncStorage.getItem(AppConstant.LOCATION);
-      const refreshToken = await AsyncStorage.getItem(
-        AppConstant.REFRESH_TOKEN,
-      );
-
       setUser(user);
 
-      if (location) {
-        const parsedLocation = JSON.parse(location);
-        setLocation(parsedLocation);
+      const locationData = await getLocationForAPI();
+      if (locationData) {
+        setLocation(locationData);
       }
     } catch (error) {
       console.error('Error fetching user and location:', error);
@@ -135,20 +138,16 @@ const UserHomeScreen: React.FC = () => {
   const fetchPendingPujas = async () => {
     setLoading(true);
     try {
-      console.log('Fetching pending pujas...');
       const response: any = await getActivePuja();
-      console.log('Pending Puja Response:', response);
-      // Handle different response structures
       let bookings: PendingPuja[] = [];
       if (Array.isArray(response?.booking)) {
         bookings = response.booking;
       } else if (response?.booking) {
-        bookings = [response.booking]; // Wrap single object in array
+        bookings = [response.booking];
       } else {
         bookings = [];
       }
       setPendingPujas(bookings);
-      console.log('Set Pending Pujas:', bookings);
     } catch (error) {
       console.error('Error fetching pending puja data:', error);
       setPendingPujas([]);
@@ -160,12 +159,21 @@ const UserHomeScreen: React.FC = () => {
   const fetchRecommendedPandits = async () => {
     try {
       setLoading(true);
-      const response = await getRecommendedPandit(
-        location.latitude,
-        location.longitude,
-      );
-      if (response && Array.isArray(response.data)) {
-        setRecomendedPandits(response.data || []);
+
+      // Use smart location helper instead of stored location
+      const locationData = await getLocationForAPI();
+
+      if (locationData) {
+        const response = await getRecommendedPandit(
+          locationData.latitude,
+          locationData.longitude,
+        );
+
+        if (response && Array.isArray(response.data)) {
+          setRecomendedPandits(response.data || []);
+        }
+      } else {
+        console.warn('No location available for recommended pandits');
       }
     } catch (error: any) {
       if (
@@ -199,17 +207,22 @@ const UserHomeScreen: React.FC = () => {
 
   const fetchTodayPanchang = async () => {
     try {
-      if (!location?.latitude || !location?.longitude) {
-        return;
-      }
-      const dateStr = formatDate(new Date());
-      const response = await getPanchang(
-        dateStr,
-        String(location.latitude),
-        String(location.longitude),
-      );
-      if (response?.success && response?.today_panchang) {
-        setTodayPanchang(response.today_panchang);
+      // Use smart location helper instead of stored location
+      const locationData = await getLocationForAPI();
+
+      if (locationData) {
+        const dateStr = formatDate(new Date());
+        const response = await getPanchang(
+          dateStr,
+          String(locationData.latitude),
+          String(locationData.longitude),
+        );
+
+        if (response?.success && response?.today_panchang) {
+          setTodayPanchang(response.today_panchang);
+        }
+      } else {
+        console.warn('No location available for panchang');
       }
     } catch (error) {
       console.log('Error fetching panchang:', error);
@@ -400,7 +413,6 @@ const UserHomeScreen: React.FC = () => {
           <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
             {Array.isArray(pendingPujas) && pendingPujas.length > 0 ? (
               pendingPujas.map((puja, idx) => {
-                console.log('Rendering Puja:', puja);
                 const pooja = puja.pooja || {};
                 const imageUrl =
                   pooja.image_url ||

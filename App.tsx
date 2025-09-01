@@ -19,6 +19,7 @@ import {
   setupNotifications,
 } from './src/configuration/notificationSetup';
 import {getMessaging} from '@react-native-firebase/messaging';
+import {requestLocationPermission} from './src/utils/locationUtils';
 
 const auth = getAuth();
 if (__DEV__) {
@@ -29,12 +30,15 @@ setupNotifications();
 
 const App = () => {
   useEffect(() => {
-    const timer = setTimeout(async () => {
+    const init = async () => {
       await initializeI18n();
+      await requestUserPermission();
+      await requestLocationPermission();
       SplashScreen.hide();
+    };
+    const timer = setTimeout(() => {
+      init();
     }, 2500);
-
-    requestUserPermission();
 
     return () => clearTimeout(timer);
   }, []);
