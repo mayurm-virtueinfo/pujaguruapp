@@ -38,6 +38,7 @@ export type UserHomeParamList = {
     panditId: string;
     panditName: string;
     panditImage: string;
+    description: string;
   };
   SelectPujaScreen: any;
   PoojaDetailScreen: any;

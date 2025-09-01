@@ -29,8 +29,6 @@ import {
   getPoojaDetails,
   getPoojaDetailsForPujaList,
 } from '../../../api/apiService';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import AppConstant from '../../../utils/appConstant';
 
 interface PujaDetails {
   id: number;
@@ -113,7 +111,7 @@ const PujaDetailsScreen: React.FC = () => {
 
   const {poojaId, panditId, panditName, panditImage} = route?.params;
 
-  console.log('panditId :: ', panditId);
+  console.log('data :: ', data);
 
   useEffect(() => {
     if (poojaId) {
@@ -167,6 +165,7 @@ const PujaDetailsScreen: React.FC = () => {
       panditId: panditId,
       panditName: panditName,
       panditImage: panditImage,
+      description: data?.short_description,
     });
   };
 

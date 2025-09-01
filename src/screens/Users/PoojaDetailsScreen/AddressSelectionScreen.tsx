@@ -52,6 +52,7 @@ const AddressSelectionScreen: React.FC = () => {
     panditId,
     panditName,
     panditImage,
+    description,
   } = route?.params as any;
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingAddress[]>([]);
@@ -118,6 +119,7 @@ const AddressSelectionScreen: React.FC = () => {
       panditId: panditId,
       panditName: panditName,
       panditImage: panditImage,
+      description: description,
     });
   };
 

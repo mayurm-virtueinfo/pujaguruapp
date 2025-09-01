@@ -77,6 +77,7 @@ const PujaBookingScreen: React.FC = () => {
     panditId,
     panditName,
     panditImage,
+    description,
   } = route?.params as any;
 
   const {showErrorToast, showSuccessToast} = useCommonToast();
@@ -566,11 +567,7 @@ const PujaBookingScreen: React.FC = () => {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
             {/* Puja Description */}
-            <Text style={styles.description}>
-              Ganesh Chaturthi Pooja is a Hindu festival celebrating the birth
-              of Lord Ganesha. It involves elaborate rituals, chanting of
-              mantras, and offerings to the deity. This pooja is believed to...
-            </Text>
+            <Text style={styles.description}>{description || ''}</Text>
 
             {/* Puja Place Section */}
             <View style={[styles.pujaPlaceContainer, THEMESHADOW.shadow]}>

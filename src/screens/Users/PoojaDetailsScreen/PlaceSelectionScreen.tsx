@@ -57,6 +57,7 @@ const PlaceSelectionScreen: React.FC = () => {
     panditId,
     panditName,
     panditImage,
+    description,
   } = route?.params as any;
 
   const handleNextPress = () => {
@@ -76,6 +77,7 @@ const PlaceSelectionScreen: React.FC = () => {
         panditId: panditId,
         panditName: panditName,
         panditImage: panditImage,
+        description: description,
       });
     } else if (selectedPlaceId === 2) {
       navigation.navigate('TirthPlaceSelectionScreen', {
@@ -87,6 +89,7 @@ const PlaceSelectionScreen: React.FC = () => {
         panditId: panditId,
         panditName: panditName,
         panditImage: panditImage,
+        description: description,
       });
     }
   };

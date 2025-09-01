@@ -48,6 +48,7 @@ const TirthPlaceSelectionScreen: React.FC = () => {
     panditId,
     panditName,
     panditImage,
+    description,
   } = route?.params as any;
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingTirthPlace[]>([]);
@@ -99,6 +100,7 @@ const TirthPlaceSelectionScreen: React.FC = () => {
       panditId: panditId,
       panditName: panditName,
       panditImage: panditImage,
+      description: description,
     });
   };
 
