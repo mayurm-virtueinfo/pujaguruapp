@@ -210,7 +210,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     margin: 24,
     borderRadius: 10,
-    overflow: 'hidden',
   },
   absoluteMainContainer: {
     flex: 1,
