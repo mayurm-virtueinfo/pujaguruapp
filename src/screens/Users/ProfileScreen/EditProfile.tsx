@@ -34,6 +34,7 @@ import {moderateScale} from 'react-native-size-matters';
 import {requestLocationPermission} from '../../../utils/locationUtils';
 import Geolocation from '@react-native-community/geolocation';
 import {useCommonToast} from '../../../common/CommonToast';
+import CustomTextInput from '../../../components/CustomTextInput';
 
 interface FormErrors {
   firstName?: string;
@@ -371,7 +372,7 @@ const UserEditProfileScreen: React.FC = () => {
         colors={[COLORS.gradientStart, COLORS.gradientEnd]}
         style={[styles.headerGradient]}
       />
-      <UserCustomHeader title={t('profile')} showBackButton={true} />
+      <UserCustomHeader title={t('edit_profile')} showBackButton={true} />
 
       <View style={styles.profileImageContainer}>
         <TouchableOpacity onPress={handleImagePicker}>
@@ -425,29 +426,27 @@ const UserEditProfileScreen: React.FC = () => {
               labelStyle={themedInputLabelStyle}
               error={formErrors.lastName}
             />
-            <ThemedInput
+            <CustomTextInput
               label={t('email')}
               placeholder={t('enter_your_email')}
               value={formData.email}
               onChangeText={() => {}}
               keyboardType="email-address"
-              textContentType="emailAddress"
-              autoComplete="email"
-              labelStyle={themedInputLabelStyle}
               error={formErrors.email}
               editable={false}
+              style={styles.disabledInput}
+              textColor={COLORS.gray}
             />
-            <ThemedInput
+            <CustomTextInput
               label={t('phone')}
               placeholder={t('enter_your_phone')}
               value={formData.phone}
               onChangeText={() => {}}
-              autoComplete="tel"
-              textContentType="telephoneNumber"
-              maxLength={15}
-              labelStyle={themedInputLabelStyle}
+              keyboardType="phone-pad"
               error={formErrors.phone}
               editable={false}
+              style={styles.disabledInput}
+              textColor={COLORS.gray}
             />
             <CustomDropdown
               label={t('location')}
@@ -549,11 +548,11 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     paddingTop: 64,
     paddingHorizontal: 24,
-    paddingBottom: 24,
     zIndex: 1,
   },
   inputContainer: {
     gap: 16,
+    marginBottom: 24,
   },
   buttonContainer: {
     height: 46,
@@ -561,6 +560,9 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
+  },
+  disabledInput: {
+    backgroundColor: COLORS.lightGray,
   },
 });
 

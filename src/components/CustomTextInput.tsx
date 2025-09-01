@@ -1,4 +1,11 @@
-import {StyleSheet, Text, TextInput, View} from 'react-native';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
 import React from 'react';
 import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
@@ -10,6 +17,10 @@ interface InputFieldProps {
   placeholder?: string;
   keyboardType?: 'default' | 'email-address' | 'phone-pad';
   error?: string;
+  editable?: boolean;
+  style?: ViewStyle;
+  textColor?: string;
+  inputStyle?: TextStyle;
 }
 
 const CustomTextInput: React.FC<InputFieldProps> = ({
@@ -19,18 +30,28 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
   placeholder,
   keyboardType = 'default',
   error,
+  editable = true,
+  style,
+  textColor,
+  inputStyle,
 }) => {
   return (
-    <View style={styles.inputField}>
+    <View style={[styles.inputField]}>
       <Text style={styles.inputTitle}>{label}</Text>
-      <View style={[styles.inputArea, error ? styles.inputAreaError : null]}>
+      <View
+        style={[styles.inputArea, style, error ? styles.inputAreaError : null]}>
         <TextInput
-          style={styles.inputText}
+          style={[
+            styles.inputText,
+            textColor ? {color: textColor} : null,
+            inputStyle,
+          ]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor={COLORS.inputLabelText}
           keyboardType={keyboardType}
+          editable={editable}
         />
       </View>
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
