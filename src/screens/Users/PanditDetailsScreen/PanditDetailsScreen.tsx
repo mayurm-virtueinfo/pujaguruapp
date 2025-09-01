@@ -32,7 +32,6 @@ import {useTranslation} from 'react-i18next';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
-// --- Updated interfaces for new API response ---
 interface PanditPhotoGalleryItem {
   id: number;
   image: string;
@@ -54,7 +53,7 @@ interface UserReview {
   rating: number;
   review: string;
   created_at: string;
-  images: UserReviewImage[]; // Now array of objects, not string[]
+  images: UserReviewImage[];
 }
 
 interface PanditDetails {
@@ -85,9 +84,6 @@ interface PanditList {
   price_with_samagri: string;
   price_without_samagri: string;
   price_status: number;
-  // surcharge_distance_km: number;
-  // custom_samagri_list: string;
-  // is_enabled: boolean;
 }
 
 const PanditDetailsScreen: React.FC = () => {
@@ -105,10 +101,11 @@ const PanditDetailsScreen: React.FC = () => {
   const [reviews, setReviews] = useState<UserReview[]>([]);
   const [pujaList, setPujaList] = useState<PanditList[]>([]);
   const [showAllPuja, setShowAllPuja] = useState<boolean>(false);
-  // For full image modal
   const [modalVisible, setModalVisible] = useState(false);
   const [modalImageUri, setModalImageUri] = useState<string | null>(null);
-  console.log('pujaList', pujaList);
+
+  console.log('selectedPandit :: ', selectedPandit);
+
   useEffect(() => {
     if (panditId) {
       fetchPanditDetails(panditId);
@@ -120,8 +117,6 @@ const PanditDetailsScreen: React.FC = () => {
       try {
         setLoading(true);
         const response: PanditResponse = await getPanditDetails(panditId);
-
-        console.log('response :: ', JSON.stringify(response));
 
         if (response.success) {
           setSelectedPandit(response.data);
@@ -170,14 +165,11 @@ const PanditDetailsScreen: React.FC = () => {
     return `${day}/${month}/${year}`;
   };
 
-  // Helper to get review avatar image
   const getReviewAvatar = (review: UserReview) => {
     if (Array.isArray(review.images) && review.images.length > 0) {
-      // If images is array of objects, use first image's image property
       if (typeof review.images[0] === 'object' && review.images[0]?.image) {
         return review.images[0].image;
       }
-      // fallback if string (shouldn't happen)
       if (typeof review.images[0] === 'string') {
         return review.images[0];
       }
@@ -185,7 +177,6 @@ const PanditDetailsScreen: React.FC = () => {
     return 'https://cdn.builder.io/api/v1/image/assets/e02e12c8254b4549b581b062ed0a5c7f/94c7341fbd9234bbb8e10341382dfaf1c28baf0d?placeholderIfAbsent=true';
   };
 
-  // Helper to render review images (if any)
   const renderReviewImages = (images: UserReviewImage[]) => {
     if (!images || images.length === 0) return null;
     return (
@@ -207,7 +198,6 @@ const PanditDetailsScreen: React.FC = () => {
     );
   };
 
-  // Render item for FlatList photo gallery
   const renderGalleryItem = ({item}: {item: PanditPhotoGalleryItem}) => (
     <TouchableOpacity
       style={[styles.galleryItemHorizontal, THEMESHADOW.shadow]}
@@ -222,64 +212,60 @@ const PanditDetailsScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
-  // Render item for FlatList puja performed
   const renderPujaItem = ({item}: {item: PanditList}) => (
-    console.log('item :::::: ', item.pooja),
-    (
-      <TouchableOpacity
-        style={styles.poojaItem}
-        onPress={() =>
-          navigation.navigate('UserHomeNavigator', {
-            screen: 'PoojaDetailScreen',
-            params: {poojaId: item?.pooja}, // Pass any required params here
-          })
-        }>
-        <Image
-          source={{uri: item.pooja_image_url}}
-          style={styles.poojaImage}
-          resizeMode="cover"
-        />
-        <View style={styles.poojaDetails}>
-          <Text style={styles.poojaName}>{item.pooja_title}</Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginBottom: moderateScale(4),
-            }}>
-            {/* {item.price_status === 1 && ( */}
-            <>
-              <Text style={styles.poojaPrice}>₹{item.price_with_samagri}</Text>
-              <Text
-                style={{
-                  marginLeft: 8,
-                  color: COLORS.textSecondary,
-                  fontSize: moderateScale(13),
-                }}>
-                {t('with_samagri')}
-              </Text>
-            </>
-            {/* )} */}
-          </View>
-          {/* {item.price_status === 1 && ( */}
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            <Text style={styles.poojaPrice}>₹{item.price_without_samagri}</Text>
+    <TouchableOpacity
+      style={styles.poojaItem}
+      onPress={() =>
+        navigation.navigate('UserHomeNavigator', {
+          screen: 'PoojaDetailScreen',
+          params: {
+            poojaId: item?.pooja,
+            panditId: panditId,
+            panditName: panditName,
+            panditImage: panditImage,
+          },
+        })
+      }>
+      <Image
+        source={{uri: item.pooja_image_url}}
+        style={styles.poojaImage}
+        resizeMode="cover"
+      />
+      <View style={styles.poojaDetails}>
+        <Text style={styles.poojaName}>{item.pooja_title}</Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: moderateScale(4),
+          }}>
+          <>
+            <Text style={styles.poojaPrice}>₹{item.price_with_samagri}</Text>
             <Text
               style={{
                 marginLeft: 8,
                 color: COLORS.textSecondary,
                 fontSize: moderateScale(13),
               }}>
-              {t('without_samagri')}
+              {t('with_samagri')}
             </Text>
-          </View>
-          {/* )} */}
+          </>
         </View>
-      </TouchableOpacity>
-    )
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <Text style={styles.poojaPrice}>₹{item.price_without_samagri}</Text>
+          <Text
+            style={{
+              marginLeft: 8,
+              color: COLORS.textSecondary,
+              fontSize: moderateScale(13),
+            }}>
+            {t('without_samagri')}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 
-  // Only show first 3 pujas unless showAllPuja is true
   const displayedPujaList =
     showAllPuja || pujaList.length <= 3 ? pujaList : pujaList.slice(0, 3);
 
@@ -289,7 +275,6 @@ const PanditDetailsScreen: React.FC = () => {
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('panditji_details')} showBackButton={true} />
 
-      {/* Full Image Modal */}
       <Modal
         visible={modalVisible}
         transparent
@@ -298,9 +283,7 @@ const PanditDetailsScreen: React.FC = () => {
         <View style={styles.modalOverlay}>
           <Pressable
             style={styles.modalOverlay}
-            onPress={() => setModalVisible(false)}>
-            {/* Empty Pressable to close modal on background press */}
-          </Pressable>
+            onPress={() => setModalVisible(false)}></Pressable>
           <View style={styles.modalContent}>
             <TouchableOpacity
               style={styles.closeButton}
@@ -351,7 +334,6 @@ const PanditDetailsScreen: React.FC = () => {
                 : 'Pandit details will appear here.'}
             </Text>
           </View>
-          {/* Photo Gallery Section */}
           <View style={styles.photoGallerySection}>
             <Text style={styles.sectionTitle}>Photo Gallery</Text>
             {gallery && gallery.length > 0 ? (
@@ -371,7 +353,6 @@ const PanditDetailsScreen: React.FC = () => {
               </View>
             )}
           </View>
-          {/* Pooja Performed Section */}
           <View style={styles.poojaSection}>
             <Text style={styles.sectionTitle}>{t('puja_list')}</Text>
             {pujaList && pujaList.length > 0 ? (
@@ -384,7 +365,6 @@ const PanditDetailsScreen: React.FC = () => {
                     )}
                   </React.Fragment>
                 ))}
-                {/* Show "More..." button if there are more than 3 pujas and not showing all */}
                 {!showAllPuja && pujaList.length > 3 && (
                   <TouchableOpacity
                     style={styles.moreButton}
@@ -402,7 +382,6 @@ const PanditDetailsScreen: React.FC = () => {
               </View>
             )}
           </View>
-          {/* Reviews Section */}
           <View style={styles.reviewsSection}>
             <Text style={styles.sectionTitle}>Reviews</Text>
             {Array.isArray(reviews) && reviews.length > 0 ? (
@@ -448,30 +427,19 @@ const PanditDetailsScreen: React.FC = () => {
                           ? review.review
                           : 'No review text.'}
                       </Text>
-                      {/* Show review images if any */}
                       {Array.isArray(review.images) &&
                         review.images.length > 0 &&
                         renderReviewImages(review.images)}
-                      {/* <View style={styles.reviewActions}>
-                        <TouchableOpacity style={styles.actionItem}>
-                          <Feather
-                            name="thumbs-up"
-                            size={moderateScale(20)}
-                            color={COLORS.bottomNavIcon}
-                            style={styles.actionIcon}
-                          />
-                          <Text style={styles.actionCount}>0</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.actionItem}>
-                          <Feather
-                            name="thumbs-down"
-                            size={moderateScale(20)}
-                            color={COLORS.bottomNavIcon}
-                            style={styles.actionIcon}
-                          />
-                          <Text style={styles.actionCount}>0</Text>
-                        </TouchableOpacity>
-                      </View> */}
+
+                      <TouchableOpacity style={styles.actionItem}>
+                        <Feather
+                          name="thumbs-down"
+                          size={moderateScale(20)}
+                          color={COLORS.bottomNavIcon}
+                          style={styles.actionIcon}
+                        />
+                        <Text style={styles.actionCount}>0</Text>
+                      </TouchableOpacity>
                     </View>
                     {idx < reviews.length - 1 && (
                       <View style={styles.separator} />
@@ -491,7 +459,6 @@ const PanditDetailsScreen: React.FC = () => {
   );
 };
 
-// Styles remain unchanged, but add reviewImagesRow and reviewImageThumb
 const styles = StyleSheet.create({
   container: {
     flex: 1,

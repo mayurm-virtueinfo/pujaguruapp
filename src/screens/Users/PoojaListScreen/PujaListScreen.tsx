@@ -14,6 +14,7 @@ import {
   getPujaList,
   PujaListItemType,
   RecommendedPuja,
+  getPanchang,
 } from '../../../api/apiService';
 import Fonts from '../../../theme/fonts';
 import {useNavigation} from '@react-navigation/native';
@@ -25,6 +26,8 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {useCommonToast} from '../../../common/CommonToast';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from '../../../utils/appConstant';
 
 type PujaItem = {
   id: any;
@@ -45,11 +48,13 @@ const PujaListScreen: React.FC = () => {
 
   const [pujaList, setPujaList] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
+  const [todayPanchang, setTodayPanchang] = useState<string | null>(null);
   console.log('pujaList', pujaList);
   const navigation = useNavigation<ScreenNavigationProp>();
 
   useEffect(() => {
     fetchPujaList();
+    fetchTodayPanchang();
   }, []);
 
   const fetchPujaList = async () => {
@@ -75,6 +80,32 @@ const PujaListScreen: React.FC = () => {
       setPujaList([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const fetchTodayPanchang = async () => {
+    try {
+      const locationStr = await AsyncStorage.getItem(AppConstant.LOCATION);
+      if (!locationStr) return;
+      const location = JSON.parse(locationStr);
+      const dateStr = formatDate(new Date());
+      const response = await getPanchang(
+        dateStr,
+        String(location.latitude),
+        String(location.longitude),
+      );
+      if (response?.success && response?.today_panchang) {
+        setTodayPanchang(response.today_panchang);
+      }
+    } catch (error) {
+      console.log('Error fetching panchang:', error);
     }
   };
 
@@ -104,7 +135,7 @@ const PujaListScreen: React.FC = () => {
             <View style={{paddingHorizontal: 24, paddingTop: 24, gap: 8}}>
               <Text style={styles.sectionTitle}>{t('recomended_puja')}</Text>
               <Text style={styles.sectionSubtitle}>
-                {t('today_is_kartik_shukla_paksha')}
+                {todayPanchang || t('today_is_kartik_shukla_paksha')}
               </Text>
             </View>
             <ScrollView

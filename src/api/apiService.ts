@@ -46,6 +46,8 @@ import ApiEndpoints, {
   GET_ACTIVE_PUJA,
   GET_NEW_PANDITJI,
   POST_NEW_PANDITJI_OFFER,
+  GET_PLATFORM_DETAILS,
+  GET_PANCHANG,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -154,7 +156,7 @@ export interface PujaItem {
   pooja_name: string;
   pooja_image_url: string;
   when_is_pooja: string;
-  booking_date: string
+  booking_date: string;
 }
 export interface PricingOption {
   id: number;
@@ -266,6 +268,21 @@ export interface User {
 export interface location {
   latitude: number;
   longitude: number;
+}
+
+export interface PanchangResponse {
+  success: boolean;
+  today_panchang: string;
+  detailed_info?: {
+    vaara: string;
+    nakshatra: string;
+    tithi: string;
+    paksha: string;
+    sunrise: string;
+    sunset: string;
+    moonrise: string;
+    moonset: string;
+  };
 }
 
 export interface SignInResponse {
@@ -606,16 +623,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return { pandits: [], puja: [] };
+      return {pandits: [], puja: []};
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || { recommendedPuja: [], pujaList: [] };
+      return response.data?.record || {recommendedPuja: [], pujaList: []};
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return { recommendedPuja: [], pujaList: [] };
+      return {recommendedPuja: [], pujaList: []};
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -666,10 +683,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -697,10 +714,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || { address: [] };
+      return response.data?.record || {address: []};
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return { address: [] };
+      return {address: []};
     }
   },
 };
@@ -716,6 +733,30 @@ export const postSignIn = (data: SignInRequest): Promise<SignInResponse> => {
       })
       .catch(error => {
         console.error('Error fetching sign in data:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getPanchang = (
+  date: string,
+  latitude: string,
+  longitude: string,
+): Promise<PanchangResponse> => {
+  const apiUrl = GET_PANCHANG.replace('{date}', date)
+    .replace('{latitude}', latitude)
+    .replace('{longitude}', longitude);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data as PanchangResponse);
+      })
+      .catch(error => {
+        console.error(
+          'Error fetching panchang:',
+          error?.response?.data || error,
+        );
         reject(error);
       });
   });
@@ -873,7 +914,7 @@ export const deleteAddress = (data: deleteAddress) => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, { data })
+      .delete(apiUrl, {data})
       .then(response => {
         resolve(response);
       })
@@ -1003,13 +1044,13 @@ export const getPanditji = (
   bookingDate: string,
   tirth: number,
 ): Promise<any> => {
-  console.log("tirth :::: ", tirth)
+  console.log('tirth :::: ', tirth);
   const apiUrl = GET_AUTO_MANUAL_PANDIT_SELECTION.replace('{puja_id}', puja_id)
     .replace('{latitude}', latitude)
     .replace('{longitude}', longitude)
     .replace('{mode}', mode)
     .replace('{booking_date}', bookingDate)
-    .replace('{tirth_id}', tirth);
+    .replace('{tirth_id}', String(tirth));
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)
@@ -1057,7 +1098,7 @@ export const getPanditDetails = (id: string): Promise<any> => {
 };
 
 export const postCreateRazorpayOrder = (data: CreateRazorpayOrder) => {
-  console.log("data", data)
+  console.log('data', data);
   let apiUrl = POST_CREATE_RAZORPAY_ORDER;
   return new Promise((resolve, reject) => {
     apiDev
@@ -1066,7 +1107,7 @@ export const postCreateRazorpayOrder = (data: CreateRazorpayOrder) => {
         resolve(response);
       })
       .catch(error => {
-        console.error("error ====>", JSON.stringify(error.message))
+        console.error('error ====>', JSON.stringify(error.message));
         // console.error('Error create razorpay order', error);
         reject(error);
       });
@@ -1294,7 +1335,7 @@ export const postRegisterFCMToken = (
   let apiUrl = POST_REGISTER_FCM;
   return new Promise((resolve, reject) => {
     apiDev
-      .post(apiUrl, { device_token, app_type })
+      .post(apiUrl, {device_token, app_type})
       .then(response => {
         resolve(response.data);
       })
@@ -1432,8 +1473,7 @@ export const getNewPanditji = (
   latitude: string,
   longitude: string,
 ): Promise<any> => {
-  const apiUrl = GET_NEW_PANDITJI
-    .replace('{latitude}', latitude)
+  const apiUrl = GET_NEW_PANDITJI.replace('{latitude}', latitude)
     .replace('{longitude}', longitude)
     .replace('{booking_Id}', bookingId);
   return new Promise((resolve, reject) => {
@@ -1452,9 +1492,7 @@ export const getNewPanditji = (
   });
 };
 
-export const postNewPanditOffer = (
-  data: any
-): Promise<any> => {
+export const postNewPanditOffer = (data: any): Promise<any> => {
   let apiUrl = POST_NEW_PANDITJI_OFFER;
   return new Promise((resolve, reject) => {
     apiDev
@@ -1464,6 +1502,21 @@ export const postNewPanditOffer = (
       })
       .catch(error => {
         console.error('Error in registering fcm token :: ', error);
+        reject(error);
+      });
+  });
+};
+
+export const getPlatformDetails = (): Promise<any> => {
+  const apiUrl = GET_PLATFORM_DETAILS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching platform details:', error);
         reject(error);
       });
   });

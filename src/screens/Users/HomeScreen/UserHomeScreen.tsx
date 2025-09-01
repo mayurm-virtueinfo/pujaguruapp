@@ -19,6 +19,7 @@ import {
   getUpcomingPujas,
   getInProgress,
   getActivePuja,
+  getPanchang,
   PanditItem,
   PujaItem,
   RecommendedPandit,
@@ -61,6 +62,7 @@ const UserHomeScreen: React.FC = () => {
   const [recomendedPandits, setRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
+  const [todayPanchang, setTodayPanchang] = useState<string | null>(null);
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
 
@@ -80,6 +82,7 @@ const UserHomeScreen: React.FC = () => {
   useEffect(() => {
     if (location) {
       fetchRecommendedPandits();
+      fetchTodayPanchang();
     }
   }, [location]);
 
@@ -187,6 +190,32 @@ const UserHomeScreen: React.FC = () => {
     }
   };
 
+  const formatDate = (date: Date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const fetchTodayPanchang = async () => {
+    try {
+      if (!location?.latitude || !location?.longitude) {
+        return;
+      }
+      const dateStr = formatDate(new Date());
+      const response = await getPanchang(
+        dateStr,
+        String(location.latitude),
+        String(location.longitude),
+      );
+      if (response?.success && response?.today_panchang) {
+        setTodayPanchang(response.today_panchang);
+      }
+    } catch (error) {
+      console.log('Error fetching panchang:', error);
+    }
+  };
+
   const handleBookPandit = (
     panditId: number,
     panditName: string,
@@ -235,9 +264,9 @@ const UserHomeScreen: React.FC = () => {
               />
             </TouchableOpacity>
           </View>
-          <Text style={styles.subtitle}>
-            {t('today_is_kartik_shukla_paksha')}
-          </Text>
+          {todayPanchang && (
+            <Text style={styles.subtitle}>{todayPanchang}</Text>
+          )}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}

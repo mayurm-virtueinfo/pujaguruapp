@@ -37,7 +37,7 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const APP_URL = 'https://0fbdb12a2a12.ngrok-free.app';
+export const APP_URL = 'https://c295ac5967be.ngrok-free.app';
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';
@@ -54,6 +54,8 @@ export const GET_ADDRESS_TYPE = '/app/address-types/';
 export const GET_TIRTH_PLACE = '/app/tirth-places/';
 export const GET_MUHRAT =
   '/app/choghadiya?date={date}&latitude={latitude}&longitude={longitude}';
+export const GET_PANCHANG =
+  '/app/panchang/?date={date}&latitude={latitude}&longitude={longitude}';
 export const GET_POOJA_DETAILS = '/app/puja-detail/{panditId}/{id}/';
 export const GET_POOJA_DETAIL_FOR_PUJA_LIST = '/app/puja-detail/{id}/';
 export const POST_BOOKING = '/app/booking/';
@@ -89,4 +91,5 @@ export const POST_AUTO_BOOKING =
 export const GET_ACTIVE_PUJA = '/app/booking-active/';
 export const GET_NEW_PANDITJI =
   '/app/new-panditji-list/?latitude={latitude}&longitude={longitude}&booking_id={booking_Id}';
-export const POST_NEW_PANDITJI_OFFER = "/app/new-pandit-offer/"
+export const POST_NEW_PANDITJI_OFFER = '/app/new-pandit-offer/';
+export const GET_PLATFORM_DETAILS = '/app/platform-settings/';

@@ -27,8 +27,8 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import RazorpayCheckout from 'react-native-razorpay';
 import {
+  getPlatformDetails,
   getWallet,
-  postBooking,
   postCreateRazorpayOrder,
   postVerrifyPayment,
 } from '../../../api/apiService';
@@ -91,20 +91,39 @@ const PaymentScreen: React.FC = () => {
   const [walletData, setWalletData] = useState<any>({});
   const [location, setLocation] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [platformDetails, setPlatformDetails] = useState<any>(null);
+
+  console.log('walletData :: ', walletData);
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
         const user = await AsyncStorage.getItem(AppConstant.CURRENT_USER);
         if (user) {
-          setCurrentUser(user);
+          try {
+            const parsed = JSON.parse(user);
+            setCurrentUser(parsed);
+          } catch (e) {
+            setCurrentUser(null);
+          }
         }
       } catch (error) {
         console.error('Error fetching CURRENT_USER:', error);
       }
     };
     fetchCurrentUser();
+    fetchPlatformDetails();
   }, []);
+
+  const fetchPlatformDetails = async () => {
+    try {
+      const details = await getPlatformDetails();
+      setPlatformDetails(details);
+      console.log('platformDetails :: ', details);
+    } catch (error) {
+      console.error('Error fetching platform details:', error);
+    }
+  };
 
   const razorpayOrderInProgress = useRef(false);
 
@@ -154,6 +173,42 @@ const PaymentScreen: React.FC = () => {
     return 0;
   };
 
+  // Amount calculations for clear breakdown (base, platform fee, wallet, payable)
+  const baseAmount = Number(price) || 0;
+  const feePercentage = Number(platformDetails?.platform_fee_percentage) || 0;
+  const minFee = platformDetails?.min_platform_fee
+    ? Number(platformDetails.min_platform_fee)
+    : 0;
+  const maxFeeRaw = platformDetails?.max_platform_fee;
+  const maxFee =
+    maxFeeRaw === null || maxFeeRaw === undefined ? null : Number(maxFeeRaw);
+
+  const computedFeeFromPercent = Number(
+    ((baseAmount * feePercentage) / 100).toFixed(2),
+  );
+  let computedFee = computedFeeFromPercent;
+  if (minFee && computedFee < minFee) computedFee = minFee;
+  if (maxFee !== null && !isNaN(maxFee) && computedFee > maxFee)
+    computedFee = maxFee;
+
+  // keep variable name taxAmount to minimize downstream changes
+  const taxAmount = computedFee;
+  const grossAmount = Number((baseAmount + taxAmount).toFixed(2));
+  const isMinApplied =
+    Boolean(minFee) && minFee > computedFeeFromPercent && taxAmount === minFee;
+  const isMaxApplied =
+    maxFee !== null &&
+    !isNaN(Number(maxFee)) &&
+    Number(maxFee) < computedFeeFromPercent &&
+    taxAmount === Number(maxFee);
+  const walletBalanceForCalc = getWalletBalance();
+  const walletUseAmountCalc = usePoints
+    ? Math.min(grossAmount, walletBalanceForCalc)
+    : 0;
+  const payableAmount = Number(
+    Math.max(grossAmount - walletUseAmountCalc, 0).toFixed(2),
+  );
+
   const handleCreateRazorpayOrder = useCallback(
     async (bookingIdForOrder: string) => {
       console.log(
@@ -174,15 +229,17 @@ const PaymentScreen: React.FC = () => {
       setIsLoading(true);
 
       try {
+        const walletBalance = getWalletBalance();
+        const walletUseAmount = usePoints
+          ? Math.min(grossAmount, walletBalance)
+          : 0;
         const requestData: any = {
           booking_id: bookingIdForOrder,
-          ...(usePoints && {
-            amount_to_pay_from_wallet_input: price,
+          ...(walletUseAmount > 0 && {
+            amount_to_pay_from_wallet_input: walletUseAmount,
           }),
         };
-        console.log('requestData ====>', requestData);
         const response: any = await postCreateRazorpayOrder(requestData);
-        console.log('response?.data =====>', response?.data);
         if (response?.data?.order_id || response?.data?.booking_id) {
           setOrderId(response.data.order_id || response?.data?.booking_id);
           razorpayOrderBookingId.current = bookingIdForOrder;
@@ -194,7 +251,7 @@ const PaymentScreen: React.FC = () => {
           );
         }
       } catch (error: any) {
-        console.error('Order creation error:', error);
+        console.error('Order creation error:', error?.response.data);
         showErrorToast(error?.message || 'Failed to create Razorpay order');
         throw error;
       } finally {
@@ -248,10 +305,10 @@ const PaymentScreen: React.FC = () => {
       } else {
         throw new Error(response?.message || 'Payment verification failed');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment verification error:', error);
       showErrorToast(error?.message || 'Payment verification failed');
-      throw error; // Re-throw to handle in calling function
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -265,13 +322,41 @@ const PaymentScreen: React.FC = () => {
     }
 
     try {
-      // Step 1: Create Razorpay order
+      const walletBalance = getWalletBalance();
+      const totalPrice = grossAmount; // include tax in payable
+      const walletUseAmount = usePoints
+        ? Math.min(totalPrice, walletBalance)
+        : 0;
+
+      // Step 1: Create order / apply wallet
       const razorpayOrder = await handleCreateRazorpayOrder(booking_Id);
-      console.log('razorpayOrder =====>', razorpayOrder);
+
+      // If wallet fully covers the price, skip Razorpay and treat as success
+      if (walletUseAmount >= totalPrice) {
+        showSuccessToast('Payment completed using wallet');
+        if (AutoModeSelection == true) {
+          navigation.navigate('SearchPanditScreen', {
+            booking_id: booking_Id,
+          });
+        } else {
+          navigation.navigate('BookingSuccessfullyScreen', {
+            booking: booking_Id,
+            panditjiData,
+            selectManualPanitData,
+            panditName,
+            panditImage,
+            auto,
+          });
+        }
+        return;
+      }
+
       if (!razorpayOrder?.order_id) {
         showErrorToast('Unable to create payment order. Please try again.');
         return;
       }
+
+      const remainingAmount = Math.max(totalPrice - walletUseAmount, 0);
 
       // Step 2: Configure Razorpay options
       const razorpayOptions = {
@@ -279,16 +364,18 @@ const PaymentScreen: React.FC = () => {
         image: 'https://your-logo-url.com/logo.png',
         currency: 'INR',
         key: 'rzp_test_birUVdrhV4Jm7l',
-        amount: price * 100,
+        amount: remainingAmount * 100,
         name: 'PujaGuru App',
         order_id: razorpayOrder.order_id,
         prefill: {
-          email: currentUser.email,
-          contact: currentUser.mobile,
-          name: `${currentUser.first_name}${currentUser.last_name}`,
+          email: currentUser?.email,
+          contact: currentUser?.mobile,
+          name: `${currentUser?.first_name || ''}${
+            currentUser?.last_name || ''
+          }`,
         },
         theme: {color: COLORS.primary},
-      };
+      } as const;
 
       // Step 3: Open Razorpay checkout
       const paymentResult = await RazorpayCheckout.open(razorpayOptions);
@@ -399,6 +486,8 @@ const PaymentScreen: React.FC = () => {
     </View>
   );
 
+  // removed duplicate calculation block (kept the one above)
+
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
@@ -426,9 +515,81 @@ const PaymentScreen: React.FC = () => {
                   <Text style={styles.pujaName}>{puja_name}</Text>
                 </View>
                 <View style={styles.amoutContainer}>
-                  <Text style={styles.totalAmount}>₹ {price}</Text>
+                  <Text style={styles.totalAmount}>
+                    ₹ {grossAmount.toFixed(2)}
+                  </Text>
                 </View>
               </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.totalRow}>
+                <Text style={styles.totalAmountLabel}>Puja price</Text>
+                <Text style={styles.totalAmount}>
+                  ₹ {baseAmount.toFixed(2)}
+                </Text>
+              </View>
+              <View style={styles.totalRow}>
+                <View style={styles.totalInfoLeft}>
+                  <Text style={styles.totalAmountLabel}>
+                    Platform fee ({feePercentage}%)
+                  </Text>
+                  {(isMinApplied || isMaxApplied) && (
+                    <Text style={styles.feeNoteText}>
+                      {isMinApplied
+                        ? `Minimum fee applied (₹ ${minFee.toFixed(2)})`
+                        : `Capped at maximum (₹ ${Number(maxFee).toFixed(2)})`}
+                    </Text>
+                  )}
+                </View>
+                <Text style={styles.totalAmount}>₹ {taxAmount.toFixed(2)}</Text>
+              </View>
+
+              <View style={styles.divider} />
+
+              <View style={styles.totalRow}>
+                <Text
+                  style={[
+                    styles.totalAmountLabel,
+                    {fontFamily: Fonts.Sen_SemiBold},
+                  ]}>
+                  Total payable
+                </Text>
+                <Text
+                  style={[
+                    styles.totalAmount,
+                    {fontFamily: Fonts.Sen_SemiBold},
+                  ]}>
+                  ₹ {grossAmount.toFixed(2)}
+                </Text>
+              </View>
+
+              {usePoints ? (
+                <>
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalAmountLabel}>Wallet applied</Text>
+                    <Text style={styles.totalAmount}>
+                      - ₹ {walletUseAmountCalc.toFixed(2)}
+                    </Text>
+                  </View>
+                  <View style={styles.totalRow}>
+                    <Text
+                      style={[
+                        styles.totalAmountLabel,
+                        {fontFamily: Fonts.Sen_SemiBold},
+                      ]}>
+                      To pay
+                    </Text>
+                    <Text
+                      style={[
+                        styles.totalAmount,
+                        {fontFamily: Fonts.Sen_SemiBold},
+                      ]}>
+                      ₹ {payableAmount.toFixed(2)}
+                    </Text>
+                  </View>
+                </>
+              ) : null}
             </View>
 
             {/* Use Points Section */}
@@ -559,6 +720,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
+  totalInfoLeft: {
+    flexDirection: 'column',
+    flex: 1,
+  },
   totalAmountLabel: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
@@ -574,6 +739,12 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
+  },
+  feeNoteText: {
+    fontSize: 12,
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.pujaCardSubtext,
+    marginTop: 2,
   },
   amoutContainer: {
     alignItems: 'flex-end',

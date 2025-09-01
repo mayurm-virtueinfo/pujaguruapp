@@ -104,24 +104,23 @@ const PujaDetailsScreen: React.FC = () => {
   );
   const [selectPrice, setSelectPrice] = useState<string>('');
 
-  // State for expand/collapse
   const [userItemsExpanded, setUserItemsExpanded] = useState<boolean>(false);
   const [panditItemsExpanded, setPanditItemsExpanded] =
     useState<boolean>(false);
 
-  // State for image modal
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [modalImageUri, setModalImageUri] = useState<string | null>(null);
 
   const {poojaId, panditId, panditName, panditImage} = route?.params;
-  console.log('data', data);
+
+  console.log('panditId :: ', panditId);
+
   useEffect(() => {
     if (poojaId) {
       fetchPoojaDetails(poojaId);
     }
   }, [poojaId]);
 
-  // Modified fetchPoojaDetails to only pass panditId if it exists
   const fetchPoojaDetails = async (id: string) => {
     setLoading(true);
     try {
