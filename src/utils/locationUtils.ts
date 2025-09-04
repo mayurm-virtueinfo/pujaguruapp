@@ -12,23 +12,29 @@ export interface LocationData {
 export const requestLocationPermission = async (): Promise<boolean> => {
   if (Platform.OS === 'android') {
     try {
-      const granted = await PermissionsAndroid.request(
+      const results = await PermissionsAndroid.requestMultiple([
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Location Permission',
-          message:
-            'This app needs access to your location to provide better services.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        },
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
+        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+      ]);
+
+      const fineGranted =
+        results[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] ===
+          PermissionsAndroid.RESULTS.GRANTED ||
+        results[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION] ===
+          PermissionsAndroid.RESULTS.LIMITED; // Android 12 approximate
+
+      const coarseGranted =
+        results[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION] ===
+        PermissionsAndroid.RESULTS.GRANTED;
+
+      // Accept either fine or coarse; we can still show approximate location
+      return fineGranted || coarseGranted;
     } catch (err) {
-      console.warn(err);
+      console.warn('requestLocationPermission error:', err);
       return false;
     }
   }
+  // iOS handled separately by Info.plist and system prompt elsewhere
   return true;
 };
 
@@ -41,26 +47,41 @@ export const getCurrentLocation = (): Promise<LocationData> => {
       return;
     }
 
-    Geolocation.getCurrentPosition(
-      position => {
-        const locationData: LocationData = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          timestamp: new Date().toISOString(),
-        };
-        resolve(locationData);
-      },
-      error => {
-        console.warn('Location error:', error.message);
-        reject(error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 10000,
-      },
-    );
+    // Try with high accuracy first, then fallback once to balanced power if it times out/position unavailable
+    const tryGetPosition = (highAccuracy: boolean): void => {
+      Geolocation.getCurrentPosition(
+        position => {
+          const locationData: LocationData = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy,
+            timestamp: new Date().toISOString(),
+          };
+          resolve(locationData);
+        },
+        error => {
+          console.warn('Location error:', error.message);
+          // Fallback once with lower accuracy if initial attempt fails on Android
+          if (
+            Platform.OS === 'android' &&
+            highAccuracy &&
+            (error?.code === 2 /* POSITION_UNAVAILABLE */ ||
+              error?.code === 3) /* TIMEOUT */
+          ) {
+            tryGetPosition(false);
+          } else {
+            reject(error);
+          }
+        },
+        {
+          enableHighAccuracy: highAccuracy,
+          timeout: 15000,
+          maximumAge: 10000,
+        },
+      );
+    };
+
+    tryGetPosition(true);
   });
 };
 

@@ -1,6 +1,11 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {View, Text, StyleSheet, Dimensions, Alert} from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  CommonActions,
+  StackActions,
+} from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import LinearGradient from 'react-native-linear-gradient';
 import {COLORS} from '../../../theme/theme';
@@ -10,8 +15,6 @@ import {moderateScale, verticalScale} from 'react-native-size-matters';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 
-const SEARCH_SCREEN_DURATION_MS = 1 * 60 * 1000;
-
 const SearchPanditScreen: React.FC = () => {
   const route = useRoute();
   const {booking_Id, booking_id} = route.params as any;
@@ -20,34 +23,57 @@ const SearchPanditScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
-  const [step, setStep] = useState(0);
   const [wsError, setWsError] = useState<string | null>(null);
-
-  const SEARCH_STEPS = [
-    t('search_pandit_screen_scanning_location'),
-    t('search_pandit_screen_finding_nearby_pandits'),
-    t('search_pandit_screen_matching_requirements'),
-    t('search_pandit_screen_almost_there'),
-  ];
-
-  const [searchText, setSearchText] = useState(SEARCH_STEPS[0]);
+  const [searchText, setSearchText] = useState(
+    t('search_pandit_screen_scanning_location') || 'Scanning your location...',
+  );
   const pulseRef = useRef<Animatable.View & View>(null);
   const circle1Ref = useRef<Animatable.View & View>(null);
   const circle2Ref = useRef<Animatable.View & View>(null);
   const ws = useRef<WebSocket | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
-    setSearchText(SEARCH_STEPS[0]);
+    setSearchText(
+      t('search_pandit_screen_scanning_location') ||
+        'Scanning your location...',
+    );
   }, [t]);
 
   useEffect(() => {
     if (bookingId) {
-      let socketURL = `ws://192.168.1.39:9000/ws/bookings/${bookingId}/`;
+      // Start 1-minute timeout: if no acceptance, navigate to Home
+      timeoutRef.current = setTimeout(() => {
+        if (!hasNavigatedRef.current) {
+          hasNavigatedRef.current = true;
+          // Reset to bottom tab with first tab focused and its first screen
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [
+                {
+                  name: 'Main' as never,
+                  params: {
+                    screen: 'UserAppBottomTabNavigator',
+                    params: {
+                      screen: 'UserHomeNavigator',
+                      params: {screen: 'UserHomeScreen'},
+                    },
+                  } as never,
+                },
+              ],
+            }),
+          );
+        }
+      }, 60 * 1000);
+
+      let socketURL = `ws://192.168.1.23:9000/ws/bookings/${bookingId}/`;
       if (socketURL.startsWith('ws://') && !__DEV__) {
         socketURL = socketURL.replace('ws://', 'wss://');
       }
+      console.log('socketURL :: ', socketURL);
 
       let socket: WebSocket | null = null;
       try {
@@ -80,24 +106,46 @@ const SearchPanditScreen: React.FC = () => {
 
       socket.onmessage = event => {
         try {
+          // Check if event.data exists and is a string
+          if (!event.data || typeof event.data !== 'string') {
+            console.warn('WebSocket received non-string data:', event.data);
+            return;
+          }
+
           const data = JSON.parse(event.data);
-          if (
-            data &&
-            (data.status === 'accepted' || data.status === 'ACCEPTED') &&
-            !hasNavigatedRef.current
-          ) {
-            hasNavigatedRef.current = true;
-            setLoading(false);
-            // navigation.navigate('BookingSuccessfullyScreen', {
-            //   booking: bookingId,
-            //   auto: 'true',
-            // } as any);
-            navigation.reset('ConfirmPujaDetails', {
-              bookingId,
-            });
+
+          // Validate the parsed data structure
+          if (!data || typeof data !== 'object') {
+            console.warn('WebSocket received invalid JSON data:', data);
+            return;
+          }
+
+          if (data.status === 'accepted' || data.status === 'ACCEPTED') {
+            if (!hasNavigatedRef.current) {
+              hasNavigatedRef.current = true;
+              setLoading(false);
+              if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+              }
+              // navigation.navigate('BookingSuccessfullyScreen', {
+              //   booking: bookingId,
+              //   auto: 'true',
+              // } as any);
+              // Direct replace to ConfirmPujaDetails
+              navigation.dispatch(
+                StackActions.replace(
+                  'ConfirmPujaDetails' as never,
+                  {
+                    bookingId,
+                  } as never,
+                ),
+              );
+            }
           }
         } catch (err) {
           console.error('Error parsing WebSocket message:', err);
+          console.error('Raw message data:', event.data);
         }
       };
 
@@ -105,39 +153,15 @@ const SearchPanditScreen: React.FC = () => {
         if (ws.current) {
           ws.current.close();
         }
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
       };
     }
   }, [bookingId, navigation, wsError]);
 
-  useEffect(() => {
-    let timers: NodeJS.Timeout[] = [];
-    const stepInterval = Math.floor(
-      SEARCH_SCREEN_DURATION_MS / (SEARCH_STEPS.length + 1),
-    );
-    SEARCH_STEPS.forEach((text, idx) => {
-      timers.push(
-        setTimeout(() => {
-          setStep(idx);
-          setSearchText(text);
-        }, idx * stepInterval),
-      );
-    });
-    timers.push(
-      setTimeout(() => {
-        setLoading(false);
-        if (!hasNavigatedRef.current) {
-          hasNavigatedRef.current = true;
-          navigation.navigate('BookingSuccessfullyScreen', {
-            booking: bookingId,
-            auto: 'true',
-          } as any);
-        }
-      }, SEARCH_SCREEN_DURATION_MS),
-    );
-    return () => {
-      timers.forEach(clearTimeout);
-    };
-  }, [SEARCH_STEPS.join('|')]);
+  // Timer-based progression removed
 
   const pulseAnimation = {
     0: {scale: 1, opacity: 0.7},

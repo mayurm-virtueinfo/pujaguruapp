@@ -23,6 +23,7 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import {useRoute} from '@react-navigation/native';
 import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
 import {getCurrentLocation, LocationData} from '../../../utils/locationUtils';
+import {Text} from 'react-native-gesture-handler';
 
 interface FormData {
   phoneNumber: string;
@@ -278,6 +279,11 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
           error={formErrors.address}
         />
       </View>
+
+      <Text>
+        lat : {location?.latitude.toFixed(4)} long :{' '}
+        {location?.longitude.toFixed(4)}
+      </Text>
 
       <PrimaryButtonOutlined
         title={t('fetch_gps_location')}

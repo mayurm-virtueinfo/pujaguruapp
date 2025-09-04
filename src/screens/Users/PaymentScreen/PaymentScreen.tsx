@@ -27,7 +27,6 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import RazorpayCheckout from 'react-native-razorpay';
 import {
-  getPlatformDetails,
   getWallet,
   postCreateRazorpayOrder,
   postVerrifyPayment,
@@ -91,7 +90,6 @@ const PaymentScreen: React.FC = () => {
   const [walletData, setWalletData] = useState<any>({});
   const [location, setLocation] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [platformDetails, setPlatformDetails] = useState<any>(null);
 
   console.log('walletData :: ', walletData);
 
@@ -112,18 +110,7 @@ const PaymentScreen: React.FC = () => {
       }
     };
     fetchCurrentUser();
-    fetchPlatformDetails();
   }, []);
-
-  const fetchPlatformDetails = async () => {
-    try {
-      const details = await getPlatformDetails();
-      setPlatformDetails(details);
-      console.log('platformDetails :: ', details);
-    } catch (error) {
-      console.error('Error fetching platform details:', error);
-    }
-  };
 
   const razorpayOrderInProgress = useRef(false);
 
@@ -173,34 +160,10 @@ const PaymentScreen: React.FC = () => {
     return 0;
   };
 
-  // Amount calculations for clear breakdown (base, platform fee, wallet, payable)
+  // Amount calculations simplified to base amount only (no platform fees)
   const baseAmount = Number(price) || 0;
-  const feePercentage = Number(platformDetails?.platform_fee_percentage) || 0;
-  const minFee = platformDetails?.min_platform_fee
-    ? Number(platformDetails.min_platform_fee)
-    : 0;
-  const maxFeeRaw = platformDetails?.max_platform_fee;
-  const maxFee =
-    maxFeeRaw === null || maxFeeRaw === undefined ? null : Number(maxFeeRaw);
-
-  const computedFeeFromPercent = Number(
-    ((baseAmount * feePercentage) / 100).toFixed(2),
-  );
-  let computedFee = computedFeeFromPercent;
-  if (minFee && computedFee < minFee) computedFee = minFee;
-  if (maxFee !== null && !isNaN(maxFee) && computedFee > maxFee)
-    computedFee = maxFee;
-
-  // keep variable name taxAmount to minimize downstream changes
-  const taxAmount = computedFee;
+  const taxAmount = 0;
   const grossAmount = Number((baseAmount + taxAmount).toFixed(2));
-  const isMinApplied =
-    Boolean(minFee) && minFee > computedFeeFromPercent && taxAmount === minFee;
-  const isMaxApplied =
-    maxFee !== null &&
-    !isNaN(Number(maxFee)) &&
-    Number(maxFee) < computedFeeFromPercent &&
-    taxAmount === Number(maxFee);
   const walletBalanceForCalc = getWalletBalance();
   const walletUseAmountCalc = usePoints
     ? Math.min(grossAmount, walletBalanceForCalc)
@@ -235,6 +198,8 @@ const PaymentScreen: React.FC = () => {
           : 0;
         const requestData: any = {
           booking_id: bookingIdForOrder,
+          latitude: location?.latitude,
+          longitude: location?.longitude,
           ...(walletUseAmount > 0 && {
             amount_to_pay_from_wallet_input: walletUseAmount,
           }),
@@ -507,46 +472,6 @@ const PaymentScreen: React.FC = () => {
             scrollEventThrottle={16}>
             {/* Total Amount Section */}
             <View style={[styles.totalSection, THEMESHADOW.shadow]}>
-              <View style={styles.totalRow}>
-                <View style={styles.totalInfo}>
-                  <Text style={styles.totalAmountLabel}>
-                    {t('total_amount')}
-                  </Text>
-                  <Text style={styles.pujaName}>{puja_name}</Text>
-                </View>
-                <View style={styles.amoutContainer}>
-                  <Text style={styles.totalAmount}>
-                    ₹ {grossAmount.toFixed(2)}
-                  </Text>
-                </View>
-              </View>
-
-              <View style={styles.divider} />
-
-              <View style={styles.totalRow}>
-                <Text style={styles.totalAmountLabel}>Puja price</Text>
-                <Text style={styles.totalAmount}>
-                  ₹ {baseAmount.toFixed(2)}
-                </Text>
-              </View>
-              <View style={styles.totalRow}>
-                <View style={styles.totalInfoLeft}>
-                  <Text style={styles.totalAmountLabel}>
-                    Platform fee ({feePercentage}%)
-                  </Text>
-                  {(isMinApplied || isMaxApplied) && (
-                    <Text style={styles.feeNoteText}>
-                      {isMinApplied
-                        ? `Minimum fee applied (₹ ${minFee.toFixed(2)})`
-                        : `Capped at maximum (₹ ${Number(maxFee).toFixed(2)})`}
-                    </Text>
-                  )}
-                </View>
-                <Text style={styles.totalAmount}>₹ {taxAmount.toFixed(2)}</Text>
-              </View>
-
-              <View style={styles.divider} />
-
               <View style={styles.totalRow}>
                 <Text
                   style={[

@@ -47,7 +47,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>We need access to your camera to allow you to take and upload photos.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>We use your location to autofill address and improve nearby services.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need access to your microphone for audio recording features.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

@@ -106,6 +106,8 @@ const PujaBookingScreen: React.FC = () => {
   const [panditjiData, setPanditjiData] = useState({});
   const [availableDates, setAvailableDates] = useState<string[] | null>(null);
 
+  console.log('selectedDate :: ', selectedDate);
+
   useEffect(() => {
     fetchLocation();
   }, []);
@@ -158,10 +160,14 @@ const PujaBookingScreen: React.FC = () => {
           // Set all available dates as an array
           setAvailableDates(availableDatesList);
 
-          // Set the first available date as selected by default
-          const firstAvailable = availableDatesList[0];
-          setSelectedDateString(firstAvailable);
-          const parsedDate = new Date(firstAvailable);
+          // Prefer today's date if it is available; otherwise, use the first available
+          const todayFormatted = formatDateYYYYMMDD(new Date());
+          const defaultDate = availableDatesList.includes(todayFormatted)
+            ? todayFormatted
+            : availableDatesList[0];
+
+          setSelectedDateString(defaultDate);
+          const parsedDate = new Date(defaultDate);
           setSelectedDate(parsedDate.getDate());
           setCurrentMonth(
             `${parsedDate.toLocaleString('default', {
@@ -457,10 +463,9 @@ const PujaBookingScreen: React.FC = () => {
   const calendarProps =
     panditId && availableDates && availableDates.length > 0
       ? {
-          date: new Date(availableDates[0]).getDate(),
-          month: `${new Date(availableDates[0]).toLocaleString('default', {
-            month: 'long',
-          })} ${new Date(availableDates[0]).getFullYear()}`,
+          // Use the currently selected date/month instead of forcing first available
+          date: selectedDate,
+          month: currentMonth,
           onDateSelect: (dateString: string) => {
             // Only allow selection if dateString is in availableDates
             if (!availableDates.includes(dateString)) {

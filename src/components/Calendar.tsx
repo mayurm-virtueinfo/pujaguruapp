@@ -10,8 +10,8 @@ interface CalendarProps {
   month?: string;
   onMonthChange?: (direction: 'prev' | 'next') => void;
   date: number;
-  selectableDates?: string[]; // New prop for available/selectable dates
-  disableMonthChange?: boolean; // New prop to disable month changing
+  selectableDates?: string[];
+  disableMonthChange?: boolean;
 }
 
 function getMonthYearFromString(monthStr: string) {
@@ -89,7 +89,28 @@ const Calendar: React.FC<CalendarProps> = ({
     markedDates[todayStr] = {
       customStyles: {
         container: {
-          backgroundColor: '#FA1927',
+          backgroundColor: COLORS.primaryBackgroundButton,
+          borderRadius: 9999,
+          width: wp(8),
+          height: wp(8),
+          alignItems: 'center',
+          justifyContent: 'center',
+          alignSelf: 'center',
+        },
+        text: {
+          color: COLORS.primaryTextDark,
+          fontFamily: Fonts.Sen_Medium,
+          fontSize: moderateScale(12),
+        },
+      },
+    };
+  }
+
+  if (currentSelected && currentSelected !== todayStr) {
+    markedDates[currentSelected] = {
+      customStyles: {
+        container: {
+          backgroundColor: COLORS.primary,
           borderRadius: 9999,
           width: wp(8),
           height: wp(8),
@@ -106,28 +127,6 @@ const Calendar: React.FC<CalendarProps> = ({
     };
   }
 
-  if (currentSelected && currentSelected !== todayStr) {
-    markedDates[currentSelected] = {
-      customStyles: {
-        container: {
-          backgroundColor: COLORS.primaryBackgroundButton,
-          borderRadius: 9999,
-          width: wp(8),
-          height: wp(8),
-          alignItems: 'center',
-          justifyContent: 'center',
-          alignSelf: 'center',
-        },
-        text: {
-          color: '#000000',
-          fontFamily: Fonts.Sen_Medium,
-          fontSize: moderateScale(12),
-        },
-      },
-    };
-  }
-
-  // Optionally mark available dates with a dot or different style
   if (selectableDates) {
     selectableDates.forEach(date => {
       if (!markedDates[date]) {
@@ -153,7 +152,7 @@ const Calendar: React.FC<CalendarProps> = ({
   }
 
   const handleMonthChange = (dateObj: CalendarDayObject) => {
-    if (disableMonthChange) return; // Prevent month change if disabled
+    if (disableMonthChange) return;
     if (!onMonthChange) return;
     const currentMonth = monthIdx + 1;
     if (dateObj.month < currentMonth || dateObj.year < year) {
@@ -164,7 +163,6 @@ const Calendar: React.FC<CalendarProps> = ({
   };
 
   const handleDayPress = (day: CalendarDayObject) => {
-    // Only allow selection if date is in selectableDates (if provided)
     if (selectableDates && !selectableDates.includes(day.dateString)) {
       return;
     }
@@ -218,7 +216,7 @@ const Calendar: React.FC<CalendarProps> = ({
           </Text>
         )}
         firstDay={0}
-        enableSwipeMonths={!disableMonthChange} // Disable swiping if month change is disabled
+        enableSwipeMonths={!disableMonthChange}
       />
     </View>
   );

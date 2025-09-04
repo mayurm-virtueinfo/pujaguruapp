@@ -120,16 +120,15 @@ const PujaListScreen: React.FC = () => {
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}
       />
-      <UserCustomHeader
-        title={t('puja')}
-        showBellButton={true}
-        onNotificationPress={handleNotificationPress}
-      />
+      <UserCustomHeader title={t('puja')} />
 
       <View style={styles.mainContent}>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollViewContent}
+          contentContainerStyle={{
+            ...styles.scrollViewContent,
+            paddingBottom: inset.bottom + 24,
+          }}
           showsVerticalScrollIndicator={false}>
           <View style={styles.recommendedSection}>
             <View style={{paddingHorizontal: 24, paddingTop: 24, gap: 8}}>
@@ -221,12 +220,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.05,
   },
   horizontalScroll: {
-    paddingHorizontal: 24,
     flex: 1,
   },
   horizontalScrollContent: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingRight: 24,
   },
   horizontalCardSpacer: {
     width: 16,
