@@ -319,7 +319,7 @@ const PanditDetailsScreen: React.FC = () => {
                   Math.round(parseFloat(selectedPandit?.average_rating || '0')),
                 )}
                 <Text style={styles.experienceText}>
-                  {selectedPandit?.total_ratings || 0} Reviews
+                  {selectedPandit?.total_ratings || 0} {t('reviews')}
                 </Text>
               </View>
             </View>
@@ -335,7 +335,7 @@ const PanditDetailsScreen: React.FC = () => {
             </Text>
           </View>
           <View style={styles.photoGallerySection}>
-            <Text style={styles.sectionTitle}>Photo Gallery</Text>
+            <Text style={styles.sectionTitle}>{t('photo_gallery')}</Text>
             {gallery && gallery.length > 0 ? (
               <FlatList
                 data={gallery}
@@ -348,7 +348,7 @@ const PanditDetailsScreen: React.FC = () => {
             ) : (
               <View style={[THEMESHADOW.shadow, styles.forNodata]}>
                 <Text style={styles.forNoDataText}>
-                  No photo gallery available.
+                  {t('no_photo_gallery_available')}
                 </Text>
               </View>
             )}
@@ -377,13 +377,13 @@ const PanditDetailsScreen: React.FC = () => {
             ) : (
               <View style={[THEMESHADOW.shadow, styles.forNodata]}>
                 <Text style={styles.forNoDataText}>
-                  No puja performed data available.
+                  {t('no_puja_performed_data_available')}
                 </Text>
               </View>
             )}
           </View>
           <View style={styles.reviewsSection}>
-            <Text style={styles.sectionTitle}>Reviews</Text>
+            <Text style={styles.sectionTitle}>{t('reviews')}</Text>
             {Array.isArray(reviews) && reviews.length > 0 ? (
               <View style={[styles.reviewsList, THEMESHADOW.shadow]}>
                 {reviews.map((review, idx) => (
@@ -425,7 +425,7 @@ const PanditDetailsScreen: React.FC = () => {
                       <Text style={styles.reviewText}>
                         {review.review && review.review.trim().length > 0
                           ? review.review
-                          : 'No review text.'}
+                          : t('no_review_text')}
                       </Text>
                       {Array.isArray(review.images) &&
                         review.images.length > 0 &&
@@ -449,7 +449,7 @@ const PanditDetailsScreen: React.FC = () => {
               </View>
             ) : (
               <View style={[THEMESHADOW.shadow, styles.forNodata]}>
-                <Text style={styles.forNoDataText}>No reviews yet.</Text>
+                <Text style={styles.forNoDataText}>{t('no_review_text')}</Text>
               </View>
             )}
           </View>

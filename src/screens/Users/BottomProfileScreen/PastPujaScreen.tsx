@@ -36,10 +36,12 @@ const PastPujaScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
+  console.log('pastBookings :: ', pastBookings);
   const fetchPastBookings = useCallback(async () => {
     setLoading(true);
     try {
       const response: any = await getPastBookings();
+      console.log('responsoes :: ', response);
       if (response.status === 200) {
         setPastBookings(response.data);
       }
@@ -123,6 +125,8 @@ const PastPujaScreen: React.FC = () => {
 
   const renderSeparator = () => <View style={styles.separator} />;
 
+  // Always render the content container and FlatList, regardless of pastBookings length.
+  // FlatList will show ListEmptyComponent if data is empty.
   return (
     <View style={[styles.container, {paddingTop: insets.top}]}>
       <CustomeLoader loading={loading} />
@@ -132,26 +136,32 @@ const PastPujaScreen: React.FC = () => {
         barStyle="light-content"
       />
       <UserCustomHeader title={t('past_bookings')} showBackButton={true} />
-      {pastBookings.length > 0 && (
-        <View style={styles.contentContainer}>
-          <View style={[styles.listContainer, THEMESHADOW.shadow]}>
-            <FlatList
-              data={pastBookings}
-              renderItem={renderBookingItem}
-              keyExtractor={(item, index) => `${item.id}-${index}`}
-              ItemSeparatorComponent={renderSeparator}
-              contentContainerStyle={[styles.flatListContent]}
-              showsVerticalScrollIndicator={false}
-              refreshControl={
-                <RefreshControl
-                  refreshing={refreshing}
-                  onRefresh={onRefresh}
-                  tintColor={COLORS.primary}
-                  colors={[COLORS.primary]}
-                />
-              }
-              ListEmptyComponent={
-                <View style={{alignItems: 'center', marginTop: 40}}>
+      <View style={styles.contentContainer}>
+        <View style={[styles.listContainer, THEMESHADOW.shadow]}>
+          <FlatList
+            data={pastBookings}
+            renderItem={renderBookingItem}
+            keyExtractor={(item, index) => `${item.id}-${index}`}
+            ItemSeparatorComponent={renderSeparator}
+            contentContainerStyle={[
+              styles.flatListContent,
+              // If empty, center the empty text vertically
+              pastBookings.length === 0
+                ? {flex: 1, justifyContent: 'center'}
+                : {},
+            ]}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={COLORS.primary}
+                colors={[COLORS.primary]}
+              />
+            }
+            ListEmptyComponent={
+              !loading ? (
+                <View style={{alignItems: 'center', marginVertical: 20}}>
                   <Text
                     style={{
                       color: COLORS.gray,
@@ -161,11 +171,11 @@ const PastPujaScreen: React.FC = () => {
                     {t('no_item_available')}
                   </Text>
                 </View>
-              }
-            />
-          </View>
+              ) : null
+            }
+          />
         </View>
-      )}
+      </View>
     </View>
   );
 };

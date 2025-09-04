@@ -258,8 +258,8 @@ const UserHomeScreen: React.FC = () => {
       />
       <UserCustomHeader
         title={t('home')}
-        showBellButton={true}
-        onNotificationPress={handleNotificationPress}
+        // showBellButton={true}
+        // onNotificationPress={handleNotificationPress}
       />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Recommended Panditji Section */}

@@ -239,5 +239,18 @@
   "no_pending_pujas": "No pending puja's.",
   "show_less": "Show Less",
   "show_more": "Show More",
-  "verify_otp": "Verify OTP"
+  "verify_otp": "Verify OTP",
+  "save": "Save",
+  "no_item_available": "No past bookings available.",
+  "no_photo_gallery_available": "No photo gallery available.",
+  "no_puja_performed_data_available": "No puja performed data available.",
+  "no_review_text": "No reviews yet.",
+  "reviews": "Reviews",
+  "photo_gallery": "Photo Gallery",
+  "no_transactions_found": "No transactions found.",
+  "condition": "If you cancel the puja before 24 hrs then the total payments is stored here in form of the points. 1 points = 1 Rupee. You can use the points to book the next puja.",
+  "no_pricing_available": "No pricing available",
+  "please_select_pricing_option": "Please select a pricing option",
+  "with_puja_items": "With Puja Items",
+  "without_puja_items": "Without Puja Items"
 }

@@ -52,6 +52,8 @@ const PanditjiScreen: React.FC = () => {
   const [panditjiData, setPanditjiData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  console.log('panditjiData :: ', panditjiData);
+
   const {showErrorToast} = useCommonToast();
 
   const handleNotificationPress = () => {
@@ -62,6 +64,9 @@ const PanditjiScreen: React.FC = () => {
     try {
       setIsLoading(true);
       const response = (await getAllPanditji()) as PanditjiResponse;
+
+      console.log('response :: ', response.data);
+
       if (response.success) {
         setPanditjiData(
           response.data
@@ -172,8 +177,8 @@ const PanditjiScreen: React.FC = () => {
       />
       <UserCustomHeader
         title={t('panditji')}
-        showBellButton={true}
-        onNotificationPress={handleNotificationPress}
+        // showBellButton={true}
+        // onNotificationPress={handleNotificationPress}
       />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
@@ -210,6 +215,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     margin: 24,
     borderRadius: 10,
+    overflow: 'hidden',
   },
   absoluteMainContainer: {
     flex: 1,
@@ -294,7 +300,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Regular,
     fontSize: moderateScale(13),
     fontWeight: '400',
-    width: wp(40),
+    width: wp(50),
   },
   selectionButton: {
     padding: scale(4),
