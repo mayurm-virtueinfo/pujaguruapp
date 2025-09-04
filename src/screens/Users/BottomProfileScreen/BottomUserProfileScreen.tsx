@@ -127,7 +127,7 @@ const BottomUserProfileScreen: React.FC = () => {
     navigation.navigate('NotificationScreen');
   };
   const handleEditNavigation = () => {
-    navigation.navigate('EditProfile');
+    navigation.navigate('EditProfile', {edit: true});
   };
   const handleUpcomingPuja = () => {
     navigation.navigate('UpcomingPuja');
@@ -239,14 +239,14 @@ const BottomUserProfileScreen: React.FC = () => {
               style={styles.editFieldContainer}
               onPress={handleSavedAddressNavigation}
               activeOpacity={0.7}>
-              <Text style={styles.editFieldLabel}>{t('Saved Address')}</Text>
+              <Text style={styles.editFieldLabel}>{t('saved_addresses')}</Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
                 color={COLORS.primaryTextDark}
               />
             </TouchableOpacity>
-            <View style={styles.divider} />
+            {/* <View style={styles.divider} />
             <TouchableOpacity
               style={styles.editFieldContainer}
               onPress={handleNotificationNavigation}
@@ -257,7 +257,7 @@ const BottomUserProfileScreen: React.FC = () => {
                 size={20}
                 color={COLORS.primaryTextDark}
               />
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
 
           <LanguageSwitcher />
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingTop: 64,
-    paddingBottom: 24,
+    // paddingBottom: 24,
     zIndex: 1,
   },
   scrollView: {

@@ -11,7 +11,7 @@ import {
   Keyboard,
   Alert,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Fonts from '../../../theme/fonts';
 import {COLORS} from '../../../theme/theme';
@@ -61,6 +61,7 @@ const UserEditProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation();
   const {showErrorToast, showSuccessToast} = useCommonToast();
+  const {edit} = useRoute().params as {edit: boolean};
 
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
@@ -465,7 +466,7 @@ const UserEditProfileScreen: React.FC = () => {
               key={city.length > 0 ? 'city-dropdown' : 'city-dropdown-empty'}
             />
             <ThemedInput
-              label={t('Address')}
+              label={t('address')}
               placeholder={t('enter_address')}
               value={formData.address}
               onChangeText={text =>
@@ -488,7 +489,7 @@ const UserEditProfileScreen: React.FC = () => {
               disabled={isLoading}
             />
             <PrimaryButton
-              title={t('save_changes')}
+              title={edit ? t('save_changes') : t('save')}
               onPress={handleSaveProfile}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}

@@ -160,11 +160,7 @@ const WalletScreen: React.FC = () => {
                   <Text style={styles.balanceAmount}>{walletData.balance}</Text>
                 </View>
               </View>
-              <Text style={styles.balanceDescription}>
-                If you cancel the puja before 24 hrs then the total payments is
-                stored here in form of the points. 1 points = 1 Rupee. You can
-                use the points to book the next puja.
-              </Text>
+              <Text style={styles.balanceDescription}>{t('condition')}</Text>
             </View>
           </View>
 
@@ -197,7 +193,7 @@ const WalletScreen: React.FC = () => {
                       fontSize: moderateScale(14),
                       marginVertical: 16,
                     }}>
-                    No transactions found.
+                    {t('no_transactions_found')}
                   </Text>
                 ) : (
                   transactions.map((item, index) =>

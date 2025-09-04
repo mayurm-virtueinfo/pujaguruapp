@@ -30,6 +30,9 @@ import {
   getPoojaDetailsForPujaList,
 } from '../../../api/apiService';
 
+// --- Fix: Arranged items can be string[] or array of objects ---
+type ArrangedItem = {name: string; quantity?: string | number} | string;
+
 interface PujaDetails {
   id: number;
   title: string;
@@ -37,8 +40,8 @@ interface PujaDetails {
   short_description: string;
   image_url: string;
   base_price: string;
-  price_with_samagri?: string;
-  price_without_samagri?: string;
+  price_with_samagri?: string | number;
+  price_without_samagri?: string | number;
   benifits?: string[];
   features?: string[];
   requirements?: string[];
@@ -53,8 +56,8 @@ interface PujaDetails {
   pooja_category?: number;
   pooja_type?: number;
   slug?: string;
-  user_arranged_items?: {name: string; quantity: string | number}[];
-  pandit_arranged_items?: {name: string; quantity: string | number}[];
+  user_arranged_items?: ArrangedItem[];
+  pandit_arranged_items?: ArrangedItem[];
   user_reviews?: UserReview[];
 }
 
@@ -81,6 +84,18 @@ interface PricingOption {
   priceDes: string;
   price: string;
   withPujaItem: boolean;
+}
+
+// --- Helper: Normalize arranged items to array of {name, quantity?} ---
+function normalizeArrangedItems(
+  items?: ArrangedItem[],
+): {name: string; quantity?: string | number}[] {
+  if (!items) return [];
+  return items.map(item =>
+    typeof item === 'string'
+      ? {name: item}
+      : {name: item.name, quantity: item.quantity},
+  );
 }
 
 const PujaDetailsScreen: React.FC = () => {
@@ -135,7 +150,7 @@ const PujaDetailsScreen: React.FC = () => {
       }
     } catch (error: any) {
       showErrorToast(
-        error.response?.data?.message || 'Failed to fetch puja details',
+        error?.response?.data?.message || 'Failed to fetch puja details',
       );
       setData(null);
     } finally {
@@ -153,7 +168,7 @@ const PujaDetailsScreen: React.FC = () => {
   const handleBookNowPress = () => {
     const selectedOption = getSelectedPricingOption();
     if (!selectedOption) {
-      showErrorToast('Please select a pricing option');
+      showErrorToast(t('please_select_pricing_option'));
       return;
     }
     navigation.navigate('PlaceSelectionScreen', {
@@ -183,14 +198,14 @@ const PujaDetailsScreen: React.FC = () => {
     return [
       {
         id: 1,
-        priceDes: 'With Puja Items',
-        price: data.price_with_samagri || data.base_price,
+        priceDes: t('with_puja_items'),
+        price: String(data.price_with_samagri ?? data.base_price),
         withPujaItem: true,
       },
       {
         id: 2,
-        priceDes: 'Without Puja Items',
-        price: data.price_without_samagri || data.base_price,
+        priceDes: t('without_puja_items'),
+        price: String(data.price_without_samagri ?? data.base_price),
         withPujaItem: false,
       },
     ];
@@ -275,7 +290,7 @@ const PujaDetailsScreen: React.FC = () => {
           <Text style={styles.sectionTitle}>
             {t('user_reviews') || 'User Reviews'}
           </Text>
-          <Text style={styles.noReviewsText}>No reviews yet.</Text>
+          <Text style={styles.noReviewsText}>{t('no_review_text')}</Text>
         </View>
       );
     }
@@ -308,11 +323,14 @@ const PujaDetailsScreen: React.FC = () => {
     title: string;
     expanded: boolean;
     onPress: () => void;
-    items: {name: string; quantity: string | number}[] | undefined;
+    items: ArrangedItem[] | undefined;
     emptyText: string;
     testID?: string;
   }) => {
-    if (!items || items.length === 0) {
+    // Normalize items to array of {name, quantity?}
+    const normalizedItems = normalizeArrangedItems(items);
+
+    if (!normalizedItems || normalizedItems.length === 0) {
       return (
         <View style={styles.expandableSectionWrapper}>
           <TouchableOpacity
@@ -342,9 +360,13 @@ const PujaDetailsScreen: React.FC = () => {
                 activeOpacity={0.7}
                 testID={testID ? `${testID}-first-row` : undefined}>
                 <View style={styles.itemTextContainer}>
-                  <Text style={styles.itemNameText}>{items[0].name}</Text>
+                  <Text style={styles.itemNameText}>
+                    {normalizedItems[0].name}
+                  </Text>
                   <Text style={styles.itemQuantityText}>
-                    Quantity: {items[0].quantity}
+                    {normalizedItems[0].quantity
+                      ? `Quantity: ${normalizedItems[0].quantity}`
+                      : ''}
                   </Text>
                 </View>
                 <Octicons
@@ -354,18 +376,18 @@ const PujaDetailsScreen: React.FC = () => {
                   style={styles.chevronIcon}
                 />
               </TouchableOpacity>
-              {items.length > 1 && (
+              {normalizedItems.length > 1 && (
                 <TouchableOpacity
                   onPress={onPress}
                   activeOpacity={0.7}
                   style={styles.moreTextWrapper}
                   testID={testID ? `${testID}-more` : undefined}>
-                  <Text style={styles.moreText}>more...</Text>
+                  <Text style={styles.moreText}>{t('show_more')}</Text>
                 </TouchableOpacity>
               )}
             </>
           ) : (
-            items.map((item, idx) => (
+            normalizedItems.map((item, idx) => (
               <React.Fragment key={idx}>
                 <View style={styles.itemRow}>
                   <Octicons
@@ -377,15 +399,17 @@ const PujaDetailsScreen: React.FC = () => {
                   <View style={styles.itemTextContainer}>
                     <Text style={styles.itemNameText}>{item.name}</Text>
                     <Text style={styles.itemQuantityText}>
-                      Quantity: {item.quantity}
+                      {item.quantity ? `Quantity: ${item.quantity}` : ''}
                     </Text>
                   </View>
                 </View>
-                {idx < items.length - 1 && <View style={styles.itemDivider} />}
+                {idx < normalizedItems.length - 1 && (
+                  <View style={styles.itemDivider} />
+                )}
               </React.Fragment>
             ))
           )}
-          {expanded && items.length > 1 && (
+          {expanded && normalizedItems.length > 1 && (
             <TouchableOpacity
               onPress={onPress}
               activeOpacity={0.7}
@@ -398,7 +422,7 @@ const PujaDetailsScreen: React.FC = () => {
                   color={COLORS.primary}
                   style={styles.chevronIcon}
                 />
-                <Text style={styles.collapseText}>Show less</Text>
+                <Text style={styles.collapseText}>{t('show_less')}</Text>
               </View>
             </TouchableOpacity>
           )}
@@ -422,8 +446,8 @@ const PujaDetailsScreen: React.FC = () => {
       <UserCustomHeader
         title={t('puja_details')}
         showBackButton={true}
-        showBellButton={true}
-        onNotificationPress={handleNotificationPress}
+        // showBellButton={true}
+        // onNotificationPress={handleNotificationPress}
       />
       <View style={styles.flexGrow}>
         <ScrollView

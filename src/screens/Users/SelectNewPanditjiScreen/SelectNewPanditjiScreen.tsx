@@ -256,10 +256,10 @@ const SelectNewPanditjiScreen: React.FC = () => {
       />
       <UserCustomHeader
         title={t('select_panditji')}
-        showBellButton={true}
+        // showBellButton={true}
         showBackButton={true}
         onBackPress={() => navigation.replace('UserHomeScreen')}
-        onNotificationPress={handleNotificationPress}
+        // onNotificationPress={handleNotificationPress}
       />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
