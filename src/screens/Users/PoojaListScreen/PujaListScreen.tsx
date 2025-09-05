@@ -133,9 +133,9 @@ const PujaListScreen: React.FC = () => {
           <View style={styles.recommendedSection}>
             <View style={{paddingHorizontal: 24, paddingTop: 24, gap: 8}}>
               <Text style={styles.sectionTitle}>{t('recomended_puja')}</Text>
-              <Text style={styles.sectionSubtitle}>
-                {todayPanchang || t('today_is_kartik_shukla_paksha')}
-              </Text>
+              {todayPanchang && (
+                <Text style={styles.sectionSubtitle}>{todayPanchang}</Text>
+              )}
             </View>
             <ScrollView
               horizontal

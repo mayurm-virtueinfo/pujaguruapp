@@ -252,5 +252,7 @@
   "no_pricing_available": "No pricing available",
   "please_select_pricing_option": "Please select a pricing option",
   "with_puja_items": "With Puja Items",
-  "without_puja_items": "Without Puja Items"
+  "without_puja_items": "Without Puja Items",
+  "select_state_first": "Please select a state first",
+  "location_fetch_failed": "Failed to fetch location. Please try again."
 }

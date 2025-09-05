@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   },
   dropdownText: {
     fontFamily: Fonts.Sen_Regular,
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(14),
     color: COLORS.textPrimary,
   },
   placeholderText: {
