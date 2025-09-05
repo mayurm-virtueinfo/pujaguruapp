@@ -451,8 +451,6 @@ const PaymentScreen: React.FC = () => {
     </View>
   );
 
-  // removed duplicate calculation block (kept the one above)
-
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />

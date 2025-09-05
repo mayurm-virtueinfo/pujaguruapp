@@ -56,6 +56,7 @@ const AddAddressScreen = () => {
   const navigation = useNavigation();
   const [location, setLocation] = useState({latitude: 0, longitude: 0});
   const [isLoading, setIsLoading] = useState(false);
+  const [cityName, setCityName] = useState('');
   const [cityOptions, setCityOptions] = useState<
     {label: string; value: string; id?: number}[]
   >([]);
@@ -65,9 +66,15 @@ const AddAddressScreen = () => {
   const [addressTypeOptions, setAddressTypeOptions] = useState<
     {label: string; value: string; id: number}[]
   >([]);
+  const [cityCoordinates, setCityCoordinates] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const didSetEditData = useRef(false);
   const route = useRoute<any>();
   const addressToEdit: Address | undefined = route.params?.addressToEdit;
+
+  console.log('cityCoordinates :: ', cityCoordinates);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -83,6 +90,14 @@ const AddAddressScreen = () => {
     if (field === 'state') {
       setFormData(prev => ({...prev, city: ''}));
       setCityOptions([]);
+      setCityName('');
+    }
+
+    if (field === 'city') {
+      const found = cityOptions.find(
+        opt => String(opt.value) === String(value),
+      );
+      setCityName(found?.label || '');
     }
   };
 
@@ -115,10 +130,7 @@ const AddAddressScreen = () => {
       errors.addressLine1 = t('address_line1_required');
       isValid = false;
     }
-    if (!formData.addressLine2.trim()) {
-      errors.addressLine2 = t('address_line2_required');
-      isValid = false;
-    }
+    // addressLine2 is optional
     if (!formData.state) {
       errors.state = t('state_required');
       isValid = false;
@@ -141,6 +153,79 @@ const AddAddressScreen = () => {
 
     setFormErrors(errors);
     return isValid;
+  };
+
+  useEffect(() => {
+    const findCityCoordinates = async () => {
+      if (cityName) {
+        const coordinates: any = await getCityCoordinates(cityName);
+        console.log('coordinates :: ', coordinates);
+        setCityCoordinates(
+          coordinates?.found
+            ? {latitude: coordinates.latitude, longitude: coordinates.longitude}
+            : null,
+        );
+      }
+    };
+    findCityCoordinates();
+  }, [cityName]);
+
+  const getCityCoordinates = async (cityName: string) => {
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+        cityName,
+      )}&limit=1`;
+      const response = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          'User-Agent': 'PujaGuruApp/1.0',
+        },
+      });
+
+      const contentType = response.headers.get('content-type') || '';
+      const rawBody = await response.text();
+      if (!response.ok) {
+        console.error(
+          'Geocoding HTTP error:',
+          response.status,
+          rawBody?.slice(0, 200),
+        );
+        return {found: false, error: `HTTP ${response.status}`};
+      }
+
+      let data: any = null;
+      try {
+        data = contentType.includes('application/json')
+          ? JSON.parse(rawBody)
+          : JSON.parse(rawBody);
+      } catch (e: any) {
+        console.error(
+          'Geocoding parse error:',
+          e?.message,
+          rawBody?.slice(0, 200),
+        );
+        return {found: false, error: 'Invalid JSON from geocoder'};
+      }
+      console.log('data for city coordinates :: ', data);
+
+      if (
+        Array.isArray(data) &&
+        data.length > 0 &&
+        data[0]?.lat &&
+        data[0]?.lon
+      ) {
+        return {
+          latitude: parseFloat(data[0].lat),
+          longitude: parseFloat(data[0].lon),
+          found: true,
+        };
+      } else {
+        return {found: false};
+      }
+    } catch (error: any) {
+      console.error('Geocoding error:', error);
+      return {found: false, error: error.message};
+    }
   };
 
   const fetchCities = async (stateId: string) => {
@@ -261,7 +346,6 @@ const AddAddressScreen = () => {
             longitude: addressToEdit.longitude || 0,
           });
 
-          // Fetch cities for the selected state in edit mode
           if (matchedStateId) {
             await fetchCities(matchedStateId);
           }
@@ -316,7 +400,6 @@ const AddAddressScreen = () => {
     }
 
     let cityId = Number(formData.city) || 0;
-    let stateId = Number(formData.state) || 0;
     let addressTypeId = Number(formData.addressType) || 0;
 
     const addressPayload = {
@@ -326,10 +409,10 @@ const AddAddressScreen = () => {
       address_line2: formData.addressLine2,
       phone_number: formData.phoneNumber,
       city: cityId,
-      state: stateId,
+      state: formData.state,
       pincode: formData.pincode,
-      latitude: location.latitude,
-      longitude: location.longitude,
+      latitude: cityCoordinates?.latitude ?? 0,
+      longitude: cityCoordinates?.longitude ?? 0,
     };
 
     try {
@@ -351,6 +434,7 @@ const AddAddressScreen = () => {
             addressType: '',
           });
           setLocation({latitude: 0, longitude: 0});
+          setCityName('');
           handleBack();
         }
       } else {
@@ -368,6 +452,7 @@ const AddAddressScreen = () => {
             addressType: '',
           });
           setLocation({latitude: 0, longitude: 0});
+          setCityName('');
           handleBack();
         }
       }
@@ -423,7 +508,7 @@ const AddAddressScreen = () => {
           </View>
           <View style={styles.inputGroup}>
             <CustomTextInput
-              label={t('address_line2') + ' *'}
+              label={t('address_line2')}
               value={formData.addressLine2}
               onChangeText={value => handleInputChange('addressLine2', value)}
               placeholder={t('enter_address_line2')}
@@ -448,7 +533,6 @@ const AddAddressScreen = () => {
               label={t('city') + ' *'}
               placeholder={t('select_city')}
               error={formErrors.city}
-              disabled={!formData.state}
             />
           </View>
           <View style={styles.rowContainer}>

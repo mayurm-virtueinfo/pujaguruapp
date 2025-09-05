@@ -78,6 +78,8 @@ const PujaBookingScreen: React.FC = () => {
     panditName,
     panditImage,
     description,
+    selectedAddressLatitude,
+    selectedAddressLongitude,
   } = route?.params as any;
 
   const {showErrorToast, showSuccessToast} = useCommonToast();
@@ -105,8 +107,6 @@ const PujaBookingScreen: React.FC = () => {
   const [muhurats, setMuhurats] = useState<any[]>([]);
   const [panditjiData, setPanditjiData] = useState({});
   const [availableDates, setAvailableDates] = useState<string[] | null>(null);
-
-  console.log('selectedDate :: ', selectedDate);
 
   useEffect(() => {
     fetchLocation();
@@ -287,8 +287,8 @@ const PujaBookingScreen: React.FC = () => {
       if (data) {
         const response: any = await postPujaBookingData(
           data,
-          location?.latitude,
-          location?.longitude,
+          selectedAddressLatitude,
+          selectedAddressLongitude,
         );
 
         if (response) {
@@ -369,6 +369,8 @@ const PujaBookingScreen: React.FC = () => {
       price: price,
       selectAddress: selectTirthPlaceName || selectAddressName,
       AutoModeSelection: false,
+      selectedAddressLatitude: selectedAddressLatitude,
+      selectedAddressLongitude: selectedAddressLongitude,
     };
     if (selection === 'automatic') {
       const data = {
@@ -385,8 +387,8 @@ const PujaBookingScreen: React.FC = () => {
       if (data) {
         const response: any = await postPujaBookingData(
           data,
-          location?.latitude,
-          location?.longitude,
+          selectedAddressLatitude,
+          selectedAddressLongitude,
         );
 
         if (response) {

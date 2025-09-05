@@ -64,11 +64,8 @@ const AddressSelectionScreen: React.FC = () => {
   const [selectedUserAddressId, setSelectedUserAddressId] = useState<
     number | null
   >(null);
-  const [selectedAddress, setSelectedAddress] =
-    useState<PoojaBookingAddress | null>(null);
+  const [selectedAddress, setSelectedAddress] = useState<any>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  console.log('selectedAddress :: ', selectedAddress);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -76,14 +73,13 @@ const AddressSelectionScreen: React.FC = () => {
     }, []),
   );
 
-  console.log('poojaPlaces :: ', poojaPlaces);
-
   const fetchAllPoojaAddresses = async () => {
     try {
       setIsLoading(true);
       const response: any = await getAddressTypeForBooking();
+
       if (response.success) {
-        setPoojaPlaces(response.data);
+        setPoojaPlaces(response.addresses);
       }
     } catch (error) {
       console.error('Error fetching pooja places:', error);
@@ -96,10 +92,8 @@ const AddressSelectionScreen: React.FC = () => {
     setSelectedAddressId(id);
     const found = poojaPlaces.find(place => place.id === id) || null;
     setSelectedAddress(found);
-    // @ts-ignore
-    if (found && found.user_address_id) {
-      // @ts-ignore
-      setSelectedUserAddressId(found.user_address_id);
+    if (found && found.id) {
+      setSelectedUserAddressId(found.id);
     } else {
       setSelectedUserAddressId(null);
     }
@@ -110,16 +104,18 @@ const AddressSelectionScreen: React.FC = () => {
       poojaId: poojaId,
       samagri_required: samagri_required,
       address: selectedUserAddressId,
-      poojaName: selectedAddress?.name || '',
+      poojaName: selectedAddress?.address_type || '',
       poojaDescription: selectedAddress?.full_address || '',
       puja_image: puja_image,
       puja_name: puja_name,
       price: price,
-      selectAddressName: selectedAddress?.name || '',
+      selectAddressName: selectedAddress?.address_type || '',
       panditId: panditId,
       panditName: panditName,
       panditImage: panditImage,
       description: description,
+      selectedAddressLatitude: selectedAddress?.latitude || '',
+      selectedAddressLongitude: selectedAddress?.longitude || '',
     });
   };
 
@@ -176,7 +172,7 @@ const AddressSelectionScreen: React.FC = () => {
                             onPress={() => handleSelectAddress(place.id)}>
                             <View>
                               <Text style={styles.pricingText}>
-                                {place.name}
+                                {place.address_type}
                               </Text>
                               <Text style={styles.subtitleText}>
                                 {place.full_address}

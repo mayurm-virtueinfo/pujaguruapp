@@ -61,6 +61,14 @@ const TirthPlaceSelectionScreen: React.FC = () => {
   const [selectedTirthPlaceDescription, setSelectedTirthPlaceDescription] =
     useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedTirthPlaceLatitude, setSelectedTirthPlaceLatitude] = useState<
+    string | null
+  >(null);
+  const [selectedTirthPlaceLongitude, setSelectedTirthPlaceLongitude] =
+    useState<string | null>(null);
+
+  console.log('selectedTirthPlaceLatitude :: ', selectedTirthPlaceLatitude);
+  console.log('selectedTirthPlaceLongitude :: ', selectedTirthPlaceLongitude);
 
   useEffect(() => {
     fetchTirthPlaces();
@@ -84,6 +92,8 @@ const TirthPlaceSelectionScreen: React.FC = () => {
     setSelectedTirthPlaceId(place.id);
     setSelectedTirthPlaceName(place.city_name);
     setSelectedTirthPlaceDescription(place.description);
+    setSelectedTirthPlaceLatitude(place.latitude);
+    setSelectedTirthPlaceLongitude(place.longitude);
   };
 
   const handleNextPress = () => {
@@ -101,6 +111,8 @@ const TirthPlaceSelectionScreen: React.FC = () => {
       panditName: panditName,
       panditImage: panditImage,
       description: description,
+      selectedAddressLatitude: selectedTirthPlaceLatitude,
+      selectedAddressLongitude: selectedTirthPlaceLongitude,
     });
   };
 

@@ -39,6 +39,8 @@ export type UserHomeParamList = {
     panditName: string;
     panditImage: string;
     description: string;
+    selectedAddressLatitude: string;
+    selectedAddressLongitude: string;
   };
   SelectPujaScreen: any;
   PoojaDetailScreen: any;

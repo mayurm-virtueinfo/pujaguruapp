@@ -60,8 +60,13 @@ const SelectPanditjiScreen: React.FC = () => {
     price,
     selectAddress,
     AutoModeSelection,
+    selectedAddressLatitude,
+    selectedAddressLongitude,
   } = route.params as any;
   const {showErrorToast, showSuccessToast} = useCommonToast();
+
+  console.log('selectedAddressLatitude :: ', selectedAddressLatitude);
+  console.log('selectedAddressLongitude :: ', selectedAddressLongitude);
 
   const navigation = useNavigation<StackNavigationProp<UserHomeParamList>>();
   const [searchText, setSearchText] = useState('');
@@ -100,8 +105,8 @@ const SelectPanditjiScreen: React.FC = () => {
     if (location && poojaId && booking_date) {
       fetchPanditji(
         poojaId,
-        location.latitude,
-        location.longitude,
+        selectedAddressLatitude,
+        selectedAddressLongitude,
         'manual',
         booking_date,
         tirth || null,
@@ -124,7 +129,6 @@ const SelectPanditjiScreen: React.FC = () => {
       setIsLoading(false);
     }
   };
-  console.log('tirth', tirth);
   const fetchPanditji = async (
     pooja_id: string,
     latitude: string,
@@ -209,8 +213,8 @@ const SelectPanditjiScreen: React.FC = () => {
     if (data) {
       const response: any = await postPujaBookingData(
         data,
-        location?.latitude || '',
-        location?.longitude || '',
+        selectedAddressLatitude,
+        selectedAddressLongitude,
       );
 
       if (response) {
@@ -234,6 +238,8 @@ const SelectPanditjiScreen: React.FC = () => {
           booking_Id: response?.data?.booking_id,
           AutoModeSelection,
           auto: 'true',
+          selectedAddressLatitude: selectedAddressLatitude,
+          selectedAddressLongitude: selectedAddressLongitude,
         });
       }
     }
