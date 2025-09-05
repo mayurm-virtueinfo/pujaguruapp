@@ -146,7 +146,7 @@ const BottomUserProfileScreen: React.FC = () => {
         colors={[COLORS.gradientStart, COLORS.gradientEnd]}
         style={[styles.headerGradient]}
       />
-      <UserCustomHeader title={t('profile')} showBackButton={true} />
+      <UserCustomHeader title={t('profile')} />
 
       {currentUser && (
         <View style={styles.profileImageContainer}>
@@ -168,7 +168,9 @@ const BottomUserProfileScreen: React.FC = () => {
             <View style={[styles.infoSection, THEMESHADOW.shadow]}>
               <ProfileField
                 label={t('name')}
-                value={currentUser?.first_name || ''}
+                value={
+                  `${currentUser?.first_name} ${currentUser?.last_name}` || ''
+                }
               />
               <View style={styles.divider} />
               <ProfileField

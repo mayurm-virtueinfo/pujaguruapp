@@ -21,6 +21,7 @@
     "@react-native-firebase/database": "^22.2.1",
     "@react-native-firebase/firestore": "^22.2.1",
     "@react-native-firebase/messaging": "^22.2.1",
+    "@react-native-picker/picker": "^2.11.1",
     "@react-navigation/bottom-tabs": "^7.3.14",
     "@react-navigation/drawer": "^7.4.1",
     "@react-navigation/material-top-tabs": "^7.2.14",

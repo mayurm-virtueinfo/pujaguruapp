@@ -400,7 +400,7 @@ const UserProfileScreen: React.FC = () => {
             />
 
             <PrimaryButton
-              title={t('save_changes')}
+              title={t('save')}
               onPress={handleSignUp}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}

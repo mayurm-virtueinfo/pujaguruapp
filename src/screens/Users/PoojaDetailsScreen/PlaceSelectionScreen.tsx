@@ -63,7 +63,7 @@ const PlaceSelectionScreen: React.FC = () => {
   const handleNextPress = () => {
     if (selectedPlaceId === 2 && panditId) {
       showErrorToast(
-        'You cannot select Tirth Place when a pandit is already selected. Remove the selected pandit to continue.',
+        'You cannot select Tirth Place when you have already selected a Pandit Ji. Please go back and select the Puja first.',
       );
       return;
     }
@@ -117,22 +117,9 @@ const PlaceSelectionScreen: React.FC = () => {
                       style={styles.pricingOption}
                       activeOpacity={0.7}
                       onPress={() => {
-                        const isTirthDisabled = place.id === 2 && !!panditId;
-                        if (isTirthDisabled) {
-                          showErrorToast(
-                            'You cannot select Tirth Place when a pandit is already selected. Remove the selected pandit to continue.',
-                          );
-                          return;
-                        }
                         setSelectedPlaceId(place.id);
                       }}>
-                      <Text
-                        style={[
-                          styles.pricingText,
-                          place.id === 2 && !!panditId && {color: '#9aa0a6'},
-                        ]}>
-                        {place.name}
-                      </Text>
+                      <Text style={styles.pricingText}>{place.name}</Text>
                       <Octicons
                         name={
                           selectedPlaceId === place.id
@@ -141,9 +128,7 @@ const PlaceSelectionScreen: React.FC = () => {
                         }
                         size={24}
                         color={
-                          place.id === 2 && !!panditId
-                            ? '#c1c7cd'
-                            : selectedPlaceId === place.id
+                          selectedPlaceId === place.id
                             ? COLORS.primary
                             : COLORS.inputBoder
                         }

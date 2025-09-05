@@ -292,5 +292,7 @@
   "no_pricing_available": "कोई मूल्य निर्धारण उपलब्ध नहीं है।",
   "please_select_pricing_option": "कृपया एक मूल्य विकल्प चुनें",
   "with_puja_items": "पूजा सामग्री के साथ",
-  "without_puja_items": "पूजा सामग्री के बिना"
+  "without_puja_items": "पूजा सामग्री के बिना",
+  "select_state_first": "कृपया पहले राज्य चुनें",
+  "location_fetch_failed": "स्थान प्राप्त करने में विफल। कृपया पुनः प्रयास करें।"
 }

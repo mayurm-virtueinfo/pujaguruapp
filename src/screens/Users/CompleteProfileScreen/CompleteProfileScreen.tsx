@@ -226,7 +226,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
     <View style={[styles.container]}>
       <View style={styles.inputField}>
         <ThemedInput
-          label={t('First name')}
+          label={t('first_name')}
           placeholder={t('enter_first_name')}
           value={formData.firstName}
           onChangeText={text => handleInputChange('firstName', text)}
@@ -240,7 +240,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
 
       <View style={styles.inputField}>
         <ThemedInput
-          label={t('Last name')}
+          label={t('last_name')}
           placeholder={t('enter_last_name')}
           value={formData.lastName}
           onChangeText={text => handleInputChange('lastName', text)}
@@ -253,7 +253,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
       </View>
       <View style={styles.inputField}>
         <ThemedInput
-          label={t('Phone number')}
+          label={t('phone_number')}
           placeholder={t('enter_phone_number')}
           value={formData.phoneNumber}
           onChangeText={text => handleInputChange('phoneNumber', text)}
@@ -268,7 +268,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
 
       <View style={styles.inputField}>
         <ThemedInput
-          label={t('Address')}
+          label={t('address')}
           placeholder={t('enter_address')}
           value={formData.address}
           onChangeText={text => handleInputChange('address', text)}
@@ -280,10 +280,10 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
         />
       </View>
 
-      <Text>
+      {/* <Text>
         lat : {location?.latitude.toFixed(4)} long :{' '}
         {location?.longitude.toFixed(4)}
-      </Text>
+      </Text> */}
 
       <PrimaryButtonOutlined
         title={t('fetch_gps_location')}
@@ -318,7 +318,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
         <UserCustomHeader
           title={t('complete_your_profile')}
           showBackButton={true}
-          showSkipButton={true}
+          // showSkipButton={true}
         />
       </SafeAreaView>
       <View style={styles.flexGrow}>
