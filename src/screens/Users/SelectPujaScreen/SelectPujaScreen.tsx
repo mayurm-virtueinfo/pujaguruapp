@@ -49,7 +49,7 @@ const SelectPujaScreen: React.FC = () => {
   const [selectedPujaId, setSelectedPujaId] = useState<number | null>(null);
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute() as any;
-  const {panditId, panditName, panditImage} = route?.params;
+  const {panditId, panditName, panditImage, panditCity} = route?.params;
 
   useEffect(() => {
     fetchPujaList();
@@ -88,6 +88,7 @@ const SelectPujaScreen: React.FC = () => {
         panditId: panditId,
         panditName: panditName,
         panditImage: panditImage,
+        panditCity: panditCity,
       });
     }
   };

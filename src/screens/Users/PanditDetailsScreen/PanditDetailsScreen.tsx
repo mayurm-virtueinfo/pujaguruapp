@@ -137,6 +137,7 @@ const PanditDetailsScreen: React.FC = () => {
 
   const panditName = selectedPandit?.pandit_name || '';
   const panditImage = selectedPandit?.profile_img;
+  const panditCity = selectedPandit?.address_city_name;
 
   const renderStars = (count: number) => {
     return (
@@ -223,6 +224,7 @@ const PanditDetailsScreen: React.FC = () => {
             panditId: panditId,
             panditName: panditName,
             panditImage: panditImage,
+            panditCity: panditCity,
           },
         })
       }>

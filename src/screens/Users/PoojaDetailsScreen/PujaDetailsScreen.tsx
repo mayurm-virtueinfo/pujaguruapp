@@ -86,7 +86,6 @@ interface PricingOption {
   withPujaItem: boolean;
 }
 
-// --- Helper: Normalize arranged items to array of {name, quantity?} ---
 function normalizeArrangedItems(
   items?: ArrangedItem[],
 ): {name: string; quantity?: string | number}[] {
@@ -124,9 +123,8 @@ const PujaDetailsScreen: React.FC = () => {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [modalImageUri, setModalImageUri] = useState<string | null>(null);
 
-  const {poojaId, panditId, panditName, panditImage} = route?.params;
-
-  console.log('data :: ', data);
+  const {poojaId, panditId, panditName, panditImage, panditCity} =
+    route?.params;
 
   useEffect(() => {
     if (poojaId) {
@@ -181,11 +179,8 @@ const PujaDetailsScreen: React.FC = () => {
       panditName: panditName,
       panditImage: panditImage,
       description: data?.short_description,
+      panditCity: panditCity,
     });
-  };
-
-  const handleNotificationPress = () => {
-    console.log('Notification Pressed');
   };
 
   const handleCheckboxToggle = (id: number, price: string) => {
@@ -194,7 +189,6 @@ const PujaDetailsScreen: React.FC = () => {
   };
 
   const getPricingOptions = (data: PujaDetails): PricingOption[] => {
-    // Fallback to base_price if price_with_samagri/price_without_samagri not present
     return [
       {
         id: 1,

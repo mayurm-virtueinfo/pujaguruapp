@@ -1,8 +1,8 @@
-import notifee, { EventType, AndroidImportance } from '@notifee/react-native';
-import { getMessaging } from '@react-native-firebase/messaging';
-import { getApp } from '@react-native-firebase/app';
-import { navigate, navigationRef } from '../utils/NavigationService';
-import { COLORS } from '../theme/theme';
+import notifee, {EventType, AndroidImportance} from '@notifee/react-native';
+import {getMessaging} from '@react-native-firebase/messaging';
+import {getApp} from '@react-native-firebase/app';
+import {navigate, navigationRef} from '../utils/NavigationService';
+import {COLORS} from '../theme/theme';
 
 const messaging = getMessaging(getApp());
 
@@ -22,13 +22,14 @@ export async function setupNotifications() {
     id: 'default',
     name: 'Default Channel',
     importance: AndroidImportance.HIGH,
+    sound: 'custom_notification_sound',
   });
 
   // Foreground message handler (displays notification)
   messaging.onMessage(async (remoteMessage: any) => {
     console.log('📩 Foreground FCM message:', remoteMessage);
 
-    const { title, body } = remoteMessage.notification || {};
+    const {title, body} = remoteMessage.notification || {};
     await notifee.displayNotification({
       id: remoteMessage.messageId,
       title: title || 'New Notification',
@@ -37,15 +38,16 @@ export async function setupNotifications() {
       android: {
         channelId,
         smallIcon: 'ic_notification',
-        pressAction: { id: 'default' },
+        pressAction: {id: 'default'},
         color: COLORS.primary,
+        sound: 'custom_notification_sound',
       },
       ios: {},
     });
   });
 
   // Handle notification press in foreground
-  foregroundUnsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
+  foregroundUnsubscribe = notifee.onForegroundEvent(({type, detail}) => {
     if (type === EventType.PRESS) {
       console.log('Notification pressed in foreground', detail);
       const data = detail.notification?.data || {};
@@ -106,16 +108,16 @@ export function handleNotificationNavigation(data: any) {
         screen: 'UserHomeNavigator',
         params: targetScreen
           ? {
-            screen: targetScreen,
-            params: {
+              screen: targetScreen,
+              params: {
+                booking_id,
+                pandit_id,
+              },
+            }
+          : {
               booking_id,
               pandit_id,
             },
-          }
-          : {
-            booking_id,
-            pandit_id,
-          },
       },
     };
 
@@ -127,8 +129,6 @@ export function handleNotificationNavigation(data: any) {
       }
     }, 500);
   }
-
-
 }
 
 export function cleanupNotifications() {

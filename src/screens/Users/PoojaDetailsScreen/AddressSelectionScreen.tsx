@@ -9,10 +9,12 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
+import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
 import Octicons from 'react-native-vector-icons/Octicons';
 import {
   getAddressTypeForBooking,
@@ -32,6 +34,14 @@ import {useTranslation} from 'react-i18next';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 
 const AddressSelectionScreen: React.FC = () => {
+  type BookingAddress = PoojaBookingAddress & {
+    address_type?: string;
+    latitude?: number;
+    longitude?: number;
+    city?: string | number;
+    state?: string;
+    uuid?: string;
+  };
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList | UserHomeParamList,
     'AddressSelectionScreen',
@@ -53,9 +63,10 @@ const AddressSelectionScreen: React.FC = () => {
     panditName,
     panditImage,
     description,
+    panditCity,
   } = route?.params as any;
 
-  const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingAddress[]>([]);
+  const [poojaPlaces, setPoojaPlaces] = useState<BookingAddress[]>([]);
 
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
     null,
@@ -64,14 +75,20 @@ const AddressSelectionScreen: React.FC = () => {
   const [selectedUserAddressId, setSelectedUserAddressId] = useState<
     number | null
   >(null);
-  const [selectedAddress, setSelectedAddress] = useState<any>(null);
+  const [selectedAddress, setSelectedAddress] = useState<BookingAddress | null>(
+    null,
+  );
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [mismatchModalVisible, setMismatchModalVisible] =
+    useState<boolean>(false);
 
   useFocusEffect(
     React.useCallback(() => {
       fetchAllPoojaAddresses();
     }, []),
   );
+
+  console.log('selectedAddress :: ', selectedAddress);
 
   const fetchAllPoojaAddresses = async () => {
     try {
@@ -100,6 +117,19 @@ const AddressSelectionScreen: React.FC = () => {
   };
 
   const handleNextPress = () => {
+    const normalize = (value: any) =>
+      value === undefined || value === null
+        ? ''
+        : String(value).toLowerCase().trim();
+
+    if (selectedAddress) {
+      const selectedCity = normalize(selectedAddress.city);
+      const panditCityNorm = normalize(panditCity);
+      if (selectedCity && panditCityNorm && selectedCity !== panditCityNorm) {
+        setMismatchModalVisible(true);
+        return;
+      }
+    }
     navigation.navigate('PujaBooking', {
       poojaId: poojaId,
       samagri_required: samagri_required,
@@ -114,8 +144,8 @@ const AddressSelectionScreen: React.FC = () => {
       panditName: panditName,
       panditImage: panditImage,
       description: description,
-      selectedAddressLatitude: selectedAddress?.latitude || '',
-      selectedAddressLongitude: selectedAddress?.longitude || '',
+      selectedAddressLatitude: String(selectedAddress?.latitude ?? ''),
+      selectedAddressLongitude: String(selectedAddress?.longitude ?? ''),
     });
   };
 
@@ -138,6 +168,46 @@ const AddressSelectionScreen: React.FC = () => {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         <View style={styles.flexGrow}>
+          <Modal
+            visible={mismatchModalVisible}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setMismatchModalVisible(false)}>
+            <View style={styles.mismatchModalOverlay}>
+              <View style={styles.mismatchModalContainer}>
+                <Text style={styles.mismatchModalTitle}>
+                  {t('oops') || 'Oops'}
+                </Text>
+                <Text style={styles.mismatchModalMessage}>
+                  {t('pandit_city_mismatch', {
+                    selectedCity: String(selectedAddress?.city ?? ''),
+                    panditCity: String(panditCity ?? ''),
+                  })}
+                </Text>
+                <PrimaryButton
+                  title={t('go_to_home') || 'Go to Home'}
+                  onPress={() => {
+                    setMismatchModalVisible(false);
+                    // Navigate to Home
+                    // @ts-ignore
+                    navigation.navigate('UserHomeNavigator', {
+                      screen: 'UserHomeScreen',
+                    });
+                  }}
+                  style={{width: '100%'}}
+                />
+                <PrimaryButtonOutlined
+                  title={
+                    t('choose_another_address') || 'Choose another address'
+                  }
+                  onPress={() => {
+                    setMismatchModalVisible(false);
+                  }}
+                  style={{width: '100%'}}
+                />
+              </View>
+            </View>
+          </Modal>
           <ScrollView
             style={styles.scrollContainer}
             contentContainerStyle={styles.scrollContent}
@@ -290,6 +360,32 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     paddingHorizontal: 24,
     paddingTop: 8,
+  },
+  mismatchModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mismatchModalContainer: {
+    width: '85%',
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 20,
+  },
+  mismatchModalTitle: {
+    fontSize: 18,
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  mismatchModalMessage: {
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Medium,
+    color: '#6c7278',
+    marginBottom: 16,
+    textAlign: 'center',
   },
   divider: {
     borderColor: COLORS.inputBoder,

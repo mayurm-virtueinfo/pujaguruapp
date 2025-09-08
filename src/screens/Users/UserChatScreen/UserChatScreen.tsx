@@ -52,7 +52,7 @@ const UserChatScreen: React.FC = () => {
 
   useEffect(() => {
     if (accessToken && booking_id) {
-      let socketURL = `ws://puja-guru.com:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
+      let socketURL = `ws://192.168.1.23:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
       if (socketURL.startsWith('ws://') && !__DEV__) {
         socketURL = socketURL.replace('ws://', 'wss://');
       }

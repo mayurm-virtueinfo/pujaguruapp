@@ -256,5 +256,8 @@
   "select_state": "Select state",
   "select_city": "Select city",
   "select_state_first": "Please select a state first",
-  "location_fetch_failed": "Failed to fetch location. Please try again."
+  "location_fetch_failed": "Failed to fetch location. Please try again.",
+  "oops": "Oops",
+  "pandit_city_mismatch": "Selected address city ({{selectedCity}}) does not match the Panditji's city ({{panditCity}}). Please choose another address or go to Home.",
+  "choose_another_address": "CHOOSE ANOTHER ADDRESS"
 }

@@ -36,7 +36,6 @@ import AppConstant from '../../../utils/appConstant';
 import PrimaryButton from '../../../components/PrimaryButton';
 import {getLocationForAPI} from '../../../helper/helper';
 
-// Define TypeScript interface for PendingPuja
 interface PendingPuja {
   id: number;
   pooja: {
@@ -67,7 +66,6 @@ const UserHomeScreen: React.FC = () => {
   useEffect(() => {
     fetchUserAndLocation();
 
-    // Add app state listener for location refresh
     const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === 'active') {
         console.log('App active - refreshing location data');
@@ -85,7 +83,6 @@ const UserHomeScreen: React.FC = () => {
 
   useFocusEffect(
     React.useCallback(() => {
-      console.log('useFocusEffect triggered');
       fetchUpcomingPujas();
       fetchInProgressPujas();
       fetchPendingPujas();
@@ -125,7 +122,6 @@ const UserHomeScreen: React.FC = () => {
     setLoading(true);
     try {
       const response: any = await getInProgress();
-      console.log('In-progress Puja Response:', response);
       setInProgressPujas(response || []);
     } catch (error) {
       console.error('Error fetching in-progress puja data:', error);
@@ -160,7 +156,6 @@ const UserHomeScreen: React.FC = () => {
     try {
       setLoading(true);
 
-      // Use smart location helper instead of stored location
       const locationData = await getLocationForAPI();
 
       if (locationData) {
@@ -207,7 +202,6 @@ const UserHomeScreen: React.FC = () => {
 
   const fetchTodayPanchang = async () => {
     try {
-      // Use smart location helper instead of stored location
       const locationData = await getLocationForAPI();
 
       if (locationData) {
@@ -233,20 +227,18 @@ const UserHomeScreen: React.FC = () => {
     panditId: number,
     panditName: string,
     panditImage: string,
+    panditCity: string,
   ) => {
     navigation.navigate('SelectPujaScreen', {
       panditId: panditId,
       panditName: panditName,
       panditImage: panditImage,
+      panditCity: panditCity,
     });
   };
 
   const handleNavigation = (route: string) => {
     navigation.navigate(route);
-  };
-
-  const handleNotificationPress = () => {
-    navigation.navigate('NotificationScreen');
   };
 
   return (
@@ -330,6 +322,7 @@ const UserHomeScreen: React.FC = () => {
                             pandit.pandit_id,
                             pandit.full_name,
                             panditImage,
+                            pandit.city,
                           )
                         }
                         style={{
