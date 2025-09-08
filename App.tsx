@@ -21,6 +21,9 @@ import {
 import {getMessaging} from '@react-native-firebase/messaging';
 import {requestLocationPermission} from './src/utils/locationUtils';
 
+// 🔐 Import capture protection
+import {CaptureProtection} from 'react-native-capture-protection';
+
 const auth = getAuth();
 if (__DEV__) {
   auth.useEmulator('http://127.0.0.1:9099');
@@ -42,6 +45,19 @@ const App = () => {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // 🔐 Enable capture protection globally
+  // useEffect(() => {
+  //   CaptureProtection.prevent({
+  //     screenshot: true, // will blank screen on iOS, block on Android
+  //     record: true, // blocks screen recording
+  //     appSwitcher: true, // protects app preview in app switcher
+  //   });
+
+  //   return () => {
+  //     CaptureProtection.allow();
+  //   };
+  // }, []);
 
   const handleInitialNotification = async () => {
     try {

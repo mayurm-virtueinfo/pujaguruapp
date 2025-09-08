@@ -294,5 +294,8 @@
   "with_puja_items": "पूजा सामग्री के साथ",
   "without_puja_items": "पूजा सामग्री के बिना",
   "select_state_first": "कृपया पहले राज्य चुनें",
-  "location_fetch_failed": "स्थान प्राप्त करने में विफल। कृपया पुनः प्रयास करें।"
+  "location_fetch_failed": "स्थान प्राप्त करने में विफल। कृपया पुनः प्रयास करें।",
+  "select_payment_method": "भुगतान विधि चुनें",
+  "pay_online": "ऑनलाइन भुगतान",
+  "cash_on_delivery": "सेवा पर नकद"
 }

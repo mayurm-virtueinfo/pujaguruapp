@@ -91,6 +91,11 @@ const PaymentScreen: React.FC = () => {
   const [location, setLocation] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
+  // Cash on option state
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    'online' | 'cod'
+  >('online');
+
   console.log('walletData :: ', walletData);
 
   useEffect(() => {
@@ -203,6 +208,9 @@ const PaymentScreen: React.FC = () => {
           ...(walletUseAmount > 0 && {
             amount_to_pay_from_wallet_input: walletUseAmount,
           }),
+          ...(selectedPaymentMethod === 'cod' && {
+            payment_mode: 'cod',
+          }),
         };
         const response: any = await postCreateRazorpayOrder(requestData);
         if (response?.data?.order_id || response?.data?.booking_id) {
@@ -216,7 +224,7 @@ const PaymentScreen: React.FC = () => {
           );
         }
       } catch (error: any) {
-        console.error('Order creation error:', error?.response.data);
+        console.error('Order creation error:', error?.response?.data || error);
         showErrorToast(error?.message || 'Failed to create Razorpay order');
         throw error;
       } finally {
@@ -224,7 +232,14 @@ const PaymentScreen: React.FC = () => {
         razorpayOrderInProgress.current = false;
       }
     },
-    [orderId, usePoints, showSuccessToast, showErrorToast, getWalletBalance],
+    [
+      orderId,
+      usePoints,
+      showSuccessToast,
+      showErrorToast,
+      getWalletBalance,
+      selectedPaymentMethod,
+    ],
   );
 
   const handleVerifyPayment = async (paymentData: any) => {
@@ -316,12 +331,34 @@ const PaymentScreen: React.FC = () => {
         return;
       }
 
-      if (!razorpayOrder?.order_id) {
+      if (!razorpayOrder?.order_id && selectedPaymentMethod === 'online') {
         showErrorToast('Unable to create payment order. Please try again.');
         return;
       }
 
       const remainingAmount = Math.max(totalPrice - walletUseAmount, 0);
+
+      if (selectedPaymentMethod === 'cod') {
+        // Cash on Delivery/Offline Payment
+        showSuccessToast(
+          'Booking confirmed. Please pay at the time of service.',
+        );
+        if (AutoModeSelection == true) {
+          navigation.navigate('SearchPanditScreen', {
+            booking_id: booking_Id,
+          });
+        } else {
+          navigation.navigate('BookingSuccessfullyScreen', {
+            booking: booking_Id,
+            panditjiData,
+            selectManualPanitData,
+            panditName,
+            panditImage,
+            auto,
+          });
+        }
+        return;
+      }
 
       // Step 2: Configure Razorpay options
       const razorpayOptions = {
@@ -451,8 +488,74 @@ const PaymentScreen: React.FC = () => {
     </View>
   );
 
+  // Payment method selection UI
+  const renderPaymentMethods = () => (
+    <View style={[styles.paymentMethodsSection, THEMESHADOW.shadow]}>
+      <Text
+        style={{
+          fontSize: 16,
+          fontFamily: Fonts.Sen_SemiBold,
+          color: COLORS.primaryTextDark,
+          marginBottom: 8,
+        }}>
+        {t('select_payment_method') || 'Select Payment Method'}
+      </Text>
+      <TouchableOpacity
+        style={styles.paymentMethodRow}
+        activeOpacity={0.7}
+        onPress={() => setSelectedPaymentMethod('online')}>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <View style={styles.radioButton}>
+            <MaterialIcons
+              name={
+                selectedPaymentMethod === 'online'
+                  ? 'radio-button-checked'
+                  : 'radio-button-unchecked'
+              }
+              size={22}
+              color={
+                selectedPaymentMethod === 'online'
+                  ? COLORS.primary
+                  : COLORS.inputBoder
+              }
+            />
+          </View>
+          <Text style={styles.paymentMethodText}>
+            {t('pay_online') || 'Pay Online'}
+          </Text>
+        </View>
+      </TouchableOpacity>
+      <View style={styles.divider} />
+      <TouchableOpacity
+        style={styles.paymentMethodRow}
+        activeOpacity={0.7}
+        onPress={() => setSelectedPaymentMethod('cod')}>
+        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          <View style={styles.radioButton}>
+            <MaterialIcons
+              name={
+                selectedPaymentMethod === 'cod'
+                  ? 'radio-button-checked'
+                  : 'radio-button-unchecked'
+              }
+              size={22}
+              color={
+                selectedPaymentMethod === 'cod'
+                  ? COLORS.primary
+                  : COLORS.inputBoder
+              }
+            />
+          </View>
+          <Text style={styles.paymentMethodText}>
+            {t('cash_on_delivery') || 'Cash on Service'}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
-    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+    <View style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <View style={styles.contentContainer}>
         <UserCustomHeader title={t('payment')} showBackButton={true} />
@@ -543,6 +646,9 @@ const PaymentScreen: React.FC = () => {
               </View>
             </View>
 
+            {/* Payment Methods Section */}
+            {renderPaymentMethods()}
+
             {/* Booking Data Section (was Suggested Puja Section) */}
             <View style={[styles.suggestedSection, THEMESHADOW.shadow]}>
               <TouchableOpacity
@@ -600,7 +706,7 @@ const PaymentScreen: React.FC = () => {
           </View>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -719,7 +825,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
   },
-  // paymentMethodsSection and related styles can be kept or removed, but not used in render
   paymentMethodsSection: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
@@ -729,14 +834,16 @@ const styles = StyleSheet.create({
   },
   paymentMethodRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     paddingHorizontal: scale(4),
+    paddingVertical: 8,
   },
   paymentMethodText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
+    marginLeft: 4,
   },
   radioButton: {
     padding: scale(4),
