@@ -37,8 +37,8 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-// export const APP_URL = 'https://e49fb80b9633.ngrok-free.app';
-export const APP_URL = 'https://puja-guru.com';
+export const APP_URL = 'https://f333c59ffe02.ngrok-free.app';
+// export const APP_URL = 'https://puja-guru.com';
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';
@@ -94,3 +94,4 @@ export const GET_NEW_PANDITJI =
   '/app/new-panditji-list/?latitude={latitude}&longitude={longitude}&booking_id={booking_Id}';
 export const POST_NEW_PANDITJI_OFFER = '/app/new-pandit-offer/';
 export const GET_PLATFORM_DETAILS = '/app/platform-settings/';
+export const POST_DELETE_ACCOUNT = '/app/delete-user/';

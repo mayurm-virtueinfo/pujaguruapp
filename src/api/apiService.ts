@@ -48,6 +48,7 @@ import ApiEndpoints, {
   POST_NEW_PANDITJI_OFFER,
   GET_PLATFORM_DETAILS,
   GET_PANCHANG,
+  POST_DELETE_ACCOUNT,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -419,6 +420,10 @@ export interface ReviewImageUpload {
       name: string;
     };
   };
+}
+
+export interface DeleteAccountRequest {
+  user_id: number;
 }
 
 export const apiService = {
@@ -1517,6 +1522,21 @@ export const getPlatformDetails = (): Promise<any> => {
       })
       .catch(error => {
         console.error('Error fetching platform details:', error);
+        reject(error);
+      });
+  });
+};
+
+export const deleteAccount = (data: DeleteAccountRequest) => {
+  const apiUrl = POST_DELETE_ACCOUNT;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .delete(apiUrl, {data})
+      .then(response => {
+        resolve(response);
+      })
+      .catch(error => {
+        console.error('Error deleting account', error);
         reject(error);
       });
   });

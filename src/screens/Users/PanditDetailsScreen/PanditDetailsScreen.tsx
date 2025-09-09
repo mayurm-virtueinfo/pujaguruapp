@@ -104,8 +104,6 @@ const PanditDetailsScreen: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalImageUri, setModalImageUri] = useState<string | null>(null);
 
-  console.log('selectedPandit :: ', selectedPandit);
-
   useEffect(() => {
     if (panditId) {
       fetchPanditDetails(panditId);

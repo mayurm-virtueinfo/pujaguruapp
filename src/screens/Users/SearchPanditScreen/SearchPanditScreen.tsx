@@ -69,7 +69,7 @@ const SearchPanditScreen: React.FC = () => {
         }
       }, 60 * 1000);
 
-      let socketURL = `ws://192.168.1.23:9000/ws/bookings/${bookingId}/`;
+      let socketURL = `ws://puja-guru.com:9000/ws/bookings/${bookingId}/`;
       if (socketURL.startsWith('ws://') && !__DEV__) {
         socketURL = socketURL.replace('ws://', 'wss://');
       }

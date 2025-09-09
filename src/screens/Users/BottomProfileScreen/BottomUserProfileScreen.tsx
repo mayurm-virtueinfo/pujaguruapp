@@ -20,7 +20,11 @@ import {useTranslation} from 'react-i18next';
 import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
 import {useAuth} from '../../../provider/AuthProvider';
 import LanguageSwitcher from '../../../components/LanguageSwitcher';
-import {getEditProfile, postLogout} from '../../../api/apiService';
+import {
+  deleteAccount,
+  getEditProfile,
+  postLogout,
+} from '../../../api/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomModal from '../../../components/CustomModal';
@@ -50,7 +54,8 @@ const BottomUserProfileScreen: React.FC = () => {
 
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
-
+  const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
+    useState(false);
   interface Address {
     address_line1: string;
     address_line2: string;
@@ -81,7 +86,6 @@ const BottomUserProfileScreen: React.FC = () => {
     try {
       const response: any = await getEditProfile();
       if (response) {
-        console.log('response in profile screen :: ', response);
         setCurrentUser(response);
       }
     } catch (error) {
@@ -123,9 +127,6 @@ const BottomUserProfileScreen: React.FC = () => {
   const handleWalletNavigation = () => {
     navigation.navigate('WalletScreen');
   };
-  const handleNotificationNavigation = () => {
-    navigation.navigate('NotificationScreen');
-  };
   const handleEditNavigation = () => {
     navigation.navigate('EditProfile', {edit: true});
   };
@@ -137,6 +138,22 @@ const BottomUserProfileScreen: React.FC = () => {
   };
   const handleSavedAddressNavigation = () => {
     navigation.navigate('AddressesScreen');
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const response: any = await deleteAccount({
+        user_id: Number(currentUser?.id) || 0,
+      });
+      if (response.data.success) {
+        setDeleteAccountModalVisible(false);
+        signOutApp();
+      }
+    } catch (error) {
+      console.error('Error deleting account', error);
+    } finally {
+      setDeleteAccountModalVisible(false);
+    }
   };
 
   return (
@@ -275,6 +292,19 @@ const BottomUserProfileScreen: React.FC = () => {
               />
             </View>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.editSection, THEMESHADOW.shadow]}
+            onPress={() => setDeleteAccountModalVisible(true)}>
+            <View style={styles.editFieldContainer}>
+              <Text style={styles.logoutLabel}>{t('delete_account')}</Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.primaryTextDark}
+              />
+            </View>
+          </TouchableOpacity>
         </ScrollView>
       </View>
       <CustomModal
@@ -285,6 +315,15 @@ const BottomUserProfileScreen: React.FC = () => {
         cancelText={t('cancel')}
         onConfirm={handleLogout}
         onCancel={() => setLogoutModalVisible(false)}
+      />
+      <CustomModal
+        visible={deleteAccountModalVisible}
+        title={t('delete_account')}
+        message={t('are_you_sure_delete_account')}
+        confirmText={t('delete')}
+        cancelText={t('cancel')}
+        onConfirm={handleDeleteAccount}
+        onCancel={() => setDeleteAccountModalVisible(false)}
       />
     </SafeAreaView>
   );
