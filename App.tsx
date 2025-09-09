@@ -47,17 +47,17 @@ const App = () => {
   }, []);
 
   // 🔐 Enable capture protection globally
-  // useEffect(() => {
-  //   CaptureProtection.prevent({
-  //     screenshot: true, // will blank screen on iOS, block on Android
-  //     record: true, // blocks screen recording
-  //     appSwitcher: true, // protects app preview in app switcher
-  //   });
+  useEffect(() => {
+    CaptureProtection.prevent({
+      screenshot: true, // will blank screen on iOS, block on Android
+      record: true, // blocks screen recording
+      appSwitcher: true, // protects app preview in app switcher
+    });
 
-  //   return () => {
-  //     CaptureProtection.allow();
-  //   };
-  // }, []);
+    return () => {
+      CaptureProtection.allow();
+    };
+  }, []);
 
   const handleInitialNotification = async () => {
     try {
