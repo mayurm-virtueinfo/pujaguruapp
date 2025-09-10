@@ -20,12 +20,22 @@ import {moderateScale} from 'react-native-size-matters';
 import {useCommonToast} from '../common/CommonToast';
 import {COLORS} from '../theme/theme';
 import PrimaryButton from '../components/PrimaryButton';
+import Checkbox from '../components/Checkbox';
 import {Images} from '../theme/Images';
 import Fonts from '../theme/fonts';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import {useFocusEffect} from '@react-navigation/native';
 import CustomeLoader from '../components/CustomeLoader';
+import {Modal} from 'react-native';
+import WebView from 'react-native-webview';
+import {
+  getTermsAndConditions as apiGetTermsAndConditions,
+  getUserAgreement as apiGetUserAgreement,
+  getRefundPolicy as apiGetRefundPolicy,
+} from '../api/apiService';
+import CustomDropdown from '../components/CustomDropdown';
+import {changeLanguage} from '../i18n';
 
 type SignInScreenNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -47,6 +57,12 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
   const [isLoading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{phoneNumber?: string}>({});
   const [previousPhoneNumber, setPreviousPhoneNumber] = useState<string>('');
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
+  const [policiesError, setPoliciesError] = useState<string | undefined>();
+  const [showHtmlModal, setShowHtmlModal] = useState(false);
+  const [htmlContent, setHtmlContent] = useState<string>('');
+  const [htmlTitle, setHtmlTitle] = useState<string>('');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
 
   useFocusEffect(
     React.useCallback(() => {
@@ -107,6 +123,11 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
   const handleSignIn = async () => {
     const cleanPhoneNumber = phoneNumber.trim().replace(/\s+/g, '');
 
+    if (!acceptedPolicies) {
+      setPoliciesError('You must accept the terms to continue.');
+      return;
+    }
+
     if (!cleanPhoneNumber) {
       const newErrors: any = {};
       newErrors.phoneNumber = 'Please enter your phone number.';
@@ -152,6 +173,48 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
     await proceedWithOTP(formattedPhone);
   };
 
+  const openHtml = (title: string, html: string) => {
+    setHtmlTitle(title);
+    setHtmlContent(html);
+    setShowHtmlModal(true);
+  };
+
+  const onPressTermsAndConditions = async () => {
+    try {
+      setLoading(true);
+      const html = await apiGetTermsAndConditions();
+      openHtml('Terms & Conditions', html);
+    } catch (e: any) {
+      showErrorToast('Unable to load Terms & Conditions.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onPressUserAgreement = async () => {
+    try {
+      setLoading(true);
+      const html = await apiGetUserAgreement();
+      openHtml('User Agreement', html);
+    } catch (e: any) {
+      showErrorToast('Unable to load User Agreement.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onPressRefundPolicy = async () => {
+    try {
+      setLoading(true);
+      const html = await apiGetRefundPolicy();
+      openHtml('Refund Policy', html);
+    } catch (e: any) {
+      showErrorToast('Unable to load Refund Policy.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -192,34 +255,103 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
                 )}
               </View>
 
-              <PrimaryButton title={t('send_otp')} onPress={handleSignIn} />
-
-              {/* Commented out terms and conditions section
-              <Text style={styles.termsText}>
-                {t('by_signing_in_you_agree_to_our')}
-                <Text
-                  style={{color: COLORS.primaryBackgroundButton}}
+              <View style={styles.termsRow}>
+                <Checkbox
+                  label=""
+                  checked={acceptedPolicies}
                   onPress={() => {
-                    Alert.alert(
-                      t('terms_of_service'),
-                      t('terms_of_service_content'),
-                    );
-                  }}>
-                  {` ${t('terms_of_service')}`}
+                    const newVal = !acceptedPolicies;
+                    setAcceptedPolicies(newVal);
+                    if (newVal) {
+                      setPoliciesError(undefined);
+                    }
+                  }}
+                  color={COLORS.primaryBackgroundButton}
+                />
+                <Text style={styles.termsInlineText}>
+                  I agree to the
+                  <Text
+                    style={[styles.linkText, styles.underlineText]}
+                    onPress={onPressTermsAndConditions}>
+                    {' '}
+                    {`Terms & Conditions`}
+                  </Text>
+                  {`,`}
+                  <Text
+                    style={[styles.linkText, styles.underlineText]}
+                    onPress={onPressUserAgreement}>
+                    {' '}
+                    {`User Agreement`}
+                  </Text>
+                  {` and`}
+                  <Text
+                    style={[styles.linkText, styles.underlineText]}
+                    onPress={onPressRefundPolicy}>
+                    {' '}
+                    {`Refund Policy`}
+                  </Text>
+                  .
                 </Text>
-                {` ${t('and')}`}
-                <Text
-                  style={{color: COLORS.primaryBackgroundButton}}
-                  onPress={() => {
-                    Alert.alert(
-                      t('privacy_policy'),
-                      t('privacy_policy_content'),
-                    );
-                  }}>
-                  {` ${t('privacy_policy')}`}
-                </Text>
-              </Text>
-              */}
+              </View>
+              {!!policiesError && (
+                <Text style={styles.errorText}>{policiesError}</Text>
+              )}
+              <View style={{marginTop: moderateScale(12)}}>
+                <CustomDropdown
+                  label={t('language') || 'Language'}
+                  items={[
+                    {label: 'English', value: 'en'},
+                    {label: 'हिन्दी', value: 'hi'},
+                    {label: 'ગુજરાતી', value: 'gu'},
+                    {label: 'मराठी', value: 'mr'},
+                  ]}
+                  selectedValue={selectedLanguage}
+                  onSelect={async (value: string) => {
+                    setSelectedLanguage(value);
+                    await changeLanguage(value);
+                  }}
+                />
+              </View>
+              <Modal
+                visible={showHtmlModal}
+                animationType="slide"
+                onRequestClose={() => setShowHtmlModal(false)}
+                transparent={false}>
+                <View style={styles.modalContainer}>
+                  <Text style={styles.modalTitle}>{htmlTitle}</Text>
+                  <View style={styles.modalContentWrapper}>
+                    {htmlContent ? (
+                      <WebView
+                        originWhitelist={['*']}
+                        source={{html: htmlContent}}
+                        startInLoadingState
+                        renderError={() => (
+                          <View style={styles.webviewError}>
+                            <Text>Failed to load content.</Text>
+                          </View>
+                        )}
+                      />
+                    ) : (
+                      <View style={styles.webviewError}>
+                        <Text>No content available.</Text>
+                      </View>
+                    )}
+                  </View>
+                  <PrimaryButton
+                    title={t('close') || 'Close'}
+                    onPress={() => setShowHtmlModal(false)}
+                    style={{
+                      marginHorizontal: moderateScale(16),
+                      marginBottom: moderateScale(16),
+                    }}
+                  />
+                </View>
+              </Modal>
+              <PrimaryButton
+                title={t('send_otp')}
+                onPress={handleSignIn}
+                disabled={!acceptedPolicies}
+              />
             </View>
           </View>
         </ScrollView>
@@ -284,10 +416,51 @@ const styles = StyleSheet.create({
     marginTop: moderateScale(16),
     textAlign: 'center',
   },
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: moderateScale(12),
+  },
+  termsInlineText: {
+    flex: 1,
+    fontSize: moderateScale(12),
+    color: COLORS.primaryTextDark,
+    fontFamily: Fonts.Sen_Regular,
+    marginRight: moderateScale(8),
+  },
+  linkText: {
+    color: COLORS.primaryBackgroundButton,
+  },
+  underlineText: {
+    textDecorationLine: 'underline',
+  },
   errorText: {
     color: '#ef4444',
     fontSize: 12,
     marginTop: 4,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingTop: moderateScale(16),
+  },
+  modalTitle: {
+    fontSize: moderateScale(18),
+    fontFamily: Fonts.Sen_Bold,
+    textAlign: 'center',
+    marginBottom: moderateScale(8),
+  },
+  modalContentWrapper: {
+    flex: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#E5E7EB',
+    marginBottom: moderateScale(12),
+  },
+  webviewError: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

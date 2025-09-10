@@ -49,6 +49,9 @@ import ApiEndpoints, {
   GET_PLATFORM_DETAILS,
   GET_PANCHANG,
   POST_DELETE_ACCOUNT,
+  GET_TERMS_AND_CONDITIONS,
+  GET_USER_AGREEMENT,
+  GET_REFUND_POLICY,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -1537,6 +1540,63 @@ export const deleteAccount = (data: DeleteAccountRequest) => {
       })
       .catch(error => {
         console.error('Error deleting account', error);
+        reject(error);
+      });
+  });
+};
+
+export const getTermsAndConditions = (): Promise<any> => {
+  const apiUrl = GET_TERMS_AND_CONDITIONS;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl, {
+        headers: {
+          Accept: 'text/html',
+        },
+      })
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching terms and conditions', error);
+        reject(error);
+      });
+  });
+};
+
+export const getUserAgreement = (): Promise<any> => {
+  const apiUrl = GET_USER_AGREEMENT;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl, {
+        headers: {
+          Accept: 'text/html',
+        },
+      })
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching user agreement', error);
+        reject(error);
+      });
+  });
+};
+
+export const getRefundPolicy = (): Promise<any> => {
+  const apiUrl = GET_REFUND_POLICY;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl, {
+        headers: {
+          Accept: 'text/html',
+        },
+      })
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching refund policy', error);
         reject(error);
       });
   });
