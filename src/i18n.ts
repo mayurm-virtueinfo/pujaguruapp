@@ -4,12 +4,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import en from './locales/en/translation.json';
 import hi from './locales/hi/translation.json';
+import gu from './locales/gu/translation.json';
+import mr from './locales/mr/translation.json';
 
 const resources = {
   en: {translation: en},
   hi: {translation: hi},
-  gu: {translation: en},
-  mr: {translation: en},
+  gu: {translation: gu},
+  mr: {translation: mr},
 };
 
 const LANGUAGE_KEY = 'appLanguage';

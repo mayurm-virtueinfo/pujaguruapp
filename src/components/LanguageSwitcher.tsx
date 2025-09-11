@@ -13,7 +13,10 @@ import {Picker} from '@react-native-picker/picker';
 
 export default function LanguageSwitcher() {
   const {t} = useTranslation();
-  const [selectedLang, setSelectedLang] = useState(i18n.language || 'en');
+  const initialLang = ['en', 'hi', 'gu', 'mr'].includes(i18n.language)
+    ? (i18n.language as 'en' | 'hi' | 'gu' | 'mr')
+    : 'en';
+  const [selectedLang, setSelectedLang] = useState(initialLang);
   const [modalVisible, setModalVisible] = useState(false);
 
   const handleLanguageChange = (lang: string) => {
@@ -31,7 +34,13 @@ export default function LanguageSwitcher() {
           style={styles.iosPickerButton}
           onPress={() => setModalVisible(true)}>
           <Text style={styles.iosPickerButtonText}>
-            {selectedLang === 'en' ? 'English' : 'हिन्दी'}
+            {selectedLang === 'en'
+              ? 'English'
+              : selectedLang === 'hi'
+              ? 'हिन्दी'
+              : selectedLang === 'gu'
+              ? 'ગુજરાતી'
+              : 'मराठी'}
           </Text>
         </TouchableOpacity>
         <Modal
@@ -50,6 +59,8 @@ export default function LanguageSwitcher() {
                 style={styles.iosPicker}>
                 <Picker.Item label="English" value="en" />
                 <Picker.Item label="हिन्दी" value="hi" />
+                <Picker.Item label="ગુજરાતી" value="gu" />
+                <Picker.Item label="मराठी" value="mr" />
               </Picker>
               <TouchableOpacity
                 style={styles.iosDoneButton}
@@ -75,6 +86,8 @@ export default function LanguageSwitcher() {
           mode="dropdown">
           <Picker.Item label="English" value="en" />
           <Picker.Item label="हिन्दी" value="hi" />
+          <Picker.Item label="ગુજરાતી" value="gu" />
+          <Picker.Item label="मराठी" value="mr" />
         </Picker>
       </View>
     </View>

@@ -17,6 +17,7 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import {useTranslation} from 'react-i18next';
+import {changeLanguage} from '../../../i18n';
 import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
 import {useAuth} from '../../../provider/AuthProvider';
 import LanguageSwitcher from '../../../components/LanguageSwitcher';
@@ -48,7 +49,7 @@ type ProfileNavigationProp = StackNavigationProp<UserProfileParamList>;
 const BottomUserProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ProfileNavigationProp>();
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
 
   const {signOutApp} = useAuth();
 
@@ -114,6 +115,9 @@ const BottomUserProfileScreen: React.FC = () => {
       const response: any = await postLogout(params);
       if (response.data.success) {
         setLogoutModalVisible(false);
+        try {
+          await changeLanguage('en');
+        } catch (e) {}
         signOutApp();
       }
     } catch (error: any) {
@@ -428,6 +432,14 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: COLORS.separatorColor,
     marginVertical: 8,
+  },
+  selectedLangText: {
+    marginHorizontal: 24,
+    marginTop: 4,
+    marginBottom: 24,
+    color: COLORS.inputLabelText,
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Medium,
   },
 });
 

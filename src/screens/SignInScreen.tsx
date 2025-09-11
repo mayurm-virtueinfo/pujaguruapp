@@ -9,6 +9,7 @@ import {
   Image,
   ImageBackground,
   Alert,
+  TouchableOpacity,
 } from 'react-native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RouteProp} from '@react-navigation/native';
@@ -36,6 +37,7 @@ import {
 } from '../api/apiService';
 import CustomDropdown from '../components/CustomDropdown';
 import {changeLanguage} from '../i18n';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 
 type SignInScreenNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -50,7 +52,7 @@ interface Props {
 }
 
 const SignInScreen: React.FC<Props> = ({navigation, route}) => {
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const {showErrorToast, showSuccessToast} = useCommonToast();
   const [phoneNumber, setPhoneNumber] = useState('1111111111');
@@ -63,6 +65,15 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
   const [htmlContent, setHtmlContent] = useState<string>('');
   const [htmlTitle, setHtmlTitle] = useState<string>('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
+  const [languageModalVisible, setLanguageModalVisible] =
+    useState<boolean>(true);
+
+  useEffect(() => {
+    // Ensure dropdown reflects the currently saved app language
+    if (i18n?.language) {
+      setSelectedLanguage(i18n.language as string);
+    }
+  }, [i18n?.language]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -234,6 +245,26 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
               ]}>
               <Image source={Images.ic_app_logo} style={styles.logo} />
               <Text style={styles.title}>{t('hi_welcome')}</Text>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => setLanguageModalVisible(true)}
+                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+                style={styles.languagePill}>
+                <Text style={styles.languagePillIcon}>
+                  <Icon name="language" size={20} color={COLORS.white} />
+                </Text>
+                <Text style={styles.languagePillText}>
+                  {selectedLanguage === 'en'
+                    ? 'English'
+                    : selectedLanguage === 'hi'
+                    ? 'हिन्दी'
+                    : selectedLanguage === 'gu'
+                    ? 'ગુજરાતી'
+                    : selectedLanguage === 'mr'
+                    ? 'मराठी'
+                    : selectedLanguage}
+                </Text>
+              </TouchableOpacity>
             </View>
 
             <View style={styles.containerBody}>
@@ -296,22 +327,41 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
               {!!policiesError && (
                 <Text style={styles.errorText}>{policiesError}</Text>
               )}
-              <View style={{marginTop: moderateScale(12)}}>
-                <CustomDropdown
-                  label={t('language') || 'Language'}
-                  items={[
-                    {label: 'English', value: 'en'},
-                    {label: 'हिन्दी', value: 'hi'},
-                    {label: 'ગુજરાતી', value: 'gu'},
-                    {label: 'मराठी', value: 'mr'},
-                  ]}
-                  selectedValue={selectedLanguage}
-                  onSelect={async (value: string) => {
-                    setSelectedLanguage(value);
-                    await changeLanguage(value);
-                  }}
-                />
-              </View>
+              {/* Language modal trigger lives in header pill; inline dropdown removed */}
+              <Modal
+                visible={languageModalVisible}
+                animationType="fade"
+                transparent
+                onRequestClose={() => setLanguageModalVisible(false)}>
+                <View style={styles.languageModalOverlay}>
+                  <View style={styles.languageModalCard}>
+                    <Text style={styles.languageModalTitle}>
+                      {t('language') || 'Language'}
+                    </Text>
+                    <CustomDropdown
+                      label={t('language') || 'Language'}
+                      items={[
+                        {label: 'English', value: 'en'},
+                        {label: 'हिन्दी', value: 'hi'},
+                        {label: 'ગુજરાતી', value: 'gu'},
+                        {label: 'मराठी', value: 'mr'},
+                      ]}
+                      selectedValue={selectedLanguage}
+                      onSelect={async (value: string) => {
+                        setSelectedLanguage(value);
+                      }}
+                    />
+                    <PrimaryButton
+                      title={t('continue') || 'continue'}
+                      onPress={async () => {
+                        await changeLanguage(selectedLanguage);
+                        setLanguageModalVisible(false);
+                      }}
+                      style={{marginTop: moderateScale(16)}}
+                    />
+                  </View>
+                </View>
+              </Modal>
               <Modal
                 visible={showHtmlModal}
                 animationType="slide"
@@ -402,12 +452,56 @@ const styles = StyleSheet.create({
     height: moderateScale(220),
     alignItems: 'center',
   },
+  languagePill: {
+    position: 'absolute',
+    top: moderateScale(16),
+    right: moderateScale(16),
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    paddingVertical: moderateScale(6),
+    paddingHorizontal: moderateScale(12),
+    borderRadius: moderateScale(24),
+    marginTop: moderateScale(30),
+    zIndex: 10,
+    elevation: 10,
+  },
+  languagePillIcon: {
+    fontSize: moderateScale(16),
+    color: COLORS.white,
+    marginRight: moderateScale(6),
+  },
+  languagePillText: {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.white,
+  },
   containerBody: {
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
     flex: 1,
     padding: moderateScale(24),
     backgroundColor: '#FFFFFF',
+  },
+  languageModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: moderateScale(24),
+  },
+  languageModalCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(20),
+    padding: moderateScale(20),
+  },
+  languageModalTitle: {
+    fontSize: moderateScale(20),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+    textAlign: 'center',
+    marginBottom: moderateScale(12),
   },
   termsText: {
     fontSize: moderateScale(12),
@@ -419,7 +513,8 @@ const styles = StyleSheet.create({
   termsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: moderateScale(12),
+    // marginTop: moderateScale(12),
+    marginBottom: moderateScale(12),
   },
   termsInlineText: {
     flex: 1,
