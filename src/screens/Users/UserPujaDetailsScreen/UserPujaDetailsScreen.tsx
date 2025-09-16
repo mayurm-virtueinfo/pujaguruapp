@@ -52,6 +52,8 @@ const UserPujaDetailsScreen: React.FC = () => {
   // Track if we've already handled the in-progress pin logic
   const hasHandledInProgressPin = useRef(false);
 
+  console.log('pujaDetails :: ', pujaDetails);
+
   // Helper to reload puja details
   const fetchPujaDetails = async () => {
     setLoading(true);
@@ -109,6 +111,23 @@ const UserPujaDetailsScreen: React.FC = () => {
       prevBookingStatus.current = pujaDetails.booking_status;
     }
   }, [pujaDetails, navigation]);
+
+  // Poll for booking status updates until completed, then stop
+  useEffect(() => {
+    if (!pujaDetails || hasNavigatedToRate.current) {
+      return;
+    }
+
+    if (pujaDetails.booking_status !== 'completed') {
+      const intervalId = setInterval(() => {
+        fetchPujaDetails();
+      }, 10000);
+
+      return () => clearInterval(intervalId);
+    }
+
+    return;
+  }, [pujaDetails?.booking_status, hasNavigatedToRate.current]);
 
   const handlePujaItemsPress = () => {
     setIsPujaItemsModalVisible(true);

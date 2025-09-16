@@ -30,16 +30,28 @@ if (__DEV__) {
 setupNotifications();
 
 const App = () => {
+  // useEffect(() => {
+  //   const init = async () => {
+  //     await initializeI18n();
+  //     await requestUserPermission();
+  //     await requestLocationPermission();
+  //     SplashScreen.hide();
+  //   };
+  //   const timer = setTimeout(() => {
+  //     init();
+  //   }, 2500);
+
+  //   return () => clearTimeout(timer);
+  // }, []);
+
   useEffect(() => {
-    const init = async () => {
-      await initializeI18n();
-      await requestUserPermission();
-      await requestLocationPermission();
-      SplashScreen.hide();
-    };
     const timer = setTimeout(() => {
-      init();
+      SplashScreen.hide();
     }, 2500);
+
+    initializeI18n();
+    requestUserPermission();
+    requestLocationPermission();
 
     return () => clearTimeout(timer);
   }, []);

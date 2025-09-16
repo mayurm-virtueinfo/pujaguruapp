@@ -1534,7 +1534,7 @@ export const deleteAccount = (data: DeleteAccountRequest) => {
   const apiUrl = POST_DELETE_ACCOUNT;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, {data})
+      .post(apiUrl, {data})
       .then(response => {
         resolve(response);
       })
