@@ -47,7 +47,7 @@ const ChatInput: React.FC<ChatInputProps> = ({onSendMessage}) => {
 
         <TextInput
           style={styles.textInput}
-          placeholder={t('message')}
+          placeholder={t('type_your_message')}
           placeholderTextColor="rgba(25, 19, 19, 0.3)"
           value={message}
           onChangeText={setMessage}

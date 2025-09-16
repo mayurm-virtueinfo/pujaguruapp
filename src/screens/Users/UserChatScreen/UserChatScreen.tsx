@@ -170,7 +170,7 @@ const UserChatScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}>
             {messages.length === 0 && !loading ? (
               <View style={styles.noMessagesContainer}>
-                <Text style={styles.noMessagesText}>No messages</Text>
+                <Text style={styles.noMessagesText}>(t{'no_messages'})</Text>
               </View>
             ) : (
               <ChatMessages messages={messages} />

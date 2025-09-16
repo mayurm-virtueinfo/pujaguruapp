@@ -12,6 +12,7 @@ import {FirebaseAuthTypes} from '@react-native-firebase/auth';
 import CompleteProfileScreen from '../screens/Users/CompleteProfileScreen/CompleteProfileScreen';
 import UserProfileScreen from '../screens/Users/ProfileScreen/UserProfileScreen';
 import UserAppBottomTabNavigator from './User/UserBottomTabNavigator';
+import TermsPolicyScreen from '../screens/Users/TermsPolicy/TermsPolicy';
 
 export type AuthStackParamList = {
   SignIn: any;
@@ -37,6 +38,7 @@ export type AuthStackParamList = {
     longitude?: number;
   };
   UserAppBottomTabNavigator: undefined;
+  TermsPolicyScreen: any;
 };
 
 const Stack = createStackNavigator<AuthStackParamList>();
@@ -94,6 +96,13 @@ const AuthNavigator = () => {
       <Stack.Screen
         name="UserAppBottomTabNavigator"
         component={UserAppBottomTabNavigator}
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="TermsPolicyScreen"
+        component={TermsPolicyScreen}
         options={{
           headerShown: false,
         }}

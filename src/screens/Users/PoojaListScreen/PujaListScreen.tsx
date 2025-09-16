@@ -48,13 +48,13 @@ const PujaListScreen: React.FC = () => {
 
   const [pujaList, setPujaList] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [todayPanchang, setTodayPanchang] = useState<string | null>(null);
+  // const [todayPanchang, setTodayPanchang] = useState<string | null>(null);
   console.log('pujaList', pujaList);
   const navigation = useNavigation<ScreenNavigationProp>();
 
   useEffect(() => {
     fetchPujaList();
-    fetchTodayPanchang();
+    // fetchTodayPanchang();
   }, []);
 
   const fetchPujaList = async () => {
@@ -90,24 +90,24 @@ const PujaListScreen: React.FC = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const fetchTodayPanchang = async () => {
-    try {
-      const locationStr = await AsyncStorage.getItem(AppConstant.LOCATION);
-      if (!locationStr) return;
-      const location = JSON.parse(locationStr);
-      const dateStr = formatDate(new Date());
-      const response = await getPanchang(
-        dateStr,
-        String(location.latitude),
-        String(location.longitude),
-      );
-      if (response?.success && response?.today_panchang) {
-        setTodayPanchang(response.today_panchang);
-      }
-    } catch (error) {
-      console.log('Error fetching panchang:', error);
-    }
-  };
+  // const fetchTodayPanchang = async () => {
+  //   try {
+  //     const locationStr = await AsyncStorage.getItem(AppConstant.LOCATION);
+  //     if (!locationStr) return;
+  //     const location = JSON.parse(locationStr);
+  //     const dateStr = formatDate(new Date());
+  //     const response = await getPanchang(
+  //       dateStr,
+  //       String(location.latitude),
+  //       String(location.longitude),
+  //     );
+  //     if (response?.success && response?.today_panchang) {
+  //       setTodayPanchang(response.today_panchang);
+  //     }
+  //   } catch (error) {
+  //     console.log('Error fetching panchang:', error);
+  //   }
+  // };
 
   const handleNotificationPress = () => {
     navigation.navigate('NotificationScreen' as any);
@@ -133,9 +133,9 @@ const PujaListScreen: React.FC = () => {
           <View style={styles.recommendedSection}>
             <View style={{paddingHorizontal: 24, paddingTop: 24, gap: 8}}>
               <Text style={styles.sectionTitle}>{t('recomended_puja')}</Text>
-              {todayPanchang && (
+              {/* {todayPanchang && (
                 <Text style={styles.sectionSubtitle}>{todayPanchang}</Text>
-              )}
+              )} */}
             </View>
             <ScrollView
               horizontal
