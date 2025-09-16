@@ -59,7 +59,7 @@ const UserHomeScreen: React.FC = () => {
   const [recomendedPandits, setRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
-  const [todayPanchang, setTodayPanchang] = useState<string | null>(null);
+  // const [todayPanchang, setTodayPanchang] = useState<string | null>(null);
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
 
@@ -70,7 +70,7 @@ const UserHomeScreen: React.FC = () => {
       if (nextAppState === 'active') {
         console.log('App active - refreshing location data');
         fetchRecommendedPandits();
-        fetchTodayPanchang();
+        // fetchTodayPanchang();
       }
     };
 
@@ -87,7 +87,7 @@ const UserHomeScreen: React.FC = () => {
       fetchInProgressPujas();
       fetchPendingPujas();
       fetchRecommendedPandits();
-      fetchTodayPanchang();
+      // fetchTodayPanchang();
     }, []),
   );
 
@@ -200,28 +200,28 @@ const UserHomeScreen: React.FC = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const fetchTodayPanchang = async () => {
-    try {
-      const locationData = await getLocationForAPI();
+  // const fetchTodayPanchang = async () => {
+  //   try {
+  //     const locationData = await getLocationForAPI();
 
-      if (locationData) {
-        const dateStr = formatDate(new Date());
-        const response = await getPanchang(
-          dateStr,
-          String(locationData.latitude),
-          String(locationData.longitude),
-        );
+  //     if (locationData) {
+  //       const dateStr = formatDate(new Date());
+  //       const response = await getPanchang(
+  //         dateStr,
+  //         String(locationData.latitude),
+  //         String(locationData.longitude),
+  //       );
 
-        if (response?.success && response?.today_panchang) {
-          setTodayPanchang(response.today_panchang);
-        }
-      } else {
-        console.warn('No location available for panchang');
-      }
-    } catch (error) {
-      console.log('Error fetching panchang:', error);
-    }
-  };
+  //       if (response?.success && response?.today_panchang) {
+  //         setTodayPanchang(response.today_panchang);
+  //       }
+  //     } else {
+  //       console.warn('No location available for panchang');
+  //     }
+  //   } catch (error) {
+  //     console.log('Error fetching panchang:', error);
+  //   }
+  // };
 
   const handleBookPandit = (
     panditId: number,
@@ -269,9 +269,9 @@ const UserHomeScreen: React.FC = () => {
               />
             </TouchableOpacity>
           </View>
-          {todayPanchang && (
+          {/* {todayPanchang && (
             <Text style={styles.subtitle}>{todayPanchang}</Text>
-          )}
+          )} */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -532,11 +532,12 @@ const styles = StyleSheet.create({
   },
   panditCardsContainer: {
     flexGrow: 0,
-    marginTop: moderateScale(12),
+    paddingTop: moderateScale(12),
+    paddingHorizontal: 10,
   },
   panditCardsContentContainer: {
     flexDirection: 'row',
-    paddingHorizontal: moderateScale(2),
+    // marginHorizontal: moderateScale(2),
     paddingBottom: moderateScale(10),
   },
   panditCard: {

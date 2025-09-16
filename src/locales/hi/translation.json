@@ -297,5 +297,13 @@
   "location_fetch_failed": "स्थान प्राप्त करने में विफल। कृपया पुनः प्रयास करें।",
   "select_payment_method": "भुगतान विधि चुनें",
   "pay_online": "ऑनलाइन भुगतान",
-  "cash_on_delivery": "सेवा पर नकद"
+  "cash_on_delivery": "सेवा पर नकद",
+  "delete_account": "खाता हटाएँ",
+  "are_you_sure_delete_account": "क्या आप वाकई खाता हटाना चाहते हैं?",
+  "i_agree_to": "मैं सहमत हूँ ",
+  "user_agreement": "उपयोगकर्ता समझौता",
+  "refund_policy": "रिफंड नीति",
+  "terms_and_conditions": "नियम और शर्तें",
+  "later": "बाद में",
+  "something_went_wrong": "कुछ गलत हो गया"
 }

@@ -10,9 +10,10 @@ import {
   ImageBackground,
   Alert,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
 import {StackNavigationProp} from '@react-navigation/stack';
-import {RouteProp} from '@react-navigation/native';
+import {RouteProp, useFocusEffect} from '@react-navigation/native';
 import {AuthStackParamList} from '../navigation/AuthNavigator';
 import ThemedInput from '../components/ThemedInput';
 import {getAuth, signInWithPhoneNumber} from '@react-native-firebase/auth';
@@ -21,19 +22,15 @@ import {moderateScale} from 'react-native-size-matters';
 import {useCommonToast} from '../common/CommonToast';
 import {COLORS} from '../theme/theme';
 import PrimaryButton from '../components/PrimaryButton';
-import Checkbox from '../components/Checkbox';
 import {Images} from '../theme/Images';
 import Fonts from '../theme/fonts';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
-import {useFocusEffect} from '@react-navigation/native';
 import CustomeLoader from '../components/CustomeLoader';
-import {Modal} from 'react-native';
-import WebView from 'react-native-webview';
 import {
-  getTermsAndConditions as apiGetTermsAndConditions,
-  getUserAgreement as apiGetUserAgreement,
-  getRefundPolicy as apiGetRefundPolicy,
+  getTermsAndConditions,
+  getUserAgreement,
+  getRefundPolicy,
 } from '../api/apiService';
 import CustomDropdown from '../components/CustomDropdown';
 import {changeLanguage} from '../i18n';
@@ -59,17 +56,16 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
   const [isLoading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{phoneNumber?: string}>({});
   const [previousPhoneNumber, setPreviousPhoneNumber] = useState<string>('');
-  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [policiesError, setPoliciesError] = useState<string | undefined>();
-  const [showHtmlModal, setShowHtmlModal] = useState(false);
-  const [htmlContent, setHtmlContent] = useState<string>('');
-  const [htmlTitle, setHtmlTitle] = useState<string>('');
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
   const [languageModalVisible, setLanguageModalVisible] =
     useState<boolean>(true);
+  const [termsContent, setTermsContent] = useState<string>('');
+  const [userAgreementContent, setUserAgreementContent] = useState<string>('');
+  const [refundPolicyContent, setRefundPolicyContent] = useState<string>('');
+  const [isAgreed, setIsAgreed] = useState(false);
 
   useEffect(() => {
-    // Ensure dropdown reflects the currently saved app language
     if (i18n?.language) {
       setSelectedLanguage(i18n.language as string);
     }
@@ -83,6 +79,18 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
       if (route.params?.previousPhoneNumber) {
         setPreviousPhoneNumber(route.params.previousPhoneNumber);
       }
+
+      getTermsAndConditions()
+        .then(data => setTermsContent(data || ''))
+        .catch(() => setTermsContent(''));
+
+      getUserAgreement()
+        .then(data => setUserAgreementContent(data || ''))
+        .catch(() => setUserAgreementContent(''));
+
+      getRefundPolicy()
+        .then(data => setRefundPolicyContent(data || ''))
+        .catch(() => setRefundPolicyContent(''));
     }, [route.params]),
   );
 
@@ -108,7 +116,6 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
         confirmation,
       });
     } catch (error: any) {
-      console.error('Full error object:', error);
       setLoading(false);
       let errorMessage = 'Failed to send OTP. Please try again.';
       if (error.code === 'auth/too-many-requests') {
@@ -126,7 +133,6 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
       } else if (error.message) {
         errorMessage = error.message;
       }
-
       showErrorToast(errorMessage);
     }
   };
@@ -134,15 +140,13 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
   const handleSignIn = async () => {
     const cleanPhoneNumber = phoneNumber.trim().replace(/\s+/g, '');
 
-    if (!acceptedPolicies) {
+    if (!isAgreed) {
       setPoliciesError('You must accept the terms to continue.');
       return;
     }
 
     if (!cleanPhoneNumber) {
-      const newErrors: any = {};
-      newErrors.phoneNumber = 'Please enter your phone number.';
-      setErrors(newErrors);
+      setErrors({phoneNumber: 'Please enter your phone number.'});
       return;
     }
 
@@ -173,10 +177,10 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
     }
 
     if (!validatePhoneNumber(formattedPhone)) {
-      const newErrors: any = {};
-      newErrors.phoneNumber =
-        'Please enter a valid phone number in international format.';
-      setErrors(newErrors);
+      setErrors({
+        phoneNumber:
+          'Please enter a valid phone number in international format.',
+      });
       return;
     }
 
@@ -184,46 +188,33 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
     await proceedWithOTP(formattedPhone);
   };
 
-  const openHtml = (title: string, html: string) => {
-    setHtmlTitle(title);
-    setHtmlContent(html);
-    setShowHtmlModal(true);
-  };
-
-  const onPressTermsAndConditions = async () => {
-    try {
-      setLoading(true);
-      const html = await apiGetTermsAndConditions();
-      openHtml('Terms & Conditions', html);
-    } catch (e: any) {
-      showErrorToast('Unable to load Terms & Conditions.');
-    } finally {
-      setLoading(false);
+  const handleOpenPolicy = (type: 'terms' | 'user' | 'refund') => {
+    let title = '';
+    let htmlContent = '';
+    if (type === 'terms') {
+      title = t('terms_and_conditions') || 'Terms & Conditions';
+      htmlContent =
+        termsContent ||
+        t('terms_and_conditions_content') ||
+        'Here are the Terms & Conditions...';
+    } else if (type === 'user') {
+      title = t('user_agreement') || 'User Agreement';
+      htmlContent =
+        userAgreementContent ||
+        t('user_agreement_content') ||
+        'Here is the User Agreement...';
+    } else if (type === 'refund') {
+      title = t('refund_policy') || 'Refund Policy';
+      htmlContent =
+        refundPolicyContent ||
+        t('refund_policy_content') ||
+        'Here is the Refund Policy...';
     }
-  };
 
-  const onPressUserAgreement = async () => {
-    try {
-      setLoading(true);
-      const html = await apiGetUserAgreement();
-      openHtml('User Agreement', html);
-    } catch (e: any) {
-      showErrorToast('Unable to load User Agreement.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onPressRefundPolicy = async () => {
-    try {
-      setLoading(true);
-      const html = await apiGetRefundPolicy();
-      openHtml('Refund Policy', html);
-    } catch (e: any) {
-      showErrorToast('Unable to load Refund Policy.');
-    } finally {
-      setLoading(false);
-    }
+    navigation.navigate('TermsPolicyScreen', {
+      title,
+      htmlContent,
+    });
   };
 
   return (
@@ -287,47 +278,58 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
               </View>
 
               <View style={styles.termsRow}>
-                <Checkbox
-                  label=""
-                  checked={acceptedPolicies}
-                  onPress={() => {
-                    const newVal = !acceptedPolicies;
-                    setAcceptedPolicies(newVal);
-                    if (newVal) {
-                      setPoliciesError(undefined);
-                    }
-                  }}
-                  color={COLORS.primaryBackgroundButton}
-                />
-                <Text style={styles.termsInlineText}>
-                  I agree to the
-                  <Text
-                    style={[styles.linkText, styles.underlineText]}
-                    onPress={onPressTermsAndConditions}>
-                    {' '}
-                    {`Terms & Conditions`}
-                  </Text>
-                  {`,`}
-                  <Text
-                    style={[styles.linkText, styles.underlineText]}
-                    onPress={onPressUserAgreement}>
-                    {' '}
-                    {`User Agreement`}
-                  </Text>
-                  {` and`}
-                  <Text
-                    style={[styles.linkText, styles.underlineText]}
-                    onPress={onPressRefundPolicy}>
-                    {' '}
-                    {`Refund Policy`}
-                  </Text>
-                  .
+                <TouchableOpacity
+                  style={styles.checkboxContainer}
+                  onPress={() => setIsAgreed(!isAgreed)}
+                  activeOpacity={0.7}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{checked: isAgreed}}
+                  accessibilityLabel="Agree to terms">
+                  <View
+                    style={[
+                      styles.checkbox,
+                      isAgreed && styles.checkboxChecked,
+                    ]}>
+                    {isAgreed && (
+                      <Icon
+                        name="check"
+                        size={moderateScale(16)}
+                        color="#fff"
+                        style={styles.checkboxIcon}
+                      />
+                    )}
+                  </View>
+                </TouchableOpacity>
+                <Text style={styles.termsText}>
+                  {t('i_agree_to') || 'I agree to the '}
+                  <TouchableOpacity
+                    onPress={() => handleOpenPolicy('terms')}
+                    activeOpacity={0.7}>
+                    <Text style={styles.termsLink}>
+                      {t('terms_and_conditions') || 'Terms & Conditions'}
+                    </Text>
+                  </TouchableOpacity>
+                  {', '}
+                  <TouchableOpacity
+                    onPress={() => handleOpenPolicy('user')}
+                    activeOpacity={0.7}>
+                    <Text style={styles.termsLink}>
+                      {t('user_agreement') || 'User Agreement'}
+                    </Text>
+                  </TouchableOpacity>
+                  {' & '}
+                  <TouchableOpacity
+                    onPress={() => handleOpenPolicy('refund')}
+                    activeOpacity={0.7}>
+                    <Text style={styles.termsLink}>
+                      {t('refund_policy') || 'Refund Policy'}
+                    </Text>
+                  </TouchableOpacity>
                 </Text>
               </View>
               {!!policiesError && (
                 <Text style={styles.errorText}>{policiesError}</Text>
               )}
-              {/* Language modal trigger lives in header pill; inline dropdown removed */}
               <Modal
                 visible={languageModalVisible}
                 animationType="fade"
@@ -362,45 +364,10 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
                   </View>
                 </View>
               </Modal>
-              <Modal
-                visible={showHtmlModal}
-                animationType="slide"
-                onRequestClose={() => setShowHtmlModal(false)}
-                transparent={false}>
-                <View style={styles.modalContainer}>
-                  <Text style={styles.modalTitle}>{htmlTitle}</Text>
-                  <View style={styles.modalContentWrapper}>
-                    {htmlContent ? (
-                      <WebView
-                        originWhitelist={['*']}
-                        source={{html: htmlContent}}
-                        startInLoadingState
-                        renderError={() => (
-                          <View style={styles.webviewError}>
-                            <Text>Failed to load content.</Text>
-                          </View>
-                        )}
-                      />
-                    ) : (
-                      <View style={styles.webviewError}>
-                        <Text>No content available.</Text>
-                      </View>
-                    )}
-                  </View>
-                  <PrimaryButton
-                    title={t('close') || 'Close'}
-                    onPress={() => setShowHtmlModal(false)}
-                    style={{
-                      marginHorizontal: moderateScale(16),
-                      marginBottom: moderateScale(16),
-                    }}
-                  />
-                </View>
-              </Modal>
               <PrimaryButton
                 title={t('send_otp')}
                 onPress={handleSignIn}
-                disabled={!acceptedPolicies}
+                disabled={!isAgreed}
               />
             </View>
           </View>
@@ -446,7 +413,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   inputContainer: {
-    marginBottom: 24,
+    marginBottom: moderateScale(8),
   },
   containerHeader: {
     height: moderateScale(220),
@@ -503,59 +470,50 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: moderateScale(12),
   },
-  termsText: {
-    fontSize: moderateScale(12),
-    color: COLORS.primaryTextDark,
-    fontFamily: Fonts.Sen_Regular,
-    marginTop: moderateScale(16),
-    textAlign: 'center',
-  },
-  termsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    // marginTop: moderateScale(12),
-    marginBottom: moderateScale(12),
-  },
-  termsInlineText: {
-    flex: 1,
-    fontSize: moderateScale(12),
-    color: COLORS.primaryTextDark,
-    fontFamily: Fonts.Sen_Regular,
-    marginRight: moderateScale(8),
-  },
-  linkText: {
-    color: COLORS.primaryBackgroundButton,
-  },
-  underlineText: {
-    textDecorationLine: 'underline',
-  },
   errorText: {
     color: '#ef4444',
     fontSize: 12,
     marginTop: 4,
   },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    paddingTop: moderateScale(16),
-  },
-  modalTitle: {
-    fontSize: moderateScale(18),
-    fontFamily: Fonts.Sen_Bold,
-    textAlign: 'center',
-    marginBottom: moderateScale(8),
-  },
-  modalContentWrapper: {
-    flex: 1,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#E5E7EB',
-    marginBottom: moderateScale(12),
-  },
-  webviewError: {
-    flex: 1,
-    justifyContent: 'center',
+  termsRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: moderateScale(16),
+    flexWrap: 'wrap',
+  },
+  checkboxContainer: {
+    marginRight: moderateScale(8),
+    padding: moderateScale(4),
+  },
+  checkbox: {
+    width: moderateScale(20),
+    height: moderateScale(20),
+    borderWidth: 1,
+    borderColor: COLORS.primaryBackgroundButton,
+    borderRadius: 4,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: COLORS.primaryBackgroundButton,
+    borderColor: COLORS.primaryBackgroundButton,
+  },
+  checkboxIcon: {
+    alignSelf: 'center',
+  },
+  termsText: {
+    fontSize: moderateScale(12),
+    color: COLORS.primaryTextDark,
+    fontFamily: Fonts.Sen_Regular,
+    textAlign: 'left',
+    flex: 1,
+    flexWrap: 'wrap',
+  },
+  termsLink: {
+    color: COLORS.primaryBackgroundButton,
+    fontFamily: Fonts.Sen_Bold,
+    textDecorationLine: 'underline',
   },
 });
 

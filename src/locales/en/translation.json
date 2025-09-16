@@ -265,5 +265,14 @@
   "cash_on_delivery": "Cash on Service",
   "pending_pandit": "Pending",
   "delete_account": "Delete Account",
-  "are_you_sure_delete_account": "Are you sure delete account ?"
+  "are_you_sure_delete_account": "Are you sure delete account ?",
+  "i_agree_to": "I agree to the ",
+  "user_agreement": "User Agreement",
+  "refund_policy": "Refund Policy",
+  "terms_and_conditions": "Terms & Conditions",
+  "address_updated_successfully": "Address updated successfully",
+  "address_update_failed": "Failed to update address",
+  "type_your_message": "Type your message...",
+  "no_messages": "No messages",
+  "new_feature_coming_soon": "New feature coming soon!"
 }

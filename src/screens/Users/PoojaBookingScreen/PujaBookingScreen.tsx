@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
@@ -107,6 +107,7 @@ const PujaBookingScreen: React.FC = () => {
   const [muhurats, setMuhurats] = useState<any[]>([]);
   const [panditjiData, setPanditjiData] = useState({});
   const [availableDates, setAvailableDates] = useState<string[] | null>(null);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     fetchLocation();
@@ -560,7 +561,7 @@ const PujaBookingScreen: React.FC = () => {
         };
 
   return (
-    <SafeAreaView style={[styles.container]}>
+    <View style={[styles.container, {paddingTop: insets.top}]}>
       <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
@@ -675,7 +676,7 @@ const PujaBookingScreen: React.FC = () => {
         onConfirm={handlePanditjiSelectionConfirm}
         initialSelection={panditjiSelection}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
