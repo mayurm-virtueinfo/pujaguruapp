@@ -276,9 +276,13 @@ const UserEditProfileScreen: React.FC = () => {
       const image = await ImagePicker.openCamera({
         width: 300,
         height: 300,
-        cropping: true,
-        cropperCircleOverlay: true,
+        // cropping: true,
+        // cropperCircleOverlay: true,
         compressImageQuality: 0.7,
+        // Ensure iOS presents picker/cropper full screen so buttons don't sit under notch
+        modalPresentationStyle: 'fullScreen',
+        mediaType: 'photo',
+        cropperStatusBarLight: true,
       });
       await processImage(image);
     } catch (error: any) {
@@ -294,9 +298,13 @@ const UserEditProfileScreen: React.FC = () => {
       const image = await ImagePicker.openPicker({
         width: 300,
         height: 300,
-        cropping: true,
-        cropperCircleOverlay: true,
+        // cropping: true,
+        // cropperCircleOverlay: true,
         compressImageQuality: 0.7,
+        // Ensure iOS presents picker/cropper full screen so buttons don't sit under notch
+        modalPresentationStyle: 'fullScreen',
+        mediaType: 'photo',
+        cropperStatusBarLight: true,
       });
       await processImage(image);
     } catch (error: any) {

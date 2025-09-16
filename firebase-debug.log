@@ -620,3 +620,4 @@ Issues? Report them at https://github.com/firebase/firebase-tools/issues and att
 
 Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
  
+[info] i  To verify the phone number +911111111111, use the code 725035. {"metadata":{"emulator":{"name":"auth"},"message":"To verify the phone number +911111111111, use the code 725035."}}

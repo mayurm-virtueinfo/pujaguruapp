@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -88,8 +88,40 @@ const UserHomeScreen: React.FC = () => {
       fetchPendingPujas();
       fetchRecommendedPandits();
       fetchTodayPanchang();
+      // Start silent polling while focused
+      startHomePolling();
+      // Cleanup on unfocus
+      return () => stopHomePolling();
     }, []),
   );
+
+  // Polling controls for silent refresh
+  const homePollingTimerRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
+  const isHomeRefreshingRef = useRef<boolean>(false);
+
+  const startHomePolling = () => {
+    if (homePollingTimerRef.current) {
+      clearInterval(homePollingTimerRef.current);
+    }
+    homePollingTimerRef.current = setInterval(async () => {
+      if (isHomeRefreshingRef.current) return;
+      isHomeRefreshingRef.current = true;
+      try {
+        await refreshListsSilently();
+      } finally {
+        isHomeRefreshingRef.current = false;
+      }
+    }, 7000);
+  };
+
+  const stopHomePolling = () => {
+    if (homePollingTimerRef.current) {
+      clearInterval(homePollingTimerRef.current);
+      homePollingTimerRef.current = null;
+    }
+  };
 
   const fetchUserAndLocation = async () => {
     try {
@@ -149,6 +181,34 @@ const UserHomeScreen: React.FC = () => {
       setPendingPujas([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Silent refresh for lists without toggling the global loader
+  const refreshListsSilently = async () => {
+    try {
+      const [upcoming, inProgress, active]: any = await Promise.all([
+        getUpcomingPujas().catch(() => []),
+        getInProgress().catch(() => []),
+        getActivePuja().catch(() => ({booking: []})),
+      ]);
+
+      // Upcoming
+      setPujas(Array.isArray(upcoming) ? upcoming : []);
+
+      // In-progress
+      setInProgressPujas(Array.isArray(inProgress) ? inProgress : []);
+
+      // Pending (normalize to array)
+      let bookings: PendingPuja[] = [];
+      if (Array.isArray(active?.booking)) {
+        bookings = active.booking;
+      } else if (active?.booking) {
+        bookings = [active.booking];
+      }
+      setPendingPujas(bookings);
+    } catch (e) {
+      // keep silent
     }
   };
 

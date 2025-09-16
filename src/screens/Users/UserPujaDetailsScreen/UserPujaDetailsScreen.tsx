@@ -51,19 +51,23 @@ const UserPujaDetailsScreen: React.FC = () => {
 
   // Track if we've already handled the in-progress pin logic
   const hasHandledInProgressPin = useRef(false);
+  // Polling controls
+  const pollingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isFetchingRef = useRef<boolean>(false);
 
   console.log('pujaDetails :: ', pujaDetails);
 
   // Helper to reload puja details
-  const fetchPujaDetails = async () => {
-    setLoading(true);
+  const fetchPujaDetails = async (options?: {silent?: boolean}) => {
+    const silent = options?.silent === true;
+    if (!silent) setLoading(true);
     try {
       const details = await getUpcomingPujaDetails(id?.toString());
       setPujaDetails(details);
     } catch (error) {
       setPujaDetails(null);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -74,6 +78,27 @@ const UserPujaDetailsScreen: React.FC = () => {
       hasNavigatedToRate.current = false;
       prevBookingStatus.current = null;
       hasHandledInProgressPin.current = false;
+      // Start polling while focused
+      if (pollingTimerRef.current) {
+        clearInterval(pollingTimerRef.current);
+      }
+      pollingTimerRef.current = setInterval(async () => {
+        if (isFetchingRef.current) return;
+        isFetchingRef.current = true;
+        try {
+          await fetchPujaDetails({silent: true});
+        } finally {
+          isFetchingRef.current = false;
+        }
+      }, 5000);
+
+      // Cleanup on unfocus
+      return () => {
+        if (pollingTimerRef.current) {
+          clearInterval(pollingTimerRef.current);
+          pollingTimerRef.current = null;
+        }
+      };
     }, [id]),
   );
 
@@ -110,24 +135,19 @@ const UserPujaDetailsScreen: React.FC = () => {
       // Update previous booking status for next render
       prevBookingStatus.current = pujaDetails.booking_status;
     }
-  }, [pujaDetails, navigation]);
-
-  // Poll for booking status updates until completed, then stop
-  useEffect(() => {
-    if (!pujaDetails || hasNavigatedToRate.current) {
-      return;
+    // Stop polling on terminal states to avoid unnecessary network calls
+    if (
+      pujaDetails &&
+      ['completed', 'cancelled', 'rejected'].includes(
+        pujaDetails.booking_status,
+      )
+    ) {
+      if (pollingTimerRef.current) {
+        clearInterval(pollingTimerRef.current);
+        pollingTimerRef.current = null;
+      }
     }
-
-    if (pujaDetails.booking_status !== 'completed') {
-      const intervalId = setInterval(() => {
-        fetchPujaDetails();
-      }, 10000);
-
-      return () => clearInterval(intervalId);
-    }
-
-    return;
-  }, [pujaDetails?.booking_status, hasNavigatedToRate.current]);
+  }, [pujaDetails?.booking_status, pujaDetails?.assigned_pandit, navigation]);
 
   const handlePujaItemsPress = () => {
     setIsPujaItemsModalVisible(true);
