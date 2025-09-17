@@ -52,6 +52,7 @@ import ApiEndpoints, {
   GET_TERMS_AND_CONDITIONS,
   GET_USER_AGREEMENT,
   GET_REFUND_POLICY,
+  POST_CREATE_MEETING,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -1597,6 +1598,21 @@ export const getRefundPolicy = (): Promise<any> => {
       })
       .catch(error => {
         console.error('Error fetching refund policy', error);
+        reject(error);
+      });
+  });
+};
+
+export const postCreateMeeting = (data: any): Promise<any> => {
+  let apiUrl = POST_CREATE_MEETING;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error in registering fcm token :: ', error);
         reject(error);
       });
   });

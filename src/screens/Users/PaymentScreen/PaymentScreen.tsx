@@ -96,8 +96,6 @@ const PaymentScreen: React.FC = () => {
     'online' | 'cod'
   >('online');
 
-  console.log('walletData :: ', walletData);
-
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {

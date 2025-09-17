@@ -37,7 +37,7 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const APP_URL = 'https://f23a9bbf9a52.ngrok-free.app';
+export const APP_URL = 'https://38d379985af2.ngrok-free.app';
 // export const APP_URL = 'https://puja-guru.com';
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
@@ -98,3 +98,4 @@ export const POST_DELETE_ACCOUNT = '/app/delete-user/';
 export const GET_TERMS_AND_CONDITIONS = '/app/policies/page/terms/';
 export const GET_USER_AGREEMENT = '/app/policies/page/user_agreement/';
 export const GET_REFUND_POLICY = '/app/policies/page/refund_policy/';
+export const POST_CREATE_MEETING = '/api/chat/create_meeting/';

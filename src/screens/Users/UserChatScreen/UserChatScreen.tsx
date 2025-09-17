@@ -7,10 +7,12 @@ import ChatMessages from '../../../components/ChatMessages';
 import ChatInput from '../../../components/ChatInput';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useFocusEffect, useRoute} from '@react-navigation/native';
-import {getChatHistory} from '../../../api/apiService';
+import {getChatHistory, postCreateMeeting} from '../../../api/apiService';
 import CustomeLoader from '../../../components/CustomeLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
+import {useTranslation} from 'react-i18next';
+import {useCommonToast} from '../../../common/CommonToast';
 
 export interface Message {
   id: string;
@@ -31,8 +33,10 @@ const UserChatScreen: React.FC = () => {
 
   const ws = useRef<WebSocket | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+  const {showErrorToast, showSuccessToast} = useCommonToast();
 
   const inset = useSafeAreaInsets();
+  const {t} = useTranslation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,16 +47,34 @@ const UserChatScreen: React.FC = () => {
         const uid = await AsyncStorage.getItem(AppConstant.USER_ID);
         setAccessToken(access_token || '');
         setUserId(uid ? Number(uid) : null);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching auth data:', error);
+        showErrorToast(error?.response?.data?.message);
       }
     };
     fetchData();
   }, []);
 
+  const createMeeting = async () => {
+    try {
+      const payload = {
+        booking_id: booking_id,
+      };
+      const response = await postCreateMeeting(payload);
+
+      if (response) {
+        console.log('respose of video call :: ', response);
+      }
+    } catch (error: any) {
+      console.error('Error fetching auth data:', error);
+    }
+  };
+
   useEffect(() => {
     if (accessToken && booking_id) {
-      let socketURL = `ws://puja-guru.com:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
+      // let socketURL = `ws://puja-guru.com:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
+      let socketURL = `ws://192.168.1.6:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
+
       if (socketURL.startsWith('ws://') && !__DEV__) {
         socketURL = socketURL.replace('ws://', 'wss://');
       }
@@ -160,7 +182,8 @@ const UserChatScreen: React.FC = () => {
         <UserCustomHeader
           title={pandit_name}
           showBackButton={true}
-          showCallButton={true}
+          showVideoCallButton={true}
+          onVideoButtonPress={createMeeting}
         />
         <View style={styles.chatContainer}>
           <ScrollView
@@ -170,7 +193,7 @@ const UserChatScreen: React.FC = () => {
             showsVerticalScrollIndicator={false}>
             {messages.length === 0 && !loading ? (
               <View style={styles.noMessagesContainer}>
-                <Text style={styles.noMessagesText}>(t{'no_messages'})</Text>
+                <Text style={styles.noMessagesText}>{t('no_messages')}</Text>
               </View>
             ) : (
               <ChatMessages messages={messages} />

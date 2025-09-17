@@ -29,11 +29,13 @@ interface UserCustomHeaderProps {
   showBellButton?: boolean;
   showCirclePlusButton?: boolean;
   showCallButton?: boolean;
+  showVideoCallButton?: boolean;
   showSliderButton?: boolean;
   showSkipButton?: boolean;
   onPlusPress?: () => void;
   onBackPress?: () => void;
   onNotificationPress?: () => void;
+  onVideoButtonPress?: () => void;
 }
 
 const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
@@ -45,9 +47,11 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
   showCallButton = false,
   showSliderButton = false,
   showSkipButton = false,
+  showVideoCallButton = false,
   onPlusPress,
   onBackPress,
   onNotificationPress,
+  onVideoButtonPress,
 }) => {
   const {t, i18n} = useTranslation();
   const navigation = useNavigation();
@@ -134,6 +138,17 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
                 onPress={() => console.log('Call Icon pressed')}
                 style={styles.iconButton}>
                 <Ionicons name="call-outline" size={24} color={COLORS.white} />
+              </TouchableOpacity>
+            )}
+            {showVideoCallButton && (
+              <TouchableOpacity
+                onPress={onVideoButtonPress}
+                style={styles.iconButton}>
+                <Ionicons
+                  name="videocam-outline"
+                  size={24}
+                  color={COLORS.white}
+                />
               </TouchableOpacity>
             )}
             {showSliderButton && (
