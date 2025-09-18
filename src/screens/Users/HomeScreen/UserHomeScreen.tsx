@@ -113,7 +113,7 @@ const UserHomeScreen: React.FC = () => {
       } finally {
         isHomeRefreshingRef.current = false;
       }
-    }, 7000);
+    }, 10000);
   };
 
   const stopHomePolling = () => {

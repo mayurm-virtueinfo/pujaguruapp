@@ -203,6 +203,7 @@ const PaymentScreen: React.FC = () => {
           booking_id: bookingIdForOrder,
           latitude: location?.latitude,
           longitude: location?.longitude,
+          is_cos: selectedPaymentMethod === 'cod',
           ...(walletUseAmount > 0 && {
             amount_to_pay_from_wallet_input: walletUseAmount,
           }),
@@ -210,6 +211,8 @@ const PaymentScreen: React.FC = () => {
             payment_mode: 'cod',
           }),
         };
+        console.log('postCreateRazorpayOrder payload :: ', requestData);
+
         const response: any = await postCreateRazorpayOrder(requestData);
         if (response?.data?.order_id || response?.data?.booking_id) {
           setOrderId(response.data.order_id || response?.data?.booking_id);
