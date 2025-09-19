@@ -54,6 +54,38 @@ const formatDateYYYYMMDD = (date: Date | string) => {
   return `${year}-${month}-${day}`;
 };
 
+const isDateInPast = (dateStr: string) => {
+  if (!dateStr) return false;
+  const todayStr = formatDateYYYYMMDD(new Date());
+  // YYYY-MM-DD lexical comparison matches chronological order
+  return dateStr < todayStr;
+};
+
+const isToday = (dateStr: string) => {
+  if (!dateStr) return false;
+  const todayStr = formatDateYYYYMMDD(new Date());
+  return dateStr === todayStr;
+};
+
+const parseTimeToMinutes = (timeStr: string): number | null => {
+  if (!timeStr || typeof timeStr !== 'string') return null;
+  const trimmed = timeStr.trim();
+
+  const ampmMatch = trimmed.match(/^\s*(\d{1,2}):(\d{2})\s*([AaPp][Mm])?\s*$/);
+  if (!ampmMatch) return null;
+  let hours = parseInt(ampmMatch[1], 10);
+  const minutes = parseInt(ampmMatch[2], 10);
+  const meridian = ampmMatch[3]?.toLowerCase();
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+  if (meridian) {
+    // Convert to 24h
+    if (meridian === 'pm' && hours !== 12) hours += 12;
+    if (meridian === 'am' && hours === 12) hours = 0;
+  }
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+  return hours * 60 + minutes;
+};
+
 const PujaBookingScreen: React.FC = () => {
   const {t} = useTranslation();
   const navigation =
@@ -105,7 +137,6 @@ const PujaBookingScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [location, setLocation] = useState<any>(null);
   const [muhurats, setMuhurats] = useState<any[]>([]);
-  const [panditjiData, setPanditjiData] = useState({});
   const [availableDates, setAvailableDates] = useState<string[] | null>(null);
   const insets = useSafeAreaInsets();
 
@@ -265,11 +296,33 @@ const PujaBookingScreen: React.FC = () => {
       selectedDateISO = formatDateYYYYMMDD(selectedDateISO);
     }
 
+    // Past date validation
+    if (isDateInPast(selectedDateISO)) {
+      showErrorToast(
+        t('cannot_select_past_date') || 'You cannot select a past date.',
+      );
+      return;
+    }
+
     let muhuratTime = '';
     let muhuratType = '';
     if (selectedSlotObj) {
       muhuratTime = `${selectedSlotObj.start} - ${selectedSlotObj.end}`;
       muhuratType = selectedSlotObj.type;
+    }
+
+    // For today, ensure muhurat start time is in the future
+    if (isToday(selectedDateISO) && selectedSlotObj) {
+      const startMinutes = parseTimeToMinutes(selectedSlotObj.start);
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      if (startMinutes !== null && startMinutes <= nowMinutes) {
+        showErrorToast(
+          t('muhurat_time_passed') ||
+            'Selected muhurat has already passed. Choose a future slot.',
+        );
+        return;
+      }
     }
 
     if (panditId) {
@@ -354,6 +407,28 @@ const PujaBookingScreen: React.FC = () => {
         t('please_select_muhurat_slot') || 'Please select a muhurat slot.',
       );
       return;
+    }
+
+    // Past date validation
+    if (isDateInPast(selectedDateISO)) {
+      showErrorToast(
+        t('cannot_select_past_date') || 'You cannot select a past date.',
+      );
+      return;
+    }
+
+    // For today, ensure muhurat start time is in the future
+    if (isToday(selectedDateISO) && selectedSlotObj) {
+      const startMinutes = parseTimeToMinutes(selectedSlotObj.start);
+      const now = new Date();
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      if (startMinutes !== null && startMinutes <= nowMinutes) {
+        showErrorToast(
+          t('muhurat_time_passed') ||
+            'Selected muhurat has already passed. Choose a future slot.',
+        );
+        return;
+      }
     }
 
     const navigationParams: any = {

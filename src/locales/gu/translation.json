@@ -213,6 +213,8 @@
   "oops": "અરે!",
   "pandit_city_mismatch": "પસંદ કરેલ સરનામું શહેર ({{selectedCity}}) પંડિતજીના શહેર ({{panditCity}}) સાથે મેળ ખાતું નથી. કૃપા કરીને બીજું સરનામું પસંદ કરો અથવા હોમ પર જાઓ.",
   "choose_another_address": "બીજું સરનામું પસંદ કરો",
+  "cannot_select_past_date": "તમે ભૂતકાળની તારીખ પસંદ કરી શકતા નથી.",
+  "muhurat_time_passed": "પસંદ કરેલો મુહૂર્ત પસાર થઈ ગયો છે. કૃપા કરીને આગળનો સ્લોટ પસંદ કરો.",
   "select_payment_method": "ચુકવણી પદ્ધતિ પસંદ કરો",
   "pay_online": "ઓનલાઇન ચુકવણી",
   "cash_on_delivery": "સેવામાં રોકડ",

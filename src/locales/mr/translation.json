@@ -201,6 +201,8 @@
   "user_agreement": "वापरकर्ता करार",
   "refund_policy": "परतावा धोरण",
   "terms_and_conditions": "अटी आणि शर्ती",
+  "cannot_select_past_date": "आपण भूतकाळातील तारीख निवडू शकत नाही.",
+  "muhurat_time_passed": "निवडलेला मुहूर्त वेळ निघून गेला आहे. कृपया पुढील स्लॉट निवडा.",
   "something_went_wrong": "काहीतरी चुकले आहे.",
   "loading": "लोड होत आहे...",
   "no_data_found": "माहिती सापडली नाही.",

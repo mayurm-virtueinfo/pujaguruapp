@@ -98,9 +98,16 @@ export function handleNotificationNavigation(data: any) {
       }
     }, 500);
   } else if (data?.screen === 'ChatScreen') {
-    const targetScreen = data?.navigation;
+    const targetScreen = data?.navigation || data?.pujaguru_app_screen;
     const booking_id = data?.booking_id;
     const pandit_id = data?.sender_id;
+    const video_call = data?.video_call || false;
+
+    console.log('-------------------------------');
+    console.log('data :: ', data);
+    console.log('targetScreen :: ', targetScreen);
+    console.log('booking_id :: ', booking_id);
+    console.log('video_call :: ', video_call);
 
     const nestedParams = {
       screen: 'UserAppBottomTabNavigator',
@@ -112,6 +119,7 @@ export function handleNotificationNavigation(data: any) {
               params: {
                 booking_id,
                 pandit_id,
+                video_call,
               },
             }
           : {
@@ -129,6 +137,49 @@ export function handleNotificationNavigation(data: any) {
       }
     }, 500);
   }
+  // } else if (data?.pujaguru_app_screen === 'UserChatScreen') {
+  //   const booking_id = data?.booking_id;
+  //   const video_call = data?.video_call;
+  //   const targetScreen = data?.pujaguru_app_screen;
+
+  //   // const nestedParams = {
+  //   //   screen: 'UserAppBottomTabNavigator',
+  //   //   params: {
+  //   //     screen: 'UserHomeNavigator',
+  //   //     params: {
+  //   //       screen: 'UserChatScreen',
+  //   //       params: {
+  //   //         booking_id,
+  //   //         video_call: video_call,
+  //   //       },
+  //   //     },
+  //   //   },
+  //   // };
+
+  //   console.log('-------- in user chat screen notification -------');
+
+  //   const nestedParams = {
+  //     screen: 'UserAppBottomTabNavigator',
+  //     params: {
+  //       screen: 'UserHomeNavigator',
+  //       params: {
+  //         screen: 'UserChatScreen',
+  //         params: {
+  //           booking_id,
+  //           video_call,
+  //         },
+  //       },
+  //     },
+  //   };
+
+  //   setTimeout(() => {
+  //     if (navigationRef.isReady()) {
+  //       navigate('Main', nestedParams);
+  //     } else {
+  //       console.warn('Navigation not ready yet');
+  //     }
+  //   }, 500);
+  // }
 }
 
 export function cleanupNotifications() {

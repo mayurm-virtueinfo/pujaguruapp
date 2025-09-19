@@ -260,6 +260,8 @@
   "oops": "Oops",
   "pandit_city_mismatch": "Selected address city ({{selectedCity}}) does not match the Panditji's city ({{panditCity}}). Please choose another address or go to Home.",
   "choose_another_address": "CHOOSE ANOTHER ADDRESS",
+  "cannot_select_past_date": "You cannot select a past date.",
+  "muhurat_time_passed": "Selected muhurat has already passed. Choose a future slot.",
   "select_payment_method": "Select Payment Method",
   "pay_online": "Pay Online",
   "cash_on_delivery": "Cash on Service",

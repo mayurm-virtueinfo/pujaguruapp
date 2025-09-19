@@ -295,6 +295,8 @@
   "without_puja_items": "पूजा सामग्री के बिना",
   "select_state_first": "कृपया पहले राज्य चुनें",
   "location_fetch_failed": "स्थान प्राप्त करने में विफल। कृपया पुनः प्रयास करें।",
+  "cannot_select_past_date": "आप पिछली तारीख नहीं चुन सकते।",
+  "muhurat_time_passed": "चयनित मुहूर्त बीत चुका है। कृपया आगे का स्लॉट चुनें।",
   "select_payment_method": "भुगतान विधि चुनें",
   "pay_online": "ऑनलाइन भुगतान",
   "cash_on_delivery": "सेवा पर नकद",
