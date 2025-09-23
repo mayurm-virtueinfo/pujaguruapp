@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   Image,
   Platform,
+  Alert,
+  BackHandler,
 } from 'react-native';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import PrimaryButton from '../../../components/PrimaryButton';
@@ -90,6 +92,8 @@ const PaymentScreen: React.FC = () => {
   const [walletData, setWalletData] = useState<any>({});
   const [location, setLocation] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isProcessingPayment, setIsProcessingPayment] =
+    useState<boolean>(false);
 
   // Cash on option state
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
@@ -123,6 +127,60 @@ const PaymentScreen: React.FC = () => {
     fetchLocation();
     fetchWallet();
   }, []);
+
+  // Prevent navigating back while payment is in progress
+  useEffect(() => {
+    const beforeRemove = navigation.addListener('beforeRemove', e => {
+      if (!isProcessingPayment && !loading) {
+        return;
+      }
+      e.preventDefault();
+      Alert.alert(
+        'Payment in progress',
+        'Are you sure you want to cancel the payment?',
+        [
+          {text: 'Stay', style: 'cancel'},
+          {
+            text: 'Cancel Payment',
+            style: 'destructive',
+            onPress: () => {
+              setIsProcessingPayment(false);
+              setIsLoading(false);
+              navigation.dispatch(e.data.action);
+            },
+          },
+        ],
+      );
+    });
+
+    const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!isProcessingPayment && !loading) {
+        return false;
+      }
+      Alert.alert(
+        'Payment in progress',
+        'Are you sure you want to cancel the payment?',
+        [
+          {text: 'Stay', style: 'cancel'},
+          {
+            text: 'Cancel Payment',
+            style: 'destructive',
+            onPress: () => {
+              setIsProcessingPayment(false);
+              setIsLoading(false);
+              navigation.goBack();
+            },
+          },
+        ],
+      );
+      return true;
+    });
+
+    return () => {
+      beforeRemove();
+      backSub.remove();
+    };
+  }, [navigation, isProcessingPayment, loading]);
 
   const fetchLocation = async () => {
     try {
@@ -303,6 +361,7 @@ const PaymentScreen: React.FC = () => {
     }
 
     try {
+      setIsProcessingPayment(true);
       const walletBalance = getWalletBalance();
       const totalPrice = grossAmount; // include tax in payable
       const walletUseAmount = usePoints
@@ -408,6 +467,8 @@ const PaymentScreen: React.FC = () => {
       } else {
         showErrorToast(error?.message || 'Payment process failed');
       }
+    } finally {
+      setIsProcessingPayment(false);
     }
   };
 
@@ -559,7 +620,10 @@ const PaymentScreen: React.FC = () => {
     <View style={[styles.safeArea, {paddingTop: inset.top}]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <View style={styles.contentContainer}>
-        <UserCustomHeader title={t('payment')} showBackButton={true} />
+        <UserCustomHeader
+          title={t('payment')}
+          showBackButton={!loading && !isProcessingPayment}
+        />
         <View style={styles.flex1}>
           <ScrollView
             style={styles.scrollView}
@@ -702,7 +766,7 @@ const PaymentScreen: React.FC = () => {
               onPress={handlePayment}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}
-              disabled={loading}
+              disabled={loading || isProcessingPayment}
             />
           </View>
         </View>

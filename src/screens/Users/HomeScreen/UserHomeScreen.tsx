@@ -35,6 +35,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import PrimaryButton from '../../../components/PrimaryButton';
 import {getLocationForAPI} from '../../../helper/helper';
+import {requestLocationPermission} from '../../../utils/locationUtils';
 
 interface PendingPuja {
   id: number;
@@ -59,6 +60,7 @@ const UserHomeScreen: React.FC = () => {
   const [recomendedPandits, setRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
+
   // const [todayPanchang, setTodayPanchang] = useState<string | null>(null);
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
@@ -69,7 +71,7 @@ const UserHomeScreen: React.FC = () => {
     const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === 'active') {
         console.log('App active - refreshing location data');
-        fetchRecommendedPandits();
+        loadHomeData();
         // fetchTodayPanchang();
       }
     };
@@ -83,19 +85,12 @@ const UserHomeScreen: React.FC = () => {
 
   useFocusEffect(
     React.useCallback(() => {
-      fetchUpcomingPujas();
-      fetchInProgressPujas();
-      fetchPendingPujas();
-      fetchRecommendedPandits();
-      // fetchTodayPanchang();
-      // Start silent polling while focused
+      loadHomeData();
       startHomePolling();
-      // Cleanup on unfocus
       return () => stopHomePolling();
     }, []),
   );
 
-  // Polling controls for silent refresh
   const homePollingTimerRef = useRef<ReturnType<typeof setInterval> | null>(
     null,
   );
@@ -137,54 +132,6 @@ const UserHomeScreen: React.FC = () => {
     }
   };
 
-  const fetchUpcomingPujas = async () => {
-    setLoading(true);
-    try {
-      const response: any = await getUpcomingPujas();
-      setPujas(response || []);
-    } catch (error) {
-      console.error('Error fetching upcoming puja data:', error);
-      setPujas([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchInProgressPujas = async () => {
-    setLoading(true);
-    try {
-      const response: any = await getInProgress();
-      setInProgressPujas(response || []);
-    } catch (error) {
-      console.error('Error fetching in-progress puja data:', error);
-      setInProgressPujas([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPendingPujas = async () => {
-    setLoading(true);
-    try {
-      const response: any = await getActivePuja();
-      let bookings: PendingPuja[] = [];
-      if (Array.isArray(response?.booking)) {
-        bookings = response.booking;
-      } else if (response?.booking) {
-        bookings = [response.booking];
-      } else {
-        bookings = [];
-      }
-      setPendingPujas(bookings);
-    } catch (error) {
-      console.error('Error fetching pending puja data:', error);
-      setPendingPujas([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Silent refresh for lists without toggling the global loader
   const refreshListsSilently = async () => {
     try {
       const [upcoming, inProgress, active]: any = await Promise.all([
@@ -212,52 +159,74 @@ const UserHomeScreen: React.FC = () => {
     }
   };
 
-  const fetchRecommendedPandits = async () => {
+  // Load all home data together to control the global loader
+  const loadHomeData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
+      // Ensure permission is requested up front in release as well
+      const granted = await requestLocationPermission();
+      if (!granted) {
+        // no-op UI
+      }
 
       const locationData = await getLocationForAPI();
-
+      let latNum: number | null = null;
+      let lngNum: number | null = null;
       if (locationData) {
-        const response = await getRecommendedPandit(
-          locationData.latitude,
-          locationData.longitude,
-        );
-
-        if (response && Array.isArray(response.data)) {
-          setRecomendedPandits(response.data || []);
-        }
+        latNum = Number(locationData.latitude);
+        lngNum = Number(locationData.longitude);
       } else {
-        console.warn('No location available for recommended pandits');
+        // Retry once after a short delay (first fix for release race conditions)
+        await new Promise(r => setTimeout(r, 1000));
+        const retryLoc = await getLocationForAPI();
+        if (retryLoc) {
+          latNum = Number(retryLoc.latitude);
+          lngNum = Number(retryLoc.longitude);
+        }
       }
-    } catch (error: any) {
-      if (
-        Platform.OS === 'ios' &&
-        error?.response?.status === 403 &&
-        error?.response?.data?.detail ===
-          'Authentication credentials were not provided.'
-      ) {
-        Alert.alert(
-          t('error'),
-          t('authentication_credentials_not_provided') ||
-            'Authentication credentials were not provided. Please login again.',
-        );
-        return;
+
+      const [upcoming, inProgress, active, recommended]: any =
+        await Promise.all([
+          getUpcomingPujas().catch(() => []),
+          getInProgress().catch(() => []),
+          getActivePuja().catch(() => ({booking: []})),
+          latNum !== null && lngNum !== null
+            ? getRecommendedPandit(latNum as any, lngNum as any).catch(() => [])
+            : Promise.resolve([]),
+        ]);
+
+      // Upcoming
+      setPujas(Array.isArray(upcoming) ? upcoming : []);
+
+      // In-progress
+      setInProgressPujas(Array.isArray(inProgress) ? inProgress : []);
+
+      // Pending (normalize to array)
+      let bookings: PendingPuja[] = [];
+      if (Array.isArray(active?.booking)) {
+        bookings = active.booking;
+      } else if (active?.booking) {
+        bookings = [active.booking];
       }
-      console.error(
-        'Error fetching recommended pandits:',
-        error.response?.data,
-      );
+      setPendingPujas(bookings);
+
+      // Recommended (support array or {data:[]})
+      if (Array.isArray(recommended)) {
+        setRecomendedPandits(recommended);
+      } else if (recommended && Array.isArray((recommended as any).data)) {
+        setRecomendedPandits((recommended as any).data || []);
+      } else {
+        setRecomendedPandits([]);
+      }
+    } catch (e) {
+      // keep UI safe defaults
+      setPujas([]);
+      setInProgressPujas([]);
+      setPendingPujas([]);
+      setRecomendedPandits([]);
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = `${date.getMonth() + 1}`.padStart(2, '0');
-    const day = `${date.getDate()}`.padStart(2, '0');
-    return `${year}-${month}-${day}`;
   };
 
   // const fetchTodayPanchang = async () => {
@@ -313,6 +282,7 @@ const UserHomeScreen: React.FC = () => {
         // showBellButton={true}
         // onNotificationPress={handleNotificationPress}
       />
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Recommended Panditji Section */}
         <View style={styles.section}>

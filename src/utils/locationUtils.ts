@@ -75,8 +75,8 @@ export const getCurrentLocation = (): Promise<LocationData> => {
         },
         {
           enableHighAccuracy: highAccuracy,
-          timeout: 15000,
-          maximumAge: 10000,
+          timeout: 25000, // longer timeout helps release builds cold start
+          maximumAge: 0, // avoid stale cached values on first boot
         },
       );
     };

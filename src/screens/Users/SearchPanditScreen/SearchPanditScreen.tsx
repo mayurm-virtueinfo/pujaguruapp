@@ -69,8 +69,8 @@ const SearchPanditScreen: React.FC = () => {
         }
       }, 60 * 1000);
 
+      let socketURL = `ws://192.168.1.24:9000/ws/bookings/${bookingId}/`;
       // let socketURL = `ws://puja-guru.com:9000/ws/bookings/${bookingId}/`;
-      let socketURL = `ws://192.168.1.6:9000/ws/bookings/${bookingId}/`;
 
       if (socketURL.startsWith('ws://') && !__DEV__) {
         socketURL = socketURL.replace('ws://', 'wss://');
@@ -190,6 +190,25 @@ const SearchPanditScreen: React.FC = () => {
       <UserCustomHeader
         title={t('search_pandit_screen_title')}
         showBackButton={true}
+        onBackPress={() =>
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [
+                {
+                  name: 'Main' as never,
+                  params: {
+                    screen: 'UserAppBottomTabNavigator',
+                    params: {
+                      screen: 'UserHomeNavigator',
+                      params: {screen: 'UserHomeScreen'},
+                    },
+                  } as never,
+                },
+              ],
+            }),
+          )
+        }
       />
 
       <View style={styles.contentWrapper}>

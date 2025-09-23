@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
 import {postCancelBooking} from '../../../api/apiService';
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
@@ -33,7 +33,7 @@ interface CancellationReason {
 const PujaCancellationScreen = () => {
   const inset = useSafeAreaInsets();
   const route = useRoute();
-  const navigation = useNavigation<UserPoojaListParamList>();
+  const navigation = useNavigation<any>();
   const {t} = useTranslation();
   const {id} = route.params as any;
   const [cancellationReasons] = useState<CancellationReason[]>([
@@ -87,7 +87,23 @@ const PujaCancellationScreen = () => {
       console.log('payload :: ', payload);
       await postCancelBooking(id, payload);
       showSuccessToast(t('cancellation_submitted_successfully'));
-      navigation.goBack();
+      const parentNavigator = navigation.getParent?.();
+      if (parentNavigator) {
+        parentNavigator.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [
+              {
+                name: 'UserHomeNavigator',
+                state: {
+                  index: 0,
+                  routes: [{name: 'UserHomeScreen'}],
+                },
+              },
+            ],
+          }),
+        );
+      }
     } catch (error: any) {
       console.log('error in cancel booking api :: ', error?.response?.data);
       showErrorToast(
