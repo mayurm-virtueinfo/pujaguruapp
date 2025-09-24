@@ -37,7 +37,7 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-export const APP_URL = 'https://6d01f6f5f296.ngrok-free.app';
+export const APP_URL = 'https://9cea2874ab1c.ngrok-free.app';
 // export const APP_URL = 'https://puja-guru.com';
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';

@@ -240,7 +240,7 @@ const AddressSelectionScreen: React.FC = () => {
                             style={styles.pricingOption}
                             activeOpacity={0.7}
                             onPress={() => handleSelectAddress(place.id)}>
-                            <View>
+                            <View style={styles.textContainer}>
                               <Text style={styles.pricingText}>
                                 {place.address_type}
                               </Text>
@@ -339,6 +339,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     minHeight: 44,
     paddingVertical: 8,
+  },
+  textContainer: {
+    flex: 1,
+    paddingRight: 12,
   },
   pricingText: {
     fontSize: 15,

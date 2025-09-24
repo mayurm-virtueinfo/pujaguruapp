@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {
   View,
   Text,
@@ -65,60 +65,7 @@ const UserHomeScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
 
-  useEffect(() => {
-    fetchUserAndLocation();
-
-    const handleAppStateChange = (nextAppState: string) => {
-      if (nextAppState === 'active') {
-        console.log('App active - refreshing location data');
-        loadHomeData();
-        // fetchTodayPanchang();
-      }
-    };
-
-    const subscription = AppState.addEventListener(
-      'change',
-      handleAppStateChange,
-    );
-    return () => subscription?.remove();
-  }, []);
-
-  useFocusEffect(
-    React.useCallback(() => {
-      loadHomeData();
-      startHomePolling();
-      return () => stopHomePolling();
-    }, []),
-  );
-
-  const homePollingTimerRef = useRef<ReturnType<typeof setInterval> | null>(
-    null,
-  );
-  const isHomeRefreshingRef = useRef<boolean>(false);
-
-  const startHomePolling = () => {
-    if (homePollingTimerRef.current) {
-      clearInterval(homePollingTimerRef.current);
-    }
-    homePollingTimerRef.current = setInterval(async () => {
-      if (isHomeRefreshingRef.current) return;
-      isHomeRefreshingRef.current = true;
-      try {
-        await refreshListsSilently();
-      } finally {
-        isHomeRefreshingRef.current = false;
-      }
-    }, 10000);
-  };
-
-  const stopHomePolling = () => {
-    if (homePollingTimerRef.current) {
-      clearInterval(homePollingTimerRef.current);
-      homePollingTimerRef.current = null;
-    }
-  };
-
-  const fetchUserAndLocation = async () => {
+  const fetchUserAndLocation = useCallback(async () => {
     try {
       const user = await AsyncStorage.getItem(AppConstant.USER_ID);
       setUser(user);
@@ -130,78 +77,44 @@ const UserHomeScreen: React.FC = () => {
     } catch (error) {
       console.error('Error fetching user and location:', error);
     }
-  };
+  }, []);
 
-  const refreshListsSilently = async () => {
-    try {
-      const [upcoming, inProgress, active]: any = await Promise.all([
-        getUpcomingPujas().catch(() => []),
-        getInProgress().catch(() => []),
-        getActivePuja().catch(() => ({booking: []})),
-      ]);
-
-      // Upcoming
-      setPujas(Array.isArray(upcoming) ? upcoming : []);
-
-      // In-progress
-      setInProgressPujas(Array.isArray(inProgress) ? inProgress : []);
-
-      // Pending (normalize to array)
-      let bookings: PendingPuja[] = [];
-      if (Array.isArray(active?.booking)) {
-        bookings = active.booking;
-      } else if (active?.booking) {
-        bookings = [active.booking];
-      }
-      setPendingPujas(bookings);
-    } catch (e) {
-      // keep silent
-    }
-  };
-
-  // Load all home data together to control the global loader
-  const loadHomeData = async () => {
+  const loadHomeData = useCallback(async () => {
     setLoading(true);
     try {
-      // Ensure permission is requested up front in release as well
+      // Request location permission
       const granted = await requestLocationPermission();
       if (!granted) {
-        // no-op UI
+        console.log('Location permission not granted');
       }
 
+      // Get location data
       const locationData = await getLocationForAPI();
       let latNum: number | null = null;
       let lngNum: number | null = null;
+
       if (locationData) {
         latNum = Number(locationData.latitude);
         lngNum = Number(locationData.longitude);
-      } else {
-        // Retry once after a short delay (first fix for release race conditions)
-        await new Promise(r => setTimeout(r, 1000));
-        const retryLoc = await getLocationForAPI();
-        if (retryLoc) {
-          latNum = Number(retryLoc.latitude);
-          lngNum = Number(retryLoc.longitude);
-        }
       }
 
-      const [upcoming, inProgress, active, recommended]: any =
-        await Promise.all([
-          getUpcomingPujas().catch(() => []),
-          getInProgress().catch(() => []),
-          getActivePuja().catch(() => ({booking: []})),
-          latNum !== null && lngNum !== null
-            ? getRecommendedPandit(latNum as any, lngNum as any).catch(() => [])
-            : Promise.resolve([]),
-        ]);
+      // Fetch all data in parallel
+      const [upcoming, inProgress, active, recommended] = await Promise.all([
+        getUpcomingPujas().catch(() => []),
+        getInProgress().catch(() => []),
+        getActivePuja().catch(() => ({booking: []})),
+        latNum !== null && lngNum !== null
+          ? getRecommendedPandit(latNum.toString(), lngNum.toString()).catch(
+              () => [],
+            )
+          : Promise.resolve([]),
+      ]);
 
-      // Upcoming
+      // Set state with proper type checking
       setPujas(Array.isArray(upcoming) ? upcoming : []);
-
-      // In-progress
       setInProgressPujas(Array.isArray(inProgress) ? inProgress : []);
 
-      // Pending (normalize to array)
+      // Handle pending pujas
       let bookings: PendingPuja[] = [];
       if (Array.isArray(active?.booking)) {
         bookings = active.booking;
@@ -210,7 +123,7 @@ const UserHomeScreen: React.FC = () => {
       }
       setPendingPujas(bookings);
 
-      // Recommended (support array or {data:[]})
+      // Handle recommended pandits
       if (Array.isArray(recommended)) {
         setRecomendedPandits(recommended);
       } else if (recommended && Array.isArray((recommended as any).data)) {
@@ -218,8 +131,9 @@ const UserHomeScreen: React.FC = () => {
       } else {
         setRecomendedPandits([]);
       }
-    } catch (e) {
-      // keep UI safe defaults
+    } catch (error) {
+      console.error('Error loading home data:', error);
+      // Set safe defaults
       setPujas([]);
       setInProgressPujas([]);
       setPendingPujas([]);
@@ -227,7 +141,31 @@ const UserHomeScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchUserAndLocation();
+    loadHomeData();
+
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'active') {
+        console.log('App active - refreshing data');
+        loadHomeData();
+      }
+    };
+
+    const subscription = AppState.addEventListener(
+      'change',
+      handleAppStateChange,
+    );
+    return () => subscription?.remove();
+  }, [fetchUserAndLocation, loadHomeData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadHomeData();
+    }, [loadHomeData]),
+  );
 
   // const fetchTodayPanchang = async () => {
   //   try {
@@ -252,23 +190,29 @@ const UserHomeScreen: React.FC = () => {
   //   }
   // };
 
-  const handleBookPandit = (
-    panditId: number,
-    panditName: string,
-    panditImage: string,
-    panditCity: string,
-  ) => {
-    navigation.navigate('SelectPujaScreen', {
-      panditId: panditId,
-      panditName: panditName,
-      panditImage: panditImage,
-      panditCity: panditCity,
-    });
-  };
+  const handleBookPandit = useCallback(
+    (
+      panditId: number,
+      panditName: string,
+      panditImage: string,
+      panditCity: string,
+    ) => {
+      navigation.navigate('SelectPujaScreen', {
+        panditId: panditId,
+        panditName: panditName,
+        panditImage: panditImage,
+        panditCity: panditCity,
+      });
+    },
+    [navigation],
+  );
 
-  const handleNavigation = (route: string) => {
-    navigation.navigate(route);
-  };
+  const handleNavigation = useCallback(
+    (route: string) => {
+      navigation.navigate(route);
+    },
+    [navigation],
+  );
 
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
