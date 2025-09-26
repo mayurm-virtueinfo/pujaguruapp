@@ -53,6 +53,7 @@ import ApiEndpoints, {
   GET_USER_AGREEMENT,
   GET_REFUND_POLICY,
   POST_CREATE_MEETING,
+  UPDATE_WAITING_USER,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -632,16 +633,16 @@ export const apiService = {
       return response.data?.record || [];
     } catch (error) {
       console.error('Error fetching past bookings :', error);
-      return {pandits: [], puja: []};
+      return { pandits: [], puja: [] };
     }
   },
   getPujaListData: async (): Promise<PujaListDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.PUJA_LIST_API);
-      return response.data?.record || {recommendedPuja: [], pujaList: []};
+      return response.data?.record || { recommendedPuja: [], pujaList: [] };
     } catch (error) {
       console.error('Error fetching puja list data:', error);
-      return {recommendedPuja: [], pujaList: []};
+      return { recommendedPuja: [], pujaList: [] };
     }
   },
   getPanditListData: async (): Promise<PanditListItem[]> => {
@@ -692,10 +693,10 @@ export const apiService = {
   getAddressData: async (): Promise<AddressDataResponse> => {
     try {
       const response = await apiDev.get(ApiEndpoints.ADDRESS_DATA_API);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
   postUserRefreshTokenApi: async (): Promise<UserRefreshTokenDataResponse> => {
@@ -723,10 +724,10 @@ export const apiService = {
     );
     try {
       const response = await apiDev.post(apiUrl, rawData);
-      return response.data?.record || {address: []};
+      return response.data?.record || { address: [] };
     } catch (error) {
       console.error('Error fetching address data:', error);
-      return {address: []};
+      return { address: [] };
     }
   },
 };
@@ -923,7 +924,7 @@ export const deleteAddress = (data: deleteAddress) => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
-      .delete(apiUrl, {data})
+      .delete(apiUrl, { data })
       .then(response => {
         resolve(response);
       })
@@ -1344,7 +1345,7 @@ export const postRegisterFCMToken = (
   let apiUrl = POST_REGISTER_FCM;
   return new Promise((resolve, reject) => {
     apiDev
-      .post(apiUrl, {device_token, app_type})
+      .post(apiUrl, { device_token, app_type })
       .then(response => {
         resolve(response.data);
       })
@@ -1535,7 +1536,7 @@ export const deleteAccount = (data: DeleteAccountRequest) => {
   const apiUrl = POST_DELETE_ACCOUNT;
   return new Promise((resolve, reject) => {
     apiDev
-      .post(apiUrl, {data})
+      .post(apiUrl, { data })
       .then(response => {
         resolve(response);
       })
@@ -1607,7 +1608,7 @@ export const postCreateMeeting = (booking_id: any): Promise<any> => {
   let apiUrl = POST_CREATE_MEETING;
   return new Promise((resolve, reject) => {
     apiDev
-      .post(apiUrl, {booking_id})
+      .post(apiUrl, { booking_id })
       .then(response => {
         resolve(response.data);
       })
@@ -1617,3 +1618,19 @@ export const postCreateMeeting = (booking_id: any): Promise<any> => {
       });
   });
 };
+
+export const updateWaitingUser = (booking_id: any): Promise<any> => {
+  let apiUrl = UPDATE_WAITING_USER;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, { booking_id })
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error updating waiting user:', error);
+        reject(error);
+      });
+  });
+};
+

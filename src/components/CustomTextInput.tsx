@@ -15,12 +15,14 @@ interface InputFieldProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
-  keyboardType?: 'default' | 'email-address' | 'phone-pad';
+  keyboardType?: 'default' | 'email-address' | 'phone-pad' | 'numeric';
   error?: string;
   editable?: boolean;
   style?: ViewStyle;
   textColor?: string;
   inputStyle?: TextStyle;
+  onlyInteger?: boolean; // Add this prop to restrict to integer input
+  maxIntegerLength?: number; // Add this prop to restrict max integer length
 }
 
 const CustomTextInput: React.FC<InputFieldProps> = ({
@@ -34,7 +36,27 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
   style,
   textColor,
   inputStyle,
+  onlyInteger = false,
+  maxIntegerLength,
 }) => {
+  // Handler to allow only integer input and limit length if specified
+  const handleChangeText = (text: string) => {
+    if (onlyInteger) {
+      // Remove all non-digit characters
+      let filtered = text.replace(/[^0-9]/g, '');
+      if (typeof maxIntegerLength === 'number' && maxIntegerLength > 0) {
+        filtered = filtered.slice(0, maxIntegerLength);
+      }
+      onChangeText(filtered);
+    } else {
+      onChangeText(text);
+    }
+  };
+
+  // Show how many digits entered if onlyInteger and maxIntegerLength are set
+  const showIntegerCount =
+    onlyInteger && typeof maxIntegerLength === 'number' && maxIntegerLength > 0;
+
   return (
     <View style={[styles.inputField]}>
       <Text style={styles.inputTitle}>{label}</Text>
@@ -47,13 +69,21 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
             inputStyle,
           ]}
           value={value}
-          onChangeText={onChangeText}
+          onChangeText={handleChangeText}
           placeholder={placeholder}
           placeholderTextColor={COLORS.inputLabelText}
-          keyboardType={keyboardType}
+          keyboardType={onlyInteger ? 'numeric' : keyboardType}
           editable={editable}
+          maxLength={
+            onlyInteger && maxIntegerLength ? maxIntegerLength : undefined
+          }
         />
       </View>
+      {showIntegerCount && (
+        <Text style={styles.countText}>
+          {value.length}/{maxIntegerLength}
+        </Text>
+      )}
       {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
@@ -96,5 +126,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Regular,
     fontSize: 12,
     marginTop: 4,
+  },
+  countText: {
+    alignSelf: 'flex-end',
+    color: COLORS.inputLabelText,
+    fontSize: 12,
+    marginTop: 2,
+    marginRight: 2,
+    fontFamily: Fonts.Sen_Regular,
   },
 });

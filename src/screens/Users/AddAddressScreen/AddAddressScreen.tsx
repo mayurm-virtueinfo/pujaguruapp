@@ -495,6 +495,8 @@ const AddAddressScreen = () => {
               placeholder={t('enter_phone_number')}
               keyboardType="phone-pad"
               error={formErrors.phoneNumber}
+              onlyInteger={true}
+              maxIntegerLength={10}
             />
           </View>
           <View style={styles.inputGroup}>
@@ -544,6 +546,8 @@ const AddAddressScreen = () => {
                 placeholder={t('enter_pincode')}
                 keyboardType="phone-pad"
                 error={formErrors.pincode}
+                onlyInteger={true}
+                maxIntegerLength={6}
               />
             </View>
             <TouchableOpacity

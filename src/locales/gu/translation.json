@@ -94,7 +94,7 @@
   "credit_card": "ક્રેડિટ કાર્ડ",
   "debit_card": "ડેબિટ કાર્ડ",
   "upi": "યુપીઆઈ",
-  "accept_terms_and_conditions": "શરતો અને નિયમોને સ્વીકારો",
+  "accept_refund_policy": "રિફંડ નીતિ સ્વીકારો",
   "confirm_booking": "બુકિંગ કન્ફર્મ કરો",
   "booking_successfully": "બુકિંગ સફળ",
   "booking_completed_successfully": "બુકિંગ સફળતાપૂર્વક પૂર્ણ થયું",
@@ -276,5 +276,12 @@
   "address_update_failed": "સરનામું અપડેટ કરવામાં નિષ્ફળ",
   "type_your_message": "તમારો સંદેશ લખો...",
   "no_messages": "કોઈ સંદેશા નથી",
-  "new_feature_coming_soon": "નવી વિશેષતા ટૂંક સમયમાં આવી રહી છે!"
+  "new_feature_coming_soon": "નવી વિશેષતા ટૂંક સમયમાં આવી રહી છે!",
+  "i_am_waiting": "હું રાહ જોઈશ",
+  "no_pandit_accepted": "કોઈ પંડિત સ્વીકાર્યો નથી",
+  "not_accepted_assign_soon": "કોઈ પંડિતે તમારી પૂજા સ્વીકારી નથી. અમારી ટીમ ટૂંક સમયમાં પંડિતને નિમણૂક કરશે.",
+  "address_added_successfully": "સરનામું સફળતાપૂર્વક ઉમેરાયું",
+  "search_panditji_automatic": "પંડિતજી આપમેળે શોધો",
+  "payment_method_disabled_wallet_covers_amount": "ચુકવણી પદ્ધતિ પસંદગી અક્ષમ છે કારણ કે તમારું વૉલેટ બુકિંગ રકમ સંપૂર્ણપણે આવરી લે છે.",
+  "choose_another_panditji": "બીજા પંડિતજી પસંદ કરો"
 }

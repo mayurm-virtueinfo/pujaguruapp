@@ -24,7 +24,7 @@ export type UserHomeParamList = {
   goBack(): unknown;
   navigate: any;
   UserHomeScreen: any;
-  PujaCancellationScreen: undefined;
+  PujaCancellationScreen: any;
   NotificationScreen: undefined;
   PujaBooking: {
     poojaId: string;

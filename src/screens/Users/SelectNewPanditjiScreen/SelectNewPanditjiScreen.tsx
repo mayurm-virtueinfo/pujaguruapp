@@ -60,6 +60,7 @@ const SelectNewPanditjiScreen: React.FC = () => {
   const route = useRoute();
   const {booking_id} = route?.params as any;
 
+  console.log('booking_id', booking_id);
   const navigation = useNavigation<StackNavigationProp<UserHomeParamList>>();
   const [searchText, setSearchText] = useState('');
   const [panditjiData, setPanditjiData] = useState<any[]>([]);

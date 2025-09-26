@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {View, Text, StyleSheet, Dimensions, Alert} from 'react-native';
+import {View, Text, StyleSheet, Modal, TouchableOpacity} from 'react-native';
 import {
   useNavigation,
   useRoute,
@@ -14,6 +14,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {moderateScale, verticalScale} from 'react-native-size-matters';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
+import PrimaryButton from '../../../components/PrimaryButton';
+import Fonts from '../../../theme/fonts';
 
 const SearchPanditScreen: React.FC = () => {
   const route = useRoute();
@@ -27,6 +29,7 @@ const SearchPanditScreen: React.FC = () => {
   const [searchText, setSearchText] = useState(
     t('search_pandit_screen_scanning_location') || 'Scanning your location...',
   );
+  const [showNoPanditModal, setShowNoPanditModal] = useState(false);
   const pulseRef = useRef<Animatable.View & View>(null);
   const circle1Ref = useRef<Animatable.View & View>(null);
   const circle2Ref = useRef<Animatable.View & View>(null);
@@ -44,28 +47,10 @@ const SearchPanditScreen: React.FC = () => {
 
   useEffect(() => {
     if (bookingId) {
-      // Start 1-minute timeout: if no acceptance, navigate to Home
+      // Start 1-minute timeout: if no acceptance, show modal
       timeoutRef.current = setTimeout(() => {
         if (!hasNavigatedRef.current) {
-          hasNavigatedRef.current = true;
-          // Reset to bottom tab with first tab focused and its first screen
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [
-                {
-                  name: 'Main' as never,
-                  params: {
-                    screen: 'UserAppBottomTabNavigator',
-                    params: {
-                      screen: 'UserHomeNavigator',
-                      params: {screen: 'UserHomeScreen'},
-                    },
-                  } as never,
-                },
-              ],
-            }),
-          );
+          setShowNoPanditModal(true);
         }
       }, 60 * 1000);
 
@@ -130,11 +115,7 @@ const SearchPanditScreen: React.FC = () => {
                 clearTimeout(timeoutRef.current);
                 timeoutRef.current = null;
               }
-              // navigation.navigate('BookingSuccessfullyScreen', {
-              //   booking: bookingId,
-              //   auto: 'true',
-              // } as any);
-              // Direct replace to ConfirmPujaDetails
+              setShowNoPanditModal(false);
               navigation.dispatch(
                 StackActions.replace(
                   'ConfirmPujaDetails' as never,
@@ -163,7 +144,27 @@ const SearchPanditScreen: React.FC = () => {
     }
   }, [bookingId, navigation, wsError]);
 
-  // Timer-based progression removed
+  const handleModalClose = () => {
+    setShowNoPanditModal(false);
+    hasNavigatedRef.current = true;
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'Main' as never,
+            params: {
+              screen: 'UserAppBottomTabNavigator',
+              params: {
+                screen: 'UserHomeNavigator',
+                params: {screen: 'UserHomeScreen'},
+              },
+            } as never,
+          },
+        ],
+      }),
+    );
+  };
 
   const pulseAnimation = {
     0: {scale: 1, opacity: 0.7},
@@ -279,6 +280,28 @@ const SearchPanditScreen: React.FC = () => {
           </>
         )}
       </View>
+
+      {/* Modal for no pandit accepted */}
+      <Modal
+        visible={showNoPanditModal}
+        transparent
+        animationType="fade"
+        onRequestClose={handleModalClose}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('no_pandit_accepted')}</Text>
+            <Text style={styles.modalMessage}>
+              {t('not_accepted_assign_soon')}
+            </Text>
+            <PrimaryButton
+              title={t('go_to_home')}
+              onPress={handleModalClose}
+              style={styles.modalButton}
+              textStyle={styles.modalButtonText}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -360,6 +383,43 @@ const styles = StyleSheet.create({
     marginTop: verticalScale(10),
     marginBottom: verticalScale(10),
     letterSpacing: 0.2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    marginHorizontal: 24,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    elevation: 8,
+  },
+  modalTitle: {
+    fontSize: moderateScale(20),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: moderateScale(15),
+    color: COLORS.textGray,
+    textAlign: 'center',
+    fontFamily: Fonts.Sen_Medium,
+    marginBottom: 20,
+  },
+  modalButton: {
+    backgroundColor: COLORS.primary,
+    marginTop: 8,
+    paddingHorizontal: 24,
+  },
+  modalButtonText: {
+    color: COLORS.white,
+    textAlign: 'center',
   },
 });
 
