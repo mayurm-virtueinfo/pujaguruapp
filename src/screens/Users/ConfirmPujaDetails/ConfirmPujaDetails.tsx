@@ -9,42 +9,51 @@ import {
   ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
+import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
 import Fonts from '../../../theme/fonts';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {Images} from '../../../theme/Images';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
-import {getUpcomingPujaDetails} from '../../../api/apiService';
+import {
+  getUpcomingPujaDetails,
+  updateWaitingUser,
+} from '../../../api/apiService';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
+import {useCommonToast} from '../../../common/CommonToast';
 
 const ConfirmPujaDetails: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserHomeParamList,
-    'PujaCancellationScreen' | 'UserChatScreen' | 'RateYourExperienceScreen'
+    | 'PujaCancellationScreen'
+    | 'UserChatScreen'
+    | 'RateYourExperienceScreen'
+    | 'FilteredPanditListScreen'
   >;
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const {bookingId, search} = route.params as any;
   const {t} = useTranslation();
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const [pujaDetails, setPujaDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
-
+  const {showSuccessToast} = useCommonToast();
   // State for show more/less for arranged items
   const [showMorePanditArranged, setShowMorePanditArranged] = useState(false);
   const [showMoreUserArranged, setShowMoreUserArranged] = useState(false);
 
   useEffect(() => {
     fetchPujaDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId]);
 
-  console.log('pujaDetails', pujaDetails);
   const fetchPujaDetails = async () => {
     setLoading(true);
     try {
@@ -350,20 +359,86 @@ const ConfirmPujaDetails: React.FC = () => {
     );
   };
 
-  const renderCancelButton = () => (
-    <PrimaryButton
-      title={t('go_to_home')}
-      onPress={() => {
-        navigation.replace('UserHomeScreen');
-      }}
-      style={styles.cancelButton}
-      textStyle={styles.cancelButtonText}
-    />
-  );
+  // Handler for "I am waiting" (auto mode)
+  const onWaitClick = async () => {
+    setLoading(true);
+    try {
+      const response = await updateWaitingUser(bookingId?.toString());
+      // Optionally show a toast or feedback
+      showSuccessToast(response?.message);
+    } catch (e) {
+      // Optionally show error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler for "Choose Another Panditji" (manual mode)
+  const onChoosePanditClick = () => {
+    navigation.navigate('FilteredPanditListScreen', {booking_id: bookingId});
+  };
+
+  console.log('pujaDetails', pujaDetails);
+  // Bottom action bar logic based on assignment_mode
+  const renderBottomActions = () => {
+    if (!pujaDetails) return null;
+
+    // Only show if search === 'true'
+    // if (search !== 'true') return null;
+
+    // assignment_mode: 1 = auto, 2 = manual
+    if (pujaDetails?.assignment_mode === 1) {
+      // Auto mode: show "I am waiting"
+      return (
+        <View style={styles.bottomActionsContainer}>
+          <PrimaryButton
+            title={t('i_am_waiting') || 'I am waiting'}
+            onPress={onWaitClick}
+            style={styles.bottomPrimaryButton}
+            textStyle={styles.bottomPrimaryButtonText}
+            disabled={loading}
+          />
+          <PrimaryButtonOutlined
+            title={t('cancel') || 'Cancel'}
+            onPress={() => {
+              navigation.navigate('PujaCancellationScreen', {id: bookingId});
+            }}
+            style={styles.bottomOutlinedButton}
+            textStyle={styles.bottomOutlinedButtonText}
+            disabled={loading}
+          />
+        </View>
+      );
+    } else if (pujaDetails?.assignment_mode === 2) {
+      // Manual mode: show "Choose Another Panditji"
+      return (
+        <View style={styles.bottomActionsContainer}>
+          <PrimaryButton
+            title={t('choose_another_panditji') || 'Choose Another Panditji'}
+            onPress={onChoosePanditClick}
+            style={styles.bottomPrimaryButton}
+            textStyle={styles.bottomPrimaryButtonText}
+            disabled={loading}
+          />
+          <PrimaryButtonOutlined
+            title={t('cancel') || 'Cancel'}
+            onPress={() => {
+              navigation.navigate('PujaCancellationScreen', {id: bookingId});
+            }}
+            style={styles.bottomOutlinedButton}
+            textStyle={styles.bottomOutlinedButtonText}
+            disabled={loading}
+          />
+        </View>
+      );
+    }
+    // If assignment_mode is not 1 or 2, show nothing
+    return null;
+  };
 
   return (
     <>
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <View style={[styles.container, {paddingTop: insets.top}]}>
         <StatusBar
           barStyle="light-content"
           backgroundColor={COLORS.primaryBackground}
@@ -394,12 +469,13 @@ const ConfirmPujaDetails: React.FC = () => {
                 {renderPujaDetails()}
                 {renderArrangedItemsSection()}
                 {renderTotalAmount()}
-                {search === 'true' && renderCancelButton()}
               </>
             )}
           </ScrollView>
         </View>
-      </SafeAreaView>
+        {/* Show bottom actions only if not loading and search === 'true' */}
+        {!loading && renderBottomActions()}
+      </View>
     </>
   );
 };
@@ -529,7 +605,7 @@ const styles = StyleSheet.create({
   panditjiText: {
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_Regular,
-    color: COLORS.pujaCardSubtext,
+    color: COLORS.primary,
     letterSpacing: -0.333,
     flex: 1,
   },
@@ -586,6 +662,37 @@ const styles = StyleSheet.create({
     marginLeft: scale(10),
     minWidth: scale(60),
     textAlign: 'right',
+  },
+  // Bottom actions styles
+  bottomActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: moderateScale(24),
+    paddingBottom: moderateScale(12),
+    // paddingTop: moderateScale(8),
+    backgroundColor: COLORS.pujaBackground,
+    gap: moderateScale(24),
+  },
+  bottomOutlinedButton: {
+    flex: 1,
+    marginRight: moderateScale(8),
+    borderRadius: moderateScale(10),
+  },
+  bottomPrimaryButton: {
+    flex: 1,
+    marginLeft: moderateScale(8),
+    borderRadius: moderateScale(10),
+  },
+  bottomOutlinedButtonText: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primaryTextDark,
+    textTransform: 'uppercase',
+    letterSpacing: -0.15,
+  },
+  bottomPrimaryButtonText: {
+    textAlign: 'center',
   },
 });
 

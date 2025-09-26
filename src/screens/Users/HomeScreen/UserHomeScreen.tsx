@@ -113,13 +113,13 @@ const UserHomeScreen: React.FC = () => {
       // Set state with proper type checking
       setPujas(Array.isArray(upcoming) ? upcoming : []);
       setInProgressPujas(Array.isArray(inProgress) ? inProgress : []);
-
+      console.log('active', active);
       // Handle pending pujas
       let bookings: PendingPuja[] = [];
-      if (Array.isArray(active?.booking)) {
-        bookings = active.booking;
-      } else if (active?.booking) {
-        bookings = [active.booking];
+      if (Array.isArray(active?.bookings)) {
+        bookings = active.bookings;
+      } else if (active?.bookings) {
+        bookings = [active.bookings];
       }
       setPendingPujas(bookings);
 

@@ -65,9 +65,6 @@ const SelectPanditjiScreen: React.FC = () => {
   } = route.params as any;
   const {showErrorToast, showSuccessToast} = useCommonToast();
 
-  console.log('selectedAddressLatitude :: ', selectedAddressLatitude);
-  console.log('selectedAddressLongitude :: ', selectedAddressLongitude);
-
   const navigation = useNavigation<StackNavigationProp<UserHomeParamList>>();
   const [searchText, setSearchText] = useState('');
   const [selectedPanditji, setSelectedPanditji] = useState<string | null>(null);
@@ -129,6 +126,7 @@ const SelectPanditjiScreen: React.FC = () => {
       setIsLoading(false);
     }
   };
+
   const fetchPanditji = async (
     pooja_id: string,
     latitude: string,
@@ -147,7 +145,6 @@ const SelectPanditjiScreen: React.FC = () => {
         booking_date,
         tirth,
       );
-      console.log('Fetched Panditji :: ', response);
       if (response.success) {
         if (Array.isArray(response.data) && response.data.length > 0) {
           const transformedData: PanditjiItem[] = response.data.map(
@@ -174,7 +171,6 @@ const SelectPanditjiScreen: React.FC = () => {
         showErrorToast(response.message || 'No Panditji found');
       }
     } catch (error: any) {
-      console.error('Error fetching panditji :: ', JSON.stringify(error));
       setPanditjiData([]);
       const errorMsg =
         error?.response?.data?.message || error?.message || 'No Panditji found';
@@ -242,6 +238,68 @@ const SelectPanditjiScreen: React.FC = () => {
           selectedAddressLongitude: selectedAddressLongitude,
         });
       }
+    }
+  };
+
+  // Handler for searching and booking a Panditji automatically
+  const handleSearchPandit = async () => {
+    // Prepare data for auto booking
+    const data = {
+      pooja: poojaId,
+      assignment_mode: 1, // 1 for auto mode
+      samagri_required: samagri_required,
+      address: address,
+      tirth_place: tirth,
+      booking_date: booking_date,
+      muhurat_time: muhurat_time,
+      muhurat_type: muhurat_type,
+      // No pandit field for auto mode
+    };
+    setIsLoading(true);
+    try {
+      const response: any = await postAutoBooking(
+        data,
+        selectedAddressLatitude,
+        selectedAddressLongitude,
+      );
+      if (response && response.success) {
+        navigation.navigate('PaymentScreen', {
+          poojaId: poojaId,
+          samagri_required: samagri_required,
+          address: address,
+          tirth: tirth,
+          booking_date: booking_date,
+          muhurat_time: muhurat_time,
+          muhurat_type: muhurat_type,
+          notes: notes,
+          pandit: response?.data?.pandit_id || null,
+          pandit_name: response?.data?.pandit_name || null,
+          pandit_image: response?.data?.pandit_image || null,
+          puja_image: puja_image,
+          puja_name: puja_name,
+          price: price,
+          selectAddress: selectAddress,
+          selectManualPanitData: null,
+          booking_Id: response?.data?.booking_id,
+          AutoModeSelection,
+          auto: 'true',
+          selectedAddressLatitude: selectedAddressLatitude,
+          selectedAddressLongitude: selectedAddressLongitude,
+        });
+      } else {
+        showErrorToast(
+          response?.message || t('no_panditji_found') || 'No Panditji found',
+        );
+      }
+    } catch (error: any) {
+      showErrorToast(
+        error?.response?.data?.message ||
+          error?.message ||
+          t('no_panditji_found') ||
+          'No Panditji found',
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -318,6 +376,27 @@ const SelectPanditjiScreen: React.FC = () => {
     </View>
   );
 
+  // Custom ListEmptyComponent with button to trigger auto booking via postAutoBooking
+  const renderEmptyComponent = () => (
+    <View style={{alignItems: 'center', padding: 20}}>
+      <Text
+        style={{
+          color: COLORS.pujaCardSubtext,
+          fontFamily: Fonts.Sen_Regular,
+          fontSize: moderateScale(15),
+          marginBottom: 16,
+        }}>
+        {t('no_panditji_found') || 'No Panditji found'}
+      </Text>
+      <PrimaryButton
+        title={t('search_panditji_automatic')}
+        onPress={handleSearchPandit}
+        textStyle={styles.buttonText}
+        style={{width: 200}}
+      />
+    </View>
+  );
+
   return (
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <CustomeLoader loading={isLoading} />
@@ -336,39 +415,30 @@ const SelectPanditjiScreen: React.FC = () => {
             showsVerticalScrollIndicator={true}
             contentContainerStyle={[styles.listContent, THEMESHADOW.shadow]}
             keyboardShouldPersistTaps="handled"
-            ListEmptyComponent={() => (
-              <View style={{alignItems: 'center', padding: 20}}>
-                <Text
-                  style={{
-                    color: COLORS.pujaCardSubtext,
-                    fontFamily: Fonts.Sen_Regular,
-                    fontSize: moderateScale(15),
-                  }}>
-                  {t('no_panditji_found') || 'No Panditji found'}
-                </Text>
-              </View>
-            )}
+            ListEmptyComponent={renderEmptyComponent}
           />
         </View>
-        <View
-          style={[
-            styles.absoluteButtonContainer,
-            {
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              paddingBottom: verticalScale(14),
-              backgroundColor: COLORS.pujaBackground,
-            },
-          ]}>
-          <PrimaryButton
-            title={t('next')}
-            onPress={handleNextPress}
-            disabled={!selectedPanditji}
-            textStyle={styles.buttonText}
-          />
-        </View>
+        {panditjiData.length > 0 && (
+          <View
+            style={[
+              styles.absoluteButtonContainer,
+              {
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                paddingBottom: verticalScale(14),
+                backgroundColor: COLORS.pujaBackground,
+              },
+            ]}>
+            <PrimaryButton
+              title={t('next')}
+              onPress={handleNextPress}
+              disabled={!selectedPanditji}
+              textStyle={styles.buttonText}
+            />
+          </View>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

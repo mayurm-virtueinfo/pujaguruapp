@@ -94,7 +94,7 @@
   "credit_card": "Credit Card",
   "debit_card": "Debit Card",
   "upi": "UPI",
-  "accept_terms_and_conditions": "Accept Terms and Conditions",
+  "accept_refund_policy": "Accept refund policy",
   "confirm_booking": "CONFIRM BOOKING",
   "booking_successfully": "Booking Successfully",
   "booking_completed_successfully": "Booking Completed Successfully",
@@ -277,5 +277,12 @@
   "type_your_message": "Type your message...",
   "no_messages": "No messages",
   "new_feature_coming_soon": "New feature coming soon!",
-  "waiting_for_approval": "Waiting for Approval"
+  "waiting_for_approval": "Waiting for Approval",
+  "i_am_waiting": "I WILL WAIT",
+  "no_pandit_accepted": "No Pandit Accepted",
+  "not_accepted_assign_soon": "No pandit accepted your puja. Our team will assign a pandit for you soon.",
+  "address_added_successfully": "Address added successfully",
+  "search_panditji_automatic": "Search panditji automatic",
+  "payment_method_disabled_wallet_full": "Payment method selection is disabled because your wallet fully covers the booking amount.",
+  "choose_another_panditji": "Choose Another Panditji"
 }

@@ -696,10 +696,10 @@ const PujaBookingScreen: React.FC = () => {
                   width: 18,
                   height: 18,
                   borderRadius: 9,
-                  backgroundColor: '#FA1927',
+                  backgroundColor: COLORS.primaryBackgroundButton,
                   marginRight: 6,
                   borderWidth: 1,
-                  borderColor: '#FA1927',
+                  borderColor: COLORS.primaryBackgroundButton,
                 }}
               />
               <Text
@@ -711,24 +711,28 @@ const PujaBookingScreen: React.FC = () => {
                 {t('current_date')}
               </Text>
               {/* Available date legend */}
-              <View
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: 9,
-                  borderWidth: 1,
-                  borderColor: COLORS.gradientEnd,
-                  marginRight: 6,
-                  backgroundColor: '#fff',
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: moderateScale(12),
-                  color: COLORS.primaryTextDark,
-                }}>
-                {t('available_date')}
-              </Text>
+              {panditId && (
+                <>
+                  <View
+                    style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: 9,
+                      borderWidth: 1,
+                      borderColor: COLORS.gradientEnd,
+                      marginRight: 6,
+                      backgroundColor: '#fff',
+                    }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: moderateScale(12),
+                      color: COLORS.primaryTextDark,
+                    }}>
+                    {t('available_date')}
+                  </Text>
+                </>
+              )}
             </View>
             {renderMuhuratSlots()}
 

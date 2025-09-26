@@ -431,7 +431,7 @@ const PanditDetailsScreen: React.FC = () => {
                         review.images.length > 0 &&
                         renderReviewImages(review.images)}
 
-                      <TouchableOpacity style={styles.actionItem}>
+                      {/* <TouchableOpacity style={styles.actionItem}>
                         <Feather
                           name="thumbs-down"
                           size={moderateScale(20)}
@@ -439,7 +439,7 @@ const PanditDetailsScreen: React.FC = () => {
                           style={styles.actionIcon}
                         />
                         <Text style={styles.actionCount}>0</Text>
-                      </TouchableOpacity>
+                      </TouchableOpacity> */}
                     </View>
                     {idx < reviews.length - 1 && (
                       <View style={styles.separator} />

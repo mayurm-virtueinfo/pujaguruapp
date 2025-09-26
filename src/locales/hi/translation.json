@@ -94,7 +94,7 @@
   "credit_card": "क्रेडिट कार्ड",
   "debit_card": "डेबिट कार्ड",
   "upi": "यूपीआई",
-  "accept_terms_and_conditions": "शर्तें और नियम स्वीकार करें",
+  "accept_refund_policy": "रिफंड नीति स्वीकार करें",
   "confirm_booking": "बुकिंग सुनिश्चित करें",
   "booking_successfully": "बुकिंग सफल",
   "booking_completed_successfully": "बुकिंग सफलतापूर्वक पूर्ण हुई",
@@ -277,5 +277,12 @@
   "type_your_message": "अपना संदेश टाइप करें...",
   "no_messages": "कोई संदेश नहीं",
   "new_feature_coming_soon": "नई सुविधा जल्द ही आ रही है!",
-  "waiting_for_approval": "अनुमोदन की प्रतीक्षा में"
+  "waiting_for_approval": "अनुमोदन की प्रतीक्षा में",
+  "i_am_waiting": "मैं प्रतीक्षा करूँगा",
+  "no_pandit_accepted": "कोई पंडित स्वीकार नहीं किया",
+  "not_accepted_assign_soon": "कोई पंडित ने आपकी पूजा स्वीकार नहीं की। हमारी टीम जल्द ही आपके लिए पंडित नियुक्त करेगी।",
+  "address_added_successfully": "पता सफलतापूर्वक जोड़ा गया",
+  "search_panditji_automatic": "पंडितजी को स्वचालित रूप से खोजें",
+  "payment_method_disabled_wallet_covers_amount": "भुगतान विधि चयन अक्षम है क्योंकि आपका वॉलेट बुकिंग राशि को पूरी तरह कवर करता है।",
+  "choose_another_panditji": "कोई अन्य पंडितजी चुनें"
 }

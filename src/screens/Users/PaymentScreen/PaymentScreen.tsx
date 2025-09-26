@@ -4,13 +4,15 @@ import {
   StyleSheet,
   Text,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   Image,
   Platform,
   Alert,
   BackHandler,
+  Modal,
+  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
 import PrimaryButton from '../../../components/PrimaryButton';
@@ -32,9 +34,13 @@ import {
   getWallet,
   postCreateRazorpayOrder,
   postVerrifyPayment,
+  getRefundPolicy,
 } from '../../../api/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
+
+// Import WebView for HTML rendering
+import {WebView} from 'react-native-webview';
 
 const PaymentScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -80,8 +86,6 @@ const PaymentScreen: React.FC = () => {
     pandit_image ||
     'https://via.placeholder.com/150';
 
-  console.log('oute.params :: ', route.params);
-
   const {showErrorToast, showSuccessToast} = useCommonToast();
 
   const [usePoints, setUsePoints] = useState<boolean>(false);
@@ -95,10 +99,35 @@ const PaymentScreen: React.FC = () => {
   const [isProcessingPayment, setIsProcessingPayment] =
     useState<boolean>(false);
 
+  // Refund Policy Modal State
+  const [refundPolicyVisible, setRefundPolicyVisible] = useState(false);
+  const [refundPolicyContent, setRefundPolicyContent] = useState<string>('');
+  const [refundPolicyLoading, setRefundPolicyLoading] = useState(false);
+
   // Cash on option state
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     'online' | 'cod'
   >('online');
+
+  // New: Only allow payment method selection if usePoints is false or wallet covers the amount
+  const walletBalanceForCalc =
+    walletData &&
+    (typeof walletData.balance === 'number' ||
+      typeof walletData.balance === 'string')
+      ? Number(walletData.balance) || 0
+      : 0;
+  const baseAmount = Number(price) || 0;
+  const taxAmount = 0;
+  const grossAmount = Number((baseAmount + taxAmount).toFixed(2));
+  const walletUseAmountCalc = usePoints
+    ? Math.min(grossAmount, walletBalanceForCalc)
+    : 0;
+  const payableAmount = Number(
+    Math.max(grossAmount - walletUseAmountCalc, 0).toFixed(2),
+  );
+  const canSelectPaymentMethod = !(
+    usePoints && walletBalanceForCalc >= grossAmount
+  );
 
   useEffect(() => {
     const fetchCurrentUser = async () => {
@@ -203,7 +232,6 @@ const PaymentScreen: React.FC = () => {
       }
     } catch (error: any) {
       showErrorToast(error.response.data.message);
-      console.log('error of wallet :: ', error.response.data);
       setWalletData({});
     } finally {
       setIsLoading(false);
@@ -222,25 +250,10 @@ const PaymentScreen: React.FC = () => {
   };
 
   // Amount calculations simplified to base amount only (no platform fees)
-  const baseAmount = Number(price) || 0;
-  const taxAmount = 0;
-  const grossAmount = Number((baseAmount + taxAmount).toFixed(2));
-  const walletBalanceForCalc = getWalletBalance();
-  const walletUseAmountCalc = usePoints
-    ? Math.min(grossAmount, walletBalanceForCalc)
-    : 0;
-  const payableAmount = Number(
-    Math.max(grossAmount - walletUseAmountCalc, 0).toFixed(2),
-  );
+  // (already done above for baseAmount, grossAmount, walletBalanceForCalc, walletUseAmountCalc, payableAmount)
 
   const handleCreateRazorpayOrder = useCallback(
     async (bookingIdForOrder: string) => {
-      console.log(
-        'called ====>',
-        razorpayOrderBookingId.current,
-        bookingIdForOrder,
-        orderId,
-      );
       if (razorpayOrderBookingId.current === bookingIdForOrder && orderId) {
         return {order_id: orderId};
       }
@@ -269,7 +282,6 @@ const PaymentScreen: React.FC = () => {
             payment_mode: 'cod',
           }),
         };
-        console.log('postCreateRazorpayOrder payload :: ', requestData);
 
         const response: any = await postCreateRazorpayOrder(requestData);
         if (response?.data?.order_id || response?.data?.booking_id) {
@@ -283,7 +295,6 @@ const PaymentScreen: React.FC = () => {
           );
         }
       } catch (error: any) {
-        console.error('Order creation error:', error?.response?.data || error);
         showErrorToast(error?.message || 'Failed to create Razorpay order');
         throw error;
       } finally {
@@ -345,7 +356,6 @@ const PaymentScreen: React.FC = () => {
         throw new Error(response?.message || 'Payment verification failed');
       }
     } catch (error: any) {
-      console.error('Payment verification error:', error);
       showErrorToast(error?.message || 'Payment verification failed');
       throw error;
     } finally {
@@ -354,7 +364,6 @@ const PaymentScreen: React.FC = () => {
   };
 
   const handlePayment = async () => {
-    console.log('razorpayOrder called =====>');
     if (!acceptTerms) {
       showErrorToast('Please accept the terms and conditions to proceed.');
       return;
@@ -458,8 +467,6 @@ const PaymentScreen: React.FC = () => {
         showErrorToast('Payment data incomplete. Please try again.');
       }
     } catch (error: any) {
-      console.error('Payment process error:', error);
-
       if (error.code === 'payment_cancelled') {
         showErrorToast('Payment cancelled by user');
       } else if (error.code === 'payment_failed') {
@@ -470,6 +477,35 @@ const PaymentScreen: React.FC = () => {
     } finally {
       setIsProcessingPayment(false);
     }
+  };
+
+  // Fetch refund policy content from API
+  const fetchRefundPolicy = async () => {
+    setRefundPolicyLoading(true);
+    setRefundPolicyContent('');
+    try {
+      const data = await getRefundPolicy();
+      // The API returns HTML, so we store it as is
+      setRefundPolicyContent(data);
+    } catch (error) {
+      setRefundPolicyContent(
+        'Failed to load refund policy. Please try again later.',
+      );
+    } finally {
+      setRefundPolicyLoading(false);
+    }
+  };
+
+  // Open refund policy modal and fetch content
+  const handleOpenRefundPolicy = async () => {
+    setRefundPolicyVisible(true);
+    await fetchRefundPolicy();
+  };
+
+  // Close refund policy modal
+  const handleCloseRefundPolicy = () => {
+    setRefundPolicyVisible(false);
+    setRefundPolicyContent('');
   };
 
   const renderBookingData = () => (
@@ -551,70 +587,99 @@ const PaymentScreen: React.FC = () => {
   );
 
   // Payment method selection UI
-  const renderPaymentMethods = () => (
-    <View style={[styles.paymentMethodsSection, THEMESHADOW.shadow]}>
-      <Text
-        style={{
-          fontSize: 16,
-          fontFamily: Fonts.Sen_SemiBold,
-          color: COLORS.primaryTextDark,
-          marginBottom: 8,
-        }}>
-        {t('select_payment_method') || 'Select Payment Method'}
-      </Text>
-      <TouchableOpacity
-        style={styles.paymentMethodRow}
-        activeOpacity={0.7}
-        onPress={() => setSelectedPaymentMethod('online')}>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <View style={styles.radioButton}>
-            <MaterialIcons
-              name={
-                selectedPaymentMethod === 'online'
-                  ? 'radio-button-checked'
-                  : 'radio-button-unchecked'
-              }
-              size={22}
-              color={
-                selectedPaymentMethod === 'online'
-                  ? COLORS.primary
-                  : COLORS.inputBoder
-              }
-            />
+  const renderPaymentMethods = () => {
+    // If user has enough points to cover the booking, do not allow payment method selection
+    const walletCoversBooking =
+      usePoints && walletBalanceForCalc >= grossAmount;
+    return (
+      <View style={[styles.paymentMethodsSection, THEMESHADOW.shadow]}>
+        <Text
+          style={{
+            fontSize: 16,
+            fontFamily: Fonts.Sen_SemiBold,
+            color: COLORS.primaryTextDark,
+            marginBottom: 8,
+          }}>
+          {t('select_payment_method') || 'Select Payment Method'}
+        </Text>
+        <TouchableOpacity
+          style={[
+            styles.paymentMethodRow,
+            walletCoversBooking && {opacity: 0.5},
+          ]}
+          activeOpacity={walletCoversBooking ? 1 : 0.7}
+          onPress={() => {
+            if (!walletCoversBooking) setSelectedPaymentMethod('online');
+          }}
+          disabled={walletCoversBooking}>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <View style={styles.radioButton}>
+              <MaterialIcons
+                name={
+                  selectedPaymentMethod === 'online'
+                    ? 'radio-button-checked'
+                    : 'radio-button-unchecked'
+                }
+                size={22}
+                color={
+                  selectedPaymentMethod === 'online'
+                    ? COLORS.primary
+                    : COLORS.inputBoder
+                }
+              />
+            </View>
+            <Text style={styles.paymentMethodText}>
+              {t('pay_online') || 'Pay Online'}
+            </Text>
           </View>
-          <Text style={styles.paymentMethodText}>
-            {t('pay_online') || 'Pay Online'}
-          </Text>
-        </View>
-      </TouchableOpacity>
-      <View style={styles.divider} />
-      <TouchableOpacity
-        style={styles.paymentMethodRow}
-        activeOpacity={0.7}
-        onPress={() => setSelectedPaymentMethod('cod')}>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-          <View style={styles.radioButton}>
-            <MaterialIcons
-              name={
-                selectedPaymentMethod === 'cod'
-                  ? 'radio-button-checked'
-                  : 'radio-button-unchecked'
-              }
-              size={22}
-              color={
-                selectedPaymentMethod === 'cod'
-                  ? COLORS.primary
-                  : COLORS.inputBoder
-              }
-            />
+        </TouchableOpacity>
+        <View style={styles.divider} />
+        <TouchableOpacity
+          style={[
+            styles.paymentMethodRow,
+            walletCoversBooking && {opacity: 0.5},
+          ]}
+          activeOpacity={walletCoversBooking ? 1 : 0.7}
+          onPress={() => {
+            if (!walletCoversBooking) setSelectedPaymentMethod('cod');
+          }}
+          disabled={walletCoversBooking}>
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            <View style={styles.radioButton}>
+              <MaterialIcons
+                name={
+                  selectedPaymentMethod === 'cod'
+                    ? 'radio-button-checked'
+                    : 'radio-button-unchecked'
+                }
+                size={22}
+                color={
+                  selectedPaymentMethod === 'cod'
+                    ? COLORS.primary
+                    : COLORS.inputBoder
+                }
+              />
+            </View>
+            <Text style={styles.paymentMethodText}>
+              {t('cash_on_delivery') || 'Cash on Service'}
+            </Text>
           </View>
-          <Text style={styles.paymentMethodText}>
-            {t('cash_on_delivery') || 'Cash on Service'}
+        </TouchableOpacity>
+        {walletCoversBooking && (
+          <Text
+            style={{color: COLORS.pujaCardSubtext, fontSize: 13, marginTop: 8}}>
+            {t('payment_method_disabled_wallet_full') ||
+              'Payment method selection is disabled because your wallet fully covers the booking amount.'}
           </Text>
-        </View>
-      </TouchableOpacity>
-    </View>
-  );
+        )}
+      </View>
+    );
+  };
+
+  // Modal width/height for WebView
+  const {width, height} = Dimensions.get('window');
+  const modalWidth = width * 0.96;
+  const modalHeight = height * 0.9;
 
   return (
     <View style={[styles.safeArea, {paddingTop: inset.top}]}>
@@ -751,7 +816,16 @@ const PaymentScreen: React.FC = () => {
                   onPress={() => setAcceptTerms(!acceptTerms)}
                 />
                 <Text style={styles.termsText}>
-                  {t('accept_terms_and_conditions')}
+                  {t('accept_refund_policy')}{' '}
+                </Text>
+                <Text
+                  style={{
+                    color: COLORS.primary,
+                    textDecorationLine: 'underline',
+                    fontFamily: Fonts.Sen_Medium,
+                  }}
+                  onPress={handleOpenRefundPolicy}>
+                  {t('view_details') || 'View Details'}
                 </Text>
               </View>
             </View>
@@ -771,6 +845,61 @@ const PaymentScreen: React.FC = () => {
           </View>
         </View>
       </View>
+      {/* Refund Policy Modal */}
+      <Modal
+        visible={refundPolicyVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={handleCloseRefundPolicy}>
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalContent,
+              {
+                // width: modalWidth,
+                maxHeight: modalHeight,
+                marginBottom: 0,
+                marginTop: 'auto',
+              },
+            ]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {t('refund_policy') || 'Refund Policy'}
+              </Text>
+              <TouchableOpacity onPress={handleCloseRefundPolicy}>
+                <MaterialIcons
+                  name="close"
+                  size={24}
+                  color={COLORS.primaryTextDark}
+                />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              {refundPolicyLoading ? (
+                <ActivityIndicator size="large" color={COLORS.primary} />
+              ) : refundPolicyContent &&
+                refundPolicyContent.startsWith('<!DOCTYPE html') ? (
+                <WebView
+                  originWhitelist={['*']}
+                  source={{html: refundPolicyContent}}
+                  style={{
+                    flex: 1,
+                    minHeight: 200,
+                    backgroundColor: 'transparent',
+                  }}
+                  containerStyle={{flex: 1, backgroundColor: 'transparent'}}
+                  showsVerticalScrollIndicator={true}
+                  bounces={true}
+                />
+              ) : (
+                <ScrollView>
+                  <Text style={styles.modalText}>{refundPolicyContent}</Text>
+                </ScrollView>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -1007,10 +1136,50 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.pujaBackground,
     paddingHorizontal: 18,
     paddingTop: 8,
-    // position: 'absolute', // not needed, use flex layout
-    // bottom: 0,
-    // left: 0,
-    // right: 0,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '100%',
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 8,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    zIndex: 2,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+  },
+  modalBody: {
+    // flex: 1,
+    minHeight: '80%',
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 18,
+    paddingBottom: 18,
+    paddingTop: 0,
+    marginBottom: 20,
+  },
+  modalText: {
+    fontSize: 15,
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primaryTextDark,
   },
 });
 
