@@ -276,5 +276,6 @@
   "address_update_failed": "पता अपडेट करने में विफल",
   "type_your_message": "अपना संदेश टाइप करें...",
   "no_messages": "कोई संदेश नहीं",
-  "new_feature_coming_soon": "नई सुविधा जल्द ही आ रही है!"
+  "new_feature_coming_soon": "नई सुविधा जल्द ही आ रही है!",
+  "waiting_for_approval": "अनुमोदन की प्रतीक्षा में"
 }

@@ -276,5 +276,6 @@
   "address_update_failed": "Failed to update address",
   "type_your_message": "Type your message...",
   "no_messages": "No messages",
-  "new_feature_coming_soon": "New feature coming soon!"
+  "new_feature_coming_soon": "New feature coming soon!",
+  "waiting_for_approval": "Waiting for Approval"
 }

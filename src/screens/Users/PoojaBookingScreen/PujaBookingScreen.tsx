@@ -336,6 +336,7 @@ const PujaBookingScreen: React.FC = () => {
         muhurat_time: muhuratTime,
         muhurat_type: muhuratType,
         pandit: panditId,
+        long_distance: false,
       };
 
       if (data) {
@@ -343,6 +344,11 @@ const PujaBookingScreen: React.FC = () => {
           data,
           selectedAddressLatitude,
           selectedAddressLongitude,
+        );
+
+        console.log(
+          'direct pandit select response of post puja booking data :: ',
+          response,
         );
 
         if (response) {
@@ -458,6 +464,7 @@ const PujaBookingScreen: React.FC = () => {
         booking_date: selectedDateISO,
         muhurat_time: muhuratTime,
         muhurat_type: muhuratType,
+        long_distance: false,
       };
 
       if (data) {
@@ -466,6 +473,8 @@ const PujaBookingScreen: React.FC = () => {
           selectedAddressLatitude,
           selectedAddressLongitude,
         );
+
+        console.log('response of post puja booking data :: ', response);
 
         if (response) {
           navigation.navigate('PaymentScreen', {

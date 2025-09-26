@@ -81,16 +81,18 @@ const UserChatScreen: React.FC = () => {
 
       setAccessToken(token);
       setMyUserId(uid);
-      setCurrentUser(current_user);
+      try {
+        setCurrentUser(current_user ? JSON.parse(current_user) : null);
+      } catch (_e) {
+        setCurrentUser(null);
+      }
     };
     fetchToken();
   }, []);
 
-  console.log('currentUser :: ', currentUser);
-
   useEffect(() => {
     if (accessToken && booking_id) {
-      let socketURL = `ws://192.168.1.24:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
+      let socketURL = `ws://192.168.1.18:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
       // let socketURL = `ws://puja-guru.com:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
       ws.current = new WebSocket(socketURL);
       ws.current.onopen = () => console.log('✅ Connected to WebSocket');
@@ -344,9 +346,9 @@ const UserChatScreen: React.FC = () => {
             }
             token={meetingToken ? String(meetingToken) : undefined}
             userInfo={{
-              avatarUrl: currentUser.profile_img_url,
-              displayName: currentUser.first_name,
-              email: currentUser.email,
+              avatarUrl: currentUser?.profile_img_url,
+              displayName: currentUser?.first_name || 'User',
+              email: currentUser?.email,
             }}
             config={{
               hideConferenceTimer: true,
@@ -359,8 +361,14 @@ const UserChatScreen: React.FC = () => {
               analytics: {
                 disabled: true,
               },
+              prejoinPageEnabled: false,
+              prejoinConfig: {
+                enabled: false,
+              },
+              requireDisplayName: false,
+              startWithAudioMuted: false,
+              startWithVideoMuted: false,
             }}
-            eventListeners={eventListeners as any}
             flags={{
               'audioMute.enabled': true,
               'ios.screensharing.enabled': true,
@@ -372,8 +380,12 @@ const UserChatScreen: React.FC = () => {
               'conference-timer.enabled': true,
               'close-captions.enabled': false,
               'toolbox.enabled': true,
+              'chat.enabled': false,
+              'prejoin.enabled': false,
             }}
+            eventListeners={eventListeners as any}
             style={[styles.jitsiView, styles.jitsiFull]}
+            onReadyToClose={onReadyToClose}
           />
         ) : (
           <View style={styles.jitsiView}>

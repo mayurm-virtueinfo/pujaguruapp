@@ -375,7 +375,7 @@ const UserHomeScreen: React.FC = () => {
         {/* Pending Puja Section */}
         <View style={styles.pujaSection}>
           <Text style={styles.sectionTitle}>
-            {t('pending_pujas') || 'Pending Pujas'}
+            {t('waiting_for_approval') || 'Waiting for Approval'}
           </Text>
           <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
             {Array.isArray(pendingPujas) && pendingPujas.length > 0 ? (
