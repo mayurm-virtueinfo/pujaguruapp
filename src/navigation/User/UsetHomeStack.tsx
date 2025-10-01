@@ -19,6 +19,7 @@ import AddAddressScreen from '../../screens/Users/AddAddressScreen/AddAddressScr
 import SearchPanditScreen from '../../screens/Users/SearchPanditScreen/SearchPanditScreen';
 import ConfirmPujaDetails from '../../screens/Users/ConfirmPujaDetails/ConfirmPujaDetails';
 import SelectNewPanditjiScreen from '../../screens/Users/SelectNewPanditjiScreen/SelectNewPanditjiScreen';
+import PanditDetailsScreen from '../../screens/Users/PanditDetailsScreen/PanditDetailsScreen';
 
 export type UserHomeParamList = {
   goBack(): unknown;
@@ -57,6 +58,7 @@ export type UserHomeParamList = {
   SearchPanditScreen: any;
   ConfirmPujaDetails: any;
   FilteredPanditListScreen: any;
+  PanditDetailsScreen: any;
 };
 
 const Stack = createStackNavigator<UserHomeParamList>();
@@ -112,6 +114,10 @@ const UserHomeNavigator = () => {
       <Stack.Screen
         name="FilteredPanditListScreen"
         component={SelectNewPanditjiScreen}
+      />
+      <Stack.Screen
+        name="PanditDetailsScreen"
+        component={PanditDetailsScreen}
       />
     </Stack.Navigator>
   );

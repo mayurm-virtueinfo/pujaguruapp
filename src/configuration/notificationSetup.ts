@@ -55,7 +55,6 @@ export async function setupNotifications() {
     }
   });
 
-  // App opened from background
   messaging.onNotificationOpenedApp((remoteMessage: any) => {
     if (remoteMessage) {
       console.log('🔁 Opened from background:', remoteMessage);
@@ -66,7 +65,6 @@ export async function setupNotifications() {
   // Background handler (must be top-level)
   messaging.setBackgroundMessageHandler(async (remoteMessage: any) => {
     console.log('📨 Background FCM message:', remoteMessage);
-    // Optionally display a local notification here if needed
   });
 }
 
@@ -137,49 +135,6 @@ export function handleNotificationNavigation(data: any) {
       }
     }, 500);
   }
-  // } else if (data?.pujaguru_app_screen === 'UserChatScreen') {
-  //   const booking_id = data?.booking_id;
-  //   const video_call = data?.video_call;
-  //   const targetScreen = data?.pujaguru_app_screen;
-
-  //   // const nestedParams = {
-  //   //   screen: 'UserAppBottomTabNavigator',
-  //   //   params: {
-  //   //     screen: 'UserHomeNavigator',
-  //   //     params: {
-  //   //       screen: 'UserChatScreen',
-  //   //       params: {
-  //   //         booking_id,
-  //   //         video_call: video_call,
-  //   //       },
-  //   //     },
-  //   //   },
-  //   // };
-
-  //   console.log('-------- in user chat screen notification -------');
-
-  //   const nestedParams = {
-  //     screen: 'UserAppBottomTabNavigator',
-  //     params: {
-  //       screen: 'UserHomeNavigator',
-  //       params: {
-  //         screen: 'UserChatScreen',
-  //         params: {
-  //           booking_id,
-  //           video_call,
-  //         },
-  //       },
-  //     },
-  //   };
-
-  //   setTimeout(() => {
-  //     if (navigationRef.isReady()) {
-  //       navigate('Main', nestedParams);
-  //     } else {
-  //       console.warn('Navigation not ready yet');
-  //     }
-  //   }, 500);
-  // }
 }
 
 export function cleanupNotifications() {
@@ -188,4 +143,37 @@ export function cleanupNotifications() {
     foregroundUnsubscribe = null;
   }
   isSetup = false;
+}
+
+function generateUuidV4(): string {
+  const bytes = new Uint8Array(16);
+  for (let i = 0; i < 16; i++) {
+    bytes[i] = Math.floor(Math.random() * 256);
+  }
+  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
+  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10
+  const toHex = (n: number) => n.toString(16).padStart(2, '0');
+  const b = Array.from(bytes).map(toHex);
+  return (
+    b[0] +
+    b[1] +
+    b[2] +
+    b[3] +
+    '-' +
+    b[4] +
+    b[5] +
+    '-' +
+    b[6] +
+    b[7] +
+    '-' +
+    b[8] +
+    b[9] +
+    '-' +
+    b[10] +
+    b[11] +
+    b[12] +
+    b[13] +
+    b[14] +
+    b[15]
+  );
 }

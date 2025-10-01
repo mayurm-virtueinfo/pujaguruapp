@@ -391,9 +391,16 @@ const UserPujaDetailsScreen: React.FC = () => {
                 }
                 style={styles.pujaIcon}
               />
-              <Text style={styles.totalSubtext}>
-                {pandit.pandit_name || t('panditji')}
-              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  navigation.navigate('PanditDetailsScreen', {
+                    panditId: pandit.id,
+                  });
+                }}>
+                <Text style={styles.totalSubtext}>
+                  {pandit.pandit_name || t('panditji')}
+                </Text>
+              </TouchableOpacity>
             </View>
             <TouchableOpacity
               onPress={() => {

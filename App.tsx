@@ -3,7 +3,6 @@ import React, {useEffect} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import SplashScreen from 'react-native-splash-screen';
 import RootNavigator from './src/navigation/RootNavigator';
-import {LogBox} from 'react-native';
 import 'react-native-gesture-handler';
 import {AuthProvider} from './src/provider/AuthProvider';
 import {ToastProvider} from 'react-native-toast-notifications';
@@ -24,26 +23,13 @@ import {CaptureProtection} from 'react-native-capture-protection';
 
 const auth = getAuth();
 if (__DEV__) {
-  auth.useEmulator('http://127.0.0.1:9099');
+  // auth.useEmulator('http://127.0.0.1:9099');
+  auth.useEmulator('http://192.168.1.15:9099');
 }
 
 setupNotifications();
 
 const App = () => {
-  // useEffect(() => {
-  //   const init = async () => {
-  //     await initializeI18n();
-  //     await requestUserPermission();
-  //     await requestLocationPermission();
-  //     SplashScreen.hide();
-  //   };
-  //   const timer = setTimeout(() => {
-  //     init();
-  //   }, 2500);
-
-  //   return () => clearTimeout(timer);
-  // }, []);
-
   useEffect(() => {
     const timer = setTimeout(() => {
       SplashScreen.hide();

@@ -3342,8 +3342,6 @@ PODS:
   - RecaptchaInterop (101.0.0)
   - RNCalendarEvents (2.2.0):
     - React-Core
-  - RNCallKeep (4.3.16):
-    - React
   - RNCAsyncStorage (1.23.1):
     - DoubleConversion
     - glog
@@ -3508,6 +3506,27 @@ PODS:
     - RNNotifee/NotifeeCore (= 9.1.8)
   - RNNotifee/NotifeeCore (9.1.8):
     - React-Core
+  - RNPermissions (5.4.2):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.10.14.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - RNReanimated (3.18.0):
     - DoubleConversion
     - glog
@@ -3856,7 +3875,6 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - RNCalendarEvents (from `../node_modules/react-native-calendar-events`)
-  - RNCallKeep (from `../node_modules/react-native-callkeep`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNCPicker (from `../node_modules/@react-native-picker/picker`)"
@@ -3871,6 +3889,7 @@ DEPENDENCIES:
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNImageCropPicker (from `../node_modules/react-native-image-crop-picker`)
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
+  - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSound (from `../node_modules/react-native-sound`)
@@ -4090,8 +4109,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   RNCalendarEvents:
     :path: "../node_modules/react-native-calendar-events"
-  RNCallKeep:
-    :path: "../node_modules/react-native-callkeep"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCClipboard:
@@ -4120,6 +4137,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-image-crop-picker"
   RNNotifee:
     :path: "../node_modules/@notifee/react-native"
+  RNPermissions:
+    :path: "../node_modules/react-native-permissions"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
@@ -4256,7 +4275,6 @@ SPEC CHECKSUMS:
   ReactCommon: b2eb96a61b826ff327a773a74357b302cf6da678
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   RNCalendarEvents: 62e1ac89d3afbfa77cf2dafa8727af93fa70825f
-  RNCallKeep: 1930a01d8caf48f018be4f2db0c9f03405c2f977
   RNCAsyncStorage: 9ff617df4a485f2efba57bdf4face05a41767390
   RNCClipboard: 81e19a7539c9b7eac2902663ef6a0f8c944e90f9
   RNCPicker: 2763f58fe45655fa79712f9d90be833c9e5216fa
@@ -4271,6 +4289,7 @@ SPEC CHECKSUMS:
   RNGoogleSignin: 30e1aee80140dc0706cd78a4951c411376c88329
   RNImageCropPicker: 8ee9c9136cdc53acc6126e30b8601189adff62b1
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
+  RNPermissions: ccfc0fcee5e5a0027d7c7f697d0230a6e3e2e968
   RNReanimated: 7f40d16441f0ed3422a65900bb0810de68d8e11f
   RNScreens: adc414245fe4ccbddcba33dbf6d0f682ff3e0829
   RNSound: 314cc5226453ef4a3314a196c65e8a65e5106a7b
