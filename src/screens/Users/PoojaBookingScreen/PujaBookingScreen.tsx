@@ -273,7 +273,13 @@ const PujaBookingScreen: React.FC = () => {
   };
 
   const handleSlotSelect = (slot: any) => {
-    setSelectedSlot(`${slot.start}_${slot.end}_${slot.type}`);
+    const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
+    if (selectedSlot === slotKey) {
+      setSelectedSlot('');
+      setSelectedSlotObj(null);
+      return;
+    }
+    setSelectedSlot(slotKey);
     setSelectedSlotObj(slot);
   };
 

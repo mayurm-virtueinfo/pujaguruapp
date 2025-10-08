@@ -7,10 +7,9 @@ import {
   StatusBar,
   Image,
   TouchableOpacity,
-  Platform,
   SafeAreaView,
-  Alert,
   AppState,
+  RefreshControl,
 } from 'react-native';
 import {moderateScale} from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -19,14 +18,13 @@ import {
   getUpcomingPujas,
   getInProgress,
   getActivePuja,
-  getPanchang,
   PujaItem,
   RecommendedPandit,
 } from '../../../api/apiService';
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
@@ -34,8 +32,11 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import PrimaryButton from '../../../components/PrimaryButton';
+import {
+  requestLocationPermission,
+  getCurrentLocation,
+} from '../../../utils/locationUtils';
 import {getLocationForAPI} from '../../../helper/helper';
-import {requestLocationPermission} from '../../../utils/locationUtils';
 
 interface PendingPuja {
   id: number;
@@ -56,36 +57,44 @@ const UserHomeScreen: React.FC = () => {
   const [pendingPujas, setPendingPujas] = useState<PendingPuja[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [user, setUser] = useState<string | null>(null);
-  const [location, setLocation] = useState<any | null>(null);
+  const [location, setLocation] = useState<{
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   const [recomendedPandits, setRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  // const [todayPanchang, setTodayPanchang] = useState<string | null>(null);
   const inset = useSafeAreaInsets();
   const {t} = useTranslation();
 
+  // Fetch user and attempt initial location fetch
   const fetchUserAndLocation = useCallback(async () => {
     try {
-      const user = await AsyncStorage.getItem(AppConstant.USER_ID);
-      setUser(user);
+      const userId = await AsyncStorage.getItem(AppConstant.USER_ID);
+      setUser(userId);
 
       const locationData = await getLocationForAPI();
-      if (locationData) {
-        setLocation(locationData);
+      if (locationData?.latitude && locationData?.longitude) {
+        setLocation({
+          latitude: Number(locationData.latitude),
+          longitude: Number(locationData.longitude),
+        });
       }
     } catch (error) {
-      console.error('Error fetching user and location:', error);
+      console.error('Error fetching user or location:', error);
     }
   }, []);
 
+  // Load home data with location check
   const loadHomeData = useCallback(async () => {
     setLoading(true);
     try {
       // Request location permission
       const granted = await requestLocationPermission();
       if (!granted) {
-        console.log('Location permission not granted');
+        throw new Error('Location permission not granted');
       }
 
       // Get location data
@@ -93,64 +102,72 @@ const UserHomeScreen: React.FC = () => {
       let latNum: number | null = null;
       let lngNum: number | null = null;
 
-      if (locationData) {
+      if (locationData?.latitude && locationData?.longitude) {
         latNum = Number(locationData.latitude);
         lngNum = Number(locationData.longitude);
+        setLocation({latitude: latNum, longitude: lngNum});
+      } else {
+        // No location available; proceed without location-dependent data
       }
 
       // Fetch all data in parallel
       const [upcoming, inProgress, active, recommended] = await Promise.all([
         getUpcomingPujas().catch(() => []),
         getInProgress().catch(() => []),
-        getActivePuja().catch(() => ({booking: []})),
-        latNum !== null && lngNum !== null
+        getActivePuja().catch(() => ({bookings: []})),
+        latNum && lngNum
           ? getRecommendedPandit(latNum.toString(), lngNum.toString()).catch(
               () => [],
             )
           : Promise.resolve([]),
       ]);
 
-      // Set state with proper type checking
       setPujas(Array.isArray(upcoming) ? upcoming : []);
       setInProgressPujas(Array.isArray(inProgress) ? inProgress : []);
-      console.log('active', active);
-      // Handle pending pujas
-      let bookings: PendingPuja[] = [];
-      if (Array.isArray(active?.bookings)) {
-        bookings = active.bookings;
-      } else if (active?.bookings) {
-        bookings = [active.bookings];
-      }
-      setPendingPujas(bookings);
-
-      // Handle recommended pandits
-      if (Array.isArray(recommended)) {
-        setRecomendedPandits(recommended);
-      } else if (recommended && Array.isArray((recommended as any).data)) {
-        setRecomendedPandits((recommended as any).data || []);
-      } else {
-        setRecomendedPandits([]);
-      }
+      setPendingPujas(
+        Array.isArray(active?.bookings)
+          ? active.bookings
+          : active?.bookings
+          ? [active.bookings]
+          : [],
+      );
+      setRecomendedPandits(
+        Array.isArray(recommended)
+          ? recommended
+          : (recommended as any)?.data || [],
+      );
     } catch (error) {
       console.error('Error loading home data:', error);
-      // Set safe defaults
       setPujas([]);
       setInProgressPujas([]);
       setPendingPujas([]);
       setRecomendedPandits([]);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
+  // Handle app state changes and location updates
   useEffect(() => {
     fetchUserAndLocation();
     loadHomeData();
 
-    const handleAppStateChange = (nextAppState: string) => {
+    const handleAppStateChange = async (nextAppState: string) => {
       if (nextAppState === 'active') {
-        console.log('App active - refreshing data');
-        loadHomeData();
+        console.log('App active - checking location');
+        try {
+          const loc = await getCurrentLocation();
+          if (loc?.latitude && loc?.longitude) {
+            setLocation({
+              latitude: Number(loc.latitude),
+              longitude: Number(loc.longitude),
+            });
+            await loadHomeData();
+          }
+        } catch (error) {
+          console.error('Error checking location on app state change:', error);
+        }
       }
     };
 
@@ -161,34 +178,12 @@ const UserHomeScreen: React.FC = () => {
     return () => subscription?.remove();
   }, [fetchUserAndLocation, loadHomeData]);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadHomeData();
-    }, [loadHomeData]),
-  );
+  // Remove periodic modal-driven checks; rely on app resume and pull-to-refresh
 
-  // const fetchTodayPanchang = async () => {
-  //   try {
-  //     const locationData = await getLocationForAPI();
-
-  //     if (locationData) {
-  //       const dateStr = formatDate(new Date());
-  //       const response = await getPanchang(
-  //         dateStr,
-  //         String(locationData.latitude),
-  //         String(locationData.longitude),
-  //       );
-
-  //       if (response?.success && response?.today_panchang) {
-  //         setTodayPanchang(response.today_panchang);
-  //       }
-  //     } else {
-  //       console.warn('No location available for panchang');
-  //     }
-  //   } catch (error) {
-  //     console.log('Error fetching panchang:', error);
-  //   }
-  // };
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    loadHomeData();
+  }, [loadHomeData]);
 
   const handleBookPandit = useCallback(
     (
@@ -221,13 +216,18 @@ const UserHomeScreen: React.FC = () => {
         backgroundColor={COLORS.primaryBackground}
         barStyle="light-content"
       />
-      <UserCustomHeader
-        title={t('home')}
-        // showBellButton={true}
-        // onNotificationPress={handleNotificationPress}
-      />
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <UserCustomHeader title={t('home')} />
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.primaryBackground]}
+            tintColor={COLORS.primaryBackground}
+          />
+        }>
         {/* Recommended Panditji Section */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -243,9 +243,6 @@ const UserHomeScreen: React.FC = () => {
               />
             </TouchableOpacity>
           </View>
-          {/* {todayPanchang && (
-            <Text style={styles.subtitle}>{todayPanchang}</Text>
-          )} */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -255,7 +252,7 @@ const UserHomeScreen: React.FC = () => {
               recomendedPandits.map((pandit: any) => {
                 const panditImage =
                   pandit.profile_img ||
-                  'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg';
+                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU';
                 return (
                   <View
                     style={[styles.panditCard, THEMESHADOW.shadow]}
@@ -497,13 +494,6 @@ const styles = StyleSheet.create({
     color: COLORS.primaryBackground,
     fontWeight: '500',
   },
-  subtitle: {
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_Medium,
-    color: '#6C7278',
-    fontWeight: '500',
-    marginBottom: moderateScale(12),
-  },
   panditCardsContainer: {
     flexGrow: 0,
     paddingTop: moderateScale(12),
@@ -511,7 +501,6 @@ const styles = StyleSheet.create({
   },
   panditCardsContentContainer: {
     flexDirection: 'row',
-    // marginHorizontal: moderateScale(2),
     paddingBottom: moderateScale(10),
   },
   panditCard: {

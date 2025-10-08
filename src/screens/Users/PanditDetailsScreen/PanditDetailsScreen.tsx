@@ -293,7 +293,11 @@ const PanditDetailsScreen: React.FC = () => {
             </TouchableOpacity>
             {modalImageUri && (
               <Image
-                source={{uri: modalImageUri}}
+                source={{
+                  uri:
+                    modalImageUri ||
+                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+                }}
                 style={styles.fullImage}
                 resizeMode="contain"
               />
@@ -309,7 +313,15 @@ const PanditDetailsScreen: React.FC = () => {
         keyboardShouldPersistTaps="handled">
         <View style={styles.contentContainer}>
           <View style={[styles.panditCard, THEMESHADOW.shadow]}>
-            <Image source={{uri: panditImage}} style={styles.panditImage} />
+            <Image
+              source={{
+                uri:
+                  panditImage ||
+                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+              }}
+              style={styles.panditImage}
+              resizeMode="cover"
+            />
             <View style={styles.panditInfo}>
               <Text style={styles.panditName}>
                 {panditName || 'Pandit Name'}

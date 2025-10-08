@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   StyleSheet,
@@ -29,6 +29,7 @@ import {
   getPoojaDetails,
   getPoojaDetailsForPujaList,
 } from '../../../api/apiService';
+import {translateData, translateText} from '../../../utils/TranslateData';
 
 // --- Fix: Arranged items can be string[] or array of objects ---
 type ArrangedItem = {name: string; quantity?: string | number} | string;
@@ -103,13 +104,16 @@ const PujaDetailsScreen: React.FC = () => {
     'UserPoojaDetails'
   >;
 
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
+  const currentLanguage = i18n.language;
+
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute() as any;
   const {showErrorToast} = useCommonToast();
 
   const [data, setData] = useState<PujaDetails | null>(null);
+  const [originalData, setOriginalData] = useState<PujaDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedPricingId, setSelectedPricingId] = useState<number | null>(
     null,
@@ -123,8 +127,59 @@ const PujaDetailsScreen: React.FC = () => {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [modalImageUri, setModalImageUri] = useState<string | null>(null);
 
+  const translationCacheRef = useRef<Map<string, PujaDetails>>(new Map());
+
   const {poojaId, panditId, panditName, panditImage, panditCity} =
     route?.params;
+
+  console.log('currentLanguage :: ', currentLanguage);
+  console.log('data :: ', data);
+
+  // Translate relevant fields from the original data whenever language changes.
+  useEffect(() => {
+    if (!originalData) return;
+
+    let mounted = true;
+    const handleTranslation = async () => {
+      setLoading(true);
+      try {
+        // Check cache first
+        const cached = translationCacheRef.current.get(currentLanguage);
+        if (cached) {
+          if (mounted) setData(cached);
+          return;
+        }
+
+        // Translate using translateData
+        const translated = await translateData(originalData, currentLanguage, [
+          'title',
+          'short_description',
+          'user_arranged_items',
+          'pandit_arranged_items',
+          'user_reviews',
+          'benifits',
+          'features',
+          'retual_steps',
+        ]);
+
+        // Cache and set the translated result
+        translationCacheRef.current.set(
+          currentLanguage,
+          translated as PujaDetails,
+        );
+        if (mounted) setData(translated as PujaDetails);
+      } catch (err) {
+        console.error('Translation error :: ', err);
+        if (mounted) setData(originalData);
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+    handleTranslation();
+    return () => {
+      mounted = false;
+    };
+  }, [currentLanguage, originalData]);
 
   useEffect(() => {
     if (poojaId) {
@@ -142,6 +197,7 @@ const PujaDetailsScreen: React.FC = () => {
         response = await getPoojaDetailsForPujaList(id);
       }
       if (response.success) {
+        setOriginalData(response.data);
         setData(response.data);
       } else {
         setData(null);
@@ -205,7 +261,6 @@ const PujaDetailsScreen: React.FC = () => {
     ];
   };
 
-  // --- User Review Section ---
   const handleReviewImagePress = (uri: string) => {
     setModalImageUri(uri);
     setImageModalVisible(true);
@@ -305,7 +360,6 @@ const PujaDetailsScreen: React.FC = () => {
     );
   };
 
-  // Expandable Section Component (shows first item with chevron, expands to show all)
   const ExpandableSection = ({
     title,
     expanded,
@@ -425,7 +479,6 @@ const PujaDetailsScreen: React.FC = () => {
     );
   };
 
-  // Handler for main puja image click
   const handleMainImagePress = () => {
     if (data?.image_url) {
       setModalImageUri(data.image_url);
@@ -437,12 +490,7 @@ const PujaDetailsScreen: React.FC = () => {
     <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
       <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
-      <UserCustomHeader
-        title={t('puja_details')}
-        showBackButton={true}
-        // showBellButton={true}
-        // onNotificationPress={handleNotificationPress}
-      />
+      <UserCustomHeader title={t('puja_details')} showBackButton={true} />
       <View style={styles.flexGrow}>
         <ScrollView
           style={styles.scrollContainer}

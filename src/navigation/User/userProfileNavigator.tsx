@@ -11,6 +11,8 @@ import UpcomingPuja from '../../screens/Users/BottomProfileScreen/UpcomingPuja';
 import PastPujaScreen from '../../screens/Users/BottomProfileScreen/PastPujaScreen';
 import UserPujaDetailsScreen from '../../screens/Users/UserPujaDetailsScreen/UserPujaDetailsScreen';
 import SearchPanditScreen from '../../screens/Users/SearchPanditScreen/SearchPanditScreen';
+import UserChatScreen from '../../screens/Users/UserChatScreen/UserChatScreen';
+import PujaCancellationScreen from '../../screens/Users/PujaCancellationScreen/PujaCancellationScreen';
 
 export type UserProfileParamList = {
   goBack(): void;
@@ -28,6 +30,13 @@ export type UserProfileParamList = {
     id: string;
   };
   SearchPanditScreen: any;
+  UserChatScreen: {
+    booking_id: string;
+    pandit_name?: string;
+    profile_img_url?: string;
+    pandit_id: string;
+  };
+  PujaCancellationScreen: {id: any};
 };
 
 const Stack = createStackNavigator<UserProfileParamList>();
@@ -56,6 +65,11 @@ const UserProfileNavigator = () => {
         name="UserPujaDetailsScreen"
         component={UserPujaDetailsScreen}
       />
+      <Stack.Screen
+        name="PujaCancellationScreen"
+        component={PujaCancellationScreen}
+      />
+      <Stack.Screen name="UserChatScreen" component={UserChatScreen} />
     </Stack.Navigator>
   );
 };

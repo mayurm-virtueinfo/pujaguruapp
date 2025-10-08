@@ -131,7 +131,15 @@ const PanditjiScreen: React.FC = () => {
         activeOpacity={0.7}>
         <View style={styles.panditjiContent}>
           <View style={styles.imageContainer}>
-            <Image source={{uri: item.image}} style={styles.panditjiImage} />
+            <Image
+              source={{
+                uri:
+                  item.image ||
+                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+              }}
+              style={styles.panditjiImage}
+              resizeMode="cover"
+            />
             {item.isVerified && (
               <View style={styles.verifiedBadge}>
                 <MaterialIcons

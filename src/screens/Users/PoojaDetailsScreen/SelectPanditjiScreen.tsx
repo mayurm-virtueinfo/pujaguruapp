@@ -181,6 +181,14 @@ const SelectPanditjiScreen: React.FC = () => {
   };
 
   const handlePanditjiSelect = (id: string) => {
+    if (selectedPanditji === id) {
+      setSelectedPanditji(null);
+      setSelectPanditData(null);
+      setSelectedPanditjiName(null);
+      setSelectedPanditjiImage(null);
+      setPanditjiData(prev => prev.map(item => ({...item, isSelected: false})));
+      return;
+    }
     const selected = panditjiData.find(item => item.id === id);
     setSelectedPanditji(id);
     setSelectPanditData(selected);
@@ -337,7 +345,14 @@ const SelectPanditjiScreen: React.FC = () => {
         activeOpacity={0.7}>
         <View style={styles.panditjiContent}>
           <View style={styles.imageContainer}>
-            <Image source={{uri: item.image}} style={styles.panditjiImage} />
+            <Image
+              source={{
+                uri:
+                  item.image ||
+                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+              }}
+              style={styles.panditjiImage}
+            />
             {item.isVerified && (
               <View style={styles.verifiedBadge}>
                 <MaterialIcons

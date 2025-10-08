@@ -175,7 +175,7 @@ const BottomUserProfileScreen: React.FC = () => {
             source={{
               uri:
                 currentUser?.profile_img ||
-                'https://www.shutterstock.com/image-vector/user-profile-icon-vector-avatar-600nw-2220431045.jpg',
+                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
             }}
             style={styles.profileImage}
           />
@@ -355,7 +355,8 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: COLORS.separatorColor,
+    borderWidth: 1,
+    borderColor: COLORS.textGray,
   },
   contentContainer: {
     position: 'absolute',

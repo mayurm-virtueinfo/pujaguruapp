@@ -387,7 +387,9 @@ const UserEditProfileScreen: React.FC = () => {
         <TouchableOpacity onPress={handleImagePicker}>
           <Image
             source={{
-              uri: profileImage?.uri || 'https://via.placeholder.com/100',
+              uri:
+                profileImage?.uri ||
+                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
             }}
             style={styles.profileImage}
           />
@@ -491,11 +493,11 @@ const UserEditProfileScreen: React.FC = () => {
               labelStyle={themedInputLabelStyle}
               error={formErrors.address}
             />
-            <PrimaryButtonOutlined
+            {/* <PrimaryButtonOutlined
               title={t('fetch_gps_location')}
               onPress={handleFetchGPS}
               disabled={isLoading}
-            />
+            /> */}
             <PrimaryButton
               title={edit ? t('save_changes') : t('save')}
               onPress={handleSaveProfile}
@@ -533,8 +535,8 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    borderWidth: 2,
-    borderColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.textGray,
   },
   editIconContainer: {
     position: 'absolute',

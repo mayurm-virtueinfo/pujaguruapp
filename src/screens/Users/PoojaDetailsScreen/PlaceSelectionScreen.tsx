@@ -120,7 +120,9 @@ const PlaceSelectionScreen: React.FC = () => {
                       style={styles.pricingOption}
                       activeOpacity={0.7}
                       onPress={() => {
-                        setSelectedPlaceId(place.id);
+                        setSelectedPlaceId(prev =>
+                          prev === place.id ? null : place.id,
+                        );
                       }}>
                       <Text style={styles.pricingText}>{place.name}</Text>
                       <Octicons

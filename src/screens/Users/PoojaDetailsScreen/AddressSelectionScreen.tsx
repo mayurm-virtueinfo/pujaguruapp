@@ -106,6 +106,12 @@ const AddressSelectionScreen: React.FC = () => {
   };
 
   const handleSelectAddress = (id: number) => {
+    if (selectedAddressId === id) {
+      setSelectedAddressId(null);
+      setSelectedAddress(null);
+      setSelectedUserAddressId(null);
+      return;
+    }
     setSelectedAddressId(id);
     const found = poojaPlaces.find(place => place.id === id) || null;
     setSelectedAddress(found);

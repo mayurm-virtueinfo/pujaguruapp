@@ -23,8 +23,8 @@ import {CaptureProtection} from 'react-native-capture-protection';
 
 const auth = getAuth();
 if (__DEV__) {
-  // auth.useEmulator('http://127.0.0.1:9099');
-  auth.useEmulator('http://192.168.1.15:9099');
+  auth.useEmulator('http://127.0.0.1:9099');
+  // auth.useEmulator('http://192.168.1.10:9099');
 }
 
 setupNotifications();
