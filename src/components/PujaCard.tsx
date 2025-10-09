@@ -114,7 +114,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Fonts.Sen_Medium,
     fontSize: 15,
-    letterSpacing: -0.15,
     textTransform: 'uppercase',
   },
 });

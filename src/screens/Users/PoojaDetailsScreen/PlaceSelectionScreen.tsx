@@ -38,11 +38,11 @@ const PlaceSelectionScreen: React.FC = () => {
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingPlace[]>([
     {
       id: 1,
-      name: 'At My Place',
+      name: t('at_my_place'),
     },
     {
       id: 2,
-      name: 'At Tirth Place',
+      name: t('at_tirth_place'),
     },
   ]);
   const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
@@ -60,6 +60,8 @@ const PlaceSelectionScreen: React.FC = () => {
     description,
     panditCity,
   } = route?.params as any;
+
+  console.log('PlaceSelectionScreen route?.params :: ', route?.params);
 
   const handleNextPress = () => {
     if (selectedPlaceId === 2 && panditId) {

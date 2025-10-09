@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   StyleSheet,
@@ -32,6 +32,7 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
+import {translateData} from '../../../utils/TranslateData';
 
 const AddressSelectionScreen: React.FC = () => {
   type BookingAddress = PoojaBookingAddress & {
@@ -47,9 +48,13 @@ const AddressSelectionScreen: React.FC = () => {
     'AddressSelectionScreen',
     'AddAddressScreen'
   >;
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
+
+  const currentLanguage = i18n.language;
+
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
 
   const route = useRoute();
 
@@ -66,7 +71,12 @@ const AddressSelectionScreen: React.FC = () => {
     panditCity,
   } = route?.params as any;
 
+  console.log('AddressSelectionScreen route?.params :: ', route?.params);
+
   const [poojaPlaces, setPoojaPlaces] = useState<BookingAddress[]>([]);
+  const [originalPoojaPlaces, setOriginalPoojaPlaces] = useState<
+    BookingAddress[]
+  >([]);
 
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(
     null,
@@ -82,28 +92,46 @@ const AddressSelectionScreen: React.FC = () => {
   const [mismatchModalVisible, setMismatchModalVisible] =
     useState<boolean>(false);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchAllPoojaAddresses();
-    }, []),
-  );
-
-  console.log('selectedAddress :: ', selectedAddress);
-
-  const fetchAllPoojaAddresses = async () => {
+  const fetchAllPoojaAddresses = useCallback(async () => {
     try {
       setIsLoading(true);
+
+      const cachedData = translationCacheRef.current.get(currentLanguage);
+
+      if (cachedData) {
+        setPoojaPlaces(cachedData);
+        setIsLoading(false);
+        return;
+      }
+
       const response: any = await getAddressTypeForBooking();
 
       if (response.success) {
-        setPoojaPlaces(response.addresses);
+        setOriginalPoojaPlaces(response.addresses);
+        const translated: any = await translateData(
+          response.addresses,
+          currentLanguage,
+          ['address_type', 'full_address'],
+        );
+
+        translationCacheRef.current.set(currentLanguage, translated);
+        setPoojaPlaces(translated);
+      } else {
+        setPoojaPlaces([]);
+        setOriginalPoojaPlaces([]);
       }
     } catch (error) {
       console.error('Error fetching pooja places:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentLanguage]);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchAllPoojaAddresses();
+    }, [fetchAllPoojaAddresses]),
+  );
 
   const handleSelectAddress = (id: number) => {
     if (selectedAddressId === id) {
@@ -113,7 +141,7 @@ const AddressSelectionScreen: React.FC = () => {
       return;
     }
     setSelectedAddressId(id);
-    const found = poojaPlaces.find(place => place.id === id) || null;
+    const found = originalPoojaPlaces.find(place => place.id === id) || null;
     setSelectedAddress(found);
     if (found && found.id) {
       setSelectedUserAddressId(found.id);
@@ -139,17 +167,17 @@ const AddressSelectionScreen: React.FC = () => {
     navigation.navigate('PujaBooking', {
       poojaId: poojaId,
       samagri_required: samagri_required,
-      address: selectedUserAddressId,
-      poojaName: selectedAddress?.address_type || '',
-      poojaDescription: selectedAddress?.full_address || '',
       puja_image: puja_image,
       puja_name: puja_name,
+      poojaName: puja_name,
       price: price,
-      selectAddressName: selectedAddress?.address_type || '',
       panditId: panditId,
       panditName: panditName,
       panditImage: panditImage,
       description: description,
+      address: selectedUserAddressId,
+      poojaDescription: selectedAddress?.full_address || '',
+      selectAddressName: selectedAddress?.address_type || '',
       selectedAddressLatitude: String(selectedAddress?.latitude ?? ''),
       selectedAddressLongitude: String(selectedAddress?.longitude ?? ''),
     });
@@ -194,7 +222,6 @@ const AddressSelectionScreen: React.FC = () => {
                   title={t('go_to_home') || 'Go to Home'}
                   onPress={() => {
                     setMismatchModalVisible(false);
-                    // Navigate to Home
                     // @ts-ignore
                     navigation.navigate('UserHomeNavigator', {
                       screen: 'UserHomeScreen',

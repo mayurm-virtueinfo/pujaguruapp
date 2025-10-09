@@ -384,8 +384,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     fontSize: moderateScale(15),
     fontWeight: '400',
-    lineHeight: moderateScale(21),
-    letterSpacing: -0.15,
     textTransform: 'uppercase',
   },
   gpsButtonLoading: {
@@ -407,8 +405,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     fontSize: moderateScale(15),
     fontWeight: '400',
-    lineHeight: moderateScale(21),
-    letterSpacing: -0.15,
     textTransform: 'uppercase',
   },
 });

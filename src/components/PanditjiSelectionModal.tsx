@@ -193,7 +193,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
     color: '#191313',
-    lineHeight: moderateScale(19.6),
     marginBottom: verticalScale(24),
   },
   optionsContainer: {
@@ -229,14 +228,12 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.333,
     marginBottom: verticalScale(4),
   },
   optionDescription: {
     fontSize: moderateScale(13),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.pujaCardSubtext,
-    lineHeight: moderateScale(15.6),
   },
   divider: {
     height: 1,
@@ -263,8 +260,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
     textTransform: 'uppercase',
-    letterSpacing: -0.15,
-    lineHeight: moderateScale(21),
   },
   confirmButton: {
     flex: 1,
@@ -280,8 +275,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     color: '#191313',
     textTransform: 'uppercase',
-    letterSpacing: -0.15,
-    lineHeight: moderateScale(21),
   },
 });
 

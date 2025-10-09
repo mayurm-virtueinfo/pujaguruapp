@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {
   View,
   StyleSheet,
@@ -26,6 +26,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {useCommonToast} from '../../../common/CommonToast';
+import {translateData} from '../../../utils/TranslateData';
 
 interface PanditjiItem {
   id: string;
@@ -44,7 +45,10 @@ interface PanditjiResponse {
 
 const PanditjiScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
+
+  const currentLanguage = i18n.language;
+  console.log('Current Language:', currentLanguage);
 
   const navigation =
     useNavigation<StackNavigationProp<UserPanditjiParamList>>();
@@ -52,52 +56,63 @@ const PanditjiScreen: React.FC = () => {
   const [panditjiData, setPanditjiData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  console.log('panditjiData :: ', panditjiData);
-
   const {showErrorToast} = useCommonToast();
 
-  const handleNotificationPress = () => {
-    navigation.navigate('NotificationScreen');
-  };
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
 
   const fetchAllPanditji = useCallback(async () => {
     try {
       setIsLoading(true);
+
+      const cachedData = translationCacheRef.current.get(currentLanguage);
+
+      if (cachedData) {
+        setPanditjiData(cachedData);
+        setIsLoading(false);
+        return;
+      }
+
       const response = (await getAllPanditji()) as PanditjiResponse;
 
-      console.log('response :: ', response.data);
-
       if (response.success) {
-        setPanditjiData(
-          response.data
-            .filter(item =>
-              item.full_name.toLowerCase().includes(searchText.toLowerCase()),
-            )
-            .map((item: any) => ({
-              id: item.id,
-              pandit_id: item.pandit_id,
-              name: item.full_name,
-              image: item.profile_img,
-              location: item.city,
-              languages: item.supported_languages.join(', '),
-              isVerified: false,
-              isSelected: false,
-            })),
+        const panditjiListData = response.data
+          .filter(item =>
+            item.full_name.toLowerCase().includes(searchText.toLowerCase()),
+          )
+          .map((item: any) => ({
+            id: item.id,
+            pandit_id: item.pandit_id,
+            name: item.full_name,
+            image: item.profile_img,
+            location: item.city,
+            languages: item.supported_languages.join(', '),
+            isVerified: false,
+            isSelected: false,
+          }));
+
+        const translated: any = await translateData(
+          panditjiListData,
+          currentLanguage,
+          ['name', 'location', 'languages'],
         );
+
+        translationCacheRef.current.set(currentLanguage, translated);
+        setPanditjiData(translated);
+      } else {
+        setPanditjiData([]);
       }
     } catch (error: any) {
       showErrorToast(error?.message || 'Failed to fetch Panditji list');
     } finally {
       setIsLoading(false);
     }
-  }, [searchText]);
+  }, [searchText, currentLanguage]);
 
   useEffect(() => {
     fetchAllPanditji();
   }, [fetchAllPanditji]);
 
   const handlePanditjiSelect = (id: string) => {
-    console.log('pandit id pass :: ', id);
     navigation.navigate('PanditDetailsScreen', {
       panditId: id,
     });
@@ -183,11 +198,7 @@ const PanditjiScreen: React.FC = () => {
         barStyle="light-content"
         backgroundColor={COLORS.gradientStart}
       />
-      <UserCustomHeader
-        title={t('panditji')}
-        // showBellButton={true}
-        // onNotificationPress={handleNotificationPress}
-      />
+      <UserCustomHeader title={t('panditji')} />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -202,7 +213,7 @@ const PanditjiScreen: React.FC = () => {
               showsVerticalScrollIndicator={true}
               contentContainerStyle={styles.listContent}
               keyboardShouldPersistTaps="handled"
-              ListEmptyComponent={renderEmptyComponent} // Add this prop
+              ListEmptyComponent={renderEmptyComponent}
             />
           </View>
         </View>
@@ -293,7 +304,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Bold,
     fontSize: moderateScale(15),
     fontWeight: '700',
-    letterSpacing: -0.333,
     marginBottom: verticalScale(2),
   },
   panditjiLocation: {

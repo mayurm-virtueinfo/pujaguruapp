@@ -32,7 +32,12 @@ const PujaListItem: React.FC<PujaListItemProps> = ({
         <View style={{flex: 1, marginLeft: 14}}>
           <View style={styles.content}>
             <Text style={styles.title}>{title}</Text>
-            <Text style={styles.description}>{description}</Text>
+            <Text
+              style={styles.description}
+              numberOfLines={2}
+              ellipsizeMode="tail">
+              {description}
+            </Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.price}>{price}</Text>
@@ -80,7 +85,6 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
     fontFamily: Fonts.Sen_Bold,
     fontSize: 15,
-    letterSpacing: -0.333,
   },
   description: {
     color: COLORS.pujaCardSubtext,
@@ -101,14 +105,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 10,
   },
   buttonText: {
     color: COLORS.primaryTextDark,
     textAlign: 'center',
     fontFamily: Fonts.Sen_Regular,
     fontSize: 15,
-    lineHeight: 21,
-    letterSpacing: -0.15,
     textTransform: 'uppercase',
   },
   separator: {

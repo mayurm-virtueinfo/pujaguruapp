@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -34,14 +34,15 @@ const PujaCancellationScreen = () => {
   const inset = useSafeAreaInsets();
   const route = useRoute();
   const navigation = useNavigation<any>();
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const {id} = route.params as any;
   const [cancellationReasons] = useState<CancellationReason[]>([
-    {key: 'user_personal', label: 'Personal reasons'},
-    {key: 'user_another_service', label: 'Found another service'},
-    {key: 'user_financial', label: 'Financial reasons'},
-    {key: 'user_other', label: 'Other', requiresSpecification: true},
+    {key: 'user_personal', label: 'personal_reason'},
+    {key: 'user_another_service', label: 'found_another_service'},
+    {key: 'user_financial', label: 'financial_reasons'},
+    {key: 'user_other', label: 'other', requiresSpecification: true},
   ]);
+
   const [selectedReasonKey, setSelectedReasonKey] = useState<string | null>(
     null,
   );
@@ -54,6 +55,13 @@ const PujaCancellationScreen = () => {
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
 
   const {showErrorToast, showSuccessToast} = useCommonToast();
+
+  const englishLabelMap: Record<string, string> = {
+    personal_reason: 'Personal Reason',
+    found_another_service: 'Found another service',
+    financial_reasons: 'Financial Reasons',
+    other: 'Other',
+  };
 
   const handleSubmit = () => {
     const selectedReason = cancellationReasons.find(
@@ -79,7 +87,8 @@ const PujaCancellationScreen = () => {
     try {
       const payload: any = {
         cancellation_reason_type: selectedReason?.key,
-        reason: selectedReason?.label,
+        reason:
+          englishLabelMap[selectedReason?.label || ''] || selectedReason?.label,
         ...(selectedReason?.requiresSpecification && {
           other_reason: customReason,
         }),
@@ -124,7 +133,7 @@ const PujaCancellationScreen = () => {
         style={styles.reasonOption}
         onPress={() => setSelectedReasonKey(reason.key)}
         activeOpacity={0.7}>
-        <Text style={styles.reasonText}>{reason.label}</Text>
+        <Text style={styles.reasonText}>{t(reason.label) || reason.label}</Text>
         <Ionicons
           name={
             selectedReasonKey === reason.key
@@ -263,7 +272,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
     color: COLORS.inputLabelText,
-    lineHeight: moderateScale(20),
     marginBottom: verticalScale(17),
     marginRight: scale(21),
   },
@@ -283,7 +291,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
     flex: 1,
-    letterSpacing: -0.33,
   },
   separator: {
     height: 1,
@@ -303,7 +310,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.14,
     minHeight: verticalScale(100),
   },
   policyLinkContainer: {
@@ -328,8 +334,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
     textTransform: 'uppercase',
-    letterSpacing: -0.15,
-    lineHeight: moderateScale(21),
   },
   fixedButtonContainer: {
     backgroundColor: COLORS.white,

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -16,19 +16,15 @@ import {
 import {moderateScale, verticalScale} from 'react-native-size-matters';
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import {
-  apiService,
-  getPanditDetails,
-  RecommendedPuja,
-} from '../../../api/apiService';
+import {getPanditDetails} from '../../../api/apiService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import Feather from 'react-native-vector-icons/Feather';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {useCommonToast} from '../../../common/CommonToast';
 import {useTranslation} from 'react-i18next';
+import {translateData} from '../../../utils/TranslateData';
 
 const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
 
@@ -90,13 +86,14 @@ const PanditDetailsScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const route = useRoute();
   const {panditId} = route.params as {panditId: string};
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const {showErrorToast} = useCommonToast();
   const navigation = useNavigation();
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedPandit, setSelectedPandit] = useState<PanditDetails | null>(
     null,
   );
+  const [originalPanditData, setOriginalPanditData] = useState<any>(null);
   const [gallery, setGallery] = useState<PanditPhotoGalleryItem[]>([]);
   const [reviews, setReviews] = useState<UserReview[]>([]);
   const [pujaList, setPujaList] = useState<PanditList[]>([]);
@@ -104,25 +101,65 @@ const PanditDetailsScreen: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalImageUri, setModalImageUri] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (panditId) {
-      fetchPanditDetails(panditId);
-    }
-  }, [panditId]);
+  const currentLanguage = i18n.language;
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
 
   const fetchPanditDetails = useCallback(
     async (panditId: string) => {
       try {
         setLoading(true);
+
+        const cachedData = translationCacheRef.current.get(currentLanguage);
+
+        if (cachedData) {
+          setSelectedPandit(cachedData);
+          setGallery(cachedData.pandit_photo_gallery || []);
+          setReviews(cachedData.user_reviews || []);
+          setPujaList(cachedData.pandit_poojas || []);
+          setLoading(false);
+          return;
+        }
+
         const response: PanditResponse = await getPanditDetails(panditId);
 
         if (response.success) {
-          setSelectedPandit(response.data);
-          setGallery(response.data.pandit_photo_gallery || []);
-          setReviews(response.data.user_reviews || []);
-          setPujaList(response.data.pandit_poojas || []);
+          setOriginalPanditData(response?.data);
+          const translatedData: any = await translateData(
+            response?.data,
+            currentLanguage,
+            ['address_city_name', 'bio', 'pandit_name'],
+          );
+
+          if (translatedData.pandit_photo_gallery) {
+            translatedData.pandit_photo_gallery = await translateData(
+              translatedData.pandit_photo_gallery,
+              currentLanguage,
+              ['pooja_name'],
+            );
+          }
+
+          if (translatedData.pandit_poojas) {
+            translatedData.pandit_poojas = await translateData(
+              translatedData.pandit_poojas,
+              currentLanguage,
+              ['pooja_title'],
+            );
+          }
+
+          translationCacheRef.current.set(currentLanguage, translatedData);
+          setSelectedPandit(translatedData);
+          setGallery(translatedData.pandit_photo_gallery || []);
+          setReviews(translatedData.user_reviews || []);
+          setPujaList(translatedData.pandit_poojas || []);
+        } else {
+          setSelectedPandit(null);
+          setOriginalPanditData(null);
+          setGallery([]);
+          setReviews([]);
+          setPujaList([]);
         }
       } catch (error: any) {
+        console.error('Error fetching Pandit details:', error);
         showErrorToast(
           error?.message || 'Failed to fetch Panditji details screen',
         );
@@ -130,8 +167,14 @@ const PanditDetailsScreen: React.FC = () => {
         setLoading(false);
       }
     },
-    [showErrorToast],
+    [showErrorToast, currentLanguage],
   );
+
+  useEffect(() => {
+    if (panditId) {
+      fetchPanditDetails(panditId);
+    }
+  }, [panditId, fetchPanditDetails]);
 
   const panditName = selectedPandit?.pandit_name || '';
   const panditImage = selectedPandit?.profile_img;
@@ -220,9 +263,9 @@ const PanditDetailsScreen: React.FC = () => {
           params: {
             poojaId: item?.pooja,
             panditId: panditId,
-            panditName: panditName,
-            panditImage: panditImage,
-            panditCity: panditCity,
+            panditName: originalPanditData?.pandit_name,
+            panditImage: originalPanditData?.profile_img,
+            panditCity: originalPanditData?.address_city_name,
           },
         })
       }>
@@ -541,7 +584,6 @@ const styles = StyleSheet.create({
     color: COLORS.inputLabelText,
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
-    lineHeight: moderateScale(20),
   },
   photoGallerySection: {
     marginBottom: moderateScale(12),
@@ -650,7 +692,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(12),
     color: COLORS.pujaCardSubtext,
     fontFamily: Fonts.Sen_Regular,
-    lineHeight: moderateScale(18),
     marginBottom: moderateScale(8),
   },
   forNoDataText: {

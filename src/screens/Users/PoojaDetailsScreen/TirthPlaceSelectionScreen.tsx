@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   StyleSheet,
@@ -7,19 +7,12 @@ import {
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
-import CustomHeader from '../../../components/CustomHeader';
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Octicons from 'react-native-vector-icons/Octicons';
-import {
-  apiService,
-  getTirthPlace,
-  PoojaBookingAddress,
-  PoojaBookingTirthPlace,
-} from '../../../api/apiService';
+import {getTirthPlace, PoojaBookingTirthPlace} from '../../../api/apiService';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {useNavigation, useRoute} from '@react-navigation/native';
@@ -27,16 +20,18 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
+import {translateData} from '../../../utils/TranslateData';
 
 const TirthPlaceSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'TirthPlaceSelectionScreen'
   >;
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
+
+  const currentLanguage = i18n.language;
 
   const route = useRoute();
   const {
@@ -51,7 +46,12 @@ const TirthPlaceSelectionScreen: React.FC = () => {
     description,
   } = route?.params as any;
 
+  console.log('tirth place route?.params :: ', route?.params);
+
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingTirthPlace[]>([]);
+  const [originalPoojaPlaces, setOriginalPoojaPlaces] = useState<
+    PoojaBookingTirthPlace[]
+  >([]);
   const [selectedTirthPlaceId, setSelectedTirthPlaceId] = useState<
     number | null
   >(null);
@@ -67,50 +67,76 @@ const TirthPlaceSelectionScreen: React.FC = () => {
   const [selectedTirthPlaceLongitude, setSelectedTirthPlaceLongitude] =
     useState<string | null>(null);
 
-  console.log('selectedTirthPlaceLatitude :: ', selectedTirthPlaceLatitude);
-  console.log('selectedTirthPlaceLongitude :: ', selectedTirthPlaceLongitude);
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
 
-  useEffect(() => {
-    fetchTirthPlaces();
-  }, []);
+  console.log(
+    'selectedTirthPlaceDescription :: ',
+    selectedTirthPlaceDescription,
+  );
 
-  const fetchTirthPlaces = async () => {
+  const fetchTirthPlaces = useCallback(async () => {
     try {
       setIsLoading(true);
+
+      const cachedData = translationCacheRef.current.get(currentLanguage);
+
+      if (cachedData) {
+        setPoojaPlaces(cachedData);
+        setIsLoading(false);
+        return;
+      }
+
       const response = await getTirthPlace();
       if (response && Array.isArray(response)) {
-        setPoojaPlaces(response);
+        setOriginalPoojaPlaces(response);
+
+        const translated: any = await translateData(response, currentLanguage, [
+          'city_name',
+          'description',
+        ]);
+        translationCacheRef.current.set(currentLanguage, translated);
+        setPoojaPlaces(translated);
+      } else {
+        setPoojaPlaces([]);
+        setOriginalPoojaPlaces([]);
       }
     } catch (error) {
       console.error('Error fetching tirth places:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentLanguage]);
+
+  useEffect(() => {
+    fetchTirthPlaces();
+  }, [fetchTirthPlaces]);
 
   const handleTirthPlaceSelect = (place: PoojaBookingTirthPlace) => {
-    setSelectedTirthPlaceId(place.id);
-    setSelectedTirthPlaceName(place.city_name);
-    setSelectedTirthPlaceDescription(place.description);
-    setSelectedTirthPlaceLatitude(place.latitude);
-    setSelectedTirthPlaceLongitude(place.longitude);
+    const originalPlace = originalPoojaPlaces.find(p => p.id === place.id);
+    if (originalPlace) {
+      setSelectedTirthPlaceId(originalPlace.id);
+      setSelectedTirthPlaceName(originalPlace.city_name);
+      setSelectedTirthPlaceDescription(originalPlace.description);
+      setSelectedTirthPlaceLatitude(originalPlace.latitude);
+      setSelectedTirthPlaceLongitude(originalPlace.longitude);
+    }
   };
 
   const handleNextPress = () => {
     navigation.navigate('PujaBooking', {
       poojaId: poojaId,
       samagri_required: samagri_required,
-      tirth: selectedTirthPlaceId,
-      poojaName: selectedTirthPlaceName,
-      poojaDescription: selectedTirthPlaceDescription,
       puja_image: puja_image,
       puja_name: puja_name,
+      poojaName: selectedTirthPlaceName,
+      tirth: selectedTirthPlaceId,
       price: price,
-      selectTirthPlaceName: selectedTirthPlaceName || '',
       panditId: panditId,
       panditName: panditName,
       panditImage: panditImage,
       description: description,
+      poojaDescription: selectedTirthPlaceDescription,
+      selectTirthPlaceName: selectedTirthPlaceName || '',
       selectedAddressLatitude: selectedTirthPlaceLatitude,
       selectedAddressLongitude: selectedTirthPlaceLongitude,
     });

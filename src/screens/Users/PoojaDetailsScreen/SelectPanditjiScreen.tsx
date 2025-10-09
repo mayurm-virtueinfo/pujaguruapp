@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   View,
   StyleSheet,
@@ -30,6 +30,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import {useCommonToast} from '../../../common/CommonToast';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
+import {translateData} from '../../../utils/TranslateData';
 
 interface PanditjiItem {
   id: string;
@@ -42,10 +43,12 @@ interface PanditjiItem {
 }
 
 const SelectPanditjiScreen: React.FC = () => {
-  const {t} = useTranslation();
+  const {t, i18n}: {t: any; i18n: {language: string}} = useTranslation();
   const inset = useSafeAreaInsets();
 
   const route = useRoute();
+  const currentLanguage: string = i18n.language;
+
   const {
     poojaId,
     samagri_required,
@@ -62,7 +65,11 @@ const SelectPanditjiScreen: React.FC = () => {
     AutoModeSelection,
     selectedAddressLatitude,
     selectedAddressLongitude,
+    poojaDescription,
   } = route.params as any;
+
+  console.log('SelectPanditjiScreen route?.params :: ', route?.params);
+
   const {showErrorToast, showSuccessToast} = useCommonToast();
 
   const navigation = useNavigation<StackNavigationProp<UserHomeParamList>>();
@@ -76,11 +83,16 @@ const SelectPanditjiScreen: React.FC = () => {
   >(null);
   const [selectPanditData, setSelectPanditData] = useState<any>(null);
   const [panditjiData, setPanditjiData] = useState<PanditjiItem[]>([]);
+  const [originalPanditjiData, setOriginalPanditjiData] = useState<
+    PanditjiItem[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [location, setLocation] = useState<{
     latitude: string;
     longitude: string;
   } | null>(null);
+
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
 
   useEffect(() => {
     fetchLocation();
@@ -98,19 +110,6 @@ const SelectPanditjiScreen: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    if (location && poojaId && booking_date) {
-      fetchPanditji(
-        poojaId,
-        selectedAddressLatitude,
-        selectedAddressLongitude,
-        'manual',
-        booking_date,
-        tirth || null,
-      );
-    }
-  }, [location, poojaId]);
-
   const postPujaBookingData = async (
     data: any,
     latitude: string,
@@ -127,58 +126,87 @@ const SelectPanditjiScreen: React.FC = () => {
     }
   };
 
-  const fetchPanditji = async (
-    pooja_id: string,
-    latitude: string,
-    longitude: string,
-    mode: 'manual',
-    booking_date: string,
-    tirth: number,
-  ) => {
-    try {
-      setIsLoading(true);
-      const response = await getPanditji(
-        pooja_id,
-        latitude,
-        longitude,
-        mode,
-        booking_date,
-        tirth,
-      );
-      if (response.success) {
-        if (Array.isArray(response.data) && response.data.length > 0) {
-          const transformedData: PanditjiItem[] = response.data.map(
-            (item: any) => ({
-              id: item.pandit_id,
-              name: item.full_name,
-              location: item.city,
-              languages: item.supported_languages?.join(', '),
-              image: item.profile_img,
-              isSelected: false,
-              isVerified: item.isVerified || false,
-            }),
-          );
-          setPanditjiData(transformedData);
+  const fetchPanditji = useCallback(
+    async (
+      pooja_id: string,
+      latitude: string,
+      longitude: string,
+      mode: 'manual',
+      booking_date: string,
+      tirth: number,
+    ) => {
+      try {
+        setIsLoading(true);
+
+        const cachedData = translationCacheRef.current.get(currentLanguage);
+        if (cachedData) {
+          setPanditjiData(cachedData);
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await getPanditji(
+          pooja_id,
+          latitude,
+          longitude,
+          mode,
+          booking_date,
+          tirth,
+        );
+        if (response.success) {
+          if (Array.isArray(response.data) && response.data.length > 0) {
+            const transformedData: PanditjiItem[] = response.data.map(
+              (item: any) => ({
+                id: item.pandit_id,
+                name: item.full_name,
+                location: item.city,
+                languages: item.supported_languages?.join(', '),
+                image: item.profile_img,
+                isSelected: false,
+                isVerified: item.isVerified || false,
+              }),
+            );
+            setOriginalPanditjiData(transformedData);
+            const translated: any = await translateData(
+              transformedData,
+              currentLanguage,
+              ['name', 'location', 'languages'],
+            );
+            translationCacheRef.current.set(currentLanguage, translated);
+            setPanditjiData(translated);
+          }
         } else {
           setPanditjiData([]);
-          showSuccessToast(
-            response.message ||
-              'No Panditji available for the selected date and pooja',
-          );
+          setOriginalPanditjiData([]);
+          showErrorToast(response.message || 'No Panditji found');
         }
-      } else {
+      } catch (error: any) {
         setPanditjiData([]);
-        showErrorToast(response.message || 'No Panditji found');
+        setOriginalPanditjiData([]);
+        const errorMsg =
+          error?.response?.data?.message ||
+          error?.message ||
+          'No Panditji found';
+        showErrorToast(errorMsg);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error: any) {
-      setPanditjiData([]);
-      const errorMsg =
-        error?.response?.data?.message || error?.message || 'No Panditji found';
-      showErrorToast(errorMsg);
-    } finally {
-      setIsLoading(false);
+    },
+    [currentLanguage],
+  );
+
+  useEffect(() => {
+    if (location && poojaId && booking_date) {
+      fetchPanditji(
+        poojaId,
+        selectedAddressLatitude,
+        selectedAddressLongitude,
+        'manual',
+        booking_date,
+        tirth || null,
+      );
     }
-  };
+  }, [location, poojaId, fetchPanditji]);
 
   const handlePanditjiSelect = (id: string) => {
     if (selectedPanditji === id) {
@@ -189,7 +217,7 @@ const SelectPanditjiScreen: React.FC = () => {
       setPanditjiData(prev => prev.map(item => ({...item, isSelected: false})));
       return;
     }
-    const selected = panditjiData.find(item => item.id === id);
+    const selected = originalPanditjiData.find(item => item.id === id);
     setSelectedPanditji(id);
     setSelectPanditData(selected);
     setSelectedPanditjiName(selected ? selected.name : null);
@@ -249,19 +277,16 @@ const SelectPanditjiScreen: React.FC = () => {
     }
   };
 
-  // Handler for searching and booking a Panditji automatically
   const handleSearchPandit = async () => {
-    // Prepare data for auto booking
     const data = {
       pooja: poojaId,
-      assignment_mode: 1, // 1 for auto mode
+      assignment_mode: 1,
       samagri_required: samagri_required,
       address: address,
       tirth_place: tirth,
       booking_date: booking_date,
       muhurat_time: muhurat_time,
       muhurat_type: muhurat_type,
-      // No pandit field for auto mode
     };
     setIsLoading(true);
     try {
@@ -293,6 +318,7 @@ const SelectPanditjiScreen: React.FC = () => {
           auto: 'true',
           selectedAddressLatitude: selectedAddressLatitude,
           selectedAddressLongitude: selectedAddressLongitude,
+          poojaDescription: poojaDescription,
         });
       } else {
         showErrorToast(
@@ -571,7 +597,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Bold,
     fontSize: moderateScale(15),
     fontWeight: '700',
-    letterSpacing: -0.333,
     marginBottom: verticalScale(2),
   },
   panditjiLocation: {

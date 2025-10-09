@@ -284,5 +284,17 @@
   "address_added_successfully": "पता सफलतापूर्वक जोड़ा गया",
   "search_panditji_automatic": "पंडितजी को स्वचालित रूप से खोजें",
   "payment_method_disabled_wallet_covers_amount": "भुगतान विधि चयन अक्षम है क्योंकि आपका वॉलेट बुकिंग राशि को पूरी तरह कवर करता है।",
-  "choose_another_panditji": "कोई अन्य पंडितजी चुनें"
+  "choose_another_panditji": "कोई अन्य पंडितजी चुनें",
+  "at_my_place": "मेरी स्थान",
+  "at_tirth_place": "तिर्थ स्थान",
+  "personal_reason": "व्यक्तिगत कारण",
+  "found_another_service": "कोई दूसरी सेवा मिली",
+  "financial_reasons": "आर्थिक कारण",
+  "other": "अन्य",
+  "arranged_items": "सामग्री की सूची",
+  "no_items_available": "कोई सामग्री उपलब्ध नहीं है",
+  "no_pandit_items": "पंडित द्वारा कोई सामग्री नहीं लाई गई",
+  "no_user_items": "आपके द्वारा कोई सामग्री नहीं लाई गई",
+  "scheduled_for": "निर्धारित तिथि",
+  "total_payable": "कुल देय राशि"
 }

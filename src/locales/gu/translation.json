@@ -284,5 +284,17 @@
   "address_added_successfully": "સરનામું સફળતાપૂર્વક ઉમેરાયું",
   "search_panditji_automatic": "પંડિતજી આપમેળે શોધો",
   "payment_method_disabled_wallet_covers_amount": "ચુકવણી પદ્ધતિ પસંદગી અક્ષમ છે કારણ કે તમારું વૉલેટ બુકિંગ રકમ સંપૂર્ણપણે આવરી લે છે.",
-  "choose_another_panditji": "બીજા પંડિતજી પસંદ કરો"
+  "choose_another_panditji": "બીજા પંડિતજી પસંદ કરો",
+  "at_my_place": "મારા સ્થાને",
+  "at_tirth_place": "તિર્થસ્થળે",
+  "personal_reason": "વ્યક્તિગત કારણ",
+  "found_another_service": "બીજી સેવા મળી",
+  "financial_reasons": "આર્થિક કારણો",
+  "other": "અન્ય",
+  "arranged_items": "વ્યવસ્થિત વસ્તુઓ",
+  "no_items_available": "કોઈ વસ્તુ ઉપલબ્ધ નથી",
+  "no_pandit_items": "પંડિત દ્વારા કોઈ વસ્તુ લાવવામાં આવી નથી",
+  "no_user_items": "તમારી તરફથી કોઈ વસ્તુ લાવવામાં આવી નથી",
+  "scheduled_for": "નક્કી કરેલ તારીખ",
+  "total_payable": "કુલ ચુકવવાનું"
 }

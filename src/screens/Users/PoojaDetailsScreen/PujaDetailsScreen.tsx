@@ -29,7 +29,11 @@ import {
   getPoojaDetails,
   getPoojaDetailsForPujaList,
 } from '../../../api/apiService';
-import {translateData, translateText} from '../../../utils/TranslateData';
+import {
+  translateData,
+  translateOne,
+  translateText,
+} from '../../../utils/TranslateData';
 
 // --- Fix: Arranged items can be string[] or array of objects ---
 type ArrangedItem = {name: string; quantity?: string | number} | string;
@@ -132,8 +136,7 @@ const PujaDetailsScreen: React.FC = () => {
   const {poojaId, panditId, panditName, panditImage, panditCity} =
     route?.params;
 
-  console.log('currentLanguage :: ', currentLanguage);
-  console.log('data :: ', data);
+  console.log('pujaDetails route?.params :: ', route?.params);
 
   // Translate relevant fields from the original data whenever language changes.
   useEffect(() => {
@@ -225,16 +228,17 @@ const PujaDetailsScreen: React.FC = () => {
       showErrorToast(t('please_select_pricing_option'));
       return;
     }
+    // const selectedOptionData = await translateOne(selectedOption, currentLanguage, ['priceDes']);
     navigation.navigate('PlaceSelectionScreen', {
       poojaId: poojaId,
       samagri_required: selectedOption.withPujaItem,
-      puja_image: data?.image_url ?? '',
-      puja_name: data?.title ?? '',
+      puja_image: originalData?.image_url ?? '',
+      puja_name: originalData?.title ?? '',
       price: selectPrice,
       panditId: panditId,
       panditName: panditName,
       panditImage: panditImage,
-      description: data?.short_description,
+      description: originalData?.short_description,
       panditCity: panditCity,
     });
   };

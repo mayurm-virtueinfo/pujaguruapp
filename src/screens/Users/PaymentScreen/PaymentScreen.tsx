@@ -38,18 +38,19 @@ import {
 } from '../../../api/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
-
-// Import WebView for HTML rendering
 import {WebView} from 'react-native-webview';
+import {translateData} from '../../../utils/TranslateData';
 
 const PaymentScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'PaymentScreen'
   >;
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
+
+  const currentLanguage = i18n.language;
 
   const route = useRoute();
   const {
@@ -71,7 +72,10 @@ const PaymentScreen: React.FC = () => {
     booking_Id,
     AutoModeSelection,
     auto,
+    poojaDescription,
   } = route.params as any;
+
+  console.log('paymentScreen route?.params :: ', route?.params);
 
   const displayPanditName =
     panditName ||
@@ -84,7 +88,7 @@ const PaymentScreen: React.FC = () => {
     panditjiData?.profile_img ||
     panditImage ||
     pandit_image ||
-    'https://via.placeholder.com/150';
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU';
 
   const {showErrorToast, showSuccessToast} = useCommonToast();
 
@@ -108,6 +112,55 @@ const PaymentScreen: React.FC = () => {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
     'online' | 'cod'
   >('online');
+
+  const [translatedPoojaName, setTranslatedPoojaName] = useState('');
+  const [translatedPoojaDescription, setTranslatedPoojaDescription] =
+    useState('');
+  const [translatedPanditName, setTranslatedPanditName] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+    const translatePoojaFields = async () => {
+      if (currentLanguage === 'en') {
+        if (isMounted) {
+          setTranslatedPoojaName(puja_name || '');
+          setTranslatedPoojaDescription(poojaDescription || '');
+          setTranslatedPanditName(displayPanditName || '');
+        }
+        return;
+      }
+      try {
+        const result = (await translateData(
+          [{puja_name, poojaDescription, displayPanditName}],
+          currentLanguage,
+          ['puja_name', 'poojaDescription', 'displayPanditName'],
+        )) as Array<{
+          puja_name: string;
+          poojaDescription: string;
+          displayPanditName: string;
+        }>;
+        if (isMounted) {
+          setTranslatedPoojaName(result[0]?.puja_name || puja_name || '');
+          setTranslatedPoojaDescription(
+            result[0]?.poojaDescription || poojaDescription || '',
+          );
+          setTranslatedPanditName(
+            result[0]?.displayPanditName || displayPanditName || '',
+          );
+        }
+      } catch {
+        if (isMounted) {
+          setTranslatedPoojaName(puja_name || '');
+          setTranslatedPoojaDescription(poojaDescription || '');
+          setTranslatedPanditName(displayPanditName || '');
+        }
+      }
+    };
+    translatePoojaFields();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentLanguage, puja_name, poojaDescription]);
 
   // New: Only allow payment method selection if usePoints is false or wallet covers the amount
   const walletBalanceForCalc =
@@ -522,7 +575,9 @@ const PaymentScreen: React.FC = () => {
           <Octicons name="location" size={20} color={COLORS.pujaCardSubtext} />
         </View>
         <View>
-          <Text style={styles.bookingDataText}>{selectAddress}</Text>
+          <Text style={styles.bookingDataText}>
+            {translatedPoojaDescription}
+          </Text>
         </View>
       </View>
       <View style={styles.textContainer}>
@@ -580,7 +635,7 @@ const PaymentScreen: React.FC = () => {
               }}
               style={styles.panditImage}
             />
-            <Text style={styles.bookingDataText}>{displayPanditName}</Text>
+            <Text style={styles.bookingDataText}>{translatedPanditName}</Text>
           </View>
         )}
     </View>
@@ -709,7 +764,7 @@ const PaymentScreen: React.FC = () => {
                     styles.totalAmountLabel,
                     {fontFamily: Fonts.Sen_SemiBold},
                   ]}>
-                  Total payable
+                  {t('total_payable')}
                 </Text>
                 <Text
                   style={[
@@ -791,7 +846,9 @@ const PaymentScreen: React.FC = () => {
                       style={styles.pujaImage}
                     />
                   </View>
-                  <Text style={styles.suggestedPujaName}>{puja_name}</Text>
+                  <Text style={styles.suggestedPujaName}>
+                    {translatedPoojaName}
+                  </Text>
                 </View>
                 <View
                   style={{
@@ -1102,7 +1159,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 25,
     marginRight: scale(14),
-    backgroundColor: COLORS.inputBoder,
+    borderWidth: 1,
+    borderColor: COLORS.inputBoder,
   },
   termsSection: {
     backgroundColor: COLORS.white,

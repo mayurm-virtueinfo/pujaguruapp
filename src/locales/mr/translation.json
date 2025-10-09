@@ -284,5 +284,17 @@
   "address_added_successfully": "पत्ता यशस्वीरित्या जोडला",
   "search_panditji_automatic": "पंडितजी स्वयंचलितपणे शोधा",
   "payment_method_disabled_wallet_full": "तुमचे वॉलेट बुकिंग रक्कम पूर्णपणे कव्हर करत असल्यामुळे पेमेंट पद्धत निवडणे अक्षम केले आहे.",
-  "choose_another_panditji": "दुसरे पंडितजी निवडा"
+  "choose_another_panditji": "दुसरे पंडितजी निवडा",
+  "at_my_place": "मातील स्थान",
+  "at_tirth_place": "तिर्थ स्थान",
+  "personal_reason": "वैयक्तिक कारण",
+  "found_another_service": "इतर सेवा मिळाली",
+  "financial_reasons": "आर्थिक कारणे",
+  "other": "इतर",
+  "arranged_items": "व्यवस्थित केलेल्या वस्तू",
+  "no_items_available": "कोणत्याही वस्तू उपलब्ध नाहीत",
+  "no_pandit_items": "पंडितांनी कोणतीही वस्तू आणलेली नाही",
+  "no_user_items": "तुमच्याकडून कोणतीही वस्तू आणलेली नाही",
+  "scheduled_for": "निश्चित तारीख",
+  "total_payable": "एकूण देय रक्कम"
 }

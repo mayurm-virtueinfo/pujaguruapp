@@ -634,7 +634,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     fontFamily: 'Sen-Medium',
-    letterSpacing: -0.14,
   },
   addressTypeGroup: {
     marginBottom: 16,

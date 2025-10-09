@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect, useCallback, useRef} from 'react';
 import {View, Text, StyleSheet, ScrollView, StatusBar} from 'react-native';
 import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import {
@@ -18,6 +18,7 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
 import CustomModal from '../../../components/CustomModal';
 import {useCommonToast} from '../../../common/CommonToast';
+import {translateData} from '../../../utils/TranslateData';
 
 export interface Address {
   id: number;
@@ -36,38 +37,60 @@ export interface Address {
 
 const AddressesScreen: React.FC = () => {
   const navigation = useNavigation<UserProfileParamList>();
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const {showSuccessToast, showErrorToast} = useCommonToast();
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [menuPosition, setMenuPosition] = useState({x: 0, y: 0});
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [originalAddresses, setOriginalAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const route = useRoute<RouteProp<UserProfileParamList, 'AddressesScreen'>>();
 
+  console.log('selectedAddress :: ', selectedAddress);
+
   const addressToEdit =
     (route.params && (route.params as any).addressToEdit) || null;
   const inset = useSafeAreaInsets();
 
+  const currentLanguage = i18n.language;
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
+
   const fetchAddressData = useCallback(async () => {
-    setLoading(true);
     try {
-      const requests = await getAddress();
-      let addressList: Address[] = [];
-      if (
-        requests &&
-        typeof requests === 'object' &&
-        'data' in requests &&
-        Array.isArray((requests as any).data)
-      ) {
-        addressList = (requests as any).data;
+      setLoading(true);
+
+      const cachedData = translationCacheRef.current.get(currentLanguage);
+
+      if (cachedData) {
+        setAddresses(cachedData);
+        setLoading(false);
+        return;
       }
-      setAddresses(addressList);
+
+      const response: any = await getAddress();
+      setOriginalAddresses(response.data);
+
+      const translated: any = await translateData(
+        response.data,
+        currentLanguage,
+        [
+          'address_type',
+          'address_line1',
+          'address_line2',
+          'city',
+          'state',
+          'name',
+        ],
+      );
+      translationCacheRef.current.set(currentLanguage, translated);
+      setAddresses(translated || []);
     } catch {
       setAddresses([]);
+      setOriginalAddresses([]);
     } finally {
       setLoading(false);
     }
@@ -87,7 +110,10 @@ const AddressesScreen: React.FC = () => {
     address: Address,
     position: {x: number; y: number},
   ) => {
-    setSelectedAddress(address);
+    const translatedAddress: any = originalAddresses.find(
+      a => a.id === address.id,
+    );
+    setSelectedAddress(translatedAddress);
     setMenuPosition(position);
     setMenuVisible(true);
   };

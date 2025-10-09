@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -33,6 +33,7 @@ import {
 import {useCommonToast} from '../../../common/CommonToast';
 import CustomeLoader from '../../../components/CustomeLoader';
 import PrimaryButton from '../../../components/PrimaryButton';
+import {translateData} from '../../../utils/TranslateData';
 
 const formatDateYYYYMMDD = (date: Date | string) => {
   if (typeof date === 'string') {
@@ -87,12 +88,6 @@ const parseTimeToMinutes = (timeStr: string): number | null => {
 };
 
 const PujaBookingScreen: React.FC = () => {
-  const {t} = useTranslation();
-  const navigation =
-    useNavigation<StackNavigationProp<UserPoojaListParamList>>();
-
-  const today = new Date();
-
   const route = useRoute();
   const {
     poojaId,
@@ -114,9 +109,86 @@ const PujaBookingScreen: React.FC = () => {
     selectedAddressLongitude,
   } = route?.params as any;
 
-  const {showErrorToast, showSuccessToast} = useCommonToast();
+  const {t, i18n} = useTranslation();
 
-  console.log('params in puja booking screen :: ', route?.params);
+  const currentLanguage = i18n.language;
+
+  const {showErrorToast} = useCommonToast();
+
+  const [translatedPoojaName, setTranslatedPoojaName] = useState<string>(
+    poojaName || '',
+  );
+  const [translatedPoojaDescription, setTranslatedPoojaDescription] =
+    useState<string>(poojaDescription || '');
+
+  useEffect(() => {
+    let isMounted = true;
+    const translatePoojaFields = async () => {
+      if (currentLanguage === 'en') {
+        if (isMounted) {
+          setTranslatedPoojaName(poojaName || '');
+          setTranslatedPoojaDescription(poojaDescription || '');
+        }
+        return;
+      }
+      try {
+        const result = (await translateData(
+          [{poojaName, poojaDescription}],
+          currentLanguage,
+          ['poojaName', 'poojaDescription'],
+        )) as Array<{poojaName: string; poojaDescription: string}>;
+        if (isMounted) {
+          setTranslatedPoojaName(result[0]?.poojaName || poojaName || '');
+          setTranslatedPoojaDescription(
+            result[0]?.poojaDescription || poojaDescription || '',
+          );
+        }
+      } catch {
+        if (isMounted) {
+          setTranslatedPoojaName(poojaName || '');
+          setTranslatedPoojaDescription(poojaDescription || '');
+        }
+      }
+    };
+    translatePoojaFields();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentLanguage, poojaName, poojaDescription]);
+
+  const navigation =
+    useNavigation<StackNavigationProp<UserPoojaListParamList>>();
+
+  const today = new Date();
+
+  const [translatedDescription, setTranslatedDescription] = useState<string>(
+    description || '',
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    const translateDescription = async () => {
+      if (currentLanguage === 'en' || !description) {
+        if (isMounted) setTranslatedDescription(description || '');
+        return;
+      }
+      try {
+        const result = (await translateData([{description}], currentLanguage, [
+          'description',
+        ])) as Array<{description: string}>;
+        if (isMounted)
+          setTranslatedDescription(result[0]?.description || description || '');
+      } catch {
+        if (isMounted) setTranslatedDescription(description || '');
+      }
+    };
+    translateDescription();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentLanguage, description]);
+
+  console.log('PujaBookingScreen route?.params :: ', route?.params);
 
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [selectedSlotObj, setSelectedSlotObj] = useState<any>(null);
@@ -137,8 +209,11 @@ const PujaBookingScreen: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [location, setLocation] = useState<any>(null);
   const [muhurats, setMuhurats] = useState<any[]>([]);
+  const [originalMuhurats, setOriginalMuhurats] = useState<any[]>([]);
   const [availableDates, setAvailableDates] = useState<string[] | null>(null);
   const insets = useSafeAreaInsets();
+
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
 
   useEffect(() => {
     fetchLocation();
@@ -149,18 +224,6 @@ const PujaBookingScreen: React.FC = () => {
       fetchPanditAvailableDate();
     }
   }, [panditId]);
-
-  useEffect(() => {
-    if (
-      location &&
-      (!panditId ||
-        (panditId &&
-          availableDates &&
-          availableDates.includes(selectedDateString)))
-    ) {
-      fetchMuhurat(selectedDateString);
-    }
-  }, [selectedDateString, location, availableDates, panditId]);
 
   const fetchLocation = async () => {
     try {
@@ -250,27 +313,62 @@ const PujaBookingScreen: React.FC = () => {
     }
   };
 
-  const fetchMuhurat = async (dateString?: string) => {
-    try {
-      setLoading(true);
-      const dateToFetch = formatDateYYYYMMDD(dateString || today);
-      const response = await getMuhrat(
-        dateToFetch,
-        location?.latitude,
-        location?.longitude,
-      );
-      if (response && Array.isArray(response.choghadiya)) {
-        setMuhurats(response.choghadiya || []);
-      } else {
+  const fetchMuhurat = useCallback(
+    async (dateString?: string) => {
+      try {
+        setLoading(true);
+
+        const dateToFetch = formatDateYYYYMMDD(dateString || today);
+        const response = await getMuhrat(
+          dateToFetch,
+          location?.latitude,
+          location?.longitude,
+        );
+        if (response && Array.isArray(response.choghadiya)) {
+          setOriginalMuhurats(response.choghadiya);
+
+          const translated: any = await translateData(
+            response.choghadiya,
+            currentLanguage,
+            ['type'],
+          );
+          const cacheKey = `${currentLanguage}_${dateToFetch}`;
+          const cachedData = translationCacheRef.current.get(cacheKey);
+
+          if (cachedData) {
+            setMuhurats(cachedData);
+            setLoading(false);
+            return;
+          }
+
+          translationCacheRef.current.set(cacheKey, translated);
+          setMuhurats(translated);
+        } else {
+          setMuhurats([]);
+          setOriginalMuhurats([]);
+        }
+      } catch (error: any) {
+        showErrorToast(error);
         setMuhurats([]);
+        setOriginalMuhurats([]);
+      } finally {
+        setLoading(false);
       }
-    } catch (error: any) {
-      showErrorToast(error);
-      setMuhurats([]);
-    } finally {
-      setLoading(false);
+    },
+    [currentLanguage, location, selectedDateString, availableDates, panditId],
+  );
+
+  useEffect(() => {
+    if (
+      location &&
+      (!panditId ||
+        (panditId &&
+          availableDates &&
+          availableDates.includes(selectedDateString)))
+    ) {
+      fetchMuhurat(selectedDateString);
     }
-  };
+  }, [selectedDateString, location, availableDates, panditId, fetchMuhurat]);
 
   const handleSlotSelect = (slot: any) => {
     const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
@@ -314,7 +412,12 @@ const PujaBookingScreen: React.FC = () => {
     let muhuratType = '';
     if (selectedSlotObj) {
       muhuratTime = `${selectedSlotObj.start} - ${selectedSlotObj.end}`;
-      muhuratType = selectedSlotObj.type;
+      const originalSlot = originalMuhurats.find(
+        slot =>
+          slot.start === selectedSlotObj.start &&
+          slot.end === selectedSlotObj.end,
+      );
+      muhuratType = originalSlot ? originalSlot.type : selectedSlotObj.type;
     }
 
     // For today, ensure muhurat start time is in the future
@@ -376,6 +479,7 @@ const PujaBookingScreen: React.FC = () => {
             panditName: panditName,
             panditImage: panditImage,
             AutoModeSelection: false,
+            poojaDescription: poojaDescription,
           });
         }
       }
@@ -407,7 +511,13 @@ const PujaBookingScreen: React.FC = () => {
     let muhuratType = '';
     if (selectedSlotObj) {
       muhuratTime = `${selectedSlotObj.start} - ${selectedSlotObj.end}`;
-      muhuratType = selectedSlotObj.type;
+      // Always use original type from originalMuhurats
+      const originalSlot = originalMuhurats.find(
+        slot =>
+          slot.start === selectedSlotObj.start &&
+          slot.end === selectedSlotObj.end,
+      );
+      muhuratType = originalSlot ? originalSlot.type : selectedSlotObj.type;
     }
 
     if (!selectedDateISO) {
@@ -459,6 +569,7 @@ const PujaBookingScreen: React.FC = () => {
       AutoModeSelection: false,
       selectedAddressLatitude: selectedAddressLatitude,
       selectedAddressLongitude: selectedAddressLongitude,
+      poojaDescription: poojaDescription,
     };
     if (selection === 'automatic') {
       const data = {
@@ -498,6 +609,7 @@ const PujaBookingScreen: React.FC = () => {
             selectAddress: selectTirthPlaceName || selectAddressName,
             booking_Id: response?.data?.booking_id,
             AutoModeSelection: true,
+            poojaDescription: poojaDescription,
           });
         }
       }
@@ -665,7 +777,7 @@ const PujaBookingScreen: React.FC = () => {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
             {/* Puja Description */}
-            <Text style={styles.description}>{description || ''}</Text>
+            <Text style={styles.description}>{translatedDescription}</Text>
 
             {/* Puja Place Section */}
             <View style={[styles.pujaPlaceContainer, THEMESHADOW.shadow]}>
@@ -673,7 +785,7 @@ const PujaBookingScreen: React.FC = () => {
                 <View style={styles.pujaPlaceTextContainer}>
                   <Text style={styles.pujaPlaceLabel}>{t('puja_place')}</Text>
                   <Text style={styles.pujaPlaceValue}>
-                    {poojaName}: {poojaDescription}
+                    {translatedPoojaName}: {translatedPoojaDescription}
                   </Text>
                 </View>
                 <TouchableOpacity
@@ -798,7 +910,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
     color: COLORS.primaryTextDark,
-    lineHeight: moderateScale(20),
     marginBottom: verticalScale(24),
   },
   pujaPlaceContainer: {
@@ -919,7 +1030,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
     textTransform: 'uppercase',
-    letterSpacing: -0.15,
   },
 });
 

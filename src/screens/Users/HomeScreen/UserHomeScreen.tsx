@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect, useState, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -28,6 +28,7 @@ import {useNavigation} from '@react-navigation/native';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
+import {translateData, translateText} from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
@@ -65,93 +66,184 @@ const UserHomeScreen: React.FC = () => {
     RecommendedPandit[]
   >([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [originalRecomendedPandits, setOriginalRecomendedPandits] = useState<
+    RecommendedPandit[]
+  >([]);
+
+  const {t, i18n} = useTranslation();
+  const currentLanguage = i18n.language;
 
   const inset = useSafeAreaInsets();
-  const {t} = useTranslation();
 
-  // Fetch user and attempt initial location fetch
+  const translationCacheRef = useRef<
+    Map<
+      string,
+      {
+        pujas: PujaItem[];
+        inProgressPujas: PujaItem[];
+        pendingPujas: PendingPuja[];
+        recomendedPandits: RecommendedPandit[];
+      }
+    >
+  >(new Map());
+
   const fetchUserAndLocation = useCallback(async () => {
     try {
       const userId = await AsyncStorage.getItem(AppConstant.USER_ID);
       setUser(userId);
-
       const locationData = await getLocationForAPI();
       if (locationData?.latitude && locationData?.longitude) {
-        setLocation({
+        const newLoc = {
           latitude: Number(locationData.latitude),
           longitude: Number(locationData.longitude),
+        };
+        setLocation(prev => {
+          if (
+            !prev ||
+            prev.latitude !== newLoc.latitude ||
+            prev.longitude !== newLoc.longitude
+          ) {
+            return newLoc;
+          }
+          return prev;
         });
       }
+      return locationData ?? null;
     } catch (error) {
       console.error('Error fetching user or location:', error);
+      return null;
     }
   }, []);
 
-  // Load home data with location check
-  const loadHomeData = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Request location permission
-      const granted = await requestLocationPermission();
-      if (!granted) {
-        throw new Error('Location permission not granted');
-      }
+  const loadHomeData = useCallback(
+    async (initialLocation?: {latitude: number; longitude: number} | null) => {
+      setLoading(true);
+      try {
+        const granted = await requestLocationPermission();
+        if (!granted) {
+          throw new Error('Location permission not granted');
+        }
+        let locationData = initialLocation ?? location;
+        if (!locationData) {
+          locationData = await getLocationForAPI();
+        }
+        let latNum: number | null = null;
+        let lngNum: number | null = null;
 
-      // Get location data
-      const locationData = await getLocationForAPI();
-      let latNum: number | null = null;
-      let lngNum: number | null = null;
+        if (locationData?.latitude && locationData?.longitude) {
+          latNum = Number(locationData.latitude);
+          lngNum = Number(locationData.longitude);
+          const newLoc = {latitude: latNum, longitude: lngNum};
+          setLocation(prev => {
+            if (
+              !prev ||
+              prev.latitude !== newLoc.latitude ||
+              prev.longitude !== newLoc.longitude
+            ) {
+              return newLoc;
+            }
+            return prev;
+          });
+        }
 
-      if (locationData?.latitude && locationData?.longitude) {
-        latNum = Number(locationData.latitude);
-        lngNum = Number(locationData.longitude);
-        setLocation({latitude: latNum, longitude: lngNum});
-      } else {
-        // No location available; proceed without location-dependent data
-      }
+        const [upcoming, inProgress, active, recommended] = await Promise.all([
+          getUpcomingPujas().catch(() => []),
+          getInProgress().catch(() => []),
+          getActivePuja().catch(() => ({bookings: []})),
+          latNum && lngNum
+            ? getRecommendedPandit(latNum.toString(), lngNum.toString()).catch(
+                () => [],
+              )
+            : Promise.resolve([]),
+        ]);
 
-      // Fetch all data in parallel
-      const [upcoming, inProgress, active, recommended] = await Promise.all([
-        getUpcomingPujas().catch(() => []),
-        getInProgress().catch(() => []),
-        getActivePuja().catch(() => ({bookings: []})),
-        latNum && lngNum
-          ? getRecommendedPandit(latNum.toString(), lngNum.toString()).catch(
-              () => [],
-            )
-          : Promise.resolve([]),
-      ]);
-
-      setPujas(Array.isArray(upcoming) ? upcoming : []);
-      setInProgressPujas(Array.isArray(inProgress) ? inProgress : []);
-      setPendingPujas(
-        Array.isArray(active?.bookings)
+        const upcomingArr: PujaItem[] = Array.isArray(upcoming) ? upcoming : [];
+        const inProgressArr: PujaItem[] = Array.isArray(inProgress)
+          ? inProgress
+          : [];
+        const pendingArr: PendingPuja[] = Array.isArray(active?.bookings)
           ? active.bookings
           : active?.bookings
           ? [active.bookings]
-          : [],
-      );
-      setRecomendedPandits(
-        Array.isArray(recommended)
-          ? recommended
-          : (recommended as any)?.data || [],
-      );
-    } catch (error) {
-      console.error('Error loading home data:', error);
-      setPujas([]);
-      setInProgressPujas([]);
-      setPendingPujas([]);
-      setRecomendedPandits([]);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, []);
+          : [];
+        const recommendedArr: RecommendedPandit[] = Array.isArray(recommended)
+          ? (recommended as RecommendedPandit[])
+          : (recommended as any)?.data || [];
 
-  // Handle app state changes and location updates
+        const cached = translationCacheRef.current.get(currentLanguage);
+        if (cached) {
+          setPujas(cached.pujas);
+          setInProgressPujas(cached.inProgressPujas);
+          setPendingPujas(cached.pendingPujas);
+          setRecomendedPandits(cached.recomendedPandits);
+        } else {
+          //upcoming translation logic
+          const tPujas = (await translateData(upcomingArr, currentLanguage, [
+            'pooja_name',
+            'when_is_pooja',
+          ])) as PujaItem[];
+
+          //inprogress translation logic
+          const tInProgress = (await translateData(
+            inProgressArr,
+            currentLanguage,
+            ['pooja_name'],
+          )) as PujaItem[];
+
+          //pending translation logic
+          const tPending = await Promise.all(
+            pendingArr.map(async p => {
+              if (p.pooja) {
+                const translatedPooja = (await translateData(
+                  p.pooja,
+                  currentLanguage,
+                  ['title', 'pooja_name'],
+                )) as any;
+                return {...p, pooja: translatedPooja} as PendingPuja;
+              }
+              return p;
+            }),
+          );
+
+          const tRecommended = (await translateData(
+            recommendedArr,
+            currentLanguage,
+            ['full_name', 'city'],
+          )) as RecommendedPandit[];
+
+          translationCacheRef.current.set(currentLanguage, {
+            pujas: tPujas,
+            inProgressPujas: tInProgress,
+            pendingPujas: tPending,
+            recomendedPandits: tRecommended,
+          });
+
+          setPujas(tPujas);
+          setInProgressPujas(tInProgress);
+          setPendingPujas(tPending);
+          setRecomendedPandits(tRecommended);
+          setOriginalRecomendedPandits(recommendedArr);
+        }
+      } catch (error) {
+        console.error('Error loading home data:', error);
+        setPujas([]);
+        setInProgressPujas([]);
+        setPendingPujas([]);
+        setRecomendedPandits([]);
+        setOriginalRecomendedPandits([]);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [currentLanguage],
+  );
+
   useEffect(() => {
-    fetchUserAndLocation();
-    loadHomeData();
+    (async () => {
+      const loc = await fetchUserAndLocation();
+      await loadHomeData(loc ?? null);
+    })();
 
     const handleAppStateChange = async (nextAppState: string) => {
       if (nextAppState === 'active') {
@@ -159,11 +251,21 @@ const UserHomeScreen: React.FC = () => {
         try {
           const loc = await getCurrentLocation();
           if (loc?.latitude && loc?.longitude) {
-            setLocation({
+            const locObj = {
               latitude: Number(loc.latitude),
               longitude: Number(loc.longitude),
+            };
+            setLocation(prev => {
+              if (
+                !prev ||
+                prev.latitude !== locObj.latitude ||
+                prev.longitude !== locObj.longitude
+              ) {
+                return locObj;
+              }
+              return prev;
             });
-            await loadHomeData();
+            await loadHomeData(locObj);
           }
         } catch (error) {
           console.error('Error checking location on app state change:', error);
@@ -177,8 +279,6 @@ const UserHomeScreen: React.FC = () => {
     );
     return () => subscription?.remove();
   }, [fetchUserAndLocation, loadHomeData]);
-
-  // Remove periodic modal-driven checks; rely on app resume and pull-to-refresh
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -288,14 +388,17 @@ const UserHomeScreen: React.FC = () => {
                     <View style={{alignSelf: 'center'}}>
                       <PrimaryButton
                         title={t('book')}
-                        onPress={() =>
+                        onPress={() => {
+                          const originalPandit = originalRecomendedPandits.find(
+                            p => p.id === pandit.id,
+                          );
                           handleBookPandit(
-                            pandit.pandit_id,
-                            pandit.full_name,
-                            panditImage,
-                            pandit.city,
-                          )
-                        }
+                            originalPandit?.pandit_id ?? pandit.pandit_id,
+                            originalPandit?.full_name ?? pandit.full_name,
+                            originalPandit?.profile_img ?? pandit.profile_img,
+                            originalPandit?.city ?? pandit.city,
+                          );
+                        }}
                         style={{
                           maxWidth: 90,
                           maxHeight: 40,
@@ -579,7 +682,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.33,
     marginBottom: moderateScale(4),
   },
   pujaDate: {

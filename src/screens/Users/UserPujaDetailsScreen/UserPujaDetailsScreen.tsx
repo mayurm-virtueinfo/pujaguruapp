@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,8 @@ import {StackNavigationProp} from '@react-navigation/stack';
 import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
 import {useTranslation} from 'react-i18next';
 import {getUpcomingPujaDetails, postStartChat} from '../../../api/apiService';
+import {translateData, translateText} from '../../../utils/TranslateData';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 const UserPujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -37,12 +39,14 @@ const UserPujaDetailsScreen: React.FC = () => {
   >;
   const route = useRoute();
   const {id} = route.params as any;
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const navigation = useNavigation<ScreenNavigationProp>();
   const [isPujaItemsModalVisible, setIsPujaItemsModalVisible] = useState(false);
-
   const [pujaDetails, setPujaDetails] = useState<any>(null);
+  const [originalPujaDetails, setOriginalPujaDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
+
+  const currentLanguage = i18n.language;
 
   // Track the previous booking status to detect changes
   const prevBookingStatus = useRef<string | null>(null);
@@ -55,21 +59,57 @@ const UserPujaDetailsScreen: React.FC = () => {
   const pollingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isFetchingRef = useRef<boolean>(false);
 
-  console.log('pujaDetails :: ', pujaDetails);
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
 
   // Helper to reload puja details
-  const fetchPujaDetails = async (options?: {silent?: boolean}) => {
-    const silent = options?.silent === true;
-    if (!silent) setLoading(true);
-    try {
-      const details = await getUpcomingPujaDetails(id?.toString());
-      setPujaDetails(details);
-    } catch (error) {
-      setPujaDetails(null);
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  };
+  const fetchPujaDetails = useCallback(
+    async (options?: {silent?: boolean}) => {
+      const silent = options?.silent === true;
+      if (!silent) setLoading(true);
+      try {
+        const cachedData = translationCacheRef.current.get(currentLanguage);
+
+        if (cachedData) {
+          setPujaDetails(cachedData);
+          setLoading(false);
+          return;
+        }
+
+        const details = await getUpcomingPujaDetails(id?.toString());
+
+        setOriginalPujaDetails(details);
+        const translatedDetails = await translateData(
+          details,
+          currentLanguage,
+          [
+            'pooja_name',
+            'location_display',
+            'muhurat_type',
+            'pandit_arranged_items',
+            'user_arranged_items',
+            'address',
+          ],
+        );
+        if (
+          translatedDetails.assigned_pandit &&
+          translatedDetails.assigned_pandit.pandit_name
+        ) {
+          translatedDetails.assigned_pandit.pandit_name = await translateText(
+            translatedDetails.assigned_pandit.pandit_name,
+            currentLanguage,
+          );
+        }
+        translationCacheRef.current.set(currentLanguage, translatedDetails);
+        setPujaDetails(translatedDetails);
+      } catch (error) {
+        setPujaDetails(null);
+        setOriginalPujaDetails(null);
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [currentLanguage, id],
+  );
 
   useFocusEffect(
     React.useCallback(() => {
@@ -99,10 +139,9 @@ const UserPujaDetailsScreen: React.FC = () => {
           pollingTimerRef.current = null;
         }
       };
-    }, [id]),
+    }, [id, fetchPujaDetails]),
   );
 
-  // Effect to handle status changes
   useEffect(() => {
     if (
       pujaDetails &&
@@ -116,8 +155,8 @@ const UserPujaDetailsScreen: React.FC = () => {
       ) {
         hasNavigatedToRate.current = true;
         navigation.navigate('RateYourExperienceScreen', {
-          booking: pujaDetails.id,
-          panditjiData: pujaDetails.assigned_pandit,
+          booking: originalPujaDetails.id,
+          panditjiData: originalPujaDetails.assigned_pandit,
         });
       }
 
@@ -165,8 +204,6 @@ const UserPujaDetailsScreen: React.FC = () => {
     try {
       const response = await postStartChat(payload);
       if (response) {
-        console.log('response for start chat :: ', response);
-
         navigation.navigate('UserChatScreen', {
           booking_id: response?.data?.booking_id,
           pandit_name: response?.data?.other_participant_name,
@@ -209,6 +246,8 @@ const UserPujaDetailsScreen: React.FC = () => {
     return `https://pujapaath.com${url}`;
   };
 
+  console.log('pujaDetails :: ', pujaDetails);
+
   const renderPujaDetails = () => {
     if (!pujaDetails) return null;
     return (
@@ -243,7 +282,7 @@ const UserPujaDetailsScreen: React.FC = () => {
                 style={styles.detailIcon}
               />
               <Text style={styles.detailText}>
-                {pujaDetails.location_display || t('location_not_available')}
+                {pujaDetails.location_display || pujaDetails.address}
               </Text>
             </View>
 
@@ -384,11 +423,16 @@ const UserPujaDetailsScreen: React.FC = () => {
                 alignItems: 'center',
               }}>
               <Image
-                source={
-                  pandit.profile_img_url
-                    ? {uri: getPanditImageUrl(pandit.profile_img_url)}
-                    : Images.ic_app_logo
-                }
+                // source={
+                //   pandit.profile_img_url
+                //     ? {uri: getPanditImageUrl(pandit.profile_img_url)}
+                //     : Images.ic_app_logo
+                // }
+                source={{
+                  uri:
+                    pandit.profile_img_url ||
+                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+                }}
                 style={styles.pujaIcon}
               />
               <TouchableOpacity
@@ -460,6 +504,7 @@ const UserPujaDetailsScreen: React.FC = () => {
   return (
     <>
       <SafeAreaView style={styles.container} edges={['top']}>
+        <CustomeLoader loading={loading} />
         <StatusBar
           barStyle="light-content"
           backgroundColor={COLORS.primaryBackground}
@@ -470,28 +515,11 @@ const UserPujaDetailsScreen: React.FC = () => {
             style={styles.content}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.contentContainer}>
-            {loading ? (
-              <View
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginTop: 40,
-                }}>
-                <ActivityIndicator
-                  size="large"
-                  color={COLORS.primaryBackgroundButton}
-                />
-              </View>
-            ) : (
-              <>
-                {renderPujaDetails()}
-                {renderTotalAmount()}
-                {renderPanditDetails()}
-                {renderPanditjiSection()}
-                {renderCancelButton()}
-              </>
-            )}
+            {renderPujaDetails()}
+            {renderTotalAmount()}
+            {renderPanditDetails()}
+            {renderPanditjiSection()}
+            {renderCancelButton()}
           </ScrollView>
         </View>
         {Platform.OS !== 'ios' && pujaDetails && (
@@ -569,7 +597,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.333,
   },
   detailIcon: {
     marginRight: scale(14),
@@ -607,13 +634,11 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.333,
   },
   totalAmount: {
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.333,
   },
   totalSubtext: {
     fontSize: moderateScale(13),
@@ -648,7 +673,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_Regular,
     color: COLORS.pujaCardSubtext,
-    letterSpacing: -0.333,
     flex: 1,
   },
   cancelButton: {
@@ -665,7 +689,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
     textTransform: 'uppercase',
-    letterSpacing: -0.15,
   },
 });
 

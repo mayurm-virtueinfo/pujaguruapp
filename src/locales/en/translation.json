@@ -284,5 +284,17 @@
   "address_added_successfully": "Address added successfully",
   "search_panditji_automatic": "Search panditji automatic",
   "payment_method_disabled_wallet_full": "Payment method selection is disabled because your wallet fully covers the booking amount.",
-  "choose_another_panditji": "Choose Another Panditji"
+  "choose_another_panditji": "Choose Another Panditji",
+  "at_my_place": "At My Place",
+  "at_tirth_place": "At Tirth Place",
+  "personal_reason": "Personal Reason",
+  "found_another_service": "Found another service",
+  "financial_reasons": "Financial Reasons",
+  "other": "Other",
+  "arranged_items": "Arranged Items",
+  "no_items_available": "No items available",
+  "no_pandit_items": "No items arranged by Pandit",
+  "no_user_items": "No items arranged by you",
+  "scheduled_for": "Scheduled for",
+  "total_payable": "Total Payable"
 }

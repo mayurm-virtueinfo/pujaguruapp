@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -10,12 +10,7 @@ import {
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import PujaCard from '../../../components/PujaCard';
 import PujaListItem from '../../../components/PujaListItem';
-import {
-  getPujaList,
-  PujaListItemType,
-  RecommendedPuja,
-  getPanchang,
-} from '../../../api/apiService';
+import {getPujaList} from '../../../api/apiService';
 import Fonts from '../../../theme/fonts';
 import {useNavigation} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
@@ -26,8 +21,7 @@ import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {useCommonToast} from '../../../common/CommonToast';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import AppConstant from '../../../utils/appConstant';
+import {translateData} from '../../../utils/TranslateData';
 
 type PujaItem = {
   id: any;
@@ -43,25 +37,30 @@ const PujaListScreen: React.FC = () => {
     'PujaList'
   >;
   const inset = useSafeAreaInsets();
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const {showErrorToast} = useCommonToast();
 
-  const [pujaList, setPujaList] = useState<PujaItem[]>([]);
+  const currentLanguage = i18n.language;
+  console.log('Current Language:', currentLanguage);
+
+  const [pujaList, setPujaList] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  // const [todayPanchang, setTodayPanchang] = useState<string | null>(null);
-  console.log('pujaList', pujaList);
   const navigation = useNavigation<ScreenNavigationProp>();
 
-  useEffect(() => {
-    fetchPujaList();
-    // fetchTodayPanchang();
-  }, []);
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
 
-  const fetchPujaList = async () => {
+  const fetchAndTranslatePujaList = useCallback(async () => {
     setLoading(true);
     try {
+      const cachedData = translationCacheRef.current.get(currentLanguage);
+
+      if (cachedData) {
+        setPujaList(cachedData);
+        setLoading(false);
+        return;
+      }
+
       const data: any = await getPujaList();
-      console.log(data);
       if (data.success) {
         const pujaItems = data.data.map((item: any) => ({
           id: item.id,
@@ -70,48 +69,27 @@ const PujaListScreen: React.FC = () => {
           base_price: parseFloat(item.base_price),
           description: item.description,
         }));
-        setPujaList(pujaItems);
+        const translated: any = await translateData(
+          pujaItems,
+          currentLanguage,
+          ['title', 'description'],
+        );
+        translationCacheRef.current.set(currentLanguage, translated);
+        setPujaList(translated);
       } else {
         setPujaList([]);
       }
     } catch (error: any) {
-      console.log('Error fetching puja list ::: ', error);
       showErrorToast(error.message || 'Failed to fetch puja list');
       setPujaList([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentLanguage]);
 
-  const formatDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = `${date.getMonth() + 1}`.padStart(2, '0');
-    const day = `${date.getDate()}`.padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  // const fetchTodayPanchang = async () => {
-  //   try {
-  //     const locationStr = await AsyncStorage.getItem(AppConstant.LOCATION);
-  //     if (!locationStr) return;
-  //     const location = JSON.parse(locationStr);
-  //     const dateStr = formatDate(new Date());
-  //     const response = await getPanchang(
-  //       dateStr,
-  //       String(location.latitude),
-  //       String(location.longitude),
-  //     );
-  //     if (response?.success && response?.today_panchang) {
-  //       setTodayPanchang(response.today_panchang);
-  //     }
-  //   } catch (error) {
-  //     console.log('Error fetching panchang:', error);
-  //   }
-  // };
-
-  const handleNotificationPress = () => {
-    navigation.navigate('NotificationScreen' as any);
-  };
+  useEffect(() => {
+    fetchAndTranslatePujaList();
+  }, [fetchAndTranslatePujaList]);
 
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
@@ -133,9 +111,6 @@ const PujaListScreen: React.FC = () => {
           <View style={styles.recommendedSection}>
             <View style={{paddingHorizontal: 24, paddingTop: 24, gap: 8}}>
               <Text style={styles.sectionTitle}>{t('recomended_puja')}</Text>
-              {/* {todayPanchang && (
-                <Text style={styles.sectionSubtitle}>{todayPanchang}</Text>
-              )} */}
             </View>
             <ScrollView
               horizontal
@@ -210,14 +185,12 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
     fontFamily: Fonts.Sen_SemiBold,
     fontSize: 18,
-    letterSpacing: 0.1,
   },
   sectionSubtitle: {
     color: COLORS.pujaTextSecondary,
     fontFamily: Fonts.Sen_Regular,
     fontSize: 15,
     marginBottom: 5,
-    letterSpacing: 0.05,
   },
   horizontalScroll: {
     flex: 1,

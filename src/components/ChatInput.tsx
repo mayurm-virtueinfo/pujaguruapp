@@ -103,7 +103,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.33,
     maxHeight: moderateScale(100),
     paddingVertical: moderateScale(8),
     paddingHorizontal: 0,

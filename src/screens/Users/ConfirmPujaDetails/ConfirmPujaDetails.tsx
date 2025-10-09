@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef, useCallback} from 'react';
 import {
   View,
   Text,
@@ -27,6 +27,8 @@ import {
 } from '../../../api/apiService';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 import {useCommonToast} from '../../../common/CommonToast';
+import {translateData} from '../../../utils/TranslateData';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 const ConfirmPujaDetails: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -39,32 +41,62 @@ const ConfirmPujaDetails: React.FC = () => {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const {bookingId, search} = route.params as any;
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const navigation = useNavigation<ScreenNavigationProp>();
 
+  const currentLanguage = i18n.language;
+
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
+
   const [pujaDetails, setPujaDetails] = useState<any>(null);
+  const [originalPujaDetails, setOriginalPujaDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const {showSuccessToast} = useCommonToast();
   // State for show more/less for arranged items
   const [showMorePanditArranged, setShowMorePanditArranged] = useState(false);
   const [showMoreUserArranged, setShowMoreUserArranged] = useState(false);
 
-  useEffect(() => {
-    fetchPujaDetails();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingId]);
+  console.log('pujaDetails :: ', pujaDetails);
 
-  const fetchPujaDetails = async () => {
-    setLoading(true);
+  const fetchPujaDetails = useCallback(async () => {
     try {
+      setLoading(true);
+
+      const cachedData = translationCacheRef.current.get(currentLanguage);
+
+      if (cachedData) {
+        setPujaDetails(cachedData);
+        setLoading(false);
+        return;
+      }
+
       const details = await getUpcomingPujaDetails(bookingId?.toString());
-      setPujaDetails(details);
+
+      setOriginalPujaDetails(details);
+
+      const translatedData = await translateData(details, currentLanguage, [
+        'pooja_name',
+        'location_display',
+        'muhurat_type',
+        'pandit_arranged_items',
+        'user_arranged_items',
+        'address',
+      ]);
+
+      translationCacheRef.current.set(currentLanguage, translatedData);
+      setPujaDetails(translatedData);
     } catch (error) {
       setPujaDetails(null);
+      setOriginalPujaDetails(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [bookingId, currentLanguage]);
+
+  useEffect(() => {
+    fetchPujaDetails();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookingId, fetchPujaDetails]);
 
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '';
@@ -99,98 +131,112 @@ const ConfirmPujaDetails: React.FC = () => {
 
     const {pandit_arranged_items, user_arranged_items} = pujaDetails;
 
-    // Only show if at least one of the arrays has items
-    if (
-      (!Array.isArray(pandit_arranged_items) ||
-        pandit_arranged_items.length === 0) &&
-      (!Array.isArray(user_arranged_items) || user_arranged_items.length === 0)
-    ) {
-      return null;
+    const hasPanditItems =
+      Array.isArray(pandit_arranged_items) && pandit_arranged_items.length > 0;
+    const hasUserItems =
+      Array.isArray(user_arranged_items) && user_arranged_items.length > 0;
+
+    // If both are empty, show a fallback
+    if (!hasPanditItems && !hasUserItems) {
+      return (
+        <View style={styles.arrangedItemsContainer}>
+          <View style={[styles.arrangedSection, THEMESHADOW.shadow]}>
+            <Text style={styles.arrangedSectionTitle}>
+              {t('arranged_items')}
+            </Text>
+            <Text style={styles.noItemsText}>
+              {t('no_items_available') || 'No items available'}
+            </Text>
+          </View>
+        </View>
+      );
     }
 
     return (
       <View style={styles.arrangedItemsContainer}>
         {/* Pandit Arranged Items */}
-        {Array.isArray(pandit_arranged_items) &&
-          pandit_arranged_items.length > 0 && (
-            <View style={[styles.arrangedSection, THEMESHADOW.shadow]}>
-              <Text style={styles.arrangedSectionTitle}>
-                {t('pandit_arranged_items') || 'Pandit Arranged Items'}
+        <View style={[styles.arrangedSection, THEMESHADOW.shadow]}>
+          <Text style={styles.arrangedSectionTitle}>
+            {t('pandit_arranged_items')}
+          </Text>
+          <View style={styles.arrangedList}>
+            {hasPanditItems ? (
+              (showMorePanditArranged
+                ? pandit_arranged_items
+                : pandit_arranged_items.slice(0, 1)
+              ).map((item: any, idx: number) => (
+                <View key={`pandit-item-${idx}`} style={styles.arrangedItemRow}>
+                  <View style={styles.redDot} />
+                  <Text style={styles.arrangedItemName}>
+                    {item.name} - {item.quantity} {item.units}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noItemsText}>
+                {t('no_pandit_items') || 'No Pandit arranged items'}
               </Text>
-              <View style={styles.arrangedList}>
-                {(showMorePanditArranged
-                  ? pandit_arranged_items
-                  : pandit_arranged_items.slice(0, 1)
-                ).map((item: any, idx: number) => (
-                  <View
-                    key={`pandit-item-${idx}`}
-                    style={styles.arrangedItemRow}>
-                    <Text style={styles.arrangedItemName}>{item.name}</Text>
-                    <Text style={styles.arrangedItemQty}>
-                      {item.quantity} {item.units}
-                    </Text>
-                  </View>
-                ))}
-                {pandit_arranged_items.length > 1 && (
-                  <TouchableOpacity
-                    onPress={() =>
-                      setShowMorePanditArranged(!showMorePanditArranged)
-                    }
-                    style={{paddingVertical: 6}}>
-                    <Text
-                      style={{
-                        color: COLORS.primaryBackgroundButton,
-                        fontFamily: Fonts.Sen_Medium,
-                      }}>
-                      {showMorePanditArranged
-                        ? t('show_less') || 'Show Less'
-                        : t('show_more') || 'Show More'}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          )}
+            )}
+            {hasPanditItems && pandit_arranged_items.length > 1 && (
+              <TouchableOpacity
+                onPress={() =>
+                  setShowMorePanditArranged(!showMorePanditArranged)
+                }
+                style={{paddingVertical: 6}}>
+                <Text
+                  style={{
+                    color: COLORS.primaryBackgroundButton,
+                    fontFamily: Fonts.Sen_Medium,
+                  }}>
+                  {showMorePanditArranged
+                    ? t('show_less') || 'Show Less'
+                    : t('show_more') || 'Show More'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
 
         {/* User Arranged Items */}
-        {Array.isArray(user_arranged_items) &&
-          user_arranged_items.length > 0 && (
-            <View style={[styles.arrangedSection, THEMESHADOW.shadow]}>
-              <Text style={styles.arrangedSectionTitle}>
-                {t('user_arranged_items') || 'Your Arranged Items'}
+        <View style={[styles.arrangedSection, THEMESHADOW.shadow]}>
+          <Text style={styles.arrangedSectionTitle}>
+            {t('user_arranged_items')}
+          </Text>
+          <View style={styles.arrangedList}>
+            {hasUserItems ? (
+              (showMoreUserArranged
+                ? user_arranged_items
+                : user_arranged_items.slice(0, 1)
+              ).map((item: any, idx: number) => (
+                <View key={`user-item-${idx}`} style={styles.arrangedItemRow}>
+                  <View style={styles.redDot} />
+                  <Text style={styles.arrangedItemName}>
+                    {item.name} - {item.quantity} {item.units}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noItemsText}>
+                {t('no_user_items') || 'No User arranged items'}
               </Text>
-              <View style={styles.arrangedList}>
-                {(showMoreUserArranged
-                  ? user_arranged_items
-                  : user_arranged_items.slice(0, 1)
-                ).map((item: any, idx: number) => (
-                  <View key={`user-item-${idx}`} style={styles.arrangedItemRow}>
-                    <Text style={styles.arrangedItemName}>{item.name}</Text>
-                    <Text style={styles.arrangedItemQty}>
-                      {item.quantity} {item.units}
-                    </Text>
-                  </View>
-                ))}
-                {user_arranged_items.length > 1 && (
-                  <TouchableOpacity
-                    onPress={() =>
-                      setShowMoreUserArranged(!showMoreUserArranged)
-                    }
-                    style={{paddingVertical: 6}}>
-                    <Text
-                      style={{
-                        color: COLORS.primaryBackgroundButton,
-                        fontFamily: Fonts.Sen_Medium,
-                      }}>
-                      {showMoreUserArranged
-                        ? t('show_less') || 'Show Less'
-                        : t('show_more') || 'Show More'}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-          )}
+            )}
+            {hasUserItems && user_arranged_items.length > 1 && (
+              <TouchableOpacity
+                onPress={() => setShowMoreUserArranged(!showMoreUserArranged)}
+                style={{paddingVertical: 6}}>
+                <Text
+                  style={{
+                    color: COLORS.primaryBackgroundButton,
+                    fontFamily: Fonts.Sen_Medium,
+                  }}>
+                  {showMoreUserArranged
+                    ? t('show_less') || 'Show Less'
+                    : t('show_more') || 'Show More'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
       </View>
     );
   };
@@ -378,13 +424,9 @@ const ConfirmPujaDetails: React.FC = () => {
     navigation.navigate('FilteredPanditListScreen', {booking_id: bookingId});
   };
 
-  console.log('pujaDetails', pujaDetails);
   // Bottom action bar logic based on assignment_mode
   const renderBottomActions = () => {
     if (!pujaDetails) return null;
-
-    // Only show if search === 'true'
-    // if (search !== 'true') return null;
 
     // assignment_mode: 1 = auto, 2 = manual
     if (pujaDetails?.assignment_mode === 1) {
@@ -432,13 +474,13 @@ const ConfirmPujaDetails: React.FC = () => {
         </View>
       );
     }
-    // If assignment_mode is not 1 or 2, show nothing
     return null;
   };
 
   return (
     <>
       <View style={[styles.container, {paddingTop: insets.top}]}>
+        <CustomeLoader loading={loading} />
         <StatusBar
           barStyle="light-content"
           backgroundColor={COLORS.primaryBackground}
@@ -449,31 +491,13 @@ const ConfirmPujaDetails: React.FC = () => {
             style={styles.content}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.contentContainer}>
-            {loading ? (
-              <View
-                style={{
-                  flex: 1,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginTop: 40,
-                }}>
-                <ActivityIndicator
-                  size="large"
-                  color={COLORS.primaryBackgroundButton}
-                />
-              </View>
-            ) : (
-              <>
-                {renderPanditDetails()}
-                {renderPanditjiSection()}
-                {renderPujaDetails()}
-                {renderArrangedItemsSection()}
-                {renderTotalAmount()}
-              </>
-            )}
+            {renderPanditDetails()}
+            {renderPanditjiSection()}
+            {renderPujaDetails()}
+            {renderArrangedItemsSection()}
+            {renderTotalAmount()}
           </ScrollView>
         </View>
-        {/* Show bottom actions only if not loading and search === 'true' */}
         {!loading && renderBottomActions()}
       </View>
     </>
@@ -530,7 +554,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.333,
   },
   detailIcon: {
     marginRight: scale(14),
@@ -565,13 +588,11 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.333,
   },
   totalAmount: {
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.333,
   },
   totalSubtext: {
     fontSize: moderateScale(13),
@@ -606,7 +627,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_Regular,
     color: COLORS.primary,
-    letterSpacing: -0.333,
     flex: 1,
   },
   cancelButton: {
@@ -622,7 +642,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
     textTransform: 'uppercase',
-    letterSpacing: -0.15,
   },
   // Arranged Items styles
   arrangedItemsContainer: {
@@ -643,17 +662,18 @@ const styles = StyleSheet.create({
   arrangedList: {},
   arrangedItemRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: verticalScale(4),
     borderBottomWidth: 0.5,
     borderBottomColor: COLORS.separatorColor,
   },
+
   arrangedItemName: {
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
     color: COLORS.primaryTextDark,
     flex: 1,
+    marginTop: 6,
   },
   arrangedItemQty: {
     fontSize: moderateScale(14),
@@ -689,9 +709,24 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
     textTransform: 'uppercase',
-    letterSpacing: -0.15,
   },
   bottomPrimaryButtonText: {
+    textAlign: 'center',
+  },
+  redDot: {
+    width: scale(8),
+    height: scale(8),
+    borderRadius: scale(4),
+    backgroundColor: COLORS.primary,
+    marginRight: scale(10),
+    marginLeft: 10,
+    marginTop: 6,
+  },
+  noItemsText: {
+    fontSize: moderateScale(13),
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.pujaCardSubtext,
+    marginTop: verticalScale(6),
     textAlign: 'center',
   },
 });

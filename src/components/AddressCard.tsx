@@ -120,7 +120,6 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontSize: 13,
     fontFamily: Fonts.Sen_Regular,
-    lineHeight: 16,
     marginTop: 4,
     marginBottom: 4,
     paddingRight: 40,

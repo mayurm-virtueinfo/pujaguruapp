@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -11,24 +11,23 @@ import {
 import CustomHeader from '../components/CustomHeader';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import dayjs from 'dayjs';
-import { COLORS } from '../theme/theme';
+import {COLORS} from '../theme/theme';
 
 const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-const AvailabilityScreen : React.FC = () => {
+const AvailabilityScreen: React.FC = () => {
   const [monthOffset, setMonthOffset] = useState(0);
-  const [nonAvailableDays, setNonAvailableDays] = useState<number[]>([15, 16, 17, 23, 24]);
+  const [nonAvailableDays, setNonAvailableDays] = useState<number[]>([
+    15, 16, 17, 23, 24,
+  ]);
 
   const currentMonth = dayjs().add(monthOffset, 'month');
   const monthName = currentMonth.format('MMMM YYYY');
   const startDay = currentMonth.startOf('month').day();
   const daysInMonth = currentMonth.daysInMonth();
 
-  const datesArray = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-  const paddedArray = [
-    ...Array(startDay).fill(null),
-    ...datesArray,
-  ];
+  const datesArray = Array.from({length: daysInMonth}, (_, i) => i + 1);
+  const paddedArray = [...Array(startDay).fill(null), ...datesArray];
 
   const toggleDate = (day: number | null) => {
     if (!day) return;
@@ -47,17 +46,22 @@ const AvailabilityScreen : React.FC = () => {
         title="Availability"
       />
 
-      <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <ScrollView contentContainerStyle={{padding: 16}}>
         <Text style={styles.description}>
-          Set your availability for upcoming months so, it would help system to provide better user
-          experience while catering the pooja booking of end user. Mark the days when you aren't
-          available. The Non-Available are marked with red color.
+          Set your availability for upcoming months so, it would help system to
+          provide better user experience while catering the pooja booking of end
+          user. Mark the days when you aren't available. The Non-Available are
+          marked with red color.
         </Text>
 
         {/* Month Header */}
         <View style={styles.monthHeader}>
           <TouchableOpacity onPress={() => setMonthOffset(monthOffset - 2)}>
-            <Icon name="keyboard-double-arrow-left" size={20} color={COLORS.darkText} />
+            <Icon
+              name="keyboard-double-arrow-left"
+              size={20}
+              color={COLORS.darkText}
+            />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setMonthOffset(monthOffset - 1)}>
             <Icon name="chevron-left" size={28} color={COLORS.darkText} />
@@ -69,14 +73,20 @@ const AvailabilityScreen : React.FC = () => {
             <Icon name="chevron-right" size={28} color={COLORS.darkText} />
           </TouchableOpacity>
           <TouchableOpacity onPress={() => setMonthOffset(monthOffset + 2)}>
-            <Icon name="keyboard-double-arrow-right" size={20} color={COLORS.darkText} />
+            <Icon
+              name="keyboard-double-arrow-right"
+              size={20}
+              color={COLORS.darkText}
+            />
           </TouchableOpacity>
         </View>
 
         {/* Weekday Labels */}
         <View style={styles.daysRow}>
           {DAYS.map((day, index) => (
-            <Text key={index} style={styles.dayLabel}>{day}</Text>
+            <Text key={index} style={styles.dayLabel}>
+              {day}
+            </Text>
           ))}
         </View>
 
@@ -90,13 +100,13 @@ const AvailabilityScreen : React.FC = () => {
                 key={index}
                 style={styles.dateCell}
                 onPress={() => toggleDate(day)}
-                disabled={isDisabled}
-              >
-                <Text style={[
-                  styles.dateText,
-                  isDisabled && styles.disabledText,
-                  isRed && styles.redText
-                ]}>
+                disabled={isDisabled}>
+                <Text
+                  style={[
+                    styles.dateText,
+                    isDisabled && styles.disabledText,
+                    isRed && styles.redText,
+                  ]}>
                   {day ?? ''}
                 </Text>
               </TouchableOpacity>
@@ -124,7 +134,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.darkText,
     marginBottom: 16,
-    lineHeight: 22,
   },
   monthHeader: {
     flexDirection: 'row',

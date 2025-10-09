@@ -12,8 +12,8 @@ export const getLocationForAPI = async () => {
       if (location.timestamp) {
         const locationTime = new Date(location.timestamp).getTime();
         const now = new Date().getTime();
-        // const thirtyMinutes = 30 * 60 * 1000;
-        const thirtyMinutes = 10 * 1000;
+        // 30 minutes cache by default
+        const thirtyMinutes = 30 * 60 * 1000;
 
         if (now - locationTime < thirtyMinutes) {
           console.log('📱 Using stored location');

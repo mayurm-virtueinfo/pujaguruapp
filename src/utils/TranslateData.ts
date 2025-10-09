@@ -14,6 +14,7 @@ export const translateText = async (
   targetLang: string,
 ): Promise<string> => {
   if (!text || typeof text !== 'string') return text;
+  if (targetLang === 'en') return text;
   try {
     const {text: translatedText} = await translate(text, {
       to: targetLang,
@@ -22,7 +23,7 @@ export const translateText = async (
     return translatedText;
   } catch (error) {
     console.error('Translation error:', error);
-    return text; // Return original text if translation fails
+    return text;
   }
 };
 
@@ -76,12 +77,14 @@ export const translateOne = async (
   return translated;
 };
 
-// Translate a single object or array of objects
 export const translateData = async (
   data: TranslatableItem | TranslatableItem[],
   targetLang: string,
   fieldsToTranslate: string[],
 ): Promise<TranslatableItem | TranslatableItem[]> => {
+  if (targetLang === 'en') {
+    return data;
+  }
   // If data is an array, translate each item
   if (Array.isArray(data)) {
     return Promise.all(

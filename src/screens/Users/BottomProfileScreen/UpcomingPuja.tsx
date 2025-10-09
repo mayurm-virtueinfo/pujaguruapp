@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
+import {translateData} from '../../../utils/TranslateData';
 
 const UpcomingPuja: React.FC = () => {
   const navigation = useNavigation<UserProfileParamList>();
@@ -27,27 +28,41 @@ const UpcomingPuja: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const inset = useSafeAreaInsets();
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
 
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchUpcomingPujas();
-    }, []),
-  );
+  const currentLanguage = i18n.language;
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
 
-  const fetchUpcomingPujas = async () => {
-    setLoading(true);
+  const fetchUpcomingPujas = useCallback(async () => {
     try {
+      setLoading(true);
+
+      const cachedData = translationCacheRef.current.get(currentLanguage);
+
+      if (cachedData) {
+        setPujas(cachedData);
+        setLoading(false);
+        return;
+      }
+
       const response: any = await getUpcomingPujas();
-      console.log('response for upcoming puja :: ', response);
-      setPujas(response || []);
+      const translated: any = await translateData(response, currentLanguage, [
+        'pooja_name',
+        'when_is_pooja',
+      ]);
+      translationCacheRef.current.set(currentLanguage, translated);
+      setPujas(translated || []);
     } catch (error) {
       console.error('Error fetching upcoming puja data:', error);
       setPujas([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentLanguage]);
+
+  useEffect(() => {
+    fetchUpcomingPujas();
+  }, [fetchUpcomingPujas]);
 
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
@@ -56,9 +71,7 @@ const UpcomingPuja: React.FC = () => {
         backgroundColor={COLORS.primaryBackground}
         barStyle="light-content"
       />
-
       <UserCustomHeader title={t('upcoming_puja')} showBackButton={true} />
-
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.pujaSection}>
           <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
@@ -143,7 +156,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.33,
     marginBottom: moderateScale(4),
   },
   pujaDate: {

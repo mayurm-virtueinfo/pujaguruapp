@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import {useCommonToast} from '../../../common/CommonToast';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 import Octicons from 'react-native-vector-icons/Octicons';
 import PrimaryButton from '../../../components/PrimaryButton';
+import {translateData} from '../../../utils/TranslateData';
 
 type PujaItem = {
   pooja_id: number;
@@ -41,9 +42,13 @@ type ScreenNavigationProp = StackNavigationProp<
 
 const SelectPujaScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
+
+  const currentLanguage = i18n.language;
+
   const {showErrorToast} = useCommonToast();
 
+  const [originalPujaList, setOriginalPujaList] = useState<PujaItem[]>([]);
   const [pujaList, setPujaList] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedPujaId, setSelectedPujaId] = useState<number | null>(null);
@@ -51,19 +56,34 @@ const SelectPujaScreen: React.FC = () => {
   const route = useRoute() as any;
   const {panditId, panditName, panditImage, panditCity} = route?.params;
 
-  useEffect(() => {
-    fetchPujaList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  console.log('SelectPujaScreen route?.params :: ', route?.params);
 
-  const fetchPujaList = async () => {
-    setLoading(true);
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
+
+  const fetchPujaList = useCallback(async () => {
     try {
+      setLoading(true);
+
+      const cachedData = translationCacheRef.current.get(currentLanguage);
+      if (cachedData) {
+        setPujaList(cachedData);
+        setLoading(false);
+        return;
+      }
+
       const data: any = await getPanditPujaList(panditId);
       if (data.success && Array.isArray(data.data)) {
-        setPujaList(data.data);
+        setOriginalPujaList(data.data);
+        const translated: any = await translateData(
+          data.data,
+          currentLanguage,
+          ['pooja_name', 'pooja_caption'],
+        );
+        translationCacheRef.current.set(currentLanguage, translated);
+        setPujaList(translated);
       } else {
         setPujaList([]);
+        setOriginalPujaList([]);
       }
     } catch (error: any) {
       showErrorToast(error?.message || 'Failed to fetch puja list');
@@ -71,24 +91,33 @@ const SelectPujaScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [panditId, currentLanguage]);
+
+  useEffect(() => {
+    fetchPujaList();
+  }, [fetchPujaList]);
 
   const handleBackPress = () => {
     navigation.goBack();
   };
 
   const handleSelectPuja = (pujaId: number) => {
-    setSelectedPujaId(pujaId);
+    setSelectedPujaId(prev => (prev === pujaId ? null : pujaId));
   };
 
   const handleNext = () => {
     if (selectedPujaId) {
+      const originalPuja = originalPujaList.find(
+        p => p.pooja_id === selectedPujaId,
+      );
       navigation.navigate('PoojaDetailScreen', {
-        poojaId: selectedPujaId,
-        panditId: panditId,
-        panditName: panditName,
-        panditImage: panditImage,
-        panditCity: panditCity,
+        panditId,
+        panditName,
+        panditImage,
+        panditCity,
+        poojaId: originalPuja?.pooja_id ?? selectedPujaId,
+        // poojaName: originalPuja?.pooja_name,
+        // poojaCaption: originalPuja?.pooja_caption,
       });
     }
   };
@@ -146,7 +175,10 @@ const SelectPujaScreen: React.FC = () => {
                       <View style={{flex: 1, marginLeft: 14}}>
                         <View style={styles.content}>
                           <Text style={styles.title}>{puja.pooja_name}</Text>
-                          <Text style={styles.description}>
+                          <Text
+                            style={styles.description}
+                            numberOfLines={2}
+                            ellipsizeMode="tail">
                             {puja.pooja_caption}
                           </Text>
                         </View>
@@ -235,7 +267,6 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
     fontFamily: Fonts.Sen_SemiBold,
     fontSize: 18,
-    letterSpacing: 0.1,
     marginBottom: 5,
   },
   sectionSubtitle: {
@@ -243,7 +274,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Regular,
     fontSize: 15,
     marginBottom: 5,
-    letterSpacing: 0.05,
   },
   horizontalScroll: {},
   horizontalScrollContent: {
@@ -293,7 +323,6 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
     fontFamily: Fonts.Sen_Bold,
     fontSize: 15,
-    letterSpacing: -0.333,
   },
   description: {
     color: COLORS.pujaCardSubtext,
@@ -332,8 +361,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontFamily: Fonts.Sen_Regular,
     fontSize: 15,
-    lineHeight: 21,
-    letterSpacing: -0.15,
     textTransform: 'uppercase',
   },
   separator: {
@@ -362,7 +389,6 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontFamily: Fonts.Sen_Bold,
     fontSize: 17,
-    letterSpacing: 0.2,
     textTransform: 'uppercase',
   },
 });

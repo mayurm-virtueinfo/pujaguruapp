@@ -382,7 +382,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: verticalScale(10),
     marginBottom: verticalScale(10),
-    letterSpacing: 0.2,
   },
   modalOverlay: {
     flex: 1,

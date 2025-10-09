@@ -194,7 +194,6 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 14,
     fontFamily: Fonts.Sen_Regular,
-    letterSpacing: -0.23,
   },
   statusIconsContainer: {
     flexDirection: 'row',

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   StyleSheet,
   View,
@@ -31,6 +31,7 @@ import AppConstant from '../../../utils/appConstant';
 import CustomModal from '../../../components/CustomModal';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {getFcmToken} from '../../../configuration/firebaseMessaging';
+import {translateData, translateText} from '../../../utils/TranslateData';
 
 interface ProfileFieldProps {
   label: string;
@@ -51,8 +52,11 @@ const BottomUserProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileNavigationProp>();
   const {t, i18n} = useTranslation();
 
+  const currentLanguage = i18n.language;
+
   const {signOutApp} = useAuth();
 
+  const [loading, setLoading] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
@@ -83,22 +87,49 @@ const BottomUserProfileScreen: React.FC = () => {
 
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
-  const fetchCurrentUser = async () => {
+  console.log('currentUser :: ', currentUser);
+
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
+
+  const fetchCurrentUser = useCallback(async () => {
     try {
+      setLoading(true);
+
+      const cachedTranslation =
+        translationCacheRef.current.get(currentLanguage);
+      if (cachedTranslation) {
+        setCurrentUser(cachedTranslation);
+        return;
+      }
+
       const response: any = await getEditProfile();
       if (response) {
-        setCurrentUser(response);
+        const translated: any = await translateData(response, currentLanguage, [
+          'first_name',
+          'last_name',
+          'city_name',
+        ]);
+        if (translated.address && translated.address.city_name) {
+          translated.address.city_name = await translateText(
+            translated.address.city_name,
+            currentLanguage,
+          );
+        }
+        translationCacheRef.current.set(currentLanguage, translated);
+        setCurrentUser(translated);
       }
     } catch (error) {
       console.error('Error fetching current user:', error);
       return null;
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [currentLanguage]);
 
   useFocusEffect(
     React.useCallback(() => {
       fetchCurrentUser();
-    }, []),
+    }, [fetchCurrentUser]),
   );
 
   const handleLogout = async () => {
@@ -162,7 +193,7 @@ const BottomUserProfileScreen: React.FC = () => {
 
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
-      <CustomeLoader loading={logoutLoading} />
+      <CustomeLoader loading={logoutLoading || loading} />
       <LinearGradient
         colors={[COLORS.gradientStart, COLORS.gradientEnd]}
         style={[styles.headerGradient]}
@@ -185,7 +216,7 @@ const BottomUserProfileScreen: React.FC = () => {
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}>
-          {currentUser && (
+          {!loading && currentUser && (
             <View style={[styles.infoSection, THEMESHADOW.shadow]}>
               <ProfileField
                 label={t('name')}

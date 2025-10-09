@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect, useState, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -7,24 +7,24 @@ import {
   Image,
   Platform,
   StatusBar,
-  ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import {Images} from '../../../theme/Images';
 import {useTranslation} from 'react-i18next';
 import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import PrimaryButton from '../../../components/PrimaryButton';
 import {useNavigation} from '@react-navigation/native';
 import {getTransaction, getWallet} from '../../../api/apiService';
 import type {TransactioData} from '../../../api/apiService';
 import {useCommonToast} from '../../../common/CommonToast';
+import {translateData} from '../../../utils/TranslateData';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 const WalletScreen: React.FC = () => {
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
@@ -35,15 +35,30 @@ const WalletScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [walletData, setWalletData] = useState<any>({});
 
-  console.log('transactions :: ', transactions);
+  const currentLanguage = i18n.language;
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
 
   const fetchTransactions = useCallback(async () => {
-    setLoading(true);
     try {
+      setLoading(true);
+
+      const cachedData = translationCacheRef.current.get(currentLanguage);
+
+      if (cachedData) {
+        setTransactions(cachedData);
+        setLoading(false);
+        return;
+      }
+
       const data: any = await getTransaction();
       if (data.success) {
-        console.log('data :: ', data);
-        setTransactions(data.data);
+        const translated: any = await translateData(
+          data.data,
+          currentLanguage,
+          ['puja_name'],
+        );
+        translationCacheRef.current.set(currentLanguage, translated);
+        setTransactions(translated || []);
       }
     } catch (error: any) {
       console.log('error of transaction :: ', error.response.data);
@@ -135,6 +150,7 @@ const WalletScreen: React.FC = () => {
         barStyle="light-content"
       />
       <UserCustomHeader title={t('wallet')} showBackButton={true} />
+      <CustomeLoader loading={loading} />
 
       <View style={styles.contentContainer}>
         <ScrollView
@@ -164,13 +180,6 @@ const WalletScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Top Up Button */}
-          {/* <PrimaryButton
-            title={t('top_up_wallet')}
-            onPress={handleTopUpWallet}
-            style={styles.topUpButton}
-          /> */}
-
           {/* Transaction History Section */}
           <View style={styles.transactionContainer}>
             <View style={[styles.transactionCard, THEMESHADOW.shadow]}>
@@ -178,13 +187,7 @@ const WalletScreen: React.FC = () => {
                 {t('transaction_history')}
               </Text>
               <View style={styles.transactionList}>
-                {loading ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={COLORS.primaryTextDark}
-                    style={{marginVertical: 16}}
-                  />
-                ) : transactions.length === 0 ? (
+                {transactions.length === 0 ? (
                   <Text
                     style={{
                       textAlign: 'center',
@@ -242,7 +245,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.333,
     marginBottom: verticalScale(6),
   },
   balanceRow: {
@@ -258,13 +260,11 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(18),
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.333,
   },
   balanceDescription: {
     fontSize: moderateScale(13),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.pujaCardSubtext,
-    lineHeight: moderateScale(16),
   },
   topUpButton: {
     marginBottom: verticalScale(24),
@@ -273,7 +273,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.15,
     textTransform: 'uppercase',
   },
   transactionContainer: {
@@ -307,7 +306,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
-    letterSpacing: -0.333,
     marginBottom: verticalScale(4),
   },
   transactionDate: {
@@ -318,7 +316,6 @@ const styles = StyleSheet.create({
   transactionAmount: {
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_SemiBold,
-    letterSpacing: -0.333,
   },
   creditAmount: {
     color: '#00A40E',

@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect, useState, useCallback, useRef} from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import {COLORS, THEMESHADOW} from '../../../theme/theme';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import Fonts from '../../../theme/fonts';
 import CustomeLoader from '../../../components/CustomeLoader';
+import {translateData} from '../../../utils/TranslateData';
 
 type PastBookingType = {
   id: number;
@@ -29,28 +30,44 @@ type PastBookingType = {
 };
 
 const PastPujaScreen: React.FC = () => {
-  const {t} = useTranslation();
+  const {t, i18n} = useTranslation();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [pastBookings, setPastBookings] = useState<PastBookingType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  console.log('pastBookings :: ', pastBookings);
+  const currentLanguage = i18n.language;
+  const translationCacheRef = useRef<Map<string, any>>(new Map());
+
   const fetchPastBookings = useCallback(async () => {
-    setLoading(true);
     try {
+      setLoading(true);
+
+      const cachedData = translationCacheRef.current.get(currentLanguage);
+
+      if (cachedData) {
+        setPastBookings(cachedData);
+        setLoading(false);
+        return;
+      }
+
       const response: any = await getPastBookings();
-      console.log('responsoes :: ', response);
       if (response.status === 200) {
-        setPastBookings(response.data);
+        const translated: any = await translateData(
+          response.data,
+          currentLanguage,
+          ['pooja_name', 'booking_status'],
+        );
+        translationCacheRef.current.set(currentLanguage, translated);
+        setPastBookings(translated || []);
       }
     } catch (error) {
       setPastBookings([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentLanguage]);
 
   useEffect(() => {
     fetchPastBookings();
@@ -91,7 +108,7 @@ const PastPujaScreen: React.FC = () => {
         : day === 3 || day === 23
         ? 'rd'
         : 'th';
-    return `Scheduled for ${day}${suffix} ${month} ${year}`;
+    return `${t('scheduled_for')} ${day}${suffix} ${month} ${year}`;
   };
 
   const renderBookingItem = ({item}: {item: PastBookingType}) => {
@@ -125,8 +142,6 @@ const PastPujaScreen: React.FC = () => {
 
   const renderSeparator = () => <View style={styles.separator} />;
 
-  // Always render the content container and FlatList, regardless of pastBookings length.
-  // FlatList will show ListEmptyComponent if data is empty.
   return (
     <View style={[styles.container, {paddingTop: insets.top}]}>
       <CustomeLoader loading={loading} />
@@ -229,7 +244,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: COLORS.primaryTextDark,
     fontFamily: Fonts.Sen_SemiBold,
-    letterSpacing: -0.33,
     flex: 1,
     flexShrink: 1,
   },
@@ -245,7 +259,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: COLORS.pujaCardSubtext,
     fontFamily: Fonts.Sen_Medium,
-    lineHeight: 16,
   },
   separator: {
     height: 1,

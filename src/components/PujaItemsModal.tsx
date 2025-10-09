@@ -18,8 +18,8 @@ import {useTranslation} from 'react-i18next';
 interface PujaItemsModalProps extends Partial<ModalProps> {
   visible: boolean;
   onClose: () => void;
-  userItems: {name: string; quantity: string | number}[];
-  panditjiItems: {name: string; quantity: string | number}[];
+  userItems: {name: string; quantity: string | number; units: string}[];
+  panditjiItems: {name: string; quantity: string | number; units: string}[];
 }
 
 const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
@@ -99,15 +99,15 @@ const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
           <Text style={styles.itemNumber}>{index + 1}.</Text>
           <Text style={styles.itemText}>
             {item.name}
-            <Text style={styles.quantityBadge}> ({item.quantity})</Text>
+            <Text style={styles.quantityBadge}>
+              {' '}
+              ({item.quantity} {item.units})
+            </Text>
           </Text>
         </View>
       ))}
     </View>
   );
-
-  console.log('panditjiItems :: ', panditjiItems);
-  console.log('userItems :: ', userItems);
 
   return (
     <Modal
@@ -204,7 +204,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(20),
     fontFamily: Fonts.Sen_Bold,
     color: COLORS.primaryTextDark,
-    letterSpacing: moderateScale(0.5),
   },
   closeIconContainer: {
     width: scale(40),
@@ -240,7 +239,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Regular,
     color: '#666666',
     marginBottom: verticalScale(12),
-    lineHeight: moderateScale(22),
   },
   itemsContainer: {
     backgroundColor: COLORS.white,
@@ -274,7 +272,6 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(16),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
-    lineHeight: moderateScale(24),
   },
   quantityBadge: {
     fontSize: moderateScale(14),

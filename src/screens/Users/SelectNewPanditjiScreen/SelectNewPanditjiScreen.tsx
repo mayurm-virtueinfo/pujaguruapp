@@ -379,7 +379,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Bold,
     fontSize: moderateScale(15),
     fontWeight: '700',
-    letterSpacing: -0.333,
     marginBottom: verticalScale(2),
   },
   panditjiLocation: {

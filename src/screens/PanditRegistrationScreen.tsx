@@ -14,12 +14,12 @@ import {
   FlatList,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack'; // Import for typing navigation
-import { AuthStackParamList } from '../navigation/AuthNavigator'; // Import your param list
+import {StackNavigationProp} from '@react-navigation/stack'; // Import for typing navigation
+import {AuthStackParamList} from '../navigation/AuthNavigator'; // Import your param list
 import {apiService, DropdownItem} from '../api/apiService';
 import CustomHeader from '../components/CustomHeader';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS } from '../theme/theme';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {COLORS} from '../theme/theme';
 
 interface FormData {
   firstName: string;
@@ -93,14 +93,17 @@ const PanditRegistrationScreen: React.FC = () => {
         apiService.getGotras(),
       ]);
 
-      console.log(' cities : ',cities);
-      console.log(' castes : ',castes);
-      console.log(' subCastes : ',subCastes);
-      console.log(' gotras : ',gotras);
+      console.log(' cities : ', cities);
+      console.log(' castes : ', castes);
+      console.log(' subCastes : ', subCastes);
+      console.log(' gotras : ', gotras);
 
       setDropdownData(prev => ({
         ...prev,
-        cities, castes, subCastes, gotras,
+        cities,
+        castes,
+        subCastes,
+        gotras,
         loading: false,
       }));
     } catch (error) {
@@ -193,15 +196,17 @@ const PanditRegistrationScreen: React.FC = () => {
       case 'subCaste':
         // data = dropdownData.subCastes;
         // const type = 'subCaste';
-        const item : DropdownItem | null = formData['caste'];
-        console.log('dropdownData.subCastes : ',dropdownData.subCastes)
-        console.log('item : ',item)
-        const subCastesFilter = dropdownData.subCastes.filter((subCaste: any) => subCaste.casteId === item?.id); 
+        const item: DropdownItem | null = formData['caste'];
+        console.log('dropdownData.subCastes : ', dropdownData.subCastes);
+        console.log('item : ', item);
+        const subCastesFilter = dropdownData.subCastes.filter(
+          (subCaste: any) => subCaste.casteId === item?.id,
+        );
         let mData = [];
-        console.log('subCastesFilter : ',subCastesFilter);
-        if(subCastesFilter.length > 0){
+        console.log('subCastesFilter : ', subCastesFilter);
+        if (subCastesFilter.length > 0) {
           mData = subCastesFilter[0].subCastes;
-        }else{
+        } else {
           mData = [];
         }
         data = mData;
@@ -218,34 +223,33 @@ const PanditRegistrationScreen: React.FC = () => {
   };
 
   const handleSelect = async (item: DropdownItem) => {
-
     if (currentDropdown) {
-    //   console.log('handleSelect : type : ', currentDropdown.type)
-    //   console.log('handleSelect : item : ', item)
-    //   if (currentDropdown.type == 'caste') {
-    //     setDropdownData(prev => ({
-    //       ...prev,
-    //       loading: true,
-    //       error: 'Failed to load sub-castes',
-    //     }));
-    //     const subCastesRes = await apiService.getSubCastes(parseInt(`${item.id}`));
-    //     const subCastesFilter = subCastesRes.filter((subCaste: any) => subCaste.casteId === item.id); 
-    //     let subCastes = [];
-    //     if (subCastesFilter.length > 0) {
-    //       subCastes = subCastesFilter[0].subCastes;
-    //     }
+      //   console.log('handleSelect : type : ', currentDropdown.type)
+      //   console.log('handleSelect : item : ', item)
+      //   if (currentDropdown.type == 'caste') {
+      //     setDropdownData(prev => ({
+      //       ...prev,
+      //       loading: true,
+      //       error: 'Failed to load sub-castes',
+      //     }));
+      //     const subCastesRes = await apiService.getSubCastes(parseInt(`${item.id}`));
+      //     const subCastesFilter = subCastesRes.filter((subCaste: any) => subCaste.casteId === item.id);
+      //     let subCastes = [];
+      //     if (subCastesFilter.length > 0) {
+      //       subCastes = subCastesFilter[0].subCastes;
+      //     }
 
-    //     console.log('subCastes : ', subCastes)  
-    //     setDropdownData(prev => ({
-    //       ...prev,
-    //       loading: false,
-    //       subCastes
-    //     }));
-    //     setFormData(prev => ({ ...prev, [currentDropdown.type]: item }));
-    //   } else {
-    //     setFormData(prev => ({ ...prev, [currentDropdown.type]: item }));
-    //   }
-      setFormData(prev => ({ ...prev, [currentDropdown.type]: item }));
+      //     console.log('subCastes : ', subCastes)
+      //     setDropdownData(prev => ({
+      //       ...prev,
+      //       loading: false,
+      //       subCastes
+      //     }));
+      //     setFormData(prev => ({ ...prev, [currentDropdown.type]: item }));
+      //   } else {
+      //     setFormData(prev => ({ ...prev, [currentDropdown.type]: item }));
+      //   }
+      setFormData(prev => ({...prev, [currentDropdown.type]: item}));
       setModalVisible(false);
     }
   };
@@ -280,11 +284,15 @@ const PanditRegistrationScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   return (
     <>
-    <CustomHeader showBackButton={true} showMenuButton={false} title={'Panditji Registration'}/>
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}>
-      {/* <View style={styles.header}>
+      <CustomHeader
+        showBackButton={true}
+        showMenuButton={false}
+        title={'Panditji Registration'}
+      />
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}>
+        {/* <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}>
@@ -294,147 +302,156 @@ const PanditRegistrationScreen: React.FC = () => {
         <View style={styles.backButton} />
       </View> */}
 
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.description}>
-          Registering allows you to access personalized services, receive
-          updates, and manage your preferences easily. It also helps us serve
-          you better by understanding your needs.
-        </Text>
+        <ScrollView style={styles.scrollView}>
+          <Text style={styles.description}>
+            Registering allows you to access personalized services, receive
+            updates, and manage your preferences easily. It also helps us serve
+            you better by understanding your needs.
+          </Text>
 
-        <View style={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>First Name</Text>
-            <TextInput
-              style={[styles.input, errors.firstName && styles.errorField]}
-              placeholder="Enter your first name"
-              placeholderTextColor="#9ca3af"
-              value={formData.firstName}
-              onChangeText={text => setFormData({...formData, firstName: text})}
-            />
-            {errors.firstName && (
-              <Text style={styles.errorText}>{errors.firstName}</Text>
-            )}
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Last Name</Text>
-            <TextInput
-              style={[styles.input, errors.lastName && styles.errorField]}
-              placeholder="Enter your last name"
-              placeholderTextColor="#9ca3af"
-              value={formData.lastName}
-              onChangeText={text => setFormData({...formData, lastName: text})}
-            />
-            {errors.lastName && (
-              <Text style={styles.errorText}>{errors.lastName}</Text>
-            )}
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.phoneNumber}
-              editable={false}
-            />
-          </View>
-
-          <DropdownField
-            label="City"
-            value={formData.city}
-            type="city"
-            error={errors.city}
-          />
-
-          <DropdownField
-            label="Caste"
-            value={formData.caste}
-            type="caste"
-            error={errors.caste}
-          />
-
-          <DropdownField
-            label="Sub-Caste"
-            value={formData.subCaste}
-            type="subCaste"
-            error={errors.subCaste}
-          />
-
-          <DropdownField
-            label="Gotra"
-            value={formData.gotra}
-            type="gotra"
-            error={errors.gotra}
-          />
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address</Text>
-            <TextInput
-              style={[
-                styles.input,
-                styles.addressInput,
-                errors.address && styles.errorField,
-              ]}
-              placeholder="Enter your address"
-              placeholderTextColor="#9ca3af"
-              value={formData.address}
-              onChangeText={text => setFormData({...formData, address: text})}
-              multiline
-            />
-            <Text style={styles.helperText}>
-              Please provide your full address including house number, street,
-              and locality. This information is crucial for accurate service
-              delivery and communication.
-            </Text>
-            {errors.address && (
-              <Text style={styles.errorText}>{errors.address}</Text>
-            )}
-          </View>
-        </View>
-      </ScrollView>
-
-      <TouchableOpacity style={[styles.button,{marginBottom:inset.bottom}]} onPress={handleSubmit}>
-        <Text style={styles.buttonText}>Next</Text>
-      </TouchableOpacity>
-
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                {currentDropdown?.title || 'Select'}
-              </Text>
-              <TouchableOpacity
-                style={styles.modalCloseButton}
-                onPress={() => setModalVisible(false)}>
-                <Text style={styles.modalCloseText}>×</Text>
-              </TouchableOpacity>
+          <View style={styles.formContainer}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>First Name</Text>
+              <TextInput
+                style={[styles.input, errors.firstName && styles.errorField]}
+                placeholder="Enter your first name"
+                placeholderTextColor="#9ca3af"
+                value={formData.firstName}
+                onChangeText={text =>
+                  setFormData({...formData, firstName: text})
+                }
+              />
+              {errors.firstName && (
+                <Text style={styles.errorText}>{errors.firstName}</Text>
+              )}
             </View>
 
-            {dropdownData.loading ? (
-              <ActivityIndicator size="large" color="#00bcd4" />
-            ) : (
-              <FlatList
-                data={currentDropdown?.data || []}
-                keyExtractor={item => `${item?.id}_${item?.name}`}
-                renderItem={({item}) => (
-                  <TouchableOpacity
-                    style={styles.dropdownItem}
-                    onPress={() => handleSelect(item)}>
-                    <Text style={styles.dropdownItemText}>{item.name}</Text>
-                  </TouchableOpacity>
-                )}
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Last Name</Text>
+              <TextInput
+                style={[styles.input, errors.lastName && styles.errorField]}
+                placeholder="Enter your last name"
+                placeholderTextColor="#9ca3af"
+                value={formData.lastName}
+                onChangeText={text =>
+                  setFormData({...formData, lastName: text})
+                }
               />
-            )}
+              {errors.lastName && (
+                <Text style={styles.errorText}>{errors.lastName}</Text>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Phone Number</Text>
+              <TextInput
+                style={styles.input}
+                value={formData.phoneNumber}
+                editable={false}
+              />
+            </View>
+
+            <DropdownField
+              label="City"
+              value={formData.city}
+              type="city"
+              error={errors.city}
+            />
+
+            <DropdownField
+              label="Caste"
+              value={formData.caste}
+              type="caste"
+              error={errors.caste}
+            />
+
+            <DropdownField
+              label="Sub-Caste"
+              value={formData.subCaste}
+              type="subCaste"
+              error={errors.subCaste}
+            />
+
+            <DropdownField
+              label="Gotra"
+              value={formData.gotra}
+              type="gotra"
+              error={errors.gotra}
+            />
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Address</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.addressInput,
+                  errors.address && styles.errorField,
+                ]}
+                placeholder="Enter your address"
+                placeholderTextColor="#9ca3af"
+                value={formData.address}
+                onChangeText={text => setFormData({...formData, address: text})}
+                multiline
+              />
+              <Text style={styles.helperText}>
+                Please provide your full address including house number, street,
+                and locality. This information is crucial for accurate service
+                delivery and communication.
+              </Text>
+              {errors.address && (
+                <Text style={styles.errorText}>{errors.address}</Text>
+              )}
+            </View>
           </View>
-        </View>
-      </Modal>
-    </KeyboardAvoidingView></>
+        </ScrollView>
+
+        <TouchableOpacity
+          style={[styles.button, {marginBottom: inset.bottom}]}
+          onPress={handleSubmit}>
+          <Text style={styles.buttonText}>Next</Text>
+        </TouchableOpacity>
+
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>
+                  {currentDropdown?.title || 'Select'}
+                </Text>
+                <TouchableOpacity
+                  style={styles.modalCloseButton}
+                  onPress={() => setModalVisible(false)}>
+                  <Text style={styles.modalCloseText}>×</Text>
+                </TouchableOpacity>
+              </View>
+
+              {dropdownData.loading ? (
+                <ActivityIndicator size="large" color="#00bcd4" />
+              ) : (
+                <FlatList
+                  data={currentDropdown?.data || []}
+                  keyExtractor={item => `${item?.id}_${item?.name}`}
+                  renderItem={({item}) => (
+                    <TouchableOpacity
+                      style={styles.dropdownItem}
+                      onPress={() => handleSelect(item)}>
+                      <Text style={styles.dropdownItemText}>{item.name}</Text>
+                    </TouchableOpacity>
+                  )}
+                  ItemSeparatorComponent={() => (
+                    <View style={styles.separator} />
+                  )}
+                />
+              )}
+            </View>
+          </View>
+        </Modal>
+      </KeyboardAvoidingView>
+    </>
   );
 };
 
@@ -477,7 +494,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 32,
     fontSize: 14,
-    lineHeight: 20,
     color: '#6b7280',
   },
   formContainer: {
@@ -525,7 +541,6 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: 12,
-    lineHeight: 16,
     color: '#6b7280',
     marginTop: 8,
   },
