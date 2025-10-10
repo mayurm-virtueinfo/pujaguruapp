@@ -1,10 +1,11 @@
 import './src/i18n';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
 import SplashScreen from 'react-native-splash-screen';
 import RootNavigator from './src/navigation/RootNavigator';
 import 'react-native-gesture-handler';
 import {AuthProvider} from './src/provider/AuthProvider';
+import {GPSProvider, useGPS} from './src/provider/GPSProvider';
 import {ToastProvider} from 'react-native-toast-notifications';
 import {moderateScale} from 'react-native-size-matters';
 import {COLORS} from './src/theme/theme';
@@ -18,13 +19,14 @@ import {
   setupNotifications,
 } from './src/configuration/notificationSetup';
 import {getMessaging} from '@react-native-firebase/messaging';
-import {requestLocationPermission} from './src/utils/locationUtils';
 import {CaptureProtection} from 'react-native-capture-protection';
+import GPSModal from './src/components/GPSModal';
+import GPSCheckWrapper from './src/components/GPSCheckWrapper';
 
 const auth = getAuth();
 if (__DEV__) {
-  auth.useEmulator('http://127.0.0.1:9099');
-  // auth.useEmulator('http://192.168.1.10:9099');
+  // auth.useEmulator('http://127.0.0.1:9099');
+  auth.useEmulator('http://192.168.1.10:9099');
 }
 
 setupNotifications();
@@ -37,7 +39,6 @@ const App = () => {
 
     initializeI18n();
     requestUserPermission();
-    requestLocationPermission();
 
     return () => clearTimeout(timer);
   }, []);
@@ -85,15 +86,19 @@ const App = () => {
           fontSize: moderateScale(16),
           color: COLORS.textPrimary,
         }}>
-        <AuthProvider>
-          <NavigationContainer
-            ref={navigationRef}
-            onReady={() => {
-              handleInitialNotification();
-            }}>
-            <RootNavigator />
-          </NavigationContainer>
-        </AuthProvider>
+        <GPSProvider>
+          <AuthProvider>
+            <NavigationContainer
+              ref={navigationRef}
+              onReady={() => {
+                handleInitialNotification();
+              }}>
+              <RootNavigator />
+              <GPSCheckWrapper />
+              <GPSModal />
+            </NavigationContainer>
+          </AuthProvider>
+        </GPSProvider>
       </ToastProvider>
     </I18nextProvider>
   );

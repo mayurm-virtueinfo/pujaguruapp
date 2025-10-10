@@ -296,5 +296,14 @@
   "no_pandit_items": "No items arranged by Pandit",
   "no_user_items": "No items arranged by you",
   "scheduled_for": "Scheduled for",
-  "total_payable": "Total Payable"
+  "total_payable": "Total Payable",
+  "gps_required_title": "GPS Required",
+  "location_permission_message": "Location permission is required to use this app. Please grant location permission to continue.",
+  "gps_enable_message": "GPS is currently disabled. Please enable GPS to use location-based features.",
+  "enabling_gps": "Enabling GPS...",
+  "enable_gps": "Enable GPS",
+  "checking_gps": "Checking GPS status...",
+  "gps_enabled_successfully": "GPS enabled successfully!",
+  "gps_disabled": "GPS is disabled",
+  "location_services_disabled": "Location Services Disabled"
 }

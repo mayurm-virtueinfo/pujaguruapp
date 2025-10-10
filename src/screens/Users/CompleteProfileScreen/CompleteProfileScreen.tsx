@@ -23,7 +23,6 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import {useRoute} from '@react-navigation/native';
 import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
 import {getCurrentLocation, LocationData} from '../../../utils/locationUtils';
-import {Text} from 'react-native-gesture-handler';
 
 interface FormData {
   phoneNumber: string;
