@@ -431,7 +431,7 @@ const UserPujaDetailsScreen: React.FC = () => {
                 <MaterialIcons
                   name="person"
                   size={scale(24)}
-                  color={COLORS.white}
+                  color={COLORS.primaryBackgroundButton}
                 />
               </View>
             </View>

@@ -22,11 +22,12 @@ import {
 } from '@react-navigation/native';
 import {
   getChatHistory as getMessageHistory,
-  postCreateMeeting,
+  postCreateMeeting as createMeeting,
 } from '../../../api/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomeLoader from '../../../components/CustomeLoader';
+import RNCallKeep from 'react-native-callkeep';
 
 export interface Message {
   id: string;
@@ -45,6 +46,8 @@ const UserChatScreen: React.FC = () => {
     pandit_id,
     user_id,
     video_call,
+    incomingMeetingUrl,
+    currentCallUUID,
   } = route.params || {};
 
   const insets = useSafeAreaInsets();
@@ -64,7 +67,6 @@ const UserChatScreen: React.FC = () => {
   const scrollViewRef = useRef<ScrollView | null>(null);
   const isUserAtBottom = useRef(true);
   const jitsiMeeting = useRef<any>(null);
-  const autoCallInitiated = useRef(false);
 
   let JitsiMeeting: any = null;
   try {
@@ -92,8 +94,7 @@ const UserChatScreen: React.FC = () => {
 
   useEffect(() => {
     if (accessToken && booking_id) {
-      let socketURL = `ws://192.168.1.18:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
-      // let socketURL = `ws://puja-guru.com:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
+      let socketURL = `ws://puja-guru.com:9000/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
       ws.current = new WebSocket(socketURL);
       ws.current.onopen = () => console.log('✅ Connected to WebSocket');
       ws.current.onmessage = e => {
@@ -115,19 +116,6 @@ const UserChatScreen: React.FC = () => {
       return () => ws.current?.close();
     }
   }, [accessToken, myUserId, booking_id]);
-
-  // Auto start video call when navigated from notification with video_call flag
-  useEffect(() => {
-    const isVideoCall =
-      video_call === true ||
-      video_call === 'true' ||
-      video_call === 1 ||
-      video_call === '1';
-    if (!autoCallInitiated.current && isVideoCall && booking_id) {
-      autoCallInitiated.current = true;
-      handleVideoCall();
-    }
-  }, [video_call, booking_id]);
 
   useFocusEffect(
     useCallback(() => {
@@ -192,13 +180,46 @@ const UserChatScreen: React.FC = () => {
     }
   }, [messages, scrollToBottom]);
 
+  // Handle incoming meeting URL or video_call flag
+  useEffect(() => {
+    handleMeetingURL();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incomingMeetingUrl]);
+
+  useEffect(() => {
+    if (video_call) {
+      handleVideoCall();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [video_call]);
+
+  const handleMeetingURL = () => {
+    if (incomingMeetingUrl) {
+      let url = incomingMeetingUrl.endsWith('/')
+        ? incomingMeetingUrl.slice(0, -1)
+        : incomingMeetingUrl;
+      const lastSlashIdx = url.lastIndexOf('/');
+      let room =
+        lastSlashIdx === -1 ? 'defaultRoom' : url.substring(lastSlashIdx + 1);
+      const queryIdx = room.indexOf('?');
+      room =
+        queryIdx !== -1 ? room.substring(0, queryIdx) : room || 'defaultRoom';
+      setRoomName(room);
+      setMeetingToken(null);
+      setServerUrl('https://meet.puja-guru.com/');
+      setInCall(true);
+    } else if (video_call) {
+      handleVideoCall();
+    }
+  };
+
   const handleVideoCall = () => {
     if (!booking_id) {
       Alert.alert('Error', 'No booking ID available for video call.');
       return;
     }
     setLoading(true);
-    postCreateMeeting(booking_id)
+    createMeeting(booking_id)
       .then(response => {
         const data = response?.data || response;
         if (data?.room_name && data?.token) {
@@ -246,6 +267,9 @@ const UserChatScreen: React.FC = () => {
   };
 
   const onReadyToClose = useCallback(() => {
+    if (currentCallUUID) {
+      RNCallKeep.endCall(currentCallUUID as any);
+    }
     setInCall(false);
     setRoomName(null);
     setMeetingToken(null);
@@ -255,66 +279,127 @@ const UserChatScreen: React.FC = () => {
     ) {
       jitsiMeeting.current.close();
     }
-  }, []);
+    navigation.getParent?.()?.setOptions?.({tabBarStyle: {display: 'flex'}});
+  }, [navigation, currentCallUUID]);
 
-  const onEndpointMessageReceived = useCallback(() => {}, []);
+  const onEndpointMessageReceived = useCallback(() => {
+    console.log('You got a message!');
+  }, []);
 
   const eventListeners = {
     onReadyToClose,
     onEndpointMessageReceived,
   };
 
-  // Hide bottom tab bar during active call; restore when call ends
   useEffect(() => {
-    const parent = (navigation as any)?.getParent?.();
-    if (!parent || typeof parent.setOptions !== 'function') return;
+    if ((route as any).params?.endCall) {
+      onReadyToClose();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [(route as any).params?.endCall]);
+
+  useEffect(() => {
     if (inCall) {
-      parent.setOptions({tabBarStyle: {display: 'none'}});
+      navigation.getParent?.()?.setOptions?.({tabBarStyle: {display: 'none'}});
     } else {
-      parent.setOptions({tabBarStyle: undefined});
+      navigation.getParent?.()?.setOptions?.({tabBarStyle: {display: 'flex'}});
     }
     return () => {
-      parent?.setOptions?.({tabBarStyle: undefined});
+      navigation.getParent?.()?.setOptions?.({tabBarStyle: {display: 'flex'}});
     };
   }, [inCall, navigation]);
+
+  if (inCall) {
+    return (
+      <View style={styles.jitsiFullScreenView}>
+        <StatusBar
+          barStyle="light-content"
+          backgroundColor="#000"
+          translucent
+        />
+        <CustomeLoader loading={loading} />
+        {JitsiMeeting ? (
+          <JitsiMeeting
+            ref={jitsiMeeting}
+            room={roomName || 'defaultRoom'}
+            serverURL={serverUrl}
+            token={meetingToken || undefined}
+            userInfo={{
+              avatarUrl: currentUser?.profile_img_url,
+              displayName: currentUser?.first_name || 'User',
+              email: currentUser?.email,
+            }}
+            config={{
+              hideConferenceTimer: true,
+              whiteboard: {
+                enabled: true,
+                collabServerBaseUrl: serverUrl,
+              },
+              analytics: {
+                disabled: true,
+              },
+              prejoinPageEnabled: false,
+              prejoinConfig: {
+                enabled: false,
+              },
+              requireDisplayName: false,
+              startWithAudioMuted: false,
+              startWithVideoMuted: false,
+            }}
+            eventListeners={eventListeners as any}
+            flags={{
+              'audioMute.enabled': true,
+              'ios.screensharing.enabled': true,
+              'fullscreen.enabled': false,
+              'audioOnly.enabled': false,
+              'android.screensharing.enabled': true,
+              'pip.enabled': true,
+              'pip-while-screen-sharing.enabled': true,
+              'conference-timer.enabled': true,
+              'close-captions.enabled': false,
+              'toolbox.enabled': true,
+              'chat.enabled': false,
+              'prejoin.enabled': false,
+            }}
+            style={styles.jitsiFullScreenView}
+          />
+        ) : (
+          <View style={styles.jitsiFullScreenView}>
+            <Text style={{color: '#fff', textAlign: 'center', marginTop: 40}}>
+              Video call is not available. Please check your app installation.
+            </Text>
+          </View>
+        )}
+      </View>
+    );
+  }
 
   return (
     <View
       style={{
         flex: 1,
         backgroundColor: COLORS.primaryBackground,
-        paddingTop: inCall ? 0 : insets.top, // Remove padding during video call
+        paddingTop: insets.top,
       }}>
       <CustomeLoader loading={loading} />
       <StatusBar
         barStyle="light-content"
         backgroundColor={COLORS.primaryBackground}
-        translucent={inCall} // Translucent during video call
-        hidden={inCall} // Hide status bar during video call
+        translucent
       />
-      {!inCall && (
-        <View style={styles.safeArea}>
-          <UserCustomHeader
-            title={pandit_name || 'Chat'}
-            showBackButton={true}
-            showVideoCallButton={true}
-            onVideoButtonPress={handleVideoCall}
-          />
-        </View>
-      )}
-      <KeyboardAvoidingView
-        style={[
-          styles.chatContainer,
-          inCall && {
-            borderTopLeftRadius: 0,
-            borderTopRightRadius: 0,
-            paddingTop: 0,
-            backgroundColor: '#000',
-          },
-        ]}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? moderateScale(90) : 0}>
-        {!inCall ? (
+      <View style={styles.safeArea}>
+        <UserCustomHeader
+          title={pandit_name || 'Chat'}
+          showBackButton={true}
+          showVideoCallButton={true}
+          onVideoButtonPress={handleVideoCall}
+        />
+        <KeyboardAvoidingView
+          style={styles.chatContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={
+            Platform.OS === 'ios' ? moderateScale(90) : 0
+          }>
           <ScrollView
             style={styles.messagesContainer}
             contentContainerStyle={{flexGrow: 1, justifyContent: 'flex-end'}}
@@ -337,71 +422,16 @@ const UserChatScreen: React.FC = () => {
               <ChatMessages messages={messages} />
             )}
           </ScrollView>
-        ) : JitsiMeeting ? (
-          <JitsiMeeting
-            ref={jitsiMeeting}
-            room={roomName ? String(roomName) : 'defaultRoom'}
-            serverURL={
-              serverUrl ? String(serverUrl) : 'https://meet.puja-guru.com/'
-            }
-            token={meetingToken ? String(meetingToken) : undefined}
-            userInfo={{
-              avatarUrl: currentUser?.profile_img_url,
-              displayName: currentUser?.first_name || 'User',
-              email: currentUser?.email,
-            }}
-            config={{
-              hideConferenceTimer: true,
-              whiteboard: {
-                enabled: true,
-                collabServerBaseUrl: serverUrl
-                  ? String(serverUrl)
-                  : 'https://meet.puja-guru.com/',
-              },
-              analytics: {
-                disabled: true,
-              },
-              prejoinPageEnabled: false,
-              prejoinConfig: {
-                enabled: false,
-              },
-              requireDisplayName: false,
-              startWithAudioMuted: false,
-              startWithVideoMuted: false,
-            }}
-            flags={{
-              'audioMute.enabled': true,
-              'ios.screensharing.enabled': true,
-              'fullscreen.enabled': true,
-              'audioOnly.enabled': false,
-              'android.screensharing.enabled': true,
-              'pip.enabled': true,
-              'pip-while-screen-sharing.enabled': true,
-              'conference-timer.enabled': true,
-              'close-captions.enabled': false,
-              'toolbox.enabled': true,
-              'chat.enabled': false,
-              'prejoin.enabled': false,
-            }}
-            eventListeners={eventListeners as any}
-            style={[styles.jitsiView, styles.jitsiFull]}
-            onReadyToClose={onReadyToClose}
-          />
-        ) : (
-          <View style={styles.jitsiView}>
-            <Text style={{color: '#fff', textAlign: 'center', marginTop: 40}}>
-              Video call is not available. Please check your app installation.
-            </Text>
-          </View>
-        )}
-        {!inCall && <ChatInput onSendMessage={handleSendMessage} />}
-      </KeyboardAvoidingView>
+          <ChatInput onSendMessage={handleSendMessage} />
+        </KeyboardAvoidingView>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   safeArea: {
+    flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
   chatContainer: {
@@ -431,12 +461,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000',
   },
-  jitsiFull: {
+  jitsiFullScreenView: {
+    flex: 1,
+    backgroundColor: '#000',
     position: 'absolute',
     top: 0,
+    left: 0,
     right: 0,
     bottom: 0,
-    left: 0,
+    zIndex: 9999,
   },
 });
 

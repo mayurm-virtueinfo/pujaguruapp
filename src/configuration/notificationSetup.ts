@@ -1,10 +1,12 @@
-import notifee, {EventType, AndroidImportance} from '@notifee/react-native';
-import {getMessaging} from '@react-native-firebase/messaging';
-import {getApp} from '@react-native-firebase/app';
-import {navigate, navigationRef} from '../utils/NavigationService';
-import {COLORS} from '../theme/theme';
-
-const messaging = getMessaging(getApp());
+import notifee, { EventType, AndroidImportance } from '@notifee/react-native';
+import messaging from '@react-native-firebase/messaging';
+import { COLORS } from '../theme/theme';
+import { navigate, navigationRef } from '../utils/NavigationService';
+import { displayIncomingCall, endIncomingCall } from './callValidation';
+import RNCallKeep from 'react-native-callkeep';
+import { startForegroundService } from './foregroundService';
+import PushNotification from 'react-native-push-notification';
+import { Linking } from 'react-native';
 
 let isSetup = false;
 let foregroundUnsubscribe: (() => void) | null = null;
@@ -22,14 +24,127 @@ export async function setupNotifications() {
     id: 'default',
     name: 'Default Channel',
     importance: AndroidImportance.HIGH,
-    sound: 'custom_notification_sound',
+  });
+
+  // Ensure the calls channel exists for RNPN-created notifications
+  PushNotification.createChannel(
+    {
+      channelId: 'calls',
+      channelName: 'Call Notifications',
+      channelDescription: 'Incoming call alerts with Accept/Decline',
+      importance: 5, // Importance.HIGH
+      vibrate: true,
+      soundName: 'default',
+    },
+    (created: boolean) => console.log('PushNotification channel "calls" created:', created),
+  );
+
+  // Configure action handlers once
+  PushNotification.configure({
+    onNotification: function (notification: any) {
+      try {
+        console.log('[RNPN] onNotification', JSON.stringify(notification));
+        // Handle taps on the notification itself (not action buttons)
+        if (notification?.data) {
+          handleNotificationNavigation(notification.data);
+        }
+      } catch (e) {
+        console.warn('onNotification error', e);
+      }
+    },
+    onAction: function (notification: any) {
+      try {
+        const action = notification?.action;
+        // RNPN delivers payload under either data or userInfo
+        const data = (notification?.data || notification?.userInfo || {}) as any;
+        console.log('[RNPN] onAction', action, JSON.stringify(data));
+
+        if (action === 'Accept') {
+          // Navigate to video call screen with payload
+          Linking.openURL('pujaguru://video').catch((err) => console.log("Depplink error::", err));
+          console.log("-----------------pujaguru://video-------------------")
+          const nestedParams = {
+            screen: 'UserAppBottomTabNavigator',
+            params: {
+              screen: 'UserHomeNavigator',
+              params: {
+                screen: 'UserChatScreen',
+                params: {
+                  booking_id: data?.booking_id,
+                  user_id: data?.sender_id,
+                  other_user_name: data?.callerName || 'Call',
+                  videocall: true,
+                  incomingMeetingUrl: data?.meeting_url,
+                  currentCallUUID: data?.callUUID || data?.callId,
+                },
+              },
+            },
+          } as any;
+
+          // Close notifications first to avoid interference
+          try { PushNotification.cancelAllLocalNotifications(); } catch { }
+
+          const attemptNavigate = (retries = 10) => {
+            if (navigationRef.isReady()) {
+              try { navigate('Main', nestedParams); } catch (e) { console.warn('navigate error', e); }
+            } else if (retries > 0) {
+              setTimeout(() => attemptNavigate(retries - 1), 200);
+            } else {
+              console.warn('Navigation not ready after retries');
+            }
+          };
+          attemptNavigate();
+        }
+
+        if (action === 'Decline') {
+          const callUUID = (data?.callUUID || data?.callId) as string | undefined;
+          if (callUUID) {
+            endIncomingCall(callUUID);
+          }
+          PushNotification.cancelAllLocalNotifications();
+        }
+      } catch (e) {
+        console.warn('onAction error', e);
+      }
+    },
+    permissions: { alert: true, badge: true, sound: true },
+    requestPermissions: true,
+    popInitialNotification: true,
   });
 
   // Foreground message handler (displays notification)
-  messaging.onMessage(async (remoteMessage: any) => {
+  messaging().onMessage(async (remoteMessage: any) => {
     console.log('📩 Foreground FCM message:', remoteMessage);
 
-    const {title, body} = remoteMessage.notification || {};
+    if (remoteMessage.data?.type === 'video_call_invite') {
+      const callUUID = remoteMessage.data.callId || `uuid-${Date.now()}`;
+      RNCallKeep.displayIncomingCall(
+        callUUID,
+        remoteMessage.data.callerName || 'Unknown',
+        'Video',
+        'number',
+        true
+      );
+
+      // Also show a local notification with Accept/Decline actions
+      showCallInviteNotification({
+        id: remoteMessage.messageId,
+        title: remoteMessage.notification?.title || 'Incoming Call',
+        body: remoteMessage.notification?.body || 'Tap to answer',
+        data: { ...remoteMessage.data, callUUID: callUUID },
+      });
+      return;
+    }
+
+    if (remoteMessage.data?.type === 'end_call') {
+      const callUUID = remoteMessage.data.callUUID;
+      if (callUUID) {
+        endIncomingCall(callUUID);
+      }
+      return;
+    }
+
+    const { title, body } = remoteMessage.notification || {};
     await notifee.displayNotification({
       id: remoteMessage.messageId,
       title: title || 'New Notification',
@@ -38,16 +153,15 @@ export async function setupNotifications() {
       android: {
         channelId,
         smallIcon: 'ic_notification',
-        pressAction: {id: 'default'},
+        pressAction: { id: 'default' },
         color: COLORS.primary,
-        sound: 'custom_notification_sound',
       },
       ios: {},
     });
   });
 
   // Handle notification press in foreground
-  foregroundUnsubscribe = notifee.onForegroundEvent(({type, detail}) => {
+  foregroundUnsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
     if (type === EventType.PRESS) {
       console.log('Notification pressed in foreground', detail);
       const data = detail.notification?.data || {};
@@ -55,25 +169,54 @@ export async function setupNotifications() {
     }
   });
 
-  messaging.onNotificationOpenedApp((remoteMessage: any) => {
+  // App opened from background
+  messaging().onNotificationOpenedApp((remoteMessage: any) => {
     if (remoteMessage) {
       console.log('🔁 Opened from background:', remoteMessage);
       handleNotificationNavigation(remoteMessage.data);
     }
   });
 
-  // Background handler (must be top-level)
-  messaging.setBackgroundMessageHandler(async (remoteMessage: any) => {
-    console.log('📨 Background FCM message:', remoteMessage);
+  // Background handler
+  messaging().setBackgroundMessageHandler(async (remoteMessage: any) => {
+    console.log('Received background message:', remoteMessage.data);
+    if (remoteMessage.data?.type === 'video_call_invite') {
+      const callUUID = remoteMessage.data.callId || `uuid-${Date.now()}`;
+      await startForegroundService({ ...remoteMessage.data, callUUID });
+    }
   });
 }
 
 export function handleNotificationNavigation(data: any) {
-  console.log('data of notification :: ', data);
-
-  if (data?.screen === 'FilteredPanditListScreen') {
+  if (data?.type === 'video_call_invite') {
+    const nestedParams = {
+      screen: 'UserAppBottomTabNavigator',
+      params: {
+        screen: 'UserHomeNavigator',
+        params: {
+          screen: 'UserChatScreen',
+          params: {
+            booking_id: data?.booking_id,
+            user_id: data?.sender_id,
+            other_user_name: data?.callerName || 'Call',
+            videocall: true,
+            incomingMeetingUrl: data?.meeting_url,
+            currentCallUUID: data?.callUUID,
+          },
+        },
+      },
+    };
+    setTimeout(() => {
+      if (navigationRef.isReady()) {
+        navigate('Main', nestedParams);
+      } else {
+        console.warn('Navigation not ready yet');
+      }
+    }, 500);
+  } else if (data?.screen === 'WaitingApprovalPujaScreen') {
     const targetScreen = data?.screen;
     const booking_id = data?.booking_id;
+    const offer_id = data?.offer_id;
 
     const nestedParams = {
       screen: 'UserAppBottomTabNavigator',
@@ -83,6 +226,7 @@ export function handleNotificationNavigation(data: any) {
           screen: targetScreen,
           params: {
             booking_id,
+            offer_id,
           },
         },
       },
@@ -99,31 +243,20 @@ export function handleNotificationNavigation(data: any) {
     const targetScreen = data?.navigation || data?.pujaguru_app_screen;
     const booking_id = data?.booking_id;
     const pandit_id = data?.sender_id;
-    const video_call = data?.video_call || false;
-
-    console.log('-------------------------------');
-    console.log('data :: ', data);
-    console.log('targetScreen :: ', targetScreen);
-    console.log('booking_id :: ', booking_id);
-    console.log('video_call :: ', video_call);
+    const videocall = data?.video_call;
 
     const nestedParams = {
       screen: 'UserAppBottomTabNavigator',
       params: {
         screen: 'UserHomeNavigator',
-        params: targetScreen
-          ? {
-              screen: targetScreen,
-              params: {
-                booking_id,
-                pandit_id,
-                video_call,
-              },
-            }
-          : {
-              booking_id,
-              pandit_id,
-            },
+        params: {
+          screen: targetScreen,
+          params: {
+            booking_id,
+            pandit_id,
+            videocall,
+          },
+        },
       },
     };
 
@@ -145,35 +278,120 @@ export function cleanupNotifications() {
   isSetup = false;
 }
 
-function generateUuidV4(): string {
-  const bytes = new Uint8Array(16);
-  for (let i = 0; i < 16; i++) {
-    bytes[i] = Math.floor(Math.random() * 256);
+// Helpers
+function showCallInviteNotification(args: {
+  id?: string;
+  title: string;
+  body: string;
+  data: any;
+}) {
+  try {
+    PushNotification.localNotification({
+      channelId: 'calls',
+      id: args.id,
+      title: args.title,
+      message: args.body,
+      userInfo: args.data, // iOS
+      data: args.data, // Android
+      playSound: true,
+      soundName: 'default',
+      importance: 5,
+      priority: 'high',
+      vibrate: true,
+      ongoing: true,
+      category: 'call',
+      actions: ['Accept', 'Decline'],
+      // Use invokeApp true so actions open the app; we'll handle action via onNotification
+      invokeApp: true,
+      largeIcon: 'ic_launcher',
+      smallIcon: 'ic_notification',
+      color: COLORS.primary,
+      // Ensure heads-up presentation on Android
+      visibility: 'public',
+      allowWhileIdle: true,
+      autoCancel: false,
+    } as any);
+  } catch (e) {
+    console.warn('showCallInviteNotification error', e);
   }
-  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
-  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10
-  const toHex = (n: number) => n.toString(16).padStart(2, '0');
-  const b = Array.from(bytes).map(toHex);
-  return (
-    b[0] +
-    b[1] +
-    b[2] +
-    b[3] +
-    '-' +
-    b[4] +
-    b[5] +
-    '-' +
-    b[6] +
-    b[7] +
-    '-' +
-    b[8] +
-    b[9] +
-    '-' +
-    b[10] +
-    b[11] +
-    b[12] +
-    b[13] +
-    b[14] +
-    b[15]
-  );
+}
+
+// Exported handlers for PushNotification.configure in index.js
+export function handlePushNotification(notification: any) {
+  try {
+    const action = notification?.data?.video_call;
+    const data = (notification?.data || notification?.userInfo || {}) as any;
+    console.log('[RNPN] onNotification', JSON.stringify(data));
+    console.log("action", action)
+    if (action === 'true') {
+      // route to Accept path
+      handlePushAction({ action: 'Accept', data });
+      Linking.openURL('pujaguru://video').catch((err) => console.log("Depplink error::", err));
+      console.log("Call accepted -------------------========+>")
+      return;
+    }
+    if (action === 'Decline') {
+      handlePushAction({ action: 'Decline', data });
+      return;
+    }
+
+    if (data) handleNotificationNavigation(data);
+  } catch (e) {
+    console.warn('handlePushNotification error', e);
+  }
+}
+
+export function handlePushAction(notification: any) {
+  try {
+    const action = notification?.action;
+    const data = (notification?.data || notification?.userInfo || {}) as any;
+    console.log('[RNPN] onAction', action, JSON.stringify(data));
+
+    if (action === 'Accept') {
+      // Bring app to foreground explicitly
+      try { (PushNotification as any).invokeApp?.(notification); } catch { }
+
+      // Fallback: deep link to ensure activity resumes
+      Linking.openURL(`pujaguru://video`).catch((err) => console.log("Depplink error::", err));
+
+      const nestedParams = {
+        screen: 'UserAppBottomTabNavigator',
+        params: {
+          screen: 'UserHomeNavigator',
+          params: {
+            screen: 'UserChatScreen',
+            params: {
+              booking_id: data?.booking_id,
+              user_id: data?.sender_id,
+              other_user_name: data?.callerName || 'Call',
+              videocall: true,
+              incomingMeetingUrl: data?.meeting_url,
+              currentCallUUID: data?.callUUID || data?.callId,
+            },
+          },
+        },
+      } as any;
+
+      const attemptNavigate = (retries = 15) => {
+        if (navigationRef.isReady()) {
+          try { navigate('Main', nestedParams); } catch (e) { console.warn('navigate error', e); }
+        } else if (retries > 0) {
+          setTimeout(() => attemptNavigate(retries - 1), 200);
+        } else {
+          console.warn('Navigation not ready after retries');
+        }
+      };
+      attemptNavigate();
+    }
+
+    if (action === 'Decline') {
+      const callUUID = (data?.callUUID || data?.callId) as string | undefined;
+      if (callUUID) {
+        endIncomingCall(callUUID);
+      }
+      try { PushNotification.cancelAllLocalNotifications(); } catch { }
+    }
+  } catch (e) {
+    console.warn('handlePushAction error', e);
+  }
 }

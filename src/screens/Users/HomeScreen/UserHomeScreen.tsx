@@ -144,28 +144,10 @@ const UserHomeScreen: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    // Load everything only once when the Home screen is first shown
     fetchUserAndLocation();
     loadHomeData();
-
-    const handleAppStateChange = (nextAppState: string) => {
-      if (nextAppState === 'active') {
-        console.log('App active - refreshing data');
-        loadHomeData();
-      }
-    };
-
-    const subscription = AppState.addEventListener(
-      'change',
-      handleAppStateChange,
-    );
-    return () => subscription?.remove();
   }, [fetchUserAndLocation, loadHomeData]);
-
-  useFocusEffect(
-    useCallback(() => {
-      loadHomeData();
-    }, [loadHomeData]),
-  );
 
   // const fetchTodayPanchang = async () => {
   //   try {
