@@ -420,7 +420,7 @@ const PujaBookingScreen: React.FC = () => {
       muhuratType = originalSlot ? originalSlot.type : selectedSlotObj.type;
     }
 
-    // For today, ensure muhurat start time is in the future
+    // For today, ensure muhurat start time is in the future and at least 2 hours after now
     if (isToday(selectedDateISO) && selectedSlotObj) {
       const startMinutes = parseTimeToMinutes(selectedSlotObj.start);
       const now = new Date();
@@ -429,6 +429,13 @@ const PujaBookingScreen: React.FC = () => {
         showErrorToast(
           t('muhurat_time_passed') ||
             'Selected muhurat has already passed. Choose a future slot.',
+        );
+        return;
+      }
+      if (startMinutes !== null && startMinutes < nowMinutes + 120) {
+        showErrorToast(
+          t('muhurat_time_must_be_2_hours_later') ||
+            'Please select a muhurat slot that starts at least 2 hours from now. This allows enough time for preparation and arrival.',
         );
         return;
       }

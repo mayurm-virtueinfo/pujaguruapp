@@ -54,7 +54,7 @@ const SearchPanditScreen: React.FC = () => {
         }
       }, 60 * 1000);
 
-      // let socketURL = `ws://192.168.1.18:9000/ws/bookings/${bookingId}/`;
+      // let socketURL = `ws://192.168.1.27:9000/ws/bookings/${bookingId}/`;
       let socketURL = `ws://puja-guru.com:9000/ws/bookings/${bookingId}/`;
 
       if (socketURL.startsWith('ws://') && !__DEV__) {
@@ -118,12 +118,27 @@ const SearchPanditScreen: React.FC = () => {
               setShowNoPanditModal(false);
               navigation.dispatch(
                 StackActions.replace(
-                  'ConfirmPujaDetails' as never,
+                  'UserPujaDetailsScreen' as never,
                   {
-                    bookingId,
+                    id: bookingId,
                   } as never,
                 ),
               );
+              // navigation.dispatch(
+              //   StackActions.navigate(
+              //     'Main' as never,
+              //     {
+              //       screen: 'UserAppBottomTabNavigator',
+              //       params: {
+              //         screen: 'UserHomeNavigator',
+              //         params: {
+              //           screen: 'UserPujaDetailsScreen',
+              //           params: {id: bookingId},
+              //         },
+              //       },
+              //     } as never,
+              //   ),
+              // );
             }
           }
         } catch (err) {

@@ -114,12 +114,6 @@ const ConfirmPujaDetails: React.FC = () => {
     return `${day}/${month}/${year}`;
   };
 
-  const getPanditImageUrl = (url: string | null | undefined) => {
-    if (!url) return undefined;
-    if (url.startsWith('http')) return url;
-    return `https://pujapaath.com${url}`;
-  };
-
   const getPujaImageUrl = (url: string | null | undefined) => {
     if (!url) return undefined;
     if (url.startsWith('http')) return url;
@@ -362,11 +356,11 @@ const ConfirmPujaDetails: React.FC = () => {
                 alignItems: 'center',
               }}>
               <Image
-                source={
-                  pandit.profile_img_url
-                    ? {uri: getPanditImageUrl(pandit.profile_img_url)}
-                    : Images.ic_app_logo
-                }
+                source={{
+                  uri:
+                    pandit.profile_img_url ||
+                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+                }}
                 style={styles.pujaIcon}
               />
               <Text style={styles.totalSubtext}>

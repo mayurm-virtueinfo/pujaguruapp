@@ -134,6 +134,31 @@ export function handleNotificationNavigation(data: any) {
         console.warn('Navigation not ready yet');
       }
     }, 500);
+  } else if (data?.screen === 'UserPujaDetailsScreen') {
+    const targetScreen = data?.screen;
+    const booking_id = data?.booking_id;
+
+    const nestedParams = {
+      screen: 'UserAppBottomTabNavigator',
+      params: {
+        screen: 'UserHomeNavigator',
+        params: {
+          screen: targetScreen,
+          params: {
+            id: booking_id,
+          },
+        },
+      },
+    };
+
+    setTimeout(() => {
+      if (navigationRef.isReady()) {
+        console.warn('Navigation is ready');
+        navigate('Main', nestedParams);
+      } else {
+        console.warn('Navigation not ready yet');
+      }
+    }, 500);
   }
 }
 
@@ -143,37 +168,4 @@ export function cleanupNotifications() {
     foregroundUnsubscribe = null;
   }
   isSetup = false;
-}
-
-function generateUuidV4(): string {
-  const bytes = new Uint8Array(16);
-  for (let i = 0; i < 16; i++) {
-    bytes[i] = Math.floor(Math.random() * 256);
-  }
-  bytes[6] = (bytes[6] & 0x0f) | 0x40; // version 4
-  bytes[8] = (bytes[8] & 0x3f) | 0x80; // variant 10
-  const toHex = (n: number) => n.toString(16).padStart(2, '0');
-  const b = Array.from(bytes).map(toHex);
-  return (
-    b[0] +
-    b[1] +
-    b[2] +
-    b[3] +
-    '-' +
-    b[4] +
-    b[5] +
-    '-' +
-    b[6] +
-    b[7] +
-    '-' +
-    b[8] +
-    b[9] +
-    '-' +
-    b[10] +
-    b[11] +
-    b[12] +
-    b[13] +
-    b[14] +
-    b[15]
-  );
 }

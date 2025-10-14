@@ -327,5 +327,6 @@
   "puja_start_time": "Puja Start Time",
   "puja_end_time": "Puja End Time",
   "total_duration": "Total Duration",
-  "payment_method": "Payment Method"
+  "payment_method": "Payment Method",
+  "muhurat_time_must_be_2_hours_later": "Please select a muhurat slot that starts at least 2 hours from now. This allows enough time for preparation and arrival"
 }
