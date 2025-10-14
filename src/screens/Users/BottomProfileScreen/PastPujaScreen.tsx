@@ -20,6 +20,8 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import Fonts from '../../../theme/fonts';
 import CustomeLoader from '../../../components/CustomeLoader';
 import {translateData} from '../../../utils/TranslateData';
+import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
+import {StackNavigationProp} from '@react-navigation/stack';
 
 type PastBookingType = {
   id: number;
@@ -30,8 +32,12 @@ type PastBookingType = {
 };
 
 const PastPujaScreen: React.FC = () => {
+  type ScreenNavigationProps = StackNavigationProp<
+    UserProfileParamList,
+    'PastBookingDetailsScreen'
+  >;
   const {t, i18n} = useTranslation();
-  const navigation = useNavigation();
+  const navigation = useNavigation<ScreenNavigationProps>();
   const insets = useSafeAreaInsets();
   const [pastBookings, setPastBookings] = useState<PastBookingType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -53,6 +59,7 @@ const PastPujaScreen: React.FC = () => {
       }
 
       const response: any = await getPastBookings();
+      console.log('response', JSON.stringify(response.data));
       if (response.status === 200) {
         const translated: any = await translateData(
           response.data,
@@ -113,7 +120,12 @@ const PastPujaScreen: React.FC = () => {
 
   const renderBookingItem = ({item}: {item: PastBookingType}) => {
     return (
-      <TouchableOpacity style={styles.bookingItem} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.bookingItem}
+        activeOpacity={0.7}
+        onPress={() => {
+          navigation.navigate('PastBookingDetailsScreen', {pujaId: item.id});
+        }}>
         <Image
           source={{uri: item.pooja_image_url}}
           style={styles.bookingImage}

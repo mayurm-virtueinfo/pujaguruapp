@@ -75,17 +75,8 @@ const UserHomeScreen: React.FC = () => {
 
   const inset = useSafeAreaInsets();
 
-  const translationCacheRef = useRef<
-    Map<
-      string,
-      {
-        pujas: PujaItem[];
-        inProgressPujas: PujaItem[];
-        pendingPujas: PendingPuja[];
-        recomendedPandits: RecommendedPandit[];
-      }
-    >
-  >(new Map());
+  // Remove translation cache to always fetch new api data on refresh
+  // const translationCacheRef = useRef</* ... */>(new Map());
 
   const fetchUserAndLocation = useCallback(async () => {
     try {
@@ -115,6 +106,7 @@ const UserHomeScreen: React.FC = () => {
     }
   }, []);
 
+  // Always fetch fresh from API, don't use a cache for translations or data
   const loadHomeData = useCallback(
     async (initialLocation?: {latitude: number; longitude: number} | null) => {
       setLoading(true);
@@ -146,6 +138,7 @@ const UserHomeScreen: React.FC = () => {
           });
         }
 
+        // Fetch fresh data for every call (including refresh)
         const [upcoming, inProgress, active, recommended] = await Promise.all([
           getUpcomingPujas().catch(() => []),
           getInProgress().catch(() => []),
@@ -170,60 +163,43 @@ const UserHomeScreen: React.FC = () => {
           ? (recommended as RecommendedPandit[])
           : (recommended as any)?.data || [];
 
-        const cached = translationCacheRef.current.get(currentLanguage);
-        if (cached) {
-          setPujas(cached.pujas);
-          setInProgressPujas(cached.inProgressPujas);
-          setPendingPujas(cached.pendingPujas);
-          setRecomendedPandits(cached.recomendedPandits);
-        } else {
-          //upcoming translation logic
-          const tPujas = (await translateData(upcomingArr, currentLanguage, [
-            'pooja_name',
-            'when_is_pooja',
-          ])) as PujaItem[];
+        // Translations happen fresh on each load as well
+        const tPujas = (await translateData(upcomingArr, currentLanguage, [
+          'pooja_name',
+          'when_is_pooja',
+        ])) as PujaItem[];
 
-          //inprogress translation logic
-          const tInProgress = (await translateData(
-            inProgressArr,
-            currentLanguage,
-            ['pooja_name'],
-          )) as PujaItem[];
+        const tInProgress = (await translateData(
+          inProgressArr,
+          currentLanguage,
+          ['pooja_name'],
+        )) as PujaItem[];
 
-          //pending translation logic
-          const tPending = await Promise.all(
-            pendingArr.map(async p => {
-              if (p.pooja) {
-                const translatedPooja = (await translateData(
-                  p.pooja,
-                  currentLanguage,
-                  ['title', 'pooja_name'],
-                )) as any;
-                return {...p, pooja: translatedPooja} as PendingPuja;
-              }
-              return p;
-            }),
-          );
+        const tPending = await Promise.all(
+          pendingArr.map(async p => {
+            if (p.pooja) {
+              const translatedPooja = (await translateData(
+                p.pooja,
+                currentLanguage,
+                ['title', 'pooja_name'],
+              )) as any;
+              return {...p, pooja: translatedPooja} as PendingPuja;
+            }
+            return p;
+          }),
+        );
 
-          const tRecommended = (await translateData(
-            recommendedArr,
-            currentLanguage,
-            ['full_name', 'city'],
-          )) as RecommendedPandit[];
+        const tRecommended = (await translateData(
+          recommendedArr,
+          currentLanguage,
+          ['full_name', 'city'],
+        )) as RecommendedPandit[];
 
-          translationCacheRef.current.set(currentLanguage, {
-            pujas: tPujas,
-            inProgressPujas: tInProgress,
-            pendingPujas: tPending,
-            recomendedPandits: tRecommended,
-          });
-
-          setPujas(tPujas);
-          setInProgressPujas(tInProgress);
-          setPendingPujas(tPending);
-          setRecomendedPandits(tRecommended);
-          setOriginalRecomendedPandits(recommendedArr);
-        }
+        setPujas(tPujas);
+        setInProgressPujas(tInProgress);
+        setPendingPujas(tPending);
+        setRecomendedPandits(tRecommended);
+        setOriginalRecomendedPandits(recommendedArr);
       } catch (error) {
         console.error('Error loading home data:', error);
         setPujas([]);
@@ -236,7 +212,7 @@ const UserHomeScreen: React.FC = () => {
         setRefreshing(false);
       }
     },
-    [currentLanguage],
+    [currentLanguage, location],
   );
 
   useEffect(() => {
@@ -247,7 +223,6 @@ const UserHomeScreen: React.FC = () => {
 
     const handleAppStateChange = async (nextAppState: string) => {
       if (nextAppState === 'active') {
-        console.log('App active - checking location');
         try {
           const loc = await getCurrentLocation();
           if (loc?.latitude && loc?.longitude) {
@@ -280,6 +255,7 @@ const UserHomeScreen: React.FC = () => {
     return () => subscription?.remove();
   }, [fetchUserAndLocation, loadHomeData]);
 
+  // Always call loadHomeData on refresh to get latest API data
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     loadHomeData();

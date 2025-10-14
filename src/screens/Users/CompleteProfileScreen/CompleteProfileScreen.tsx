@@ -6,6 +6,7 @@ import {
   Dimensions,
   SafeAreaView,
   ScrollView,
+  Text,
 } from 'react-native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {COLORS} from '../../../theme/theme';
@@ -23,6 +24,7 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import {useRoute} from '@react-navigation/native';
 import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
 import {getCurrentLocation, LocationData} from '../../../utils/locationUtils';
+import CustomTextInput from '../../../components/CustomTextInput';
 
 interface FormData {
   phoneNumber: string;
@@ -73,10 +75,10 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   const [screenData, setScreenData] = useState<ScreenDimensions>(
     Dimensions.get('window'),
   );
-  const [location, setLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
+  // const [location, setLocation] = useState<{
+  //   latitude: number;
+  //   longitude: number;
+  // } | null>(null);
 
   // Helper to fetch UID, with retry logic if not found
   const fetchUID = async (retryCount = 0) => {
@@ -97,7 +99,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   // On mount, fetch UID and GPS, and listen for screen size changes
   useEffect(() => {
     fetchUID();
-    handleFetchGPS();
+    // handleFetchGPS();
     const onChange = (result: {window: ScreenDimensions}) => {
       setScreenData(result.window);
     };
@@ -148,28 +150,28 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
     }));
   };
 
-  const handleFetchGPS = async () => {
-    setIsLoading(true);
-    try {
-      console.log('🎯 Fetching current location...');
+  // const handleFetchGPS = async () => {
+  //   // setIsLoading(true);
+  //   try {
+  //     console.log('🎯 Fetching current location...');
 
-      const locationData = await getCurrentLocation();
-      setLocation(locationData);
+  //     const locationData = await getCurrentLocation();
+  //     setLocation(locationData);
 
-      console.log('📍 Location fetched successfully:', {
-        lat: locationData.latitude.toFixed(4),
-        lng: locationData.longitude.toFixed(4),
-      });
-    } catch (error: any) {
-      console.warn('❌ Error getting location:', error.message);
-      setFormErrors(prev => ({
-        ...prev,
-        address: t('location_fetch_failed'),
-      }));
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     console.log('📍 Location fetched successfully:', {
+  //       lat: locationData.latitude.toFixed(4),
+  //       lng: locationData.longitude.toFixed(4),
+  //     });
+  //   } catch (error: any) {
+  //     console.warn('❌ Error getting location:', error.message);
+  //     setFormErrors(prev => ({
+  //       ...prev,
+  //       address: t('location_fetch_failed'),
+  //     }));
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   // Modified handleNext to ensure UID is available before navigating
   const handleNext = async () => {
@@ -193,14 +195,14 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
       return;
     }
 
-    if (!location) {
-      setIsLoading(false);
-      setFormErrors(prev => ({
-        ...prev,
-        address: t('location_required'),
-      }));
-      return;
-    }
+    // if (!location) {
+    //   setIsLoading(false);
+    //   setFormErrors(prev => ({
+    //     ...prev,
+    //     address: t('location_required'),
+    //   }));
+    //   return;
+    // }
 
     navigation.navigate('UserProfileScreen', {
       phoneNumber: formData.phoneNumber,
@@ -208,8 +210,8 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
       lastName: formData.lastName,
       address: formData.address,
       uid: currentUid,
-      latitude: location.latitude,
-      longitude: location.longitude,
+      // latitude: location.latitude,
+      // longitude: location.longitude,
     });
     setIsLoading(false);
   };
@@ -234,6 +236,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
           maxLength={30}
           labelStyle={themedInputLabelStyle}
           error={formErrors.firstName}
+          required
         />
       </View>
 
@@ -248,6 +251,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
           maxLength={30}
           labelStyle={themedInputLabelStyle}
           error={formErrors.lastName}
+          required
         />
       </View>
       <View style={styles.inputField}>
@@ -262,20 +266,23 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
           maxLength={15}
           labelStyle={themedInputLabelStyle}
           error={formErrors.phoneNumber}
+          required
         />
       </View>
 
       <View style={styles.inputField}>
-        <ThemedInput
+        <CustomTextInput
           label={t('address')}
           placeholder={t('enter_address')}
           value={formData.address}
           onChangeText={text => handleInputChange('address', text)}
-          autoComplete="street-address"
-          textContentType="fullStreetAddress"
-          maxLength={100}
-          labelStyle={themedInputLabelStyle}
+          // autoComplete="street-address"
+          // textContentType="fullStreetAddress"
+          // maxLength={100}
+          // labelStyle={themedInputLabelStyle}
           error={formErrors.address}
+          required
+          multiline
         />
       </View>
 
@@ -284,11 +291,11 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
         {location?.longitude.toFixed(4)}
       </Text> */}
 
-      <PrimaryButtonOutlined
+      {/* <PrimaryButtonOutlined
         title={t('fetch_gps_location')}
         onPress={handleFetchGPS}
         disabled={isLoading}
-      />
+      /> */}
 
       <PrimaryButton
         title={t('next')}

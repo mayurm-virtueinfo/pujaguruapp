@@ -258,8 +258,7 @@ const PanditDetailsScreen: React.FC = () => {
     <TouchableOpacity
       style={styles.poojaItem}
       onPress={() =>
-        navigation.navigate('UserHomeNavigator', {
-          screen: 'PoojaDetailScreen',
+        navigation.navigate('PoojaDetailScreen', {
           params: {
             poojaId: item?.pooja,
             panditId: panditId,

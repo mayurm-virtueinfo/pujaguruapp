@@ -375,23 +375,23 @@ const AddAddressScreen = () => {
     didSetEditData.current = false;
   }, [addressToEdit]);
 
-  const handleFetchGPS = async () => {
-    setIsLoading(true);
-    const hasPermission = await requestLocationPermission();
-    if (hasPermission) {
-      Geolocation.getCurrentPosition(
-        position => {
-          const {latitude, longitude} = position.coords;
-          setLocation({latitude, longitude});
-          setIsLoading(false);
-        },
-        () => setIsLoading(false),
-        {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-      );
-    } else {
-      setIsLoading(false);
-    }
-  };
+  // const handleFetchGPS = async () => {
+  //   setIsLoading(true);
+  //   const hasPermission = await requestLocationPermission();
+  //   if (hasPermission) {
+  //     Geolocation.getCurrentPosition(
+  //       position => {
+  //         const {latitude, longitude} = position.coords;
+  //         setLocation({latitude, longitude});
+  //         setIsLoading(false);
+  //       },
+  //       () => setIsLoading(false),
+  //       {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+  //     );
+  //   } else {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const handleSaveAddress = async () => {
     if (!validateForm()) {
@@ -480,16 +480,17 @@ const AddAddressScreen = () => {
         <View style={styles.formContainer}>
           <View style={styles.inputGroup}>
             <CustomTextInput
-              label={t('full_name') + ' *'}
+              label={t('full_name')}
               value={formData.fullName}
               onChangeText={value => handleInputChange('fullName', value)}
               placeholder={t('enter_full_name')}
               error={formErrors.fullName}
+              required={true}
             />
           </View>
           <View style={styles.inputGroup}>
             <CustomTextInput
-              label={t('phone_number') + ' *'}
+              label={t('phone_number')}
               value={formData.phoneNumber}
               onChangeText={value => handleInputChange('phoneNumber', value)}
               placeholder={t('enter_phone_number')}
@@ -497,15 +498,17 @@ const AddAddressScreen = () => {
               error={formErrors.phoneNumber}
               onlyInteger={true}
               maxIntegerLength={10}
+              required={true}
             />
           </View>
           <View style={styles.inputGroup}>
             <CustomTextInput
-              label={t('address_line1') + ' *'}
+              label={t('address_line1')}
               value={formData.addressLine1}
               onChangeText={value => handleInputChange('addressLine1', value)}
               placeholder={t('enter_address_line1')}
               error={formErrors.addressLine1}
+              required={true}
             />
           </View>
           <View style={styles.inputGroup}>
@@ -522,9 +525,10 @@ const AddAddressScreen = () => {
               items={stateOptions}
               selectedValue={formData.state}
               onSelect={value => handleInputChange('state', value)}
-              label={t('state') + ' *'}
+              label={t('state')}
               placeholder={t('select_state')}
               error={formErrors.state}
+              required={true}
             />
           </View>
           <View style={styles.inputGroup}>
@@ -532,15 +536,16 @@ const AddAddressScreen = () => {
               items={cityOptions}
               selectedValue={formData.city}
               onSelect={value => handleInputChange('city', value)}
-              label={t('city') + ' *'}
+              label={t('city')}
               placeholder={t('select_city')}
               error={formErrors.city}
+              required={true}
             />
           </View>
           <View style={styles.rowContainer}>
             <View style={styles.halfInputGroup}>
               <CustomTextInput
-                label={t('pincode') + ' *'}
+                label={t('pincode')}
                 value={formData.pincode}
                 onChangeText={value => handleInputChange('pincode', value)}
                 placeholder={t('enter_pincode')}
@@ -548,9 +553,10 @@ const AddAddressScreen = () => {
                 error={formErrors.pincode}
                 onlyInteger={true}
                 maxIntegerLength={6}
+                required={true}
               />
             </View>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.locationButton}
               onPress={handleFetchGPS}
               disabled={isLoading}>
@@ -562,7 +568,7 @@ const AddAddressScreen = () => {
               <Text style={styles.locationButtonText}>
                 {isLoading ? t('fetching_location') : t('my_location')}
               </Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
           <View style={styles.addressTypeGroup}>
             <CustomDropdown

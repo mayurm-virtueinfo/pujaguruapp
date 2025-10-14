@@ -7,6 +7,14 @@ import SelectPanditjiScreen from '../../screens/Users/PoojaDetailsScreen/SelectP
 import PanditjiScreen from '../../screens/Users/PandijiScreen/PandijiScreen';
 import PanditDetailsScreen from '../../screens/Users/PanditDetailsScreen/PanditDetailsScreen';
 import NotificationScreen from '../../screens/Users/NotificationScreen/NotificationScreen';
+import PujaDetailsScreen from '../../screens/Users/PoojaDetailsScreen/PujaDetailsScreen';
+import PlaceSelectionScreen from '../../screens/Users/PoojaDetailsScreen/PlaceSelectionScreen';
+import PujaBookingScreen from '../../screens/Users/PoojaBookingScreen/PujaBookingScreen';
+import AddressSelectionScreen from '../../screens/Users/PoojaDetailsScreen/AddressSelectionScreen';
+import TirthPlaceSelectionScreen from '../../screens/Users/PoojaDetailsScreen/TirthPlaceSelectionScreen';
+import PaymentScreen from '../../screens/Users/PaymentScreen/PaymentScreen';
+import BookingSuccessfullyScreen from '../../screens/Users/BookingSuccessfullyScreen/BookingSuccessfullyScreen';
+import RateYourExperienceScreen from '../../screens/Users/RateYourExperienceScreen/RateYourExperienceScreen';
 
 export type UserPanditjiParamList = {
   goBack(): void;
@@ -14,6 +22,15 @@ export type UserPanditjiParamList = {
   PanditjiScreen: undefined;
   PanditDetailsScreen: {panditId: string};
   NotificationScreen: undefined;
+  PoojaDetailScreen: any;
+  PlaceSelectionScreen: any;
+  PujaBooking: any;
+  AddressSelectionScreen: any;
+  TirthPlaceSelectionScreen: any;
+  PaymentScreen: any;
+  SelectPanditjiScreen: any;
+  BookingSuccessfullyScreen: any;
+  RateYourExperienceScreen: any;
 };
 
 const Stack = createStackNavigator<UserPanditjiParamList>();
@@ -30,6 +47,33 @@ const UserPanditjiNavigator = () => {
         component={PanditDetailsScreen}
       />
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
+      <Stack.Screen name="PoojaDetailScreen" component={PujaDetailsScreen} />
+      <Stack.Screen
+        name="PlaceSelectionScreen"
+        component={PlaceSelectionScreen}
+      />
+      <Stack.Screen name="PujaBooking" component={PujaBookingScreen} />
+      <Stack.Screen
+        name="AddressSelectionScreen"
+        component={AddressSelectionScreen}
+      />
+      <Stack.Screen
+        name="TirthPlaceSelectionScreen"
+        component={TirthPlaceSelectionScreen}
+      />
+      <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
+      <Stack.Screen
+        name="SelectPanditjiScreen"
+        component={SelectPanditjiScreen}
+      />
+      <Stack.Screen
+        name="BookingSuccessfullyScreen"
+        component={BookingSuccessfullyScreen}
+      />
+      <Stack.Screen
+        name="RateYourExperienceScreen"
+        component={RateYourExperienceScreen}
+      />
     </Stack.Navigator>
   );
 };

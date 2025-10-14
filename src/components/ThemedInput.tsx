@@ -25,6 +25,23 @@ interface ThemedInputProps {
   maxLength?: number;
   error?: string;
   editable?: boolean;
+  required?: boolean; // <-- Add required prop
+}
+
+function renderLabelWithRedStar(
+  label?: string,
+  required?: boolean,
+  style?: TextStyle,
+) {
+  if (!label) return null;
+  // Remove any existing trailing * (for extra robustness)
+  const cleanLabel = label.replace(/\s*\*$/, '');
+  return (
+    <Text style={[styles.label, style]}>
+      {cleanLabel}
+      {required && <Text style={styles.redStar}> *</Text>}
+    </Text>
+  );
 }
 
 const ThemedInput: React.FC<ThemedInputProps> = ({
@@ -40,10 +57,11 @@ const ThemedInput: React.FC<ThemedInputProps> = ({
   maxLength,
   error,
   editable = true,
+  required = false,
 }) => {
   return (
     <View style={styles.container}>
-      {label && <Text style={[styles.label, labelStyle]}>{label}</Text>}
+      {renderLabelWithRedStar(label, required, labelStyle)}
       <TextInput
         style={[COMPONENT_STYLES.input, error && styles.errorField]}
         value={value}
@@ -81,6 +99,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Regular,
     marginBottom: 8,
     color: COLORS.textPrimary,
+  },
+  redStar: {
+    color: COLORS.error,
+    fontSize: moderateScale(12),
+    fontFamily: Fonts.Sen_Regular,
   },
 });
 

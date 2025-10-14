@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   buttonWrapper: {
     backgroundColor: COLORS.white,
     paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingTop: 6,
   },
   mismatchModalOverlay: {
     flex: 1,

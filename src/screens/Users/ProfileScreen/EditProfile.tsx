@@ -418,6 +418,7 @@ const UserEditProfileScreen: React.FC = () => {
               maxLength={30}
               labelStyle={themedInputLabelStyle}
               error={formErrors.firstName}
+              required={true}
             />
             <ThemedInput
               label={t('Last name')}
@@ -436,6 +437,7 @@ const UserEditProfileScreen: React.FC = () => {
               maxLength={30}
               labelStyle={themedInputLabelStyle}
               error={formErrors.lastName}
+              required={true}
             />
             <CustomTextInput
               label={t('email')}
@@ -474,6 +476,7 @@ const UserEditProfileScreen: React.FC = () => {
               placeholder={t('enter_your_location')}
               error={formErrors.location}
               key={city.length > 0 ? 'city-dropdown' : 'city-dropdown-empty'}
+              required={true}
             />
             <ThemedInput
               label={t('address')}
@@ -492,6 +495,7 @@ const UserEditProfileScreen: React.FC = () => {
               maxLength={100}
               labelStyle={themedInputLabelStyle}
               error={formErrors.address}
+              required={true}
             />
             {/* <PrimaryButtonOutlined
               title={t('fetch_gps_location')}
