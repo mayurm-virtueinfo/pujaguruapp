@@ -6,6 +6,8 @@ export const getLocationForAPI = async () => {
   try {
     const storedLocation = await AsyncStorage.getItem(AppConstant.LOCATION);
 
+    console.log('storedLocation :: ', storedLocation);
+
     if (storedLocation) {
       const location = JSON.parse(storedLocation);
 

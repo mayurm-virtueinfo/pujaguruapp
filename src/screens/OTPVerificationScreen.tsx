@@ -9,11 +9,11 @@ import {
   ScrollView,
   ImageBackground,
   Image,
+  TouchableOpacity,
 } from 'react-native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {RouteProp} from '@react-navigation/native';
 import {AuthStackParamList} from '../navigation/AuthNavigator';
-import Loader from '../components/Loader';
 import {getAuth, signInWithPhoneNumber} from '@react-native-firebase/auth';
 import {useCommonToast} from '../common/CommonToast';
 import {COLORS} from '../theme/theme';
@@ -29,9 +29,9 @@ import {postRegisterFCMToken, postSignIn} from '../api/apiService';
 import {useAuth} from '../provider/AuthProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../utils/appConstant';
-import {getMessaging, getToken} from '@react-native-firebase/messaging';
 import {getFcmToken} from '../configuration/firebaseMessaging';
 import CustomeLoader from '../components/CustomeLoader';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 type AuthNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -61,7 +61,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   const [isLoading, setLoading] = useState(false);
   const [otpConfirmation, setOtpConfirmation] = useState(
     route.params.confirmation,
-  );
+  ); // No same number detect logic here
   const [isOtpExpired, setIsOtpExpired] = useState(false);
   const {phoneNumber} = route.params;
   const inputRefs = useRef<TextInput[]>([]);
@@ -119,7 +119,10 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
           await AsyncStorage.setItem(AppConstant.USER_ID, String(userID));
           await AsyncStorage.setItem(
             AppConstant.LOCATION,
-            JSON.stringify(response.location),
+            JSON.stringify({
+              ...response.location,
+              timestamp: new Date().toISOString(),
+            }),
           );
           await AsyncStorage.setItem(
             AppConstant.CURRENT_USER,
@@ -200,6 +203,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       setTimeout(() => {
         inputRefs.current[0]?.focus();
       }, 100);
+      // No same number detect logic here
     } catch (error: any) {
       console.error('Resend OTP error:', error);
       let errorMessage = t('resend_otp_failed');
@@ -217,6 +221,10 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
     }
   };
 
+  const handleBackPress = () => {
+    navigation.goBack();
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -229,11 +237,21 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
+            {/* <TouchableOpacity
+              onPress={handleBackPress}
+              style={styles.iconButton}>
+              <Ionicons name="chevron-back" size={24} color={COLORS.white} />
+            </TouchableOpacity> */}
             <View
               style={[
                 styles.header,
                 {paddingTop: inset.top + moderateScale(20)},
               ]}>
+              <TouchableOpacity
+                onPress={handleBackPress}
+                style={styles.backButton}>
+                <Ionicons name="chevron-back" size={28} color={COLORS.white} />
+              </TouchableOpacity>
               <Image source={Images.ic_app_logo} style={styles.logo} />
               <Text style={styles.title}>{t('hi_welcome')}</Text>
             </View>
@@ -284,13 +302,16 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
                 title={t('verify_otp')}
                 onPress={handleVerification}
               />
-
               <PrimaryButtonOutlined
-                onPress={() =>
-                  navigation.replace('SignIn', {
-                    previousPhoneNumber: phoneNumber,
-                  })
-                }
+                onPress={async () => {
+                  const auth = getAuth();
+                  try {
+                    await auth.signOut();
+                  } catch (e) {
+                    console.log('Error signing out:', e);
+                  }
+                  navigation.replace('SignIn');
+                }}
                 title={t('change_mobile_number')}
               />
             </View>
@@ -322,6 +343,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
+  },
+  backButton: {
+    position: 'absolute',
+    top: moderateScale(20),
+    left: moderateScale(16),
+    zIndex: 10,
+    padding: moderateScale(8),
   },
   logo: {
     width: '33%',
@@ -395,6 +423,9 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
     color: COLORS.primaryTextDark,
+  },
+  iconButton: {
+    padding: 4,
   },
 });
 

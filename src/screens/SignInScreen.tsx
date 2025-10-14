@@ -55,7 +55,6 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
   const [phoneNumber, setPhoneNumber] = useState('1111111111');
   const [isLoading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{phoneNumber?: string}>({});
-  const [previousPhoneNumber, setPreviousPhoneNumber] = useState<string>('');
   const [policiesError, setPoliciesError] = useState<string | undefined>();
   const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
   const [languageModalVisible, setLanguageModalVisible] =
@@ -76,10 +75,6 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
       setErrors({});
       setLoading(false);
 
-      if (route.params?.previousPhoneNumber) {
-        setPreviousPhoneNumber(route.params.previousPhoneNumber);
-      }
-
       getTermsAndConditions()
         .then(data => setTermsContent(data || ''))
         .catch(() => setTermsContent(''));
@@ -96,20 +91,34 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
 
   const proceedWithOTP = async (formattedPhone: string) => {
     try {
+      console.log('------ proceedWithOTP called ------');
+
       setLoading(true);
 
+      console.log('formattedPhone in proceedWithOTP :: ', formattedPhone);
+
       const auth = getAuth();
+      console.log('auth in proceedWithOTP :: ', auth.currentUser);
+
       if (auth.currentUser) {
+        console.log('------ in if condition ------');
         await auth.signOut();
       }
+      console.log('------ proceedWithOTP called 2 ------');
 
       await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('------ proceedWithOTP called 3 ------');
+
       const confirmation = await signInWithPhoneNumber(
         getAuth(),
         formattedPhone,
       );
 
+      console.log('------ proceedWithOTP called 4------');
+
       setLoading(false);
+      console.log('------ proceedWithOTP called 5------');
+
       showSuccessToast('OTP has been sent to your phone.');
       navigation.navigate('OTPVerification', {
         phoneNumber: formattedPhone,
@@ -153,28 +162,6 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
     const formattedPhone = cleanPhoneNumber.startsWith('+')
       ? cleanPhoneNumber
       : `+91${cleanPhoneNumber}`;
-
-    if (previousPhoneNumber && formattedPhone === previousPhoneNumber) {
-      Alert.alert(
-        'Same Number Detected',
-        'You entered the same phone number. What would you like to do?',
-        [
-          {
-            text: 'Enter Different Number',
-            onPress: () => {
-              setPhoneNumber('');
-              setPreviousPhoneNumber('');
-            },
-            style: 'default',
-          },
-          {
-            text: 'Cancel',
-            style: 'cancel',
-          },
-        ],
-      );
-      return;
-    }
 
     if (!validatePhoneNumber(formattedPhone)) {
       setErrors({
@@ -278,58 +265,59 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
               </View>
 
               <View style={styles.termsRow}>
-                <TouchableOpacity
-                  style={styles.checkboxContainer}
-                  onPress={() => setIsAgreed(!isAgreed)}
-                  activeOpacity={0.7}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{checked: isAgreed}}
-                  accessibilityLabel="Agree to terms">
-                  <View
-                    style={[
-                      styles.checkbox,
-                      isAgreed && styles.checkboxChecked,
-                    ]}>
-                    {isAgreed && (
-                      <Icon
-                        name="check"
-                        size={moderateScale(16)}
-                        color="#fff"
-                        style={styles.checkboxIcon}
-                      />
-                    )}
-                  </View>
-                </TouchableOpacity>
-                <Text style={styles.termsText}>
-                  {t('i_agree_to') || 'I agree to the '}
+                <View style={styles.checkboxWrapper}>
                   <TouchableOpacity
-                    onPress={() => handleOpenPolicy('terms')}
-                    activeOpacity={0.7}>
-                    <Text style={styles.termsLink}>
-                      {t('terms_and_conditions') || 'Terms & Conditions'}
-                    </Text>
+                    style={styles.checkboxContainer}
+                    onPress={() => setIsAgreed(!isAgreed)}
+                    activeOpacity={0.7}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{checked: isAgreed}}
+                    accessibilityLabel="Agree to terms">
+                    <View
+                      style={[
+                        styles.checkbox,
+                        isAgreed && styles.checkboxChecked,
+                      ]}>
+                      {isAgreed && (
+                        <Icon
+                          name="check"
+                          size={moderateScale(16)}
+                          color="#fff"
+                          style={styles.checkboxIcon}
+                        />
+                      )}
+                    </View>
                   </TouchableOpacity>
-                  {', '}
-                  <TouchableOpacity
-                    onPress={() => handleOpenPolicy('user')}
-                    activeOpacity={0.7}>
-                    <Text style={styles.termsLink}>
-                      {t('user_agreement') || 'User Agreement'}
+                </View>
+
+                <View style={{flex: 1}}>
+                  <Text style={styles.termsText}>
+                    I agree to the{' '}
+                    <Text
+                      style={styles.termsLink}
+                      onPress={() => handleOpenPolicy('terms')}>
+                      Terms & Conditions
                     </Text>
-                  </TouchableOpacity>
-                  {' & '}
-                  <TouchableOpacity
-                    onPress={() => handleOpenPolicy('refund')}
-                    activeOpacity={0.7}>
-                    <Text style={styles.termsLink}>
-                      {t('refund_policy') || 'Refund Policy'}
+                    {', '}
+                    <Text
+                      style={styles.termsLink}
+                      onPress={() => handleOpenPolicy('user')}>
+                      User Agreement
                     </Text>
-                  </TouchableOpacity>
-                </Text>
+                    {' & '}
+                    <Text
+                      style={styles.termsLink}
+                      onPress={() => handleOpenPolicy('refund')}>
+                      Refund Policy
+                    </Text>
+                  </Text>
+                </View>
               </View>
+
               {!!policiesError && (
                 <Text style={styles.errorText}>{policiesError}</Text>
               )}
+
               <Modal
                 visible={languageModalVisible}
                 animationType="fade"
@@ -364,6 +352,7 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
                   </View>
                 </View>
               </Modal>
+
               <PrimaryButton
                 title={t('send_otp')}
                 onPress={handleSignIn}
@@ -477,13 +466,11 @@ const styles = StyleSheet.create({
   },
   termsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: moderateScale(16),
-    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    marginTop: moderateScale(10),
   },
   checkboxContainer: {
     marginRight: moderateScale(8),
-    padding: moderateScale(4),
   },
   checkbox: {
     width: moderateScale(20),
@@ -502,17 +489,22 @@ const styles = StyleSheet.create({
   checkboxIcon: {
     alignSelf: 'center',
   },
-  termsText: {
-    fontSize: moderateScale(12),
-    color: COLORS.primaryTextDark,
-    fontFamily: Fonts.Sen_Regular,
-    textAlign: 'left',
+  checkboxWrapper: {
+    paddingTop: moderateScale(3),
+  },
+  termsTextContainer: {
     flex: 1,
     flexWrap: 'wrap',
   },
+  termsText: {
+    fontSize: moderateScale(13),
+    color: '#000',
+    lineHeight: moderateScale(18),
+  },
+
   termsLink: {
     color: COLORS.primaryBackgroundButton,
-    fontFamily: Fonts.Sen_Bold,
+    fontWeight: '600',
     textDecorationLine: 'underline',
   },
 });

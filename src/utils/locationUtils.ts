@@ -157,24 +157,28 @@ export const checkAndPromptGPS = async (): Promise<boolean> => {
           error => {
             if (error.code === 2) {
               // Location services disabled - show alert
-              Alert.alert(
-                'Location Services Disabled',
-                'Please enable Location Services in Settings to use this feature.',
-                [
-                  {
-                    text: 'Cancel',
-                    style: 'cancel',
-                    onPress: () => resolve(false),
-                  },
-                  {
-                    text: 'Open Settings',
-                    onPress: () => {
-                      Linking.openURL('App-Prefs:Privacy&path=LOCATION');
-                      resolve(false);
-                    },
-                  },
-                ],
+              // Alert.alert(
+              //   'Location Services Disabled',
+              //   'Please enable Location Services in Settings to use this feature.',
+              //   [
+              //     {
+              //       text: 'Cancel',
+              //       style: 'cancel',
+              //       onPress: () => resolve(false),
+              //     },
+              //     {
+              //       text: 'Open Settings',
+              //       onPress: () => {
+              //         Linking.openURL('App-Prefs:Privacy&path=LOCATION');
+              //         resolve(false);
+              //       },
+              //     },
+              //   ],
+              // );
+              console.error(
+                '-------- Location services are disabled on iOS --------',
               );
+              resolve(false);
             } else {
               resolve(false);
             }

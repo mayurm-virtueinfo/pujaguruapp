@@ -219,7 +219,10 @@ const UserProfileScreen: React.FC = () => {
         );
         await AsyncStorage.setItem(
           AppConstant.LOCATION,
-          JSON.stringify(response.location),
+          JSON.stringify({
+            ...response.location,
+            timestamp: new Date().toISOString(),
+          }),
         );
         const userID = response.user?.id;
         await AsyncStorage.setItem(AppConstant.USER_ID, String(userID));

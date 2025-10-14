@@ -184,6 +184,7 @@ const AddAddressScreen = () => {
 
       const contentType = response.headers.get('content-type') || '';
       const rawBody = await response.text();
+
       if (!response.ok) {
         console.error(
           'Geocoding HTTP error:',

@@ -13,7 +13,7 @@ import {useGPS} from '../provider/GPSProvider';
 import {COLORS} from '../theme/theme';
 
 const GPSModal: React.FC = () => {
-  const {isGPSEnabled, isLoading, promptForGPS} = useGPS();
+  const {isGPSEnabled, promptForGPS} = useGPS();
 
   if (Platform.OS === 'android' || isGPSEnabled) return null;
 
