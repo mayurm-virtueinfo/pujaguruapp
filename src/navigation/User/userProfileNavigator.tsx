@@ -13,6 +13,7 @@ import UserPujaDetailsScreen from '../../screens/Users/UserPujaDetailsScreen/Use
 import SearchPanditScreen from '../../screens/Users/SearchPanditScreen/SearchPanditScreen';
 import UserChatScreen from '../../screens/Users/UserChatScreen/UserChatScreen';
 import PujaCancellationScreen from '../../screens/Users/PujaCancellationScreen/PujaCancellationScreen';
+import PastBookingDetailsScreen from '../../screens/Users/PastBookingDetailsScreen/PastBookingDetailsScreen';
 
 export type UserProfileParamList = {
   goBack(): void;
@@ -37,6 +38,7 @@ export type UserProfileParamList = {
     pandit_id: string;
   };
   PujaCancellationScreen: {id: any};
+  PastBookingDetailsScreen: any;
 };
 
 const Stack = createStackNavigator<UserProfileParamList>();
@@ -70,6 +72,10 @@ const UserProfileNavigator = () => {
         component={PujaCancellationScreen}
       />
       <Stack.Screen name="UserChatScreen" component={UserChatScreen} />
+      <Stack.Screen
+        name="PastBookingDetailsScreen"
+        component={PastBookingDetailsScreen}
+      />
     </Stack.Navigator>
   );
 };

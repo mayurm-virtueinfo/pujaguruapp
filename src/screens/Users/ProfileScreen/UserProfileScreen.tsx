@@ -44,6 +44,7 @@ import {moderateScale} from 'react-native-size-matters';
 import {useCommonToast} from '../../../common/CommonToast';
 import {getMessaging, getToken} from '@react-native-firebase/messaging';
 import {getFcmToken} from '../../../configuration/firebaseMessaging';
+import {getCurrentLocation} from '../../../utils/locationUtils';
 
 type CompleteProfileScreenRouteProp = NavigationProp<
   AuthStackParamList,
@@ -68,8 +69,7 @@ const UserProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<CompleteProfileScreenRouteProp>();
   const route = useRoute<CompleteProfileScreenRouteProps>();
-  const {phoneNumber, firstName, lastName, address, uid, latitude, longitude} =
-    route?.params;
+  const {phoneNumber, firstName, lastName, address, uid} = route?.params;
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState(phoneNumber);
@@ -83,6 +83,10 @@ const UserProfileScreen: React.FC = () => {
     uri: string;
     name: string;
     type: string;
+  } | null>(null);
+  const [gpslocation, setgpsLocation] = useState<{
+    latitude: number;
+    longitude: number;
   } | null>(null);
 
   const {showErrorToast} = useCommonToast();
@@ -108,6 +112,7 @@ const UserProfileScreen: React.FC = () => {
       }
     };
     getStateData();
+    handleFetchGPS();
   }, []);
 
   useEffect(() => {
@@ -140,6 +145,9 @@ const UserProfileScreen: React.FC = () => {
     getCityData();
   }, [selectState]);
 
+  // Strict phone validation for 10 digits only
+  const phoneRegex = /^[0-9]{10}$/;
+
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -152,8 +160,15 @@ const UserProfileScreen: React.FC = () => {
       errors.email = t('invalid_email');
     }
 
+    // Phone field is required, must be 10 digits, only numbers allowed
     if (!phone) {
-      errors.phone = t('invalid_phone');
+      errors.phone = t('phone_required') || 'Phone number is required';
+    } else if (!/^\d+$/.test(phone)) {
+      errors.phone =
+        t('invalid_phone_digits') || 'Phone number must contain only numbers';
+    } else if (phone.length !== 10) {
+      errors.phone =
+        t('invalid_phone_length') || 'Phone number must be exactly 10 digits';
     }
 
     if (!selectState) {
@@ -192,8 +207,8 @@ const UserProfileScreen: React.FC = () => {
       params.append('email', email);
       params.append('state', selectState);
       params.append('city', location);
-      params.append('latitude', latitude?.toString() || '0');
-      params.append('longitude', longitude?.toString() || '0');
+      params.append('latitude', gpslocation?.latitude?.toString() || '0');
+      params.append('longitude', gpslocation?.longitude?.toString() || '0');
 
       if (profileImage) {
         params.append('profile_img', {
@@ -303,6 +318,41 @@ const UserProfileScreen: React.FC = () => {
     }
   };
 
+  const handleFetchGPS = async () => {
+    // setIsLoading(true);
+    try {
+      console.log('🎯 Fetching current location...');
+
+      const locationData = await getCurrentLocation();
+      setgpsLocation(locationData);
+
+      console.log('📍 Location fetched successfully:', {
+        lat: locationData.latitude.toFixed(4),
+        lng: locationData.longitude.toFixed(4),
+      });
+    } catch (error: any) {
+      console.warn('❌ Error getting location:', error.message);
+      setFormErrors(prev => ({
+        ...prev,
+        address: t('location_fetch_failed'),
+      }));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Helper: Only allow numeric input and max 10 numbers in phone field
+  const handlePhoneChange = (text: string) => {
+    // Remove all non-numeric characters
+    let cleaned = text.replace(/[^0-9]/g, '');
+    // Limit to 10 digits
+    if (cleaned.length > 10) {
+      cleaned = cleaned.slice(0, 10);
+    }
+    setPhone(cleaned);
+    setFormErrors(prev => ({...prev, phone: undefined}));
+  };
+
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <CustomeLoader loading={isLoading} />
@@ -343,6 +393,7 @@ const UserProfileScreen: React.FC = () => {
               }}
               labelStyle={themedInputLabelStyle}
               error={formErrors.userName}
+              required
             />
             <ThemedInput
               label={t('email')}
@@ -357,20 +408,21 @@ const UserProfileScreen: React.FC = () => {
               autoComplete="email"
               labelStyle={themedInputLabelStyle}
               error={formErrors.email}
+              required
             />
             <ThemedInput
               label={t('phone')}
               placeholder={t('enter_your_phone')}
               value={phone}
-              onChangeText={text => {
-                setPhone(text);
-                setFormErrors(prev => ({...prev, phone: undefined}));
-              }}
+              // Phone input: only allow numbers, max 10, clear error on edit
+              onChangeText={handlePhoneChange}
               autoComplete="tel"
               textContentType="telephoneNumber"
-              maxLength={15}
+              maxLength={10}
               labelStyle={themedInputLabelStyle}
               error={formErrors.phone}
+              required
+              keyboardType="phone-pad"
             />
             <CustomDropdown
               label={t('state')}
@@ -387,6 +439,7 @@ const UserProfileScreen: React.FC = () => {
               }}
               placeholder={t('enter_your_State')}
               error={formErrors.state}
+              required
             />
             <CustomDropdown
               label={t('city')}
@@ -400,6 +453,7 @@ const UserProfileScreen: React.FC = () => {
                 selectState ? t('enter_your_location') : t('select_state_first')
               }
               error={formErrors.location}
+              required
             />
 
             <PrimaryButton

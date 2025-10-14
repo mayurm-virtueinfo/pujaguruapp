@@ -85,27 +85,27 @@ const Calendar: React.FC<CalendarProps> = ({
 
   const markedDates: {[date: string]: any} = {};
 
-  if (todayObj.getFullYear() === year && todayObj.getMonth() === monthIdx) {
-    markedDates[todayStr] = {
-      customStyles: {
-        container: {
-          backgroundColor: COLORS.primaryBackgroundButton,
-          borderRadius: 9999,
-          width: wp(8),
-          height: wp(8),
-          alignItems: 'center',
-          justifyContent: 'center',
-          alignSelf: 'center',
-        },
-        text: {
-          color: COLORS.primaryTextDark,
-          fontFamily: Fonts.Sen_Medium,
-          fontSize: moderateScale(12),
-        },
+  // Always mark the current date with primaryBackgroundButton background color
+  markedDates[todayStr] = {
+    customStyles: {
+      container: {
+        backgroundColor: COLORS.primaryBackgroundButton,
+        borderRadius: 9999,
+        width: wp(8),
+        height: wp(8),
+        alignItems: 'center',
+        justifyContent: 'center',
+        alignSelf: 'center',
       },
-    };
-  }
+      text: {
+        color: COLORS.primaryTextDark,
+        fontFamily: Fonts.Sen_Medium,
+        fontSize: moderateScale(12),
+      },
+    },
+  };
 
+  // If the selected date is not today, mark it with primary color
   if (currentSelected && currentSelected !== todayStr) {
     markedDates[currentSelected] = {
       customStyles: {
@@ -127,6 +127,7 @@ const Calendar: React.FC<CalendarProps> = ({
     };
   }
 
+  // Mark selectable dates with border, if not already marked
   if (selectableDates) {
     selectableDates.forEach(date => {
       if (!markedDates[date]) {

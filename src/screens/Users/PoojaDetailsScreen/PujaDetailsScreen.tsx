@@ -13,7 +13,7 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
-import {RouteProp, useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {useTranslation} from 'react-i18next';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
@@ -35,7 +35,6 @@ import {
   translateText,
 } from '../../../utils/TranslateData';
 
-// --- Fix: Arranged items can be string[] or array of objects ---
 type ArrangedItem = {name: string; quantity?: string | number} | string;
 
 interface PujaDetails {
@@ -109,12 +108,23 @@ const PujaDetailsScreen: React.FC = () => {
   >;
 
   const {t, i18n} = useTranslation();
-  const currentLanguage = i18n.language;
+  const currentLanguage = i18n?.language;
 
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
-  const route = useRoute() as any;
+  const route = useRoute() as any; // accept any, maybe route?.params?.params
   const {showErrorToast} = useCommonToast();
+
+  const resolvedParams = (() => {
+    if (route?.params?.poojaId) return route.params;
+    if (route?.params?.params && route?.params?.params.poojaId)
+      return route.params.params;
+    return {};
+  })();
+
+  // Extract these fields safely from resolvedParams
+  const {poojaId, panditId, panditName, panditImage, panditCity} =
+    resolvedParams;
 
   const [data, setData] = useState<PujaDetails | null>(null);
   const [originalData, setOriginalData] = useState<PujaDetails | null>(null);
@@ -123,37 +133,35 @@ const PujaDetailsScreen: React.FC = () => {
     null,
   );
   const [selectPrice, setSelectPrice] = useState<string>('');
-
   const [userItemsExpanded, setUserItemsExpanded] = useState<boolean>(false);
   const [panditItemsExpanded, setPanditItemsExpanded] =
     useState<boolean>(false);
-
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [modalImageUri, setModalImageUri] = useState<string | null>(null);
 
   const translationCacheRef = useRef<Map<string, PujaDetails>>(new Map());
 
-  const {poojaId, panditId, panditName, panditImage, panditCity} =
-    route?.params;
+  // `poojaId` may be number or string
+  useEffect(() => {
+    if (poojaId) {
+      fetchPoojaDetails(String(poojaId));
+    }
+  }, [poojaId, panditId]);
 
-  console.log('pujaDetails route?.params :: ', route?.params);
-
-  // Translate relevant fields from the original data whenever language changes.
+  // Defensive: also update translation on language change
   useEffect(() => {
     if (!originalData) return;
-
     let mounted = true;
     const handleTranslation = async () => {
       setLoading(true);
       try {
-        // Check cache first
+        // Use language-cached translation
         const cached = translationCacheRef.current.get(currentLanguage);
         if (cached) {
           if (mounted) setData(cached);
+          setLoading(false);
           return;
         }
-
-        // Translate using translateData
         const translated = await translateData(originalData, currentLanguage, [
           'title',
           'short_description',
@@ -164,8 +172,6 @@ const PujaDetailsScreen: React.FC = () => {
           'features',
           'retual_steps',
         ]);
-
-        // Cache and set the translated result
         translationCacheRef.current.set(
           currentLanguage,
           translated as PujaDetails,
@@ -184,42 +190,52 @@ const PujaDetailsScreen: React.FC = () => {
     };
   }, [currentLanguage, originalData]);
 
-  useEffect(() => {
-    if (poojaId) {
-      fetchPoojaDetails(poojaId);
-    }
-  }, [poojaId]);
-
   const fetchPoojaDetails = async (id: string) => {
     setLoading(true);
     try {
       let response: any;
-      if (panditId) {
+      // We must supply both panditId & poojaId if panditId is present (number or string)
+      if (panditId !== undefined && panditId !== null && panditId !== '') {
         response = await getPoojaDetails(panditId, id);
       } else {
         response = await getPoojaDetailsForPujaList(id);
       }
-      if (response.success) {
+      if (response && response.success) {
         setOriginalData(response.data);
         setData(response.data);
       } else {
+        setOriginalData(null);
         setData(null);
       }
     } catch (error: any) {
       showErrorToast(
         error?.response?.data?.message || 'Failed to fetch puja details',
       );
+      setOriginalData(null);
       setData(null);
     } finally {
       setLoading(false);
     }
   };
 
+  const getPricingOptions = (data: PujaDetails): PricingOption[] => [
+    {
+      id: 1,
+      priceDes: t('with_puja_items'),
+      price: String(data.price_with_samagri ?? data.base_price),
+      withPujaItem: true,
+    },
+    {
+      id: 2,
+      priceDes: t('without_puja_items'),
+      price: String(data.price_without_samagri ?? data.base_price),
+      withPujaItem: false,
+    },
+  ];
+
   const getSelectedPricingOption = (): PricingOption | undefined => {
     if (!data || selectedPricingId == null) return undefined;
-    return getPricingOptions(data).find(
-      option => option.id === selectedPricingId,
-    );
+    return getPricingOptions(data).find(opt => opt.id === selectedPricingId);
   };
 
   const handleBookNowPress = () => {
@@ -228,7 +244,6 @@ const PujaDetailsScreen: React.FC = () => {
       showErrorToast(t('please_select_pricing_option'));
       return;
     }
-    // const selectedOptionData = await translateOne(selectedOption, currentLanguage, ['priceDes']);
     navigation.navigate('PlaceSelectionScreen', {
       poojaId: poojaId,
       samagri_required: selectedOption.withPujaItem,
@@ -246,23 +261,6 @@ const PujaDetailsScreen: React.FC = () => {
   const handleCheckboxToggle = (id: number, price: string) => {
     setSelectedPricingId(id === selectedPricingId ? null : id);
     setSelectPrice(price);
-  };
-
-  const getPricingOptions = (data: PujaDetails): PricingOption[] => {
-    return [
-      {
-        id: 1,
-        priceDes: t('with_puja_items'),
-        price: String(data.price_with_samagri ?? data.base_price),
-        withPujaItem: true,
-      },
-      {
-        id: 2,
-        priceDes: t('without_puja_items'),
-        price: String(data.price_without_samagri ?? data.base_price),
-        withPujaItem: false,
-      },
-    ];
   };
 
   const handleReviewImagePress = (uri: string) => {
@@ -315,7 +313,7 @@ const PujaDetailsScreen: React.FC = () => {
         onPress={() =>
           navigation.navigate('UserPanditjiNavigator', {
             screen: 'PanditDetailsScreen',
-            params: {panditId: item.pandit_id},
+            params: {panditId: item.pandit_id?.toString()},
           })
         }
         style={{flexDirection: 'row', gap: 5}}>
@@ -379,7 +377,6 @@ const PujaDetailsScreen: React.FC = () => {
     emptyText: string;
     testID?: string;
   }) => {
-    // Normalize items to array of {name, quantity?}
     const normalizedItems = normalizeArrangedItems(items);
 
     if (!normalizedItems || normalizedItems.length === 0) {
@@ -399,7 +396,6 @@ const PujaDetailsScreen: React.FC = () => {
       );
     }
 
-    // Show only the first item with chevron and "more..." if not expanded
     return (
       <View style={styles.expandableSectionWrapper}>
         <Text style={styles.sectionTitle}>{title}</Text>
@@ -581,10 +577,6 @@ const PujaDetailsScreen: React.FC = () => {
                 testID="pandit-arranged-items-section"
               />
 
-              {/* <Text style={styles.sectionTitle}>{t('visual_section')}</Text>
-              <Text style={styles.visualText}>
-                {data?.benifits?.join(', ') || 'No benefits available'}
-              </Text> */}
               {/* User Reviews Section */}
               {renderReviewsSection()}
             </View>
@@ -725,7 +717,7 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 44,
+    justifyContent: 'center',
   },
   itemIcon: {
     marginRight: 12,
@@ -735,6 +727,7 @@ const styles = StyleSheet.create({
   },
   itemTextContainer: {
     flex: 1,
+    gap: 3,
   },
   itemNameText: {
     fontSize: 15,
@@ -777,10 +770,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 8,
   },
-  // --- User Review Styles ---
-  reviewsContainer: {
-    // marginBottom: 8,
-  },
+  reviewsContainer: {},
   noReviewsText: {
     fontSize: 14,
     fontFamily: Fonts.Sen_Regular,
@@ -855,7 +845,6 @@ const styles = StyleSheet.create({
     opacity: 0.5,
     marginTop: 2,
   },
-  // --- Expandable Section Styles ---
   expandableSectionWrapper: {
     marginBottom: 10,
   },
@@ -892,7 +881,6 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     textDecorationLine: 'underline',
   },
-  // --- Modal Styles ---
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.85)',

@@ -24,6 +24,19 @@ interface CustomDropdownProps {
   placeholder?: string;
   label?: string;
   error?: string;
+  required?: boolean; // New prop to indicate if * should be red
+}
+
+function renderLabelWithRedStar(label?: string, required?: boolean) {
+  if (!label) return null;
+  // Remove any existing trailing * (for extra robustness)
+  const cleanLabel = label.replace(/\s*\*$/, '');
+  return (
+    <Text style={styles.label}>
+      {cleanLabel}
+      {required && <Text style={styles.redStar}> *</Text>}
+    </Text>
+  );
 }
 
 const CustomDropdown: React.FC<CustomDropdownProps> = ({
@@ -33,6 +46,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   placeholder = 'Select an option',
   label,
   error,
+  required = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -51,7 +65,7 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {renderLabelWithRedStar(label, required)}
       <TouchableOpacity
         style={[
           styles.dropdown,
@@ -99,6 +113,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     fontSize: moderateScale(14),
     marginBottom: moderateScale(5),
+  },
+  redStar: {
+    color: COLORS.error,
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Medium,
   },
   dropdown: {
     backgroundColor: COLORS.white,

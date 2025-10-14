@@ -63,7 +63,9 @@ const BookingSuccessfullyScreen: React.FC = () => {
                 if (auto === 'true') {
                   navigation.replace('PujaList');
                 } else {
-                  navigation.replace('UserHomeScreen');
+                  navigation.navigate('UserHomeNavigator', {
+                    screen: 'UserHomeScreen',
+                  });
                 }
               }}
               style={styles.buttonContainer}

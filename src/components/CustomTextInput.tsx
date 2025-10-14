@@ -21,8 +21,24 @@ interface InputFieldProps {
   style?: ViewStyle;
   textColor?: string;
   inputStyle?: TextStyle;
-  onlyInteger?: boolean; // Add this prop to restrict to integer input
-  maxIntegerLength?: number; // Add this prop to restrict max integer length
+  onlyInteger?: boolean;
+  maxIntegerLength?: number;
+  required?: boolean;
+  multiline?: boolean; // Add multiline prop, for explicit control
+  numberOfLines?: number; // Also support numberOfLines if needed
+}
+
+function renderLabelWithRedStar(label: string, required?: boolean) {
+  if (required) {
+    const cleanLabel = label.replace(/\s*\*$/, '');
+    return (
+      <Text style={styles.inputTitle}>
+        {cleanLabel}
+        <Text style={styles.redStar}> *</Text>
+      </Text>
+    );
+  }
+  return <Text style={styles.inputTitle}>{label.replace(/\s*\*$/, '')}</Text>;
 }
 
 const CustomTextInput: React.FC<InputFieldProps> = ({
@@ -38,11 +54,13 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
   inputStyle,
   onlyInteger = false,
   maxIntegerLength,
+  required = false,
+  multiline = true, // <--- Set default to multiline for this rewrite
+  numberOfLines = 4, // <--- Suggest default, but allow override
 }) => {
   // Handler to allow only integer input and limit length if specified
   const handleChangeText = (text: string) => {
     if (onlyInteger) {
-      // Remove all non-digit characters
       let filtered = text.replace(/[^0-9]/g, '');
       if (typeof maxIntegerLength === 'number' && maxIntegerLength > 0) {
         filtered = filtered.slice(0, maxIntegerLength);
@@ -53,13 +71,12 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
     }
   };
 
-  // Show how many digits entered if onlyInteger and maxIntegerLength are set
   const showIntegerCount =
     onlyInteger && typeof maxIntegerLength === 'number' && maxIntegerLength > 0;
 
   return (
     <View style={[styles.inputField]}>
-      <Text style={styles.inputTitle}>{label}</Text>
+      {renderLabelWithRedStar(label, required)}
       <View
         style={[styles.inputArea, style, error ? styles.inputAreaError : null]}>
         <TextInput
@@ -67,6 +84,7 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
             styles.inputText,
             textColor ? {color: textColor} : null,
             inputStyle,
+            multiline ? {textAlignVertical: 'top'} : null,
           ]}
           value={value}
           onChangeText={handleChangeText}
@@ -77,6 +95,8 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
           maxLength={
             onlyInteger && maxIntegerLength ? maxIntegerLength : undefined
           }
+          multiline={multiline}
+          numberOfLines={multiline ? numberOfLines : undefined}
         />
       </View>
       {showIntegerCount && (
@@ -101,8 +121,13 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     fontSize: 14,
   },
+  redStar: {
+    color: COLORS.error,
+    fontFamily: Fonts.Sen_Medium,
+    fontSize: 14,
+  },
   inputArea: {
-    height: 46,
+    height: 90, // Increased default height for multiline
     paddingVertical: 12.5,
     paddingHorizontal: 14,
     borderRadius: 10,
@@ -110,6 +135,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.inputBoder,
     justifyContent: 'center',
     backgroundColor: COLORS.white,
+    minHeight: 65,
   },
   inputAreaError: {
     borderColor: COLORS.error,
@@ -120,6 +146,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     padding: 0,
     margin: 0,
+    minHeight: 65,
   },
   errorText: {
     color: COLORS.error,

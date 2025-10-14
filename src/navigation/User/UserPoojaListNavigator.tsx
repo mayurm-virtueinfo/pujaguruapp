@@ -24,6 +24,9 @@ export type UserPoojaListParamList = {
   goBack(): void;
   navigate(arg0: string): unknown;
   PujaList: undefined;
+  UserHomeNavigator: {
+    screen: 'UserHomeScreen';
+  };
   PujaBooking: {
     poojaId: string;
     samagri_required: boolean;

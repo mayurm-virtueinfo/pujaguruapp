@@ -811,13 +811,11 @@ const PaymentScreen: React.FC = () => {
                     <TouchableOpacity
                       onPress={() => setUsePoints(!usePoints)}
                       style={styles.customCheckbox}>
-                      {usePoints && (
-                        <MaterialIcons
-                          name="check"
-                          size={18}
-                          color={COLORS.primary}
-                        />
-                      )}
+                      <FontAwesome
+                        name={usePoints ? 'check-square-o' : 'square-o'}
+                        size={22}
+                        color={usePoints ? COLORS.primary : COLORS.inputBoder}
+                      />
                     </TouchableOpacity>
                   </View>
                   <Text style={styles.pointsLabel}>
@@ -1055,7 +1053,6 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: moderateScale(6),
-    borderWidth: 2,
     borderColor: COLORS.inputBoder,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1193,7 +1190,7 @@ const styles = StyleSheet.create({
   fixedButtonContainer: {
     backgroundColor: COLORS.pujaBackground,
     paddingHorizontal: 18,
-    paddingTop: 8,
+    paddingTop: 6,
   },
   // Modal styles
   modalOverlay: {
