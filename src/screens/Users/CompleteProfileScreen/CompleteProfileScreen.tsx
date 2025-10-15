@@ -267,6 +267,8 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
           labelStyle={themedInputLabelStyle}
           error={formErrors.phoneNumber}
           required
+          editable={false}
+          style={styles.disabledInput}
         />
       </View>
 
@@ -412,6 +414,9 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(15),
     fontWeight: '400',
     textTransform: 'uppercase',
+  },
+  disabledInput: {
+    backgroundColor: COLORS.lightGray,
   },
 });
 

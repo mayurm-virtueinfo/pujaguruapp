@@ -55,8 +55,8 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
   onlyInteger = false,
   maxIntegerLength,
   required = false,
-  multiline = true, // <--- Set default to multiline for this rewrite
-  numberOfLines = 4, // <--- Suggest default, but allow override
+  multiline = false, // <--- Set default to multiline for this rewrite
+  // numberOfLines = 4, // <--- Suggest default, but allow override
 }) => {
   // Handler to allow only integer input and limit length if specified
   const handleChangeText = (text: string) => {
@@ -95,8 +95,8 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
           maxLength={
             onlyInteger && maxIntegerLength ? maxIntegerLength : undefined
           }
-          multiline={multiline}
-          numberOfLines={multiline ? numberOfLines : undefined}
+          // multiline={multiline}
+          // numberOfLines={multiline ? numberOfLines : undefined}
         />
       </View>
       {showIntegerCount && (
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   inputArea: {
-    height: 90, // Increased default height for multiline
+    // height: 90, // Increased default height for multiline
     paddingVertical: 12.5,
     paddingHorizontal: 14,
     borderRadius: 10,
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.inputBoder,
     justifyContent: 'center',
     backgroundColor: COLORS.white,
-    minHeight: 65,
+    minHeight: 50,
   },
   inputAreaError: {
     borderColor: COLORS.error,
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     padding: 0,
     margin: 0,
-    minHeight: 65,
+    // minHeight: 65,
   },
   errorText: {
     color: COLORS.error,

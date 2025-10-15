@@ -26,6 +26,8 @@ interface ThemedInputProps {
   error?: string;
   editable?: boolean;
   required?: boolean; // <-- Add required prop
+  style?: TextStyle;
+  textColor?: string;
 }
 
 function renderLabelWithRedStar(
@@ -58,12 +60,14 @@ const ThemedInput: React.FC<ThemedInputProps> = ({
   error,
   editable = true,
   required = false,
+  style,
+  textColor,
 }) => {
   return (
     <View style={styles.container}>
       {renderLabelWithRedStar(label, required, labelStyle)}
       <TextInput
-        style={[COMPONENT_STYLES.input, error && styles.errorField]}
+        style={[COMPONENT_STYLES.input, error && styles.errorField, style]}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
@@ -74,7 +78,7 @@ const ThemedInput: React.FC<ThemedInputProps> = ({
         textContentType={textContentType}
         maxLength={maxLength}
         editable={editable}
-      />
+        />
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );

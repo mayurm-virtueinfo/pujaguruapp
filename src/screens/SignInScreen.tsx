@@ -219,14 +219,14 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
             <View
               style={[
                 styles.containerHeader,
-                {paddingTop: inset.top + moderateScale(20)},
+                {paddingTop: inset.top},
               ]}>
               <Image source={Images.ic_app_logo} style={styles.logo} />
               <Text style={styles.title}>{t('hi_welcome')}</Text>
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => setLanguageModalVisible(true)}
-                hitSlop={{top: 12, bottom: 12, left: 12, right: 12}}
+                hitSlop={{ bottom: 12, left: 12, right: 12}}
                 style={styles.languagePill}>
                 <Text style={styles.languagePillIcon}>
                   <Icon name="language" size={20} color={COLORS.white} />
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   },
   languagePill: {
     position: 'absolute',
-    top: moderateScale(16),
+    top: moderateScale(6),
     right: moderateScale(16),
     flexDirection: 'row',
     alignItems: 'center',

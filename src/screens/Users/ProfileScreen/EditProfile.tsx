@@ -34,7 +34,7 @@ import {moderateScale} from 'react-native-size-matters';
 import {requestLocationPermission} from '../../../utils/locationUtils';
 import Geolocation from '@react-native-community/geolocation';
 import {useCommonToast} from '../../../common/CommonToast';
-import CustomTextInput from '../../../components/CustomTextInput';
+// Removed: import CustomTextInput from '../../../components/CustomTextInput';
 
 interface FormErrors {
   firstName?: string;
@@ -439,7 +439,7 @@ const UserEditProfileScreen: React.FC = () => {
               error={formErrors.lastName}
               required={true}
             />
-            <CustomTextInput
+            <ThemedInput
               label={t('email')}
               placeholder={t('enter_your_email')}
               value={formData.email}
@@ -448,9 +448,9 @@ const UserEditProfileScreen: React.FC = () => {
               error={formErrors.email}
               editable={false}
               style={styles.disabledInput}
-              textColor={COLORS.gray}
+              // textColor={COLORS.gray}
             />
-            <CustomTextInput
+            <ThemedInput
               label={t('phone')}
               placeholder={t('enter_your_phone')}
               value={formData.phone}
@@ -459,7 +459,7 @@ const UserEditProfileScreen: React.FC = () => {
               error={formErrors.phone}
               editable={false}
               style={styles.disabledInput}
-              textColor={COLORS.gray}
+              // textColor={COLORS.gray}
             />
             <CustomDropdown
               label={t('location')}

@@ -163,10 +163,10 @@ const UserProfileScreen: React.FC = () => {
     // Phone field is required, must be 10 digits, only numbers allowed
     if (!phone) {
       errors.phone = t('phone_required') || 'Phone number is required';
-    } else if (!/^\d+$/.test(phone)) {
+    } else if (!/^\+?\d+$/.test(phone)) {
       errors.phone =
         t('invalid_phone_digits') || 'Phone number must contain only numbers';
-    } else if (phone.length !== 10) {
+    } else if (phone.length !== 13) {
       errors.phone =
         t('invalid_phone_length') || 'Phone number must be exactly 10 digits';
     }
@@ -344,10 +344,10 @@ const UserProfileScreen: React.FC = () => {
   // Helper: Only allow numeric input and max 10 numbers in phone field
   const handlePhoneChange = (text: string) => {
     // Remove all non-numeric characters
-    let cleaned = text.replace(/[^0-9]/g, '');
+    let cleaned = text.replace(/[^0-9+]/g, '');
     // Limit to 10 digits
-    if (cleaned.length > 10) {
-      cleaned = cleaned.slice(0, 10);
+    if (cleaned.length > 13) {
+      cleaned = cleaned.slice(0, 13);
     }
     setPhone(cleaned);
     setFormErrors(prev => ({...prev, phone: undefined}));
@@ -418,11 +418,13 @@ const UserProfileScreen: React.FC = () => {
               onChangeText={handlePhoneChange}
               autoComplete="tel"
               textContentType="telephoneNumber"
-              maxLength={10}
+              maxLength={13}
               labelStyle={themedInputLabelStyle}
               error={formErrors.phone}
               required
               keyboardType="phone-pad"
+              editable={false}
+              style={styles.disabledInput}
             />
             <CustomDropdown
               label={t('state')}
@@ -529,6 +531,9 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
+  },
+  disabledInput: {
+    backgroundColor: COLORS.lightGray,
   },
 });
 
