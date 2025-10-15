@@ -368,9 +368,11 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   title: {
-    fontSize: moderateScale(32),
+    fontSize: moderateScale(30),
     fontFamily: Fonts.Sen_Bold,
     color: COLORS.white,
+    textAlign: 'center',
+    marginTop: moderateScale(8),
   },
   mainTitle: {
     fontSize: moderateScale(24),
@@ -390,8 +392,10 @@ const styles = StyleSheet.create({
     marginBottom: moderateScale(8),
   },
   containerHeader: {
-    height: moderateScale(220),
+    height: moderateScale(250),
     alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: moderateScale(20),
   },
   languagePill: {
     position: 'absolute',

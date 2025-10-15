@@ -102,8 +102,9 @@ const AddressesScreen: React.FC = () => {
 
   useFocusEffect(
     useCallback(() => {
+      translationCacheRef.current.delete(currentLanguage);
       fetchAddressData();
-    }, [fetchAddressData]),
+    }, [fetchAddressData, currentLanguage]),
   );
 
   const handleMenuPress = (
@@ -138,6 +139,7 @@ const AddressesScreen: React.FC = () => {
     setLoading(true);
     try {
       await deleteAddress({id: selectedAddress.id});
+      translationCacheRef.current.delete(currentLanguage);
       await fetchAddressData();
       showSuccessToast(t('address_deleted_successfully'));
     } catch (error) {
