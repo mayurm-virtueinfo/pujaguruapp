@@ -52,7 +52,7 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
   const {t, i18n} = useTranslation();
   const inset = useSafeAreaInsets();
   const {showErrorToast, showSuccessToast} = useCommonToast();
-  const [phoneNumber, setPhoneNumber] = useState('1111111111');
+  const [phoneNumber, setPhoneNumber] = useState(__DEV__ ? '1111111111' : '');
   const [isLoading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{phoneNumber?: string}>({});
   const [policiesError, setPoliciesError] = useState<string | undefined>();
@@ -91,33 +91,22 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
 
   const proceedWithOTP = async (formattedPhone: string) => {
     try {
-      console.log('------ proceedWithOTP called ------');
-
       setLoading(true);
 
-      console.log('formattedPhone in proceedWithOTP :: ', formattedPhone);
-
       const auth = getAuth();
-      console.log('auth in proceedWithOTP :: ', auth.currentUser);
 
       if (auth.currentUser) {
-        console.log('------ in if condition ------');
         await auth.signOut();
       }
-      console.log('------ proceedWithOTP called 2 ------');
 
       await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('------ proceedWithOTP called 3 ------');
 
       const confirmation = await signInWithPhoneNumber(
         getAuth(),
         formattedPhone,
       );
 
-      console.log('------ proceedWithOTP called 4------');
-
       setLoading(false);
-      console.log('------ proceedWithOTP called 5------');
 
       showSuccessToast('OTP has been sent to your phone.');
       navigation.navigate('OTPVerification', {
@@ -216,17 +205,13 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled">
           <View style={styles.content}>
-            <View
-              style={[
-                styles.containerHeader,
-                {paddingTop: inset.top},
-              ]}>
+            <View style={[styles.containerHeader, {paddingTop: inset.top}]}>
               <Image source={Images.ic_app_logo} style={styles.logo} />
               <Text style={styles.title}>{t('hi_welcome')}</Text>
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => setLanguageModalVisible(true)}
-                hitSlop={{ bottom: 12, left: 12, right: 12}}
+                hitSlop={{bottom: 12, left: 12, right: 12}}
                 style={styles.languagePill}>
                 <Text style={styles.languagePillIcon}>
                   <Icon name="language" size={20} color={COLORS.white} />
