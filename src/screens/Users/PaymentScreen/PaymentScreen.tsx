@@ -574,8 +574,10 @@ const PaymentScreen: React.FC = () => {
           }}>
           <Octicons name="location" size={20} color={COLORS.pujaCardSubtext} />
         </View>
-        <View>
-          <Text style={styles.bookingDataText}>
+        <View style={{flex: 1}}>
+          <Text
+            style={[styles.bookingDataText, {flexWrap: 'wrap'}]}
+            numberOfLines={0}>
             {translatedPoojaDescription}
           </Text>
         </View>
