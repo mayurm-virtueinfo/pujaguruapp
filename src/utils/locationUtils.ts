@@ -104,38 +104,81 @@ export const getCurrentLocation = (): Promise<LocationData> => {
       return;
     }
 
-    const tryGetPosition = (highAccuracy: boolean): void => {
-      Geolocation.getCurrentPosition(
-        position => {
-          const locationData: LocationData = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            timestamp: new Date().toISOString(),
-          };
-          resolve(locationData);
-        },
-        error => {
-          console.warn('Location error:', error.message);
-          if (
-            Platform.OS === 'android' &&
-            highAccuracy &&
-            (error?.code === 2 || error?.code === 3)
-          ) {
-            tryGetPosition(false);
-          } else {
-            reject(error);
-          }
-        },
-        {
-          enableHighAccuracy: highAccuracy,
-          timeout: 25000,
-          maximumAge: 0,
-        },
-      );
-    };
+    // Helper to try getCurrentPosition with specified options and return a promise
+    const getPosition = (options: {
+      enableHighAccuracy: boolean;
+      timeout: number;
+      maximumAge: number;
+    }) =>
+      new Promise<LocationData>((res, rej) => {
+        Geolocation.getCurrentPosition(
+          position => {
+            res({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+              timestamp: new Date().toISOString(),
+            });
+          },
+          err => rej(err),
+          options,
+        );
+      });
 
-    tryGetPosition(true);
+    try {
+      // 1) Quick attempt: try a low-accuracy, short-timeout call which often returns cached/fused location quickly
+      try {
+        const quick = await getPosition({
+          enableHighAccuracy: false,
+          timeout: 3000, // 3s
+          maximumAge: 60000, // accept location up to 1 minute old
+        });
+        // If quick attempt succeeds and accuracy is present, return it immediately
+        if (quick) {
+          resolve(quick);
+          return;
+        }
+      } catch (quickErr) {
+        // ignore and fall through to a higher-accuracy attempt
+        const qe: any = quickErr || {};
+        console.debug('Quick location attempt failed:', qe.message ?? qe);
+      }
+
+      // 2) Secondary attempt: higher accuracy but with reduced timeout from 25s to 10s
+      try {
+        const high = await getPosition({
+          enableHighAccuracy: true,
+          timeout: 10000, // 10s instead of 25s
+          maximumAge: 0,
+        });
+        resolve(high);
+        return;
+      } catch (highErr) {
+        // if Android and high accuracy failed due to provider issues, try a final low-accuracy fallback
+        const he: any = highErr || {};
+        console.warn('High accuracy attempt failed:', he.message ?? he);
+        if (Platform.OS === 'android') {
+          try {
+            const fallback = await getPosition({
+              enableHighAccuracy: false,
+              timeout: 5000,
+              maximumAge: 0,
+            });
+            resolve(fallback);
+            return;
+          } catch (fallbackErr) {
+            reject(fallbackErr);
+            return;
+          }
+        }
+
+        // For iOS or other failures, reject with the high-accuracy error
+        reject(highErr);
+        return;
+      }
+    } catch (err) {
+      reject(err);
+    }
   });
 };
 

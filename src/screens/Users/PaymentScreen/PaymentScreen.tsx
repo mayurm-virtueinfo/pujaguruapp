@@ -561,6 +561,8 @@ const PaymentScreen: React.FC = () => {
     setRefundPolicyContent('');
   };
 
+  console.log('translatedPoojaDescription :: ', translatedPoojaDescription);
+
   const renderBookingData = () => (
     <View style={styles.bookingDataItem}>
       <View style={styles.textContainer}>

@@ -69,10 +69,11 @@ export async function setupNotifications() {
 }
 
 export function handleNotificationNavigation(data: any) {
-  console.log('data of notification :: ', data);
+  console.log('------ data of notification :: ', data);
 
+  // any pandit selected puja reject notification
   if (data?.screen === 'FilteredPanditListScreen') {
-    const targetScreen = data?.screen;
+    const targetScreen = data?.pujaguru_screen;
     const booking_id = data?.booking_id;
 
     const nestedParams = {
@@ -82,7 +83,7 @@ export function handleNotificationNavigation(data: any) {
         params: {
           screen: targetScreen,
           params: {
-            booking_id,
+            bookingId: booking_id,
           },
         },
       },
@@ -95,7 +96,9 @@ export function handleNotificationNavigation(data: any) {
         console.warn('Navigation not ready yet');
       }
     }, 500);
-  } else if (data?.screen === 'ChatScreen') {
+  }
+  //chat notification
+  else if (data?.screen === 'ChatScreen') {
     const targetScreen = data?.navigation || data?.pujaguru_app_screen;
     const booking_id = data?.booking_id;
     const pandit_id = data?.sender_id;
@@ -134,8 +137,37 @@ export function handleNotificationNavigation(data: any) {
         console.warn('Navigation not ready yet');
       }
     }, 500);
-  } else if (data?.screen === 'UserPujaDetailsScreen') {
+  }
+  // Pandit Accept puja notification
+  else if (data?.screen === 'UserPujaDetailsScreen') {
     const targetScreen = data?.screen;
+    const booking_id = data?.booking_id;
+
+    const nestedParams = {
+      screen: 'UserAppBottomTabNavigator',
+      params: {
+        screen: 'UserHomeNavigator',
+        params: {
+          screen: targetScreen,
+          params: {
+            id: booking_id,
+          },
+        },
+      },
+    };
+
+    setTimeout(() => {
+      if (navigationRef.isReady()) {
+        console.warn('Navigation is ready');
+        navigate('Main', nestedParams);
+      } else {
+        console.warn('Navigation not ready yet');
+      }
+    }, 500);
+  }
+  // reminder booked puja notification
+  else if (data?.pujaguru_screen === 'UserPujaDetailsScreen') {
+    const targetScreen = data?.pujaguru_screen;
     const booking_id = data?.booking_id;
 
     const nestedParams = {

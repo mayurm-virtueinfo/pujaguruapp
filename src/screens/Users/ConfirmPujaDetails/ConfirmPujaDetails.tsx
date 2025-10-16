@@ -415,7 +415,11 @@ const ConfirmPujaDetails: React.FC = () => {
 
   // Handler for "Choose Another Panditji" (manual mode)
   const onChoosePanditClick = () => {
-    navigation.navigate('FilteredPanditListScreen', {booking_id: bookingId});
+    if (!pujaDetails.assigned_pandit?.id) {
+      navigation.navigate('FilteredPanditListScreen', {booking_id: bookingId});
+    } else {
+      showSuccessToast(t('panditji_confirmation'));
+    }
   };
 
   // Bottom action bar logic based on assignment_mode

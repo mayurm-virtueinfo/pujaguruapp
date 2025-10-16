@@ -448,7 +448,7 @@ const UserHomeScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Pending Puja Section */}
+        {/* waiting for approval Puja Section */}
         <View style={styles.pujaSection}>
           <Text style={styles.sectionTitle}>
             {t('waiting_for_approval') || 'Waiting for Approval'}

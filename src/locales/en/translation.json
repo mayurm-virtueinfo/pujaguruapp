@@ -331,5 +331,6 @@
   "muhurat_time_must_be_2_hours_later": "Please select a muhurat slot that starts at least 2 hours from now. This allows enough time for preparation and arrival",
   "phone_required": "Phone number is required",
   "invalid_phone_digits": "Phone number must contain only numbers",
-  "invalid_phone_length": "Phone number must be exactly 13 digits"
+  "invalid_phone_length": "Phone number must be exactly 13 digits",
+  "panditji_confirmation": "Your Puja request has been sent to Panditji. Please wait 10–15 minutes for confirmation."
 }

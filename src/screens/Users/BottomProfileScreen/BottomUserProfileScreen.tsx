@@ -128,6 +128,9 @@ const BottomUserProfileScreen: React.FC = () => {
 
   useFocusEffect(
     React.useCallback(() => {
+      if (translationCacheRef.current.has(currentLanguage)) {
+        translationCacheRef.current.delete(currentLanguage);
+      }
       fetchCurrentUser();
     }, [fetchCurrentUser]),
   );

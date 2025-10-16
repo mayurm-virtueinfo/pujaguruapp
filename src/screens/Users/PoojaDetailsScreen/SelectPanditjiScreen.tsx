@@ -272,6 +272,7 @@ const SelectPanditjiScreen: React.FC = () => {
           auto: 'true',
           selectedAddressLatitude: selectedAddressLatitude,
           selectedAddressLongitude: selectedAddressLongitude,
+          poojaDescription: poojaDescription,
         });
       }
     }
