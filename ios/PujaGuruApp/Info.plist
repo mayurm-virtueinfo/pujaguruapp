@@ -105,5 +105,7 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSCalendarsUsageDescription</key>
+    <string>This is required to check availability, schedule appointments and save event dates directly to your calendar.</string>
 </dict>
 </plist>

@@ -15,7 +15,7 @@
   "dependencies": {
     "@amplitude/analytics-react-native": "1.4.13",
     "@giphy/react-native-sdk": "4.1.0",
-    "@jitsi/react-native-sdk": "^11.5.1",
+    "@jitsi/react-native-sdk": "^11.6.2",
     "@notifee/react-native": "^9.1.8",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-native-clipboard/clipboard": "1.14.3",

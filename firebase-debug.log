@@ -1,0 +1,38 @@
+[debug] [2025-10-16T06:36:31.494Z] ----------------------------------------------------------------------
+[debug] [2025-10-16T06:36:31.497Z] Command:       /Users/mac/.nvm/versions/node/v22.14.0/bin/node /usr/local/bin/firebase emulators:start --only auth
+[debug] [2025-10-16T06:36:31.497Z] CLI Version:   14.20.0
+[debug] [2025-10-16T06:36:31.497Z] Platform:      darwin
+[debug] [2025-10-16T06:36:31.497Z] Node Version:  v22.14.0
+[debug] [2025-10-16T06:36:31.498Z] Time:          Thu Oct 16 2025 12:06:31 GMT+0530 (India Standard Time)
+[debug] [2025-10-16T06:36:31.498Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-10-16T06:36:31.499Z] >>> [apiv2][query] GET https://firebase-public.firebaseio.com/cli.json [none]
+[debug] [2025-10-16T06:36:31.727Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2025-10-16T06:36:31.732Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-10-16T06:36:31.732Z] > authorizing via signed-in user (virtueinfo30@gmail.com)
+[info] i  emulators: Starting emulators: auth {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: auth"}}
+[debug] [2025-10-16T06:36:32.728Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-10-16T06:36:32.728Z] assigned listening specs for emulators {"user":{"auth":[{"address":"0.0.0.0","family":"IPv4","port":9099}],"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2025-10-16T06:36:32.732Z] Emulator locator file path: /var/folders/9w/r4dm63k10wv77k7pjsm27hfr0000gn/T/hub-panditji-42b4a.json
+[debug] [2025-10-16T06:36:32.732Z] [hub] writing locator at /var/folders/9w/r4dm63k10wv77k7pjsm27hfr0000gn/T/hub-panditji-42b4a.json
+[debug] [2025-10-16T06:36:38.523Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌────────────────┬──────────────┬────────────────────────────┐
+│ Emulator       │ Host:Port    │ View in Emulator UI        │
+├────────────────┼──────────────┼────────────────────────────┤
+│ Authentication │ 0.0.0.0:9099 │ http://127.0.0.1:4000/auth │
+└────────────────┴──────────────┴────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2025-10-16T06:36:39.110Z] <<< [apiv2][status] GET https://firebase-public.firebaseio.com/cli.json 200
+[debug] [2025-10-16T06:36:39.110Z] <<< [apiv2][body] GET https://firebase-public.firebaseio.com/cli.json {"cloudBuildErrorAfter":1594252800000,"cloudBuildWarnAfter":1590019200000,"defaultNode10After":1594252800000,"minVersion":"3.0.5","node8DeploysDisabledAfter":1613390400000,"node8RuntimeDisabledAfter":1615809600000,"node8WarnAfter":1600128000000}
+[info] i  To verify the phone number +911111111111, use the code 406146. {"metadata":{"emulator":{"name":"auth"},"message":"To verify the phone number +911111111111, use the code 406146."}}
+[info] i  To verify the phone number +911111111111, use the code 021989. {"metadata":{"emulator":{"name":"auth"},"message":"To verify the phone number +911111111111, use the code 021989."}}
