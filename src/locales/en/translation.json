@@ -332,5 +332,8 @@
   "phone_required": "Phone number is required",
   "invalid_phone_digits": "Phone number must contain only numbers",
   "invalid_phone_length": "Phone number must be exactly 13 digits",
-  "panditji_confirmation": "Your Puja request has been sent to Panditji. Please wait 10–15 minutes for confirmation."
+  "panditji_confirmation": "Your Puja request has been sent to Panditji. Please wait 10–15 minutes for confirmation.",
+  "update_modal_title": "Update Required",
+  "update_modal_message": "A new version is available. Please update to continue.",
+  "update_now": "Update Now"
 }

@@ -76,7 +76,7 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
 
   return (
     <View style={[styles.inputField]}>
-      {renderLabelWithRedStar(label, required)}
+      {label && renderLabelWithRedStar(label, required)}
       <View
         style={[styles.inputArea, style, error ? styles.inputAreaError : null]}>
         <TextInput

@@ -418,7 +418,7 @@ const UserProfileScreen: React.FC = () => {
               onChangeText={handlePhoneChange}
               autoComplete="tel"
               textContentType="telephoneNumber"
-              maxLength={13}
+              maxLength={15}
               labelStyle={themedInputLabelStyle}
               error={formErrors.phone}
               required
