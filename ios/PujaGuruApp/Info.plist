@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-	<string>PujaGuruApp</string>
+	<string>Pujaguru</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -52,8 +52,8 @@
 	<string>We need your location to provide continuous location-based services, even when the app is in the background.</string>
 	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
 	<dict>
-  		<key>LocationAccuracy</key>
-  		<string>We need precise location data to enhance your experience.</string>
+		<key>LocationAccuracy</key>
+		<string>We need precise location data to enhance your experience.</string>
 	</dict>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need access to your microphone for audio recording features.</string>
@@ -106,6 +106,6 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 	<key>NSCalendarsUsageDescription</key>
-    <string>This is required to check availability, schedule appointments and save event dates directly to your calendar.</string>
+	<string>This is required to check availability, schedule appointments and save event dates directly to your calendar.</string>
 </dict>
 </plist>
