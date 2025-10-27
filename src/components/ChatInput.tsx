@@ -24,8 +24,8 @@ const ChatInput: React.FC<ChatInputProps> = ({onSendMessage}) => {
 
   const handleSend = () => {
     if (message.trim()) {
-      onSendMessage(message.trim());
       setMessage('');
+      onSendMessage(message.trim());
       Keyboard.dismiss();
     }
   };

@@ -12,11 +12,11 @@ interface ChatMessagesProps {
 const ChatMessages: React.FC<ChatMessagesProps> = ({messages}) => {
   return (
     <View style={styles.container}>
-      <ScrollView
+      {/* <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"> */}
         {messages.map(message => (
           <ChatBubble
             key={message.id}
@@ -25,7 +25,7 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({messages}) => {
             isOwn={message.isOwn}
           />
         ))}
-      </ScrollView>
+      {/* </ScrollView> */}
     </View>
   );
 };
