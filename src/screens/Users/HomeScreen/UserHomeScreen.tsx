@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
   panditImage: {
     width: moderateScale(86),
     height: moderateScale(86),
-    borderRadius: moderateScale(40),
+    borderRadius: moderateScale(50),
     borderWidth: 1,
   },
   ratingContainerAbsolute: {

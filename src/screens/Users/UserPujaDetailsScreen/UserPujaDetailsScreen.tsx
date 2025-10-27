@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useCallback} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,184 +9,216 @@ import {
   Image,
   Platform,
   ActivityIndicator,
-  Modal,
+  Alert,
+  RefreshControl,
 } from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {
-  useFocusEffect,
-  useNavigation,
-  useRoute,
-} from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
 import PujaItemsModal from '../../../components/PujaItemsModal';
 import Fonts from '../../../theme/fonts';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {Images} from '../../../theme/Images';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
-import {useTranslation} from 'react-i18next';
-import {getUpcomingPujaDetails, postStartChat} from '../../../api/apiService';
-import {translateData, translateText} from '../../../utils/TranslateData';
+import { Images } from '../../../theme/Images';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
+import { useTranslation } from 'react-i18next';
+import { getUpcomingPujaDetails, postStartChat } from '../../../api/apiService';
+import { translateData, translateText } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
+
+// TYPES for safer data handling and remove linter errors
+type PujaDetailsType = {
+  id?: number | string;
+  pooja_name?: string;
+  pooja_image_url?: string | null;
+  location_display?: string;
+  address?: string;
+  booking_date?: string | null;
+  muhurat_time?: string | null;
+  muhurat_type?: string | null;
+  samagri_required?: boolean;
+  user_arranged_items?: any[];
+  pandit_arranged_items?: any[];
+  assigned_pandit?: {
+    id?: string | number;
+    pandit_name?: string;
+    profile_img_url?: string | null;
+  } | null;
+  booking_status?: string;
+  verification_pin?: string;
+  completion_pin?: string;
+  amount?: string | number;
+};
 
 const UserPujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'PujaCancellationScreen' | 'UserChatScreen' | 'RateYourExperienceScreen'
   >;
+
   const route = useRoute();
-  const {id} = route.params as any;
-  const {t, i18n} = useTranslation();
+  const { id } = (route.params as { id: string | number }) || {};
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<ScreenNavigationProp>();
+
   const [isPujaItemsModalVisible, setIsPujaItemsModalVisible] = useState(false);
-  const [pujaDetails, setPujaDetails] = useState<any>(null);
-  const [originalPujaDetails, setOriginalPujaDetails] = useState<any>(null);
+  const [pujaDetails, setPujaDetails] = useState<PujaDetailsType | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isNavigating, setIsNavigating] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [displayPin, setDisplayPin] = useState<{
+    value: string;
+    type: 'verification' | 'completion' | null;
+  }>({ value: '', type: null });
+
+  const [initialLoaded, setInitialLoaded] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentLanguage = i18n.language;
 
-  // Track the previous booking status to detect changes
-  const prevBookingStatus = useRef<string | null>(null);
-  // Track if we've navigated to RateYourExperienceScreen for this booking
-  const hasNavigatedToRate = useRef(false);
-
-  // Track if we've already handled the in-progress pin logic
-  const hasHandledInProgressPin = useRef(false);
-  // Polling controls
-  const pollingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const isFetchingRef = useRef<boolean>(false);
-
-  const translationCacheRef = useRef<Map<string, any>>(new Map());
-
-  // Helper to reload puja details
-  const fetchPujaDetails = useCallback(
-    async (options?: {silent?: boolean}) => {
-      const silent = options?.silent === true;
-      if (!silent) setLoading(true);
-      try {
-        const cachedData = translationCacheRef.current.get(currentLanguage);
-
-        if (cachedData) {
-          setPujaDetails(cachedData);
-          setLoading(false);
-          return;
-        }
-
-        const details = await getUpcomingPujaDetails(id?.toString());
-
-        setOriginalPujaDetails(details);
-        const translatedDetails = await translateData(
-          details,
-          currentLanguage,
-          [
-            'pooja_name',
-            'location_display',
-            'muhurat_type',
-            'pandit_arranged_items',
-            'user_arranged_items',
-            'address',
-          ],
-        );
-        if (
-          translatedDetails.assigned_pandit &&
-          translatedDetails.assigned_pandit.pandit_name
-        ) {
-          translatedDetails.assigned_pandit.pandit_name = await translateText(
-            translatedDetails.assigned_pandit.pandit_name,
-            currentLanguage,
-          );
-        }
-        translationCacheRef.current.set(currentLanguage, translatedDetails);
-        setPujaDetails(translatedDetails);
-      } catch (error) {
+  // Helper: fetch API for initial load (with loader)
+  const fetchInitialPujaDetails = async () => {
+    setLoading(true);
+    try {
+      if (!id) {
         setPujaDetails(null);
-        setOriginalPujaDetails(null);
-      } finally {
-        if (!silent) setLoading(false);
+        setInitialLoaded(true);
+        setLoading(false);
+        return;
       }
-    },
-    [currentLanguage, id],
-  );
-
-  useFocusEffect(
-    React.useCallback(() => {
-      fetchPujaDetails();
-      // Reset navigation flag and previous booking status when screen is focused
-      hasNavigatedToRate.current = false;
-      prevBookingStatus.current = null;
-      hasHandledInProgressPin.current = false;
-      // Start polling while focused
-      if (pollingTimerRef.current) {
-        clearInterval(pollingTimerRef.current);
+      const details: PujaDetailsType = await getUpcomingPujaDetails(String(id));
+      if (!details || typeof details !== "object") {
+        setPujaDetails(null);
+        setInitialLoaded(true);
+        setLoading(false);
+        return;
       }
-      pollingTimerRef.current = setInterval(async () => {
-        if (isFetchingRef.current) return;
-        isFetchingRef.current = true;
-        try {
-          await fetchPujaDetails({silent: true});
-        } finally {
-          isFetchingRef.current = false;
-        }
-      }, 5000);
+      const translatedDetails = await translateData(
+        details,
+        currentLanguage,
+        [
+          'pooja_name',
+          'location_display',
+          'muhurat_type',
+          'pandit_arranged_items',
+          'user_arranged_items',
+          'address',
+        ],
+      );
+      let safePandit = translatedDetails && typeof translatedDetails === 'object'
+        ? (translatedDetails as PujaDetailsType).assigned_pandit
+        : undefined;
+      if (
+        safePandit &&
+        typeof safePandit === 'object' &&
+        typeof safePandit.pandit_name === 'string'
+      ) {
+        safePandit.pandit_name = await translateText(safePandit.pandit_name, currentLanguage);
+      }
+      setPujaDetails(translatedDetails as PujaDetailsType);
+    } catch (error) {
+      setPujaDetails(null);
+      Alert.alert(t('error'), t('failed_to_load_puja_details'), [
+        { text: t('ok') },
+      ]);
+    } finally {
+      setInitialLoaded(true);
+      setLoading(false);
+    }
+  };
 
-      // Cleanup on unfocus
-      return () => {
-        if (pollingTimerRef.current) {
-          clearInterval(pollingTimerRef.current);
-          pollingTimerRef.current = null;
-        }
-      };
-    }, [id, fetchPujaDetails]),
-  );
+  // fetch API for polling in background (no loader except manual refresh)
+  const fetchPujaDetailsInBackground = async () => {
+    try {
+      if (!id) {
+        setPujaDetails(null);
+        return;
+      }
+      const details: PujaDetailsType = await getUpcomingPujaDetails(String(id));
+      if (!details || typeof details !== "object") {
+        setPujaDetails(null);
+        return;
+      }
+      const translatedDetails = await translateData(
+        details,
+        currentLanguage,
+        [
+          'pooja_name',
+          'location_display',
+          'muhurat_type',
+          'pandit_arranged_items',
+          'user_arranged_items',
+          'address',
+        ],
+      );
+      let safePandit = translatedDetails && typeof translatedDetails === 'object'
+        ? (translatedDetails as PujaDetailsType).assigned_pandit
+        : undefined;
+      if (
+        safePandit &&
+        typeof safePandit === 'object' &&
+        typeof safePandit.pandit_name === 'string'
+      ) {
+        safePandit.pandit_name = await translateText(safePandit.pandit_name, currentLanguage);
+      }
+      setPujaDetails(translatedDetails as PujaDetailsType);
+    } catch (error) {
+      // do not show alert in background polling
+    }
+  };
+
+  // Initial load: loader, then polling begins
+  useEffect(() => {
+    let isMounted = true;
+    setLoading(true);
+    setInitialLoaded(false);
+
+    fetchInitialPujaDetails().then(() => {
+      if (!isMounted) return;
+      // After initial loader & load, start polling every 3s in background
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      intervalRef.current = setInterval(() => {
+        fetchPujaDetailsInBackground();
+      }, 3000);
+    });
+
+    return () => {
+      isMounted = false;
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+    // eslint-disable-next-line
+  }, [currentLanguage, id]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchInitialPujaDetails();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
-    if (
-      pujaDetails &&
-      pujaDetails.booking_status &&
-      pujaDetails.assigned_pandit
-    ) {
-      // 1. If booking_status is 'completed' and we haven't navigated yet, navigate to RateYourExperienceScreen
-      if (
-        pujaDetails.booking_status === 'completed' &&
-        !hasNavigatedToRate.current
-      ) {
-        hasNavigatedToRate.current = true;
-        navigation.navigate('RateYourExperienceScreen', {
-          booking: originalPujaDetails.id,
-          panditjiData: originalPujaDetails.assigned_pandit,
-        });
-      }
-
-      // 2. If booking_status changed from 'accepted' to 'in_progress', reload details to get completion pin
-      if (
-        prevBookingStatus.current === 'accepted' &&
-        pujaDetails.booking_status === 'in_progress' &&
-        !hasHandledInProgressPin.current
-      ) {
-        hasHandledInProgressPin.current = true;
-        // Refetch details to get the completion pin
-        fetchPujaDetails();
-      }
-
-      // Update previous booking status for next render
-      prevBookingStatus.current = pujaDetails.booking_status;
+    // Pin value update based on booking status
+    if (!pujaDetails) {
+      setDisplayPin({ value: '', type: null });
+      return;
     }
-    // Stop polling on terminal states to avoid unnecessary network calls
-    if (
-      pujaDetails &&
-      ['completed', 'cancelled', 'rejected'].includes(
-        pujaDetails.booking_status,
-      )
-    ) {
-      if (pollingTimerRef.current) {
-        clearInterval(pollingTimerRef.current);
-        pollingTimerRef.current = null;
-      }
+    let pinVal = '';
+    let pinType: 'verification' | 'completion' | null = null;
+    if (pujaDetails.booking_status === 'in_progress' && pujaDetails.completion_pin) {
+      pinVal = pujaDetails.completion_pin;
+      pinType = 'completion';
     }
-  }, [pujaDetails?.booking_status, pujaDetails?.assigned_pandit, navigation]);
+    else if (
+      ['accepted', 'confirmed', 'pending'].includes(pujaDetails.booking_status ?? '') &&
+      pujaDetails.verification_pin
+    ) {
+      pinVal = pujaDetails.verification_pin;
+      pinType = 'verification';
+    }
+    setDisplayPin({ value: pinVal, type: pinType });
+  }, [pujaDetails]);
 
   const handlePujaItemsPress = () => {
     setIsPujaItemsModalVisible(true);
@@ -197,22 +229,28 @@ const UserPujaDetailsScreen: React.FC = () => {
   };
 
   const startChatConversation = async () => {
+    if (!pujaDetails?.id) {
+      Alert.alert(t('error'), t('no_booking_found'), [{ text: t('ok') }]);
+      return;
+    }
     const payload = {
-      booking_id: pujaDetails?.id,
+      booking_id: pujaDetails.id,
     };
     setLoading(true);
     try {
       const response = await postStartChat(payload);
-      if (response) {
+      if (response?.data) {
         navigation.navigate('UserChatScreen', {
-          booking_id: response?.data?.booking_id,
-          pandit_name: response?.data?.other_participant_name,
-          profile_img_url: response?.data?.other_participant_profile_img,
-          pandit_id: response?.data?.other_participant_id,
+          booking_id: response.data.booking_id,
+          pandit_name: response.data.other_participant_name,
+          profile_img_url: response.data.other_participant_profile_img,
+          pandit_id: response.data.other_participant_id,
         });
+      } else {
+        Alert.alert(t('error'), t('no_chat_response'), [{ text: t('ok') }]);
       }
     } catch (error) {
-      console.error('Error starting chat :: ', error);
+      Alert.alert(t('error'), t('failed_to_start_chat'), [{ text: t('ok') }]);
     } finally {
       setLoading(false);
     }
@@ -220,49 +258,49 @@ const UserPujaDetailsScreen: React.FC = () => {
 
   const formatDate = (dateStr: string | null | undefined) => {
     if (!dateStr) return '';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) {
-      const parts = dateStr.split('-');
-      if (parts.length === 3) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+          return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
       }
-      return dateStr;
+      const day = d.getDate().toString().padStart(2, '0');
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch {
+      return dateStr ?? '';
     }
-    const day = d.getDate().toString().padStart(2, '0');
-    const month = (d.getMonth() + 1).toString().padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
   };
 
   const getPanditImageUrl = (url: string | null | undefined) => {
-    if (!url) return undefined;
+    if (!url || typeof url !== 'string') return Images.ic_app_logo;
     if (url.startsWith('http')) return url;
     return `https://pujapaath.com${url}`;
   };
 
   const getPujaImageUrl = (url: string | null | undefined) => {
-    if (!url) return undefined;
+    if (!url || typeof url !== 'string') return Images.ic_app_logo;
     if (url.startsWith('http')) return url;
     return `https://pujapaath.com${url}`;
   };
 
-  console.log('pujaDetails :: ', pujaDetails);
-
   const renderPujaDetails = () => {
-    if (!pujaDetails) return null;
+    if (!pujaDetails || typeof pujaDetails !== 'object') return null;
+
     return (
       <View style={styles.detailsContainer}>
         <View style={[styles.detailsCard, THEMESHADOW.shadow]}>
           <View style={styles.detailsContent}>
-            {/* Puja Name & Image */}
             <View style={styles.detailRow}>
               <View style={styles.detailRowContent}>
                 <Image
-                  source={
-                    pujaDetails.pooja_image_url
-                      ? {uri: getPujaImageUrl(pujaDetails.pooja_image_url)}
-                      : Images.ic_app_logo
-                  }
+                  source={{
+                    uri: getPujaImageUrl(pujaDetails?.pooja_image_url),
+                  }}
                   style={styles.pujaIcon}
                 />
                 <Text style={styles.pujaTitle}>
@@ -273,7 +311,6 @@ const UserPujaDetailsScreen: React.FC = () => {
 
             <View style={styles.separator} />
 
-            {/* Location Section */}
             <View style={styles.detailRow}>
               <MaterialIcons
                 name="location-on"
@@ -281,14 +318,13 @@ const UserPujaDetailsScreen: React.FC = () => {
                 color={COLORS.pujaCardSubtext}
                 style={styles.detailIcon}
               />
-              <Text style={styles.detailText}>
-                {pujaDetails.location_display || pujaDetails.address}
+              <Text style={styles.detailText} numberOfLines={2}>
+                {pujaDetails.location_display || pujaDetails.address || t('location_not_available')}
               </Text>
             </View>
 
             <View style={styles.separator} />
 
-            {/* Date Section */}
             <View style={styles.detailRow}>
               <MaterialIcons
                 name="event"
@@ -297,13 +333,12 @@ const UserPujaDetailsScreen: React.FC = () => {
                 style={styles.detailIcon}
               />
               <Text style={styles.detailText}>
-                {formatDate(pujaDetails.booking_date)}
+                {formatDate(pujaDetails.booking_date) || t('date_not_available')}
               </Text>
             </View>
 
             <View style={styles.separator} />
 
-            {/* Time Section */}
             <View style={styles.detailRow}>
               <MaterialIcons
                 name="access-time"
@@ -313,17 +348,13 @@ const UserPujaDetailsScreen: React.FC = () => {
               />
               <Text style={styles.detailText}>
                 {pujaDetails.muhurat_time
-                  ? pujaDetails.muhurat_time
+                  ? `${pujaDetails.muhurat_time} ${pujaDetails.muhurat_type ? `(${pujaDetails.muhurat_type})` : ''}`
                   : t('time_not_available')}
-                {pujaDetails.muhurat_type
-                  ? ` (${pujaDetails.muhurat_type})`
-                  : ''}
               </Text>
             </View>
 
             <View style={styles.separator} />
 
-            {/* Puja Items Section */}
             {pujaDetails.samagri_required ? (
               <>
                 <View style={styles.detailRow}>
@@ -336,7 +367,10 @@ const UserPujaDetailsScreen: React.FC = () => {
                   <Text style={styles.detailText}>{t('puja_items_list')}</Text>
                   <TouchableOpacity
                     style={styles.viewButton}
-                    onPress={handlePujaItemsPress}>
+                    onPress={handlePujaItemsPress}
+                    accessible
+                    accessibilityLabel={t('view_puja_items')}
+                  >
                     <MaterialIcons
                       name="visibility"
                       size={scale(20)}
@@ -344,32 +378,32 @@ const UserPujaDetailsScreen: React.FC = () => {
                     />
                   </TouchableOpacity>
                 </View>
-                {(pujaDetails.verification_pin ||
-                  pujaDetails.completion_pin) && (
-                  <View style={styles.separator} />
-                )}
+                {displayPin.value && <View style={styles.separator} />}
               </>
             ) : null}
 
-            {/* Pin Section */}
-            {(pujaDetails.verification_pin || pujaDetails.completion_pin) && (
+            {displayPin.value && (
               <View style={styles.detailRow}>
                 <Image
                   source={Images.ic_pin}
-                  style={[
-                    styles.detailIcon,
-                    {width: scale(20), height: scale(16)},
-                  ]}
+                  style={[styles.detailIcon, { width: scale(20), height: scale(16) }]}
                   resizeMode="contain"
                 />
-                <Text style={styles.detailText}>
-                  {pujaDetails.booking_status !== 'in_progress' &&
-                  pujaDetails.verification_pin
-                    ? `${pujaDetails.verification_pin}: ${t(
-                        'verification_pin',
-                      )}`
-                    : pujaDetails.completion_pin
-                    ? `${pujaDetails.completion_pin}: ${t('completion_pin')}`
+                <Text
+                  style={[
+                    styles.detailText,
+                    {
+                      color:
+                        displayPin.type === 'completion'
+                          ? COLORS.primaryBackgroundButton
+                          : COLORS.primaryTextDark,
+                      fontFamily: Fonts.Sen_SemiBold,
+                    },
+                  ]}>
+                  {displayPin.type === 'verification'
+                    ? `${displayPin.value}: ${t('verification_pin')}`
+                    : displayPin.type === 'completion'
+                    ? `${displayPin.value}: ${t('completion_pin')}`
                     : ''}
                 </Text>
               </View>
@@ -386,7 +420,7 @@ const UserPujaDetailsScreen: React.FC = () => {
       <View style={styles.totalContainer}>
         <View style={[styles.totalCard, THEMESHADOW.shadow]}>
           <View style={styles.totalContent}>
-            <View style={{gap: 6}}>
+            <View style={{ gap: 6 }}>
               <Text style={styles.totalLabel}>{t('total_amount')}</Text>
               <Text style={styles.totalSubtext}>
                 {pujaDetails.pooja_name || t('puja')}
@@ -396,7 +430,7 @@ const UserPujaDetailsScreen: React.FC = () => {
               <Text style={styles.totalAmount}>
                 ₹{' '}
                 {pujaDetails.amount
-                  ? parseFloat(pujaDetails.amount).toLocaleString('en-IN', {
+                  ? Number(pujaDetails.amount).toLocaleString('en-IN', {
                       minimumFractionDigits: 0,
                     })
                   : '0'}
@@ -411,7 +445,8 @@ const UserPujaDetailsScreen: React.FC = () => {
   const renderPanditDetails = () => {
     if (!pujaDetails) return null;
     const pandit = pujaDetails.assigned_pandit;
-    if (!pandit) return null;
+    if (!pandit || typeof pandit !== 'object') return null;
+
     return (
       <View style={styles.totalContainer}>
         <View style={[styles.totalCard, THEMESHADOW.shadow]}>
@@ -419,42 +454,52 @@ const UserPujaDetailsScreen: React.FC = () => {
             <View
               style={{
                 flexDirection: 'row',
-                justifyContent: 'center',
                 alignItems: 'center',
+                flex: 1,
               }}>
-              <Image
-                // source={
-                //   pandit.profile_img_url
-                //     ? {uri: getPanditImageUrl(pandit.profile_img_url)}
-                //     : Images.ic_app_logo
-                // }
+              {pandit?.profile_img_url && <Image
                 source={{
-                  uri:
-                    pandit.profile_img_url ||
-                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+                  uri: getPanditImageUrl(pandit?.profile_img_url),
                 }}
                 style={styles.pujaIcon}
-              />
-              <TouchableOpacity
-                onPress={() => {
-                  navigation.navigate('PanditDetailsScreen', {
-                    panditId: pandit.id,
-                  });
-                }}>
-                <Text style={styles.totalSubtext}>
-                  {pandit.pandit_name || t('panditji')}
-                </Text>
-              </TouchableOpacity>
+              />}
+              <View style={{ flex: 1, marginLeft: scale(12) }}>
+                <TouchableOpacity
+                  onPress={() => {
+                    if (pandit.id !== undefined && pandit.id !== null) {
+                      // @ts-ignore
+                      navigation.navigate('PanditDetailsScreen', {
+                        panditId: pandit.id,
+                      });
+                    }
+                  }}
+                  accessible
+                  accessibilityLabel={t('view_pandit_details')}>
+                  <Text style={styles.totalSubtext}>
+                    {pandit.pandit_name || t('panditji')}
+                  </Text>
+                </TouchableOpacity>
+                {pujaDetails.booking_status === 'in_progress' && (
+                  <Text style={[styles.statusText, { fontSize: moderateScale(11) }]}>
+                    {t('performing_puja')}
+                  </Text>
+                )}
+              </View>
             </View>
             <TouchableOpacity
-              onPress={() => {
-                startChatConversation();
-              }}>
-              <Image
-                source={Images.ic_message}
-                style={{width: scale(20), height: scale(20)}}
-                resizeMode="contain"
-              />
+              onPress={startChatConversation}
+              accessible
+              accessibilityLabel={t('start_chat')}
+              disabled={isNavigating}>
+              {isNavigating ? (
+                <ActivityIndicator size="small" color={COLORS.primaryBackgroundButton} />
+              ) : (
+                <Image
+                  source={Images.ic_message}
+                  style={{ width: scale(20), height: scale(20) }}
+                  resizeMode="contain"
+                />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -464,7 +509,6 @@ const UserPujaDetailsScreen: React.FC = () => {
 
   const renderPanditjiSection = () => {
     if (!pujaDetails) return null;
-    // Only show if no assigned_pandit
     if (pujaDetails.assigned_pandit) return null;
     return (
       <View style={styles.panditjiContainer}>
@@ -489,22 +533,59 @@ const UserPujaDetailsScreen: React.FC = () => {
   };
 
   const handleCancelBooking = () => {
-    navigation.navigate('PujaCancellationScreen', {id: id});
+    if (pujaDetails?.booking_status === 'in_progress') {
+      Alert.alert(t('cannot_cancel'), t('cannot_cancel_in_progress'), [
+        { text: t('ok') },
+      ]);
+      return;
+    }
+    if (pujaDetails?.booking_status === 'completed') {
+      Alert.alert(t('cannot_cancel'), t('cannot_cancel_completed'), [
+        { text: t('ok') },
+      ]);
+      return;
+    }
+    navigation.navigate('PujaCancellationScreen', { id });
   };
+
   const renderCancelButton = () => (
     <PrimaryButton
       title={t('cancel_booking')}
       onPress={handleCancelBooking}
       style={styles.cancelButton}
       textStyle={styles.cancelButtonText}
+      disabled={pujaDetails?.booking_status === 'in_progress' || pujaDetails?.booking_status === 'completed' || isNavigating}
     />
   );
 
-  // Show modal outside SafeAreaView for iOS, inside for others
+  if (isNavigating && pujaDetails?.booking_status === 'completed') {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBackground} />
+        <UserCustomHeader title={t('puja_details')} showBackButton={false} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primaryBackgroundButton} />
+          <Text style={styles.loadingText}>{t('processing_completion')}</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Show loader only during first screen load; after that, even background polling doesn't show loader unless user pulls to refresh.
+  if (!initialLoaded || loading) {
+    return (
+      <>
+        <SafeAreaView style={styles.container} edges={['top']}>
+          <CustomeLoader loading={true} />
+        </SafeAreaView>
+      </>
+    );
+  }
+
   return (
     <>
       <SafeAreaView style={styles.container} edges={['top']}>
-        <CustomeLoader loading={loading} />
+        <CustomeLoader loading={false} />
         <StatusBar
           barStyle="light-content"
           backgroundColor={COLORS.primaryBackground}
@@ -514,7 +595,16 @@ const UserPujaDetailsScreen: React.FC = () => {
           <ScrollView
             style={styles.content}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.contentContainer}>
+            contentContainerStyle={styles.contentContainer}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={COLORS.primaryBackgroundButton}
+                colors={[COLORS.primaryBackground]}
+              />
+            }
+            keyboardShouldPersistTaps="handled">
             {renderPujaDetails()}
             {renderTotalAmount()}
             {renderPanditDetails()}
@@ -522,6 +612,8 @@ const UserPujaDetailsScreen: React.FC = () => {
             {renderCancelButton()}
           </ScrollView>
         </View>
+
+        {/* Android Modal */}
         {Platform.OS !== 'ios' && pujaDetails && (
           <PujaItemsModal
             visible={isPujaItemsModalVisible}
@@ -531,11 +623,13 @@ const UserPujaDetailsScreen: React.FC = () => {
           />
         )}
       </SafeAreaView>
+
+      {/* iOS Modal */}
       {Platform.OS === 'ios' && pujaDetails && (
         <PujaItemsModal
           visible={isPujaItemsModalVisible}
           onClose={handleModalClose}
-          userItems={pujaDetails?.user_arranged_item || []}
+          userItems={pujaDetails?.user_arranged_items || []}
           panditjiItems={pujaDetails?.pandit_arranged_items || []}
         />
       )}
@@ -548,6 +642,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.primaryBackground,
+    padding: moderateScale(20),
+  },
+  loadingText: {
+    marginTop: verticalScale(16),
+    fontSize: moderateScale(16),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.white,
+    textAlign: 'center',
+  },
   content: {
     flex: 1,
     backgroundColor: COLORS.pujaBackground,
@@ -559,12 +667,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
-    // overflow: 'hidden',
   },
   contentContainer: {
     flexGrow: 1,
     padding: moderateScale(24),
-    // paddingBottom: verticalScale(100),
   },
   detailsContainer: {
     marginBottom: verticalScale(24),
@@ -573,14 +679,30 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
   },
-  detailsContent: {
-    // padding: moderateScale(14),
-  },
+  detailsContent: {},
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: verticalScale(14),
     minHeight: verticalScale(48),
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: verticalScale(14),
+    minHeight: verticalScale(48),
+  },
+  statusIndicator: {
+    width: scale(8),
+    height: scale(8),
+    borderRadius: scale(4),
+    marginRight: scale(12),
+  },
+  statusText: {
+    fontSize: moderateScale(13),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.pujaCardSubtext,
+    flex: 1,
   },
   detailRowContent: {
     flexDirection: 'row',
