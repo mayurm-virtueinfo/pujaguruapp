@@ -359,5 +359,7 @@
   "start_chat": "चॅट सुरू करा",
   "location_not_available": "स्थान उपलब्ध नाही",
   "date_not_available": "तारीख उपलब्ध नाही",
-  "time_not_available": "वेळ उपलब्ध नाही"
+  "time_not_available": "वेळ उपलब्ध नाही",
+  "otp_sent": "OTP तुमच्या फोनवर पाठवले गेले आहे.",
+  "otp_send_failed": "OTP पाठवण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा."
 }

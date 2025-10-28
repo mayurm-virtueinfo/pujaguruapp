@@ -359,5 +359,7 @@
   "start_chat": "Start chat",
   "location_not_available": "Location not available",
   "date_not_available": "Date not available",
-  "time_not_available": "Time not available"
+  "time_not_available": "Time not available",
+  "otp_sent": "OTP has been sent to your phone.",
+  "otp_send_failed": "Failed to send OTP. Please try again."
 }
