@@ -1167,7 +1167,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
     padding: 14,
-    marginBottom: verticalScale(24),
     marginHorizontal: scale(4),
   },
   termsRow: {

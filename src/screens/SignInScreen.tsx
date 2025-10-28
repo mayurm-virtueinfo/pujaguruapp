@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, {useState, useCallback, useEffect} from 'react';
 import {
   View,
   Text,
@@ -14,23 +14,23 @@ import {
   StatusBar,
   useColorScheme,
 } from 'react-native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { AuthStackParamList } from '../navigation/AuthNavigator';
+import {StackNavigationProp} from '@react-navigation/stack';
+import {AuthStackParamList} from '../navigation/AuthNavigator';
 import CustomTextInput from '../components/CustomTextInput';
-import { getAuth, signInWithPhoneNumber } from '@react-native-firebase/auth';
+import {getAuth, signInWithPhoneNumber} from '@react-native-firebase/auth';
 import Loader from '../components/CustomeLoader';
-import { moderateScale } from 'react-native-size-matters';
-import { useCommonToast } from '../common/CommonToast';
-import { COLORS } from '../theme/theme';
+import {moderateScale} from 'react-native-size-matters';
+import {useCommonToast} from '../common/CommonToast';
+import {COLORS} from '../theme/theme';
 import Fonts from '../theme/fonts';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTranslation } from 'react-i18next';
-import { Picker } from '@react-native-picker/picker';
-import i18n, { changeLanguage as setAppLanguage } from '../i18n';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTranslation} from 'react-i18next';
+import {Picker} from '@react-native-picker/picker';
+import i18n, {changeLanguage as setAppLanguage} from '../i18n';
 import getCurrentLanguage from '../i18n';
 import PrimaryButton from '../components/PrimaryButton';
-import { Images } from '../theme/Images';
-import { useFocusEffect } from '@react-navigation/native';
+import {Images} from '../theme/Images';
+import {useFocusEffect} from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {
   getTermsAndConditions as getTermsConditions,
@@ -40,7 +40,7 @@ import {
 import CountrySelect from 'react-native-country-select';
 
 // Fallback mapping for country calling codes (covers all official ISO 3166 alpha-2 codes - as of 2024)
-const COUNTRY_CALLING_CODES: { [key: string]: string } = {
+const COUNTRY_CALLING_CODES: {[key: string]: string} = {
   AF: '+93',
   AX: '+358',
   AL: '+355',
@@ -293,7 +293,7 @@ const COUNTRY_CALLING_CODES: { [key: string]: string } = {
 };
 
 // Optional: Mapping for country-specific phone number lengths
-const PHONE_NUMBER_LENGTHS: { [key: string]: number } = {
+const PHONE_NUMBER_LENGTHS: {[key: string]: number} = {
   IN: 10,
   US: 10,
   GB: 10,
@@ -316,18 +316,18 @@ interface Props {
 
 const DEFAULT_COUNTRY_ISO = 'IN';
 
-const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
-  const { t } = useTranslation();
+const SignInScreen: React.FC<Props> = ({navigation, route}) => {
+  const {t} = useTranslation();
   const inset = useSafeAreaInsets();
-  const { showErrorToast, showSuccessToast } = useCommonToast();
+  const {showErrorToast, showSuccessToast} = useCommonToast();
   const [phoneNumber, setPhoneNumber] = useState(__DEV__ ? '1111111111' : '');
   const [isLoading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ phoneNumber?: string }>({});
+  const [errors, setErrors] = useState<{phoneNumber?: string}>({});
   const [previousPhoneNumber, setPreviousPhoneNumber] = useState<string>('');
   const [isAgreed, setIsAgreed] = useState(false);
   const [countryModalVisible, setCountryModalVisible] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<any>({
-    name: { common: 'India' },
+    name: {common: 'India'},
     flag: '🇮🇳',
     callingCode: '+91',
     cca2: 'IN',
@@ -383,8 +383,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
     }
     if (!/^[0-9]+$/.test(trimmed)) {
       return (
-        t('Please_enter_valid_number') ||
-        'Please enter a valid mobile number'
+        t('Please_enter_valid_number') || 'Please enter a valid mobile number'
       );
     }
     return '';
@@ -393,7 +392,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
   const handleSignIn = async () => {
     const errorMsg = validateInput(phoneNumber);
     if (errorMsg) {
-      setErrors({ phoneNumber: errorMsg });
+      setErrors({phoneNumber: errorMsg});
       showErrorToast(errorMsg);
       return;
     }
@@ -408,7 +407,9 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
 
     setErrors({});
     const dialCode = selectedCountry?.callingCode || '+91';
-    const formattedPhone = `${dialCode}${phoneNumber.trim().replace(/\s+/g, '')}`;
+    const formattedPhone = `${dialCode}${phoneNumber
+      .trim()
+      .replace(/\s+/g, '')}`;
 
     if (previousPhoneNumber && formattedPhone === previousPhoneNumber) {
       Alert.alert(t('same_number_detected'), t('same_number_message'), [
@@ -445,16 +446,14 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
       setLoading(true);
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone);
       setLoading(false);
-      showSuccessToast(t('otp_sent') || 'OTP has been sent to your phone.');
+      showSuccessToast(t('otp_sent'));
       navigation.navigate('OTPVerification', {
         phoneNumber: formattedPhone,
         confirmation,
       });
     } catch (error: any) {
       setLoading(false);
-      showErrorToast(
-        t('otp_send_failed') || 'Failed to send OTP. Please try again.',
-      );
+      showErrorToast(t('otp_send_failed'));
     }
   };
 
@@ -509,11 +508,12 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
     color: pickerTextColor,
     fontSize: moderateScale(16),
     fontFamily: Fonts.Sen_Regular,
-    backgroundColor: colorScheme === 'dark' ? COLORS.primaryTextDark : undefined,
+    backgroundColor:
+      colorScheme === 'dark' ? COLORS.primaryTextDark : undefined,
   });
 
   return (
-    <View style={[styles.container, { paddingTop: inset.top }]}>
+    <View style={[styles.container, {paddingTop: inset.top}]}>
       <StatusBar
         translucent
         backgroundColor="transparent"
@@ -531,7 +531,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
               <View style={styles.containerHeader}>
                 <Image
                   source={Images.ic_app_logo}
-                  style={{ resizeMode: 'contain' }}
+                  style={{resizeMode: 'contain'}}
                 />
                 <Text style={styles.title}>{t('hi_welcome')}</Text>
                 <TouchableOpacity
@@ -564,7 +564,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
               </View>
 
               <View
-                style={[styles.containerBody, { paddingBottom: inset.bottom }]}>
+                style={[styles.containerBody, {paddingBottom: inset.bottom}]}>
                 <Text style={styles.mainTitle}>{t('sign_in')}</Text>
                 <Text style={styles.subtitle}>
                   {t('please_enter_your_credential')}
@@ -596,22 +596,23 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                     placeholder={t('enter_mobile_number')}
                     keyboardType="phone-pad"
                     error={errors?.phoneNumber}
-                    style={{ width: '65%' }}
+                    style={{width: '65%'}}
                   />
                 </View>
 
                 <CountrySelect
                   visible={countryModalVisible}
                   onClose={() => setCountryModalVisible(false)}
-                  onSelect={country => {
+                  onSelect={(country: any) => {
                     console.log('Selected country:', country);
                     const correctCallingCode =
                       COUNTRY_CALLING_CODES[country.cca2] ||
-                      (Array.isArray(country.callingCode) && country.callingCode.length
+                      (Array.isArray(country.callingCode) &&
+                      country.callingCode.length
                         ? `+${country.callingCode[0]}`
                         : country.callingCode || country.dialCode || '+91');
                     setSelectedCountry({
-                      name: country.name || { common: country.name || 'Unknown' },
+                      name: country.name || {common: country.name || 'Unknown'},
                       flag: country.flag,
                       callingCode: correctCallingCode,
                       cca2: country.cca2 || 'IN',
@@ -632,7 +633,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                     onPress={() => setIsAgreed(!isAgreed)}
                     activeOpacity={0.7}
                     accessibilityRole="checkbox"
-                    accessibilityState={{ checked: isAgreed }}
+                    accessibilityState={{checked: isAgreed}}
                     accessibilityLabel="Agree to terms">
                     <View
                       style={[
@@ -675,7 +676,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                   onPress={handleSignIn}
                   title={t('send_otp')}
                   disabled={!isAgreed}
-                  style={{ marginBottom: 20 }}
+                  style={{marginBottom: 20}}
                 />
               </View>
             </View>
@@ -699,7 +700,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                   mode="dropdown"
                   style={[
                     styles.langPicker,
-                    Platform.OS === 'ios' && { color: pickerTextColor },
+                    Platform.OS === 'ios' && {color: pickerTextColor},
                   ]}
                   itemStyle={
                     Platform.OS === 'ios' ? getIosPickerItemStyle() : undefined
@@ -710,7 +711,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                     color={Platform.OS === 'ios' ? undefined : pickerTextColor}
                     style={
                       colorScheme === 'dark'
-                        ? { backgroundColor: COLORS.primaryTextDark }
+                        ? {backgroundColor: COLORS.primaryTextDark}
                         : undefined
                     }
                   />
@@ -720,7 +721,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                     color={Platform.OS === 'ios' ? undefined : pickerTextColor}
                     style={
                       colorScheme === 'dark'
-                        ? { backgroundColor: COLORS.primaryTextDark }
+                        ? {backgroundColor: COLORS.primaryTextDark}
                         : undefined
                     }
                   />
@@ -730,7 +731,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                     color={Platform.OS === 'ios' ? undefined : pickerTextColor}
                     style={
                       colorScheme === 'dark'
-                        ? { backgroundColor: COLORS.primaryTextDark }
+                        ? {backgroundColor: COLORS.primaryTextDark}
                         : undefined
                     }
                   />
@@ -740,13 +741,13 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                     color={Platform.OS === 'ios' ? undefined : pickerTextColor}
                     style={
                       colorScheme === 'dark'
-                        ? { backgroundColor: COLORS.primaryTextDark }
+                        ? {backgroundColor: COLORS.primaryTextDark}
                         : undefined
                     }
                   />
                 </Picker>
               </View>
-              <View style={{ height: 12 }} />
+              <View style={{height: 12}} />
               <PrimaryButton
                 title={t('continue') || 'Continue'}
                 onPress={handleChangeLanguage}
