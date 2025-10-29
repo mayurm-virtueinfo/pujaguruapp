@@ -32,6 +32,7 @@ import AppConstant from '../utils/appConstant';
 import {getFcmToken} from '../configuration/firebaseMessaging';
 import CustomeLoader from '../components/CustomeLoader';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {getFirebaseAuthErrorMessage} from '../helper/firebaseErrorHandler'; // <-- Firebase error handler
 
 type AuthNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -138,7 +139,9 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       }
     } catch (error: any) {
       if (!hasNavigatedRef.current) {
-        showErrorToast(error?.message);
+        // Use firebase error handler
+        const message = getFirebaseAuthErrorMessage(error);
+        showErrorToast(message);
       }
     } finally {
       setLoading(false);
@@ -162,12 +165,10 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
         );
       }
     } catch (error: any) {
-      if (error.code === 'auth/invalid-verification-code') {
-        showErrorToast(t('invalid_otp'));
-      } else {
-        if (!hasNavigatedRef.current) {
-          showErrorToast(error?.message);
-        }
+      // Use firebase error handler for all errors
+      if (!hasNavigatedRef.current) {
+        const message = getFirebaseAuthErrorMessage(error);
+        showErrorToast(message);
       }
     } finally {
       setLoading(false);
@@ -206,15 +207,8 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       // No same number detect logic here
     } catch (error: any) {
       console.error('Resend OTP error:', error);
-      let errorMessage = t('resend_otp_failed');
-      if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Too many requests. Please wait and try again.';
-      } else if (error.code === 'auth/quota-exceeded') {
-        errorMessage = 'SMS quota exceeded. Please try again later.';
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-
+      // Use firebase error handler for resend
+      let errorMessage = getFirebaseAuthErrorMessage(error); 
       showErrorToast(errorMessage);
     } finally {
       setLoading(false);

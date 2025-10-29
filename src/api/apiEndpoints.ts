@@ -1,3 +1,5 @@
+import Config from 'react-native-config';
+
 class ApiEndpoints {
   static readonly XMasterKey =
     '$2a$10$XR82L3T4Q4gtDUAvZKwioOsmNaU2X7QVpkZbtKJ90jdcoVal/Pd4a';
@@ -37,8 +39,7 @@ class ApiEndpoints {
 
 export default ApiEndpoints;
 
-// export const APP_URL = 'https://9ddf43dbc3f4.ngrok-free.app';
-export const APP_URL = 'https://puja-guru.com';
+export const APP_URL = Config.BASE_URL;
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';
