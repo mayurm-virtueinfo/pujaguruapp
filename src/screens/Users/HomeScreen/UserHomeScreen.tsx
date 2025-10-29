@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   AppState,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 import {moderateScale} from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -28,7 +29,7 @@ import {useNavigation} from '@react-navigation/native';
 import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {useTranslation} from 'react-i18next';
-import {translateData, translateText} from '../../../utils/TranslateData';
+import {translateData} from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
@@ -37,7 +38,10 @@ import {
   requestLocationPermission,
   getCurrentLocation,
 } from '../../../utils/locationUtils';
-import {getLocationForAPI} from '../../../helper/helper';
+import {
+  getLocationForAPI,
+  LOCATION_UPDATED_EVENT,
+} from '../../../helper/helper';
 
 interface PendingPuja {
   id: number;
@@ -74,9 +78,6 @@ const UserHomeScreen: React.FC = () => {
   const currentLanguage = i18n.language;
 
   const inset = useSafeAreaInsets();
-
-  // Remove translation cache to always fetch new api data on refresh
-  // const translationCacheRef = useRef</* ... */>(new Map());
 
   const fetchUserAndLocation = useCallback(async () => {
     try {
@@ -255,7 +256,27 @@ const UserHomeScreen: React.FC = () => {
     return () => subscription?.remove();
   }, [fetchUserAndLocation, loadHomeData]);
 
-  // Always call loadHomeData on refresh to get latest API data
+  // 🔔 Auto-refresh when background location updates
+  useEffect(() => {
+    const locationListener = DeviceEventEmitter.addListener(
+      LOCATION_UPDATED_EVENT,
+      async (newLocation: any) => {
+        console.log(
+          '📡 Auto-refresh triggered: new location received',
+          newLocation,
+        );
+        await loadHomeData({
+          latitude: newLocation.latitude,
+          longitude: newLocation.longitude,
+        });
+      },
+    );
+
+    return () => {
+      locationListener.remove();
+    };
+  }, [loadHomeData]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     loadHomeData();

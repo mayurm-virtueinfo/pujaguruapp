@@ -2,7 +2,6 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiEndpoints, {APP_URL, POST_REFRESH_TOKEN} from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
-import {postRefreshToken} from './apiService';
 
 const apiDev = axios.create({
   baseURL: APP_URL,
@@ -39,6 +38,12 @@ apiDev.interceptors.request.use(
 let isRefreshing = false;
 let refreshSubscribers: any = [];
 
+let sessionHandler: any = null;
+
+export const registerApiSessionHandler = (handler: any) => {
+  sessionHandler = handler;
+};
+
 const subscribeTokenRefresh = (cb: any) => {
   refreshSubscribers.push(cb);
 };
@@ -60,8 +65,11 @@ const refreshAccessToken = async (refreshToken: string) => {
       },
     );
     return response.data;
-  } catch (error) {
-    console.error('Error refreshing token (custom logic)', error);
+  } catch (error: any) {
+    console.error('Error refreshing token (custom logic) :: ', error);
+    if (sessionHandler) {
+      sessionHandler();
+    }
     throw error;
   }
 };
@@ -119,6 +127,7 @@ apiDev.interceptors.response.use(
             '---Accesstoken---refreshing---apiDev--failure (custom logic): ',
             refreshError,
           );
+          if (sessionHandler) sessionHandler();
           return Promise.reject(refreshError);
         }
       }

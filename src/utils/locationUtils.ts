@@ -1,15 +1,13 @@
-import {Platform, PermissionsAndroid, Alert, Linking} from 'react-native';
+import {Platform, PermissionsAndroid, Linking} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import {promptForEnableLocationIfNeeded} from 'react-native-android-location-enabler';
 import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface LocationData {
   latitude: number;
   longitude: number;
   address?: string;
   timestamp?: string;
-  accuracy?: number;
 }
 
 // 🔹 Request location permission for Android & iOS
@@ -65,20 +63,6 @@ export const ensureLocationEnabled = async (): Promise<boolean> => {
       Geolocation.getCurrentPosition(
         () => resolve(true),
         error => {
-          if (error.code === 2) {
-            Alert.alert(
-              'Location Services Disabled',
-              'Please enable Location Services in Settings.',
-              [
-                {text: 'Cancel', style: 'cancel'},
-                {
-                  text: 'Open Settings',
-                  onPress: () =>
-                    Linking.openURL('App-Prefs:Privacy&path=LOCATION'),
-                },
-              ],
-            );
-          }
           resolve(false);
         },
       );
@@ -88,97 +72,37 @@ export const ensureLocationEnabled = async (): Promise<boolean> => {
 };
 
 // 🔹 Get current location
-export const getCurrentLocation = (): Promise<LocationData> => {
-  return new Promise(async (resolve, reject) => {
-    //check location permission
-    const hasPermission = await requestLocationPermission();
-    if (!hasPermission) {
-      reject(new Error('Location permission denied'));
-      return;
-    }
+export const getCurrentLocation = async (): Promise<LocationData> => {
+  // 1️⃣ Ask for permission (Android + iOS)
+  const hasPermission = await requestLocationPermission();
+  if (!hasPermission) throw new Error('Location permission denied');
 
-    //check GPS service enable or not
-    const gpsEnabled = await ensureLocationEnabled();
-    if (!gpsEnabled) {
-      reject(new Error('Location services are turned off'));
-      return;
-    }
+  // 2️⃣ Ensure GPS/Location is enabled
+  const gpsEnabled = await ensureLocationEnabled();
+  if (!gpsEnabled) throw new Error('Location services are turned off');
 
-    // Helper to try getCurrentPosition with specified options and return a promise
-    const getPosition = (options: {
-      enableHighAccuracy: boolean;
-      timeout: number;
-      maximumAge: number;
-    }) =>
-      new Promise<LocationData>((res, rej) => {
-        Geolocation.getCurrentPosition(
-          position => {
-            res({
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              accuracy: position.coords.accuracy,
-              timestamp: new Date().toISOString(),
-            });
-          },
-          err => rej(err),
-          options,
-        );
-      });
+  // 3️⃣ Get quick fused/cached location
+  return new Promise<LocationData>((resolve, reject) => {
+    Geolocation.getCurrentPosition(
+      pos => {
+        console.log('Geolocation library response :: ', pos);
 
-    try {
-      // 1) Quick attempt: try a low-accuracy, short-timeout call which often returns cached/fused location quickly
-      try {
-        const quick = await getPosition({
-          enableHighAccuracy: false,
-          timeout: 3000, // 3s
-          maximumAge: 60000, // accept location up to 1 minute old
+        resolve({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          timestamp: new Date().toISOString(),
         });
-        // If quick attempt succeeds and accuracy is present, return it immediately
-        if (quick) {
-          resolve(quick);
-          return;
-        }
-      } catch (quickErr) {
-        // ignore and fall through to a higher-accuracy attempt
-        const qe: any = quickErr || {};
-        console.debug('Quick location attempt failed:', qe.message ?? qe);
-      }
-
-      // 2) Secondary attempt: higher accuracy but with reduced timeout from 25s to 10s
-      try {
-        const high = await getPosition({
-          enableHighAccuracy: true,
-          timeout: 10000, // 10s instead of 25s
-          maximumAge: 0,
-        });
-        resolve(high);
-        return;
-      } catch (highErr) {
-        // if Android and high accuracy failed due to provider issues, try a final low-accuracy fallback
-        const he: any = highErr || {};
-        console.warn('High accuracy attempt failed:', he.message ?? he);
-        if (Platform.OS === 'android') {
-          try {
-            const fallback = await getPosition({
-              enableHighAccuracy: false,
-              timeout: 5000,
-              maximumAge: 0,
-            });
-            resolve(fallback);
-            return;
-          } catch (fallbackErr) {
-            reject(fallbackErr);
-            return;
-          }
-        }
-
-        // For iOS or other failures, reject with the high-accuracy error
-        reject(highErr);
-        return;
-      }
-    } catch (err) {
-      reject(err);
-    }
+      },
+      err => {
+        console.warn('⚠️ Location fetch failed:', err.message);
+        reject(err);
+      },
+      {
+        enableHighAccuracy: false, // 🚀 use fast fused/cell-based location
+        timeout: 5000, // wait max 5 sec
+        maximumAge: 10 * 60 * 1000, // use cached up to 10 min old
+      },
+    );
   });
 };
 
@@ -186,51 +110,17 @@ export const getCurrentLocation = (): Promise<LocationData> => {
 export const checkAndPromptGPS = async (): Promise<boolean> => {
   try {
     if (Platform.OS === 'android') {
-      // Directly prompt for GPS if disabled
       const status = await promptForEnableLocationIfNeeded({
         interval: 10000,
         waitForAccurate: true,
       });
       return status === 'enabled' || status === 'already-enabled';
     } else if (Platform.OS === 'ios') {
-      // For iOS, we need to check if location services are enabled
       return new Promise(resolve => {
         Geolocation.getCurrentPosition(
-          () => resolve(true), // Location services are enabled
-          error => {
-            if (error.code === 2) {
-              // Location services disabled - show alert
-              // Alert.alert(
-              //   'Location Services Disabled',
-              //   'Please enable Location Services in Settings to use this feature.',
-              //   [
-              //     {
-              //       text: 'Cancel',
-              //       style: 'cancel',
-              //       onPress: () => resolve(false),
-              //     },
-              //     {
-              //       text: 'Open Settings',
-              //       onPress: () => {
-              //         Linking.openURL('App-Prefs:Privacy&path=LOCATION');
-              //         resolve(false);
-              //       },
-              //     },
-              //   ],
-              // );
-              console.error(
-                '-------- Location services are disabled on iOS --------',
-              );
-              resolve(false);
-            } else {
-              resolve(false);
-            }
-          },
-          {
-            enableHighAccuracy: false,
-            timeout: 5000,
-            maximumAge: 0,
-          },
+          () => resolve(true),
+          () => resolve(false),
+          {enableHighAccuracy: false, timeout: 5000, maximumAge: 0},
         );
       });
     }
@@ -247,40 +137,17 @@ export const isGPSEnabled = async (): Promise<boolean> => {
     if (Platform.OS === 'android') {
       return new Promise(resolve => {
         Geolocation.getCurrentPosition(
-          position => {
-            resolve(true);
-          },
-          error => {
-            if (error.code === 2 || error.code === 3) {
-              resolve(false);
-            } else {
-              resolve(false);
-            }
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 2000,
-            maximumAge: 0,
-          },
+          () => resolve(true),
+          () => resolve(false),
+          {enableHighAccuracy: true, timeout: 2000, maximumAge: 0},
         );
       });
     } else {
-      // For iOS
       return new Promise(resolve => {
         Geolocation.getCurrentPosition(
-          position => {
-            console.log('iOS GPS check success');
-            resolve(true);
-          },
-          error => {
-            console.log('iOS GPS check failed:', error.code, error.message);
-            resolve(false);
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 3000,
-            maximumAge: 0,
-          },
+          () => resolve(true),
+          () => resolve(false),
+          {enableHighAccuracy: true, timeout: 3000, maximumAge: 0},
         );
       });
     }

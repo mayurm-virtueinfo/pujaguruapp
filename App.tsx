@@ -34,6 +34,7 @@ import {GPSProvider} from './src/provider/GPSProvider';
 import GPSCheckWrapper from './src/components/GPSCheckWrapper';
 import GPSModal from './src/components/GPSModal';
 import {requestUserPermission} from './src/configuration/firebaseMessaging';
+import {SessionProvider} from './src/provider/SessionProvider';
 
 LogBox.ignoreLogs([
   "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
@@ -42,8 +43,8 @@ LogBox.ignoreLogs([
 
 const auth = getAuth();
 if (__DEV__) {
-  auth.useEmulator('http://127.0.0.1:9099');
-  // auth.useEmulator('http://192.168.1.13:9099');
+  // auth.useEmulator('http://127.0.0.1:9099');
+  auth.useEmulator('http://192.168.1.13:9099');
 }
 setupNotifications();
 
@@ -169,15 +170,17 @@ const App = () => {
         }}>
         <GPSProvider>
           <AuthProvider>
-            <NavigationContainer
-              ref={navigationRef}
-              onReady={() => {
-                handleInitialNotification();
-              }}>
-              <RootNavigator />
-              <GPSCheckWrapper />
-              <GPSModal />
-            </NavigationContainer>
+            <SessionProvider>
+              <NavigationContainer
+                ref={navigationRef}
+                onReady={() => {
+                  handleInitialNotification();
+                }}>
+                <RootNavigator />
+                <GPSCheckWrapper />
+                <GPSModal />
+              </NavigationContainer>
+            </SessionProvider>
           </AuthProvider>
         </GPSProvider>
       </ToastProvider>

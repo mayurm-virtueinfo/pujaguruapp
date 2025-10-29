@@ -361,5 +361,8 @@
   "date_not_available": "Date not available",
   "time_not_available": "Time not available",
   "otp_sent": "OTP has been sent to your phone.",
-  "otp_send_failed": "Failed to send OTP. Please try again."
+  "otp_send_failed": "Failed to send OTP. Please try again.",
+  "session_expire": "Session Expired",
+  "session_expire_message": "Your session has expired. Please login again.",
+  "login_again": "Login Again"
 }

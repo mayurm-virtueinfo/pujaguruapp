@@ -361,5 +361,8 @@
   "date_not_available": "तिथि उपलब्ध नहीं है",
   "time_not_available": "समय उपलब्ध नहीं है",
   "otp_sent": "OTP आपके फ़ोन पर भेजा गया है।",
-  "otp_send_failed": "OTP भेजने में विफल। कृपया पुनः प्रयास करें।"
+  "otp_send_failed": "OTP भेजने में विफल। कृपया पुनः प्रयास करें।",
+  "session_expire": "सत्र समाप्त",
+  "session_expire_message": "आपका सत्र समाप्त हो गया है। कृपया दोबारा लॉगिन करें।",
+  "login_again": "दोबारा लॉगिन करें"
 }
