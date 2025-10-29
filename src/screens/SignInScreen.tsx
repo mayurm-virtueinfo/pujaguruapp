@@ -38,6 +38,7 @@ import {
   getRefundPolicy,
 } from '../api/apiService';
 import CountrySelect from 'react-native-country-select';
+import { getFirebaseAuthErrorMessage } from '../helper/firebaseErrorHandler'; // <-- Added
 
 // Fallback mapping for country calling codes (covers all official ISO 3166 alpha-2 codes - as of 2024)
 const COUNTRY_CALLING_CODES: {[key: string]: string} = {
@@ -445,15 +446,17 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
     try {
       setLoading(true);
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone);
-      setLoading(false);
       showSuccessToast(t('otp_sent'));
+      setLoading(false);
       navigation.navigate('OTPVerification', {
         phoneNumber: formattedPhone,
         confirmation,
       });
     } catch (error: any) {
       setLoading(false);
-      showErrorToast(t('otp_send_failed'));
+      // Use firebase error handler message
+      const firebaseErrorMsg = getFirebaseAuthErrorMessage(error);
+      showErrorToast(firebaseErrorMsg);
     }
   };
 
