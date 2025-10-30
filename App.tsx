@@ -30,9 +30,6 @@ import {
   handleNotificationNavigation,
   setupNotifications,
 } from './src/configuration/notificationSetup';
-import {GPSProvider} from './src/provider/GPSProvider';
-import GPSCheckWrapper from './src/components/GPSCheckWrapper';
-import GPSModal from './src/components/GPSModal';
 import {requestUserPermission} from './src/configuration/firebaseMessaging';
 import {SessionProvider} from './src/provider/SessionProvider';
 
@@ -44,7 +41,7 @@ LogBox.ignoreLogs([
 const auth = getAuth();
 if (__DEV__) {
   // auth.useEmulator('http://127.0.0.1:9099');
-  auth.useEmulator('http://192.168.1.9:9099');
+  auth.useEmulator('http://192.168.1.13:9099');
 }
 setupNotifications();
 
@@ -168,21 +165,17 @@ const App = () => {
           fontSize: moderateScale(16),
           color: COLORS.textPrimary,
         }}>
-        <GPSProvider>
-          <AuthProvider>
-            <SessionProvider>
-              <NavigationContainer
-                ref={navigationRef}
-                onReady={() => {
-                  handleInitialNotification();
-                }}>
-                <RootNavigator />
-                <GPSCheckWrapper />
-                <GPSModal />
-              </NavigationContainer>
-            </SessionProvider>
-          </AuthProvider>
-        </GPSProvider>
+        <AuthProvider>
+          <SessionProvider>
+            <NavigationContainer
+              ref={navigationRef}
+              onReady={() => {
+                handleInitialNotification();
+              }}>
+              <RootNavigator />
+            </NavigationContainer>
+          </SessionProvider>
+        </AuthProvider>
       </ToastProvider>
     </I18nextProvider>
   );

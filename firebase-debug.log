@@ -1,21 +1,20 @@
-[debug] [2025-10-29T09:35:45.336Z] ----------------------------------------------------------------------
-[debug] [2025-10-29T09:35:45.340Z] Command:       /Users/mac/.nvm/versions/node/v22.14.0/bin/node /Users/mac/.nvm/versions/node/v22.14.0/bin/firebase emulators:start --only auth
-[debug] [2025-10-29T09:35:45.341Z] CLI Version:   14.20.0
-[debug] [2025-10-29T09:35:45.341Z] Platform:      darwin
-[debug] [2025-10-29T09:35:45.341Z] Node Version:  v22.14.0
-[debug] [2025-10-29T09:35:45.341Z] Time:          Wed Oct 29 2025 15:05:45 GMT+0530 (India Standard Time)
-[debug] [2025-10-29T09:35:45.342Z] ----------------------------------------------------------------------
+[debug] [2025-10-30T10:23:20.858Z] ----------------------------------------------------------------------
+[debug] [2025-10-30T10:23:20.861Z] Command:       /Users/apple/.nvm/versions/node/v22.17.1/bin/node /Users/apple/.nvm/versions/node/v22.17.1/bin/firebase emulators:start --only auth
+[debug] [2025-10-30T10:23:20.861Z] CLI Version:   14.11.1
+[debug] [2025-10-30T10:23:20.862Z] Platform:      darwin
+[debug] [2025-10-30T10:23:20.862Z] Node Version:  v22.17.1
+[debug] [2025-10-30T10:23:20.862Z] Time:          Thu Oct 30 2025 15:53:20 GMT+0530 (India Standard Time)
+[debug] [2025-10-30T10:23:20.862Z] ----------------------------------------------------------------------
 [debug] 
-[debug] [2025-10-29T09:35:46.089Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
-[debug] [2025-10-29T09:35:46.099Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-10-30T10:23:21.064Z] Object "" in "firebase.json" has unknown property: {"additionalProperty":"react-native"}
+[debug] [2025-10-30T10:23:21.069Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
 [debug] Failed to authenticate, have you run firebase login?
 [warn] ⚠  emulators: You are not currently authenticated so some features may not work correctly. Please run firebase login to authenticate the CLI. 
 [info] i  emulators: Starting emulators: auth {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: auth"}}
-[debug] [2025-10-29T09:35:51.504Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
-[debug] [2025-10-29T09:35:51.504Z] assigned listening specs for emulators {"user":{"auth":[{"address":"0.0.0.0","family":"IPv4","port":9099}],"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}]},"metadata":{"message":"assigned listening specs for emulators"}}
-[debug] [2025-10-29T09:35:51.510Z] Emulator locator file path: /var/folders/3n/p8r92cqs1ddbr5d11d16j5wr0000gn/T/hub-panditji-42b4a.json
-[debug] [2025-10-29T09:35:51.510Z] [hub] writing locator at /var/folders/3n/p8r92cqs1ddbr5d11d16j5wr0000gn/T/hub-panditji-42b4a.json
-[debug] [2025-10-29T09:36:14.555Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[debug] [2025-10-30T10:23:23.314Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2025-10-30T10:23:23.314Z] assigned listening specs for emulators {"user":{"auth":[{"address":"0.0.0.0","family":"IPv4","port":9099}],"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2025-10-30T10:23:23.317Z] [hub] writing locator at /var/folders/1y/5fr5z4js2897c00n1lsl0rq40000gn/T/hub-panditji-42b4a.json
+[debug] [2025-10-30T10:23:30.084Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
 [info] 
 ┌─────────────────────────────────────────────────────────────┐
 │ ✔  All emulators ready! It is now safe to connect your app. │
@@ -32,4 +31,9 @@
 
 Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
  
-[info] i  To verify the phone number +911111111111, use the code 363947. {"metadata":{"emulator":{"name":"auth"},"message":"To verify the phone number +911111111111, use the code 363947."}}
+[info] i  To verify the phone number +911111111111, use the code 039157. {"metadata":{"emulator":{"name":"auth"},"message":"To verify the phone number +911111111111, use the code 039157."}}
+[info] i  To verify the phone number +911111111111, use the code 145585. {"metadata":{"emulator":{"name":"auth"},"message":"To verify the phone number +911111111111, use the code 145585."}}
+[info] i  To verify the phone number +916666666666, use the code 680180. {"metadata":{"emulator":{"name":"auth"},"message":"To verify the phone number +916666666666, use the code 680180."}}
+[info] i  To verify the phone number +919999999999, use the code 124212. {"metadata":{"emulator":{"name":"auth"},"message":"To verify the phone number +919999999999, use the code 124212."}}
+[info] i  To verify the phone number +919999999999, use the code 762025. {"metadata":{"emulator":{"name":"auth"},"message":"To verify the phone number +919999999999, use the code 762025."}}
+[info] i  To verify the phone number +919999999999, use the code 156077. {"metadata":{"emulator":{"name":"auth"},"message":"To verify the phone number +919999999999, use the code 156077."}}

@@ -1,4 +1,4 @@
-import {Platform, PermissionsAndroid, Linking} from 'react-native';
+import {Platform, PermissionsAndroid, Linking, Alert} from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import {promptForEnableLocationIfNeeded} from 'react-native-android-location-enabler';
 import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
@@ -35,6 +35,34 @@ export const requestLocationPermission = async (): Promise<boolean> => {
 
       if (status === RESULTS.GRANTED || status === RESULTS.LIMITED) return true;
 
+      if (status === RESULTS.BLOCKED || status === RESULTS.UNAVAILABLE) {
+        Alert.alert(
+          'Location Services Disabled',
+          'Please enable Location Services in your device settings for accurate app functionality.',
+          [
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                const url = 'app-settings:';
+                Linking.canOpenURL(url)
+                  .then(supported => {
+                    if (supported) {
+                      Linking.openURL(url);
+                    } else if (Linking.openSettings) {
+                      Linking.openSettings();
+                    }
+                  })
+                  .catch(() => {
+                    if (Linking.openSettings) Linking.openSettings();
+                  });
+              },
+            },
+            {text: 'Cancel', style: 'cancel'},
+          ],
+        );
+        return false;
+      }
+
       const newStatus = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
       return newStatus === RESULTS.GRANTED || newStatus === RESULTS.LIMITED;
     }
@@ -59,14 +87,11 @@ export const ensureLocationEnabled = async (): Promise<boolean> => {
       return false;
     }
   } else if (Platform.OS === 'ios') {
-    return new Promise(resolve => {
-      Geolocation.getCurrentPosition(
-        () => resolve(true),
-        error => {
-          resolve(false);
-        },
-      );
-    });
+    // Prefer using react-native-permissions to check Location Services
+    const status = await check(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+    if (status === RESULTS.GRANTED || status === RESULTS.LIMITED) {
+      return true;
+    }
   }
   return false;
 };
@@ -81,12 +106,10 @@ export const getCurrentLocation = async (): Promise<LocationData> => {
   const gpsEnabled = await ensureLocationEnabled();
   if (!gpsEnabled) throw new Error('Location services are turned off');
 
-  // 3️⃣ Get quick fused/cached location
+  // 3️⃣ Get current location
   return new Promise<LocationData>((resolve, reject) => {
     Geolocation.getCurrentPosition(
       pos => {
-        console.log('Geolocation library response :: ', pos);
-
         resolve({
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
@@ -94,65 +117,13 @@ export const getCurrentLocation = async (): Promise<LocationData> => {
         });
       },
       err => {
-        console.warn('⚠️ Location fetch failed:', err.message);
         reject(err);
       },
       {
-        enableHighAccuracy: false, // 🚀 use fast fused/cell-based location
-        timeout: 5000, // wait max 5 sec
-        maximumAge: 10 * 60 * 1000, // use cached up to 10 min old
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 10 * 60 * 1000,
       },
     );
   });
-};
-
-// 🔹 Direct GPS check and prompt function
-export const checkAndPromptGPS = async (): Promise<boolean> => {
-  try {
-    if (Platform.OS === 'android') {
-      const status = await promptForEnableLocationIfNeeded({
-        interval: 10000,
-        waitForAccurate: true,
-      });
-      return status === 'enabled' || status === 'already-enabled';
-    } else if (Platform.OS === 'ios') {
-      return new Promise(resolve => {
-        Geolocation.getCurrentPosition(
-          () => resolve(true),
-          () => resolve(false),
-          {enableHighAccuracy: false, timeout: 5000, maximumAge: 0},
-        );
-      });
-    }
-    return false;
-  } catch (err) {
-    console.warn('Error checking GPS status:', err);
-    return false;
-  }
-};
-
-// 🔹 Check if GPS is enabled without prompting
-export const isGPSEnabled = async (): Promise<boolean> => {
-  try {
-    if (Platform.OS === 'android') {
-      return new Promise(resolve => {
-        Geolocation.getCurrentPosition(
-          () => resolve(true),
-          () => resolve(false),
-          {enableHighAccuracy: true, timeout: 2000, maximumAge: 0},
-        );
-      });
-    } else {
-      return new Promise(resolve => {
-        Geolocation.getCurrentPosition(
-          () => resolve(true),
-          () => resolve(false),
-          {enableHighAccuracy: true, timeout: 3000, maximumAge: 0},
-        );
-      });
-    }
-  } catch (err) {
-    console.log('GPS check exception:', err);
-    return false;
-  }
 };
