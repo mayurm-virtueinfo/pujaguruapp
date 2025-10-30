@@ -892,7 +892,7 @@ const PaymentScreen: React.FC = () => {
           <View
             style={[
               styles.fixedButtonContainer,
-              {paddingBottom: inset.bottom || (Platform.OS === 'ios' ? 16 : 8)},
+              {paddingBottom: Platform.OS === 'ios' ? 16 : 16},
             ]}>
             <PrimaryButton
               title={t('confirm_booking')}
@@ -970,7 +970,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    // backgroundColor: COLORS.primary,
   },
   flex1: {
     flex: 1,

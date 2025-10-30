@@ -197,10 +197,10 @@ const BottomUserProfileScreen: React.FC = () => {
   return (
     <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
       <CustomeLoader loading={logoutLoading || loading} />
-      <LinearGradient
+      {/* <LinearGradient
         colors={[COLORS.gradientStart, COLORS.gradientEnd]}
         style={[styles.headerGradient]}
-      />
+      /> */}
       <UserCustomHeader title={t('profile')} />
 
       {currentUser && (
@@ -370,7 +370,7 @@ const BottomUserProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.primaryBackground,
+    backgroundColor: COLORS.primary,
   },
   headerGradient: {
     position: 'absolute',

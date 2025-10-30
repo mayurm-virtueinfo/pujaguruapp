@@ -525,7 +525,9 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
       <ImageBackground
         source={Images.ic_splash_background}
         style={styles.container}>
-        <KeyboardAvoidingView style={styles.container}>
+        <KeyboardAvoidingView style={styles.container} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
           <Loader loading={isLoading} />
           <ScrollView
             contentContainerStyle={styles.scrollContent}

@@ -900,11 +900,14 @@ const styles = StyleSheet.create({
   },
   flex1: {
     flex: 1,
+    borderTopLeftRadius:30,
+    borderTopRightRadius:30,
+    backgroundColor: COLORS.pujaBackground,
   },
   scrollContent: {
     padding: moderateScale(24),
     paddingBottom: verticalScale(50),
-    backgroundColor: COLORS.pujaBackground,
+
   },
   content: {
     flex: 1,
