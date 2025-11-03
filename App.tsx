@@ -1,7 +1,7 @@
 import './src/i18n';
 import React, {useEffect, useState} from 'react';
 import {NavigationContainer} from '@react-navigation/native';
-import SplashScreen from 'react-native-splash-screen';
+// import SplashScreen from 'react-native-splash-screen';
 import RootNavigator from './src/navigation/RootNavigator';
 import {
   LogBox,
@@ -32,6 +32,8 @@ import {
 } from './src/configuration/notificationSetup';
 import {requestUserPermission} from './src/configuration/firebaseMessaging';
 import {SessionProvider} from './src/provider/SessionProvider';
+import { hideSplash } from 'react-native-splash-view';
+
 
 LogBox.ignoreLogs([
   "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
@@ -41,7 +43,7 @@ LogBox.ignoreLogs([
 const auth = getAuth();
 if (__DEV__) {
   // auth.useEmulator('http://127.0.0.1:9099');
-  auth.useEmulator('http://192.168.1.13:9099');
+  auth.useEmulator('http://192.168.1.7:9099');
 }
 setupNotifications();
 
@@ -51,7 +53,8 @@ const App = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      SplashScreen.hide();
+      // SplashScreen.hide();
+      hideSplash();
     }, 2500);
 
     initializeI18n();

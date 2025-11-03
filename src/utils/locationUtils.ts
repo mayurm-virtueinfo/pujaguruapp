@@ -101,15 +101,16 @@ export const getCurrentLocation = async (): Promise<LocationData> => {
   // 1️⃣ Ask for permission (Android + iOS)
   const hasPermission = await requestLocationPermission();
   if (!hasPermission) throw new Error('Location permission denied');
-
+  
   // 2️⃣ Ensure GPS/Location is enabled
   const gpsEnabled = await ensureLocationEnabled();
   if (!gpsEnabled) throw new Error('Location services are turned off');
-
+  
   // 3️⃣ Get current location
   return new Promise<LocationData>((resolve, reject) => {
     Geolocation.getCurrentPosition(
       pos => {
+        console.log('hasPermission ::', pos)
         resolve({
           latitude: pos.coords.latitude,
           longitude: pos.coords.longitude,
@@ -117,12 +118,13 @@ export const getCurrentLocation = async (): Promise<LocationData> => {
         });
       },
       err => {
+        console.log('err ::', err)
         reject(err);
       },
       {
-        enableHighAccuracy: false,
-        timeout: 5000,
-        maximumAge: 10 * 60 * 1000,
+        enableHighAccuracy: true,   // ✅ Try GPS first
+        timeout: 15000,             // ✅ Give 15 seconds
+        maximumAge: 10000,          // ✅ Allow a recent cached fix
       },
     );
   });
