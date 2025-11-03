@@ -40,6 +40,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import {WebView} from 'react-native-webview';
 import {translateData} from '../../../utils/TranslateData';
+import Config from 'react-native-config';
 
 const PaymentScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -487,7 +488,7 @@ const PaymentScreen: React.FC = () => {
         description: 'Puja Booking Payment',
         image: 'https://your-logo-url.com/logo.png',
         currency: 'INR',
-        key: 'rzp_test_birUVdrhV4Jm7l',
+        key: Config.RAZORPAY_KEY,
         amount: remainingAmount * 100,
         name: 'PujaGuru App',
         order_id: razorpayOrder.order_id,
