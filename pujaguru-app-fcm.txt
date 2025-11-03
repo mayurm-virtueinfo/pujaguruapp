@@ -5,3 +5,15 @@ Services : Apple Push Notifications service (APNs)
 Enabled Services : 
 Name	    Configuration
 APNsApple   Push Notifications service (APNs)	Team scoped (All topics) [Sandbox & Production]
+
+
+"@react-native-firebase/database": "^22.2.1",
+"@react-native-firebase/firestore": "^22.2.1",
+"@types/react-native-razorpay": "^2.2.6",
+"npm": "^11.4.1",
+"razorpay": "^2.9.6",
+"react-native-splash-screen": "^3.3.0",
+
+
+npm run firebase-emulator
+npm install -g firebase-tools
