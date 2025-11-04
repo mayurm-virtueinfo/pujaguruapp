@@ -1,13 +1,13 @@
-import React, {useRef} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {COLORS} from '../theme/theme';
+import { COLORS } from '../theme/theme';
 import Fonts from '../theme/fonts';
-import {Address} from '../screens/Users/AddressesScreen/AddressesScreen';
+import { Address } from '../screens/Users/AddressesScreen/AddressesScreen';
 
 interface AddressCardProps {
   address: Address;
-  onMenuPress: (address: Address, position: {x: number; y: number}) => void;
+  onMenuPress: (address: Address, position: { x: number; y: number }) => void;
   isLast?: boolean;
 }
 
@@ -29,7 +29,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
           px: number,
           py: number,
         ) => {
-          onMenuPress(address, {x: px, y: py});
+          onMenuPress(address, { x: px, y: py });
         },
       );
     }
@@ -52,15 +52,16 @@ const AddressCard: React.FC<AddressCardProps> = ({
         <Text style={styles.addressName}>
           {address.name ? address.name : 'Address'}
         </Text>
-        {address.label && (
+        {address.address_type ? (
           <View style={styles.typeBadge}>
-            <Text style={styles.typeText}>{address.label}</Text>
+            <Text style={styles.typeText}>{address.address_type}</Text>
           </View>
-        )}
+        ) : null}
         <TouchableOpacity
           ref={buttonRef}
           style={styles.menuButton}
-          onPress={handleMenuPress}>
+          onPress={handleMenuPress}
+        >
           <MaterialIcons
             name="more-vert"
             size={24}

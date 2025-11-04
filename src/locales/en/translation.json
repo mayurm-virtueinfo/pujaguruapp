@@ -367,5 +367,10 @@
   "otp_send_failed": "Failed to send OTP. Please try again.",
   "session_expire": "Session Expired",
   "session_expire_message": "Your session has expired. Please login again.",
-  "login_again": "Login Again"
+  "login_again": "Login Again",
+  "invalid_phone_number": "Invalid phone number",
+  "invalid_pincode": "Invalid pincode",
+  "failed_to_fetch_cities": "Failed to fetch city list. Please try again.",
+  "failed_to_fetch_data": "Failed to fetch data. Please try again.",
+  "failed_to_save_address": "Failed to save address. Please try again."
 }

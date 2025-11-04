@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -7,27 +7,27 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import PujaCard from '../../../components/PujaCard';
 import PujaListItem from '../../../components/PujaListItem';
-import {getPujaList} from '../../../api/apiService';
+import { getPujaList } from '../../../api/apiService';
 import Fonts from '../../../theme/fonts';
-import {useNavigation} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {moderateScale} from 'react-native-size-matters';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
+import { moderateScale } from 'react-native-size-matters';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {useCommonToast} from '../../../common/CommonToast';
-import {translateData} from '../../../utils/TranslateData';
+import { useCommonToast } from '../../../common/CommonToast';
+import { translateData } from '../../../utils/TranslateData';
 
 type PujaItem = {
   id: any;
   title: any;
   image_url: any;
-  base_price: number;
+  price_without_samagri: number;
   description: any;
 };
 
@@ -37,8 +37,8 @@ const PujaListScreen: React.FC = () => {
     'PujaList'
   >;
   const inset = useSafeAreaInsets();
-  const {t, i18n} = useTranslation();
-  const {showErrorToast} = useCommonToast();
+  const { t, i18n } = useTranslation();
+  const { showErrorToast } = useCommonToast();
 
   const currentLanguage = i18n.language;
   console.log('Current Language:', currentLanguage);
@@ -46,6 +46,8 @@ const PujaListScreen: React.FC = () => {
   const [pujaList, setPujaList] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const navigation = useNavigation<ScreenNavigationProp>();
+
+  console.log('pujaList :: ', pujaList);
 
   const translationCacheRef = useRef<Map<string, any>>(new Map());
 
@@ -61,12 +63,13 @@ const PujaListScreen: React.FC = () => {
       }
 
       const data: any = await getPujaList();
+      console.log('data :: ', data);
       if (data.success) {
         const pujaItems = data.data.map((item: any) => ({
           id: item.id,
           title: item.title,
           image_url: item.image_url,
-          base_price: parseFloat(item.base_price),
+          price_without_samagri: parseFloat(item.price_without_samagri),
           description: item.description,
         }));
         const translated: any = await translateData(
@@ -92,7 +95,7 @@ const PujaListScreen: React.FC = () => {
   }, [fetchAndTranslatePujaList]);
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={loading} />
       <StatusBar
         barStyle="light-content"
@@ -107,16 +110,18 @@ const PujaListScreen: React.FC = () => {
             ...styles.scrollViewContent,
             paddingBottom: inset.bottom + 24,
           }}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.recommendedSection}>
-            <View style={{paddingHorizontal: 24, paddingTop: 24, gap: 8}}>
+            <View style={{ paddingHorizontal: 24, paddingTop: 24, gap: 8 }}>
               <Text style={styles.sectionTitle}>{t('recomended_puja')}</Text>
             </View>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalScrollContent}
-              style={styles.horizontalScroll}>
+              style={styles.horizontalScroll}
+            >
               {pujaList.slice(0, 3).map((puja, idx) => (
                 <React.Fragment key={puja.id}>
                   <PujaCard
@@ -145,7 +150,7 @@ const PujaListScreen: React.FC = () => {
                   image={puja.image_url}
                   title={puja.title}
                   description={puja.description}
-                  price={`₹ ${puja.base_price}`}
+                  price={`₹ ${puja.price_without_samagri}`}
                   onPress={() => {
                     navigation.navigate('UserPoojaDetails', {
                       poojaId: puja.id,
