@@ -29,8 +29,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomeLoader from '../../../components/CustomeLoader';
 import { handleIncomingMessage } from '../../../helper/helper';
-import { KeyboardAwareScrollView, KeyboardProvider, KeyboardStickyView } from 'react-native-keyboard-controller';
-
+import {
+  KeyboardAwareScrollView,
+  KeyboardProvider,
+  KeyboardStickyView,
+} from 'react-native-keyboard-controller';
 
 export interface Message {
   id: string;
@@ -172,7 +175,7 @@ const UserChatScreen: React.FC = () => {
 
   const scrollToBottom = useCallback((animated = true) => {
     if (scrollViewRef.current) {
-      setTimeout(() => scrollViewRef.current?.scrollToEnd({animated}), 100);
+      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated }), 100);
     }
   }, []);
 
@@ -189,7 +192,10 @@ const UserChatScreen: React.FC = () => {
       const newMsg: Message = {
         id: tempId, // temporary unique ID
         text,
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
         isOwn: true,
       };
 
@@ -201,7 +207,7 @@ const UserChatScreen: React.FC = () => {
       } catch (err) {
         console.log('Send failed:', err);
         // 3️⃣ Mark as failed in UI
-        setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
+        setMessages(prev => prev.filter(msg => msg.id !== tempId));
       }
 
       // isUserAtBottom.current = true;
@@ -211,7 +217,7 @@ const UserChatScreen: React.FC = () => {
   };
 
   const handleScroll = (event: any) => {
-    const {contentOffset, contentSize, layoutMeasurement} = event.nativeEvent;
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     const isAtBottom =
       contentOffset.y >= contentSize.height - layoutMeasurement.height - 10;
     isUserAtBottom.current = isAtBottom;
@@ -300,23 +306,24 @@ const UserChatScreen: React.FC = () => {
     const parent = (navigation as any)?.getParent?.();
     if (!parent || typeof parent.setOptions !== 'function') return;
     if (inCall) {
-      parent.setOptions({tabBarStyle: {display: 'none'}});
+      parent.setOptions({ tabBarStyle: { display: 'none' } });
     } else {
-      parent.setOptions({tabBarStyle: undefined});
+      parent.setOptions({ tabBarStyle: undefined });
     }
     return () => {
-      parent?.setOptions?.({tabBarStyle: undefined});
+      parent?.setOptions?.({ tabBarStyle: undefined });
     };
   }, [inCall, navigation]);
 
   return (
     <KeyboardProvider>
-      <SafeAreaView
+      <View
         style={{
           flex: 1,
           backgroundColor: COLORS.primaryBackground,
           paddingTop: inCall ? 0 : insets.top, // Remove padding during video call
-        }}>
+        }}
+      >
         <CustomeLoader loading={loading} />
         <StatusBar
           barStyle="light-content"
@@ -337,13 +344,22 @@ const UserChatScreen: React.FC = () => {
         <View
           style={[
             styles.chatContainer,
-            inCall && { borderTopLeftRadius: 0, borderTopRightRadius: 0, paddingTop: 0, backgroundColor: '#000' },
-          ]}>
+            inCall && {
+              borderTopLeftRadius: 0,
+              borderTopRightRadius: 0,
+              paddingTop: 0,
+              backgroundColor: '#000',
+            },
+          ]}
+        >
           {!inCall ? (
             <KeyboardAwareScrollView
               extraKeyboardSpace={Platform.OS == 'android' ? -50 : -70}
               style={styles.messagesContainer}
-              contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end' }}
+              contentContainerStyle={{
+                flexGrow: 1,
+                justifyContent: 'flex-end',
+              }}
               ref={scrollViewRef}
               onScroll={handleScroll}
               scrollEventThrottle={16}
@@ -352,7 +368,8 @@ const UserChatScreen: React.FC = () => {
                   scrollToBottom();
                 }
               }}
-              keyboardShouldPersistTaps="handled">
+              keyboardShouldPersistTaps="handled"
+            >
               {messages.length === 0 ? (
                 <View style={styles.noChatContainer}>
                   <Text style={styles.noChatText}>
@@ -415,23 +432,24 @@ const UserChatScreen: React.FC = () => {
             />
           ) : (
             <View style={styles.jitsiView}>
-              <Text style={{ color: '#fff', textAlign: 'center', marginTop: 40 }}>
+              <Text
+                style={{ color: '#fff', textAlign: 'center', marginTop: 40 }}
+              >
                 Video call is not available. Please check your app installation.
               </Text>
             </View>
           )}
-          {!inCall &&
+          {!inCall && (
             <KeyboardStickyView
-              offset={{ closed: 0, opened: Platform.OS == 'android' ? 50: 85 }} // remove extra space
+              offset={{ closed: 0, opened: Platform.OS == 'android' ? 50 : 85 }} // remove extra space
               enabled={true}
               style={{ backgroundColor: 'blue' }}
             >
               <ChatInput onSendMessage={handleSendMessage} />
             </KeyboardStickyView>
-          }
+          )}
         </View>
-      </SafeAreaView>
-
+      </View>
     </KeyboardProvider>
   );
 };

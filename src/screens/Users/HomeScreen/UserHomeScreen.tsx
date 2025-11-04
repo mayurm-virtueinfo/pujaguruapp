@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback, useRef} from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,11 @@ import {
   StatusBar,
   Image,
   TouchableOpacity,
-  SafeAreaView,
   AppState,
   RefreshControl,
   DeviceEventEmitter,
 } from 'react-native';
-import {moderateScale} from 'react-native-size-matters';
+import { moderateScale } from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   getRecommendedPandit,
@@ -22,20 +21,20 @@ import {
   PujaItem,
   RecommendedPandit,
 } from '../../../api/apiService';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
-import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { UserHomeParamList } from '../../../navigation/User/UsetHomeStack';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useTranslation} from 'react-i18next';
-import {translateData} from '../../../utils/TranslateData';
+import { useTranslation } from 'react-i18next';
+import { translateData } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import PrimaryButton from '../../../components/PrimaryButton';
-import {getCurrentLocation} from '../../../utils/locationUtils';
-import {LOCATION_UPDATED_EVENT} from '../../../helper/helper';
+import { getCurrentLocation } from '../../../utils/locationUtils';
+import { LOCATION_UPDATED_EVENT } from '../../../helper/helper';
 
 interface PendingPuja {
   id: number;
@@ -63,205 +62,267 @@ const UserHomeScreen: React.FC = () => {
   const [recomendedPandits, setRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [originalRecomendedPandits, setOriginalRecomendedPandits] = useState<
     RecommendedPandit[]
   >([]);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
-
   const inset = useSafeAreaInsets();
 
-  const fetchUserAndLocation = useCallback(async () => {
-    try {
-      const userId = await AsyncStorage.getItem(AppConstant.USER_ID);
-      setUser(userId);
-      // Always fetch fresh location
-      const locationData = await getCurrentLocation();
-      if (locationData?.latitude && locationData?.longitude) {
-        const newLoc = {
-          latitude: Number(locationData.latitude),
-          longitude: Number(locationData.longitude),
-        };
-        setLocation(prev => {
-          if (
-            !prev ||
-            prev.latitude !== newLoc.latitude ||
-            prev.longitude !== newLoc.longitude
-          ) {
-            return newLoc;
-          }
-          return prev;
-        });
-      }
-      return locationData ?? null;
-    } catch (error) {
-      console.error('Error fetching user or location:', error);
-      return null;
-    }
-  }, [location]);
+  // Fetch user ID
+  useEffect(() => {
+    let isMounted = true;
+    AsyncStorage.getItem(AppConstant.USER_ID).then(uid => {
+      if (isMounted) setUser(uid);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
-  // Always fetch fresh from API, don't use a cache for translations or data
-  const loadHomeData = useCallback(async () => {
-    setLoading(true);
-    try {
-      // Always fetch a fresh location (do not use state or cache)
-      const locationData = await getCurrentLocation();
-      let latNum: number | null = null;
-      let lngNum: number | null = null;
-      if (locationData?.latitude && locationData?.longitude) {
-        latNum = Number(locationData.latitude);
-        lngNum = Number(locationData.longitude);
-        const newLoc = {latitude: latNum, longitude: lngNum};
-        setLocation(prev => {
-          if (
-            !prev ||
-            prev.latitude !== newLoc.latitude ||
-            prev.longitude !== newLoc.longitude
-          ) {
-            return newLoc;
-          }
-          return prev;
-        });
-      }
+  // Load all data (with optional location)
+  const loadAllData = useCallback(
+    async (
+      locationForPandit?: { latitude: number; longitude: number } | null,
+    ) => {
+      setLoading(true);
+      try {
+        // Parallel API calls (non-blocking)
+        const [upcomingRes, inProgressRes, activeRes] = await Promise.all([
+          getUpcomingPujas().catch(() => []),
+          getInProgress().catch(() => []),
+          getActivePuja().catch(() => ({ bookings: [] })),
+        ]);
 
-      // Fetch fresh data for every call (including refresh)
-      const [upcoming, inProgress, active, recommended] = await Promise.all([
+        // Recommended Pandits (only if location)
+        let recommendedArr: RecommendedPandit[] = [];
+        if (locationForPandit) {
+          try {
+            const rec = await getRecommendedPandit(
+              locationForPandit.latitude.toString(),
+              locationForPandit.longitude.toString(),
+            );
+            recommendedArr = Array.isArray(rec)
+              ? rec
+              : (rec as any)?.data || [];
+          } catch (err) {
+            console.warn('Failed to fetch recommended pandits:', err);
+            recommendedArr = [];
+          }
+        }
+
+        // Parse responses
+        const upcomingArr: PujaItem[] = Array.isArray(upcomingRes)
+          ? upcomingRes
+          : [];
+        const inProgressArr: PujaItem[] = Array.isArray(inProgressRes)
+          ? inProgressRes
+          : [];
+        const pendingArr: PendingPuja[] = Array.isArray(activeRes?.bookings)
+          ? activeRes.bookings
+          : activeRes?.bookings
+          ? [activeRes.bookings]
+          : [];
+
+        // Translate all data in parallel
+        const [tPujas, tInProgress, tPending, tRecommended] = await Promise.all(
+          [
+            translateData(upcomingArr, currentLanguage, [
+              'pooja_name',
+              'when_is_pooja',
+            ]) as Promise<PujaItem[]>,
+            translateData(inProgressArr, currentLanguage, [
+              'pooja_name',
+            ]) as Promise<PujaItem[]>,
+            Promise.all(
+              pendingArr.map(async p => {
+                if (p.pooja) {
+                  const translatedPooja = await translateData(
+                    p.pooja,
+                    currentLanguage,
+                    ['title', 'pooja_name'],
+                  );
+                  return { ...p, pooja: translatedPooja } as PendingPuja;
+                }
+                return p;
+              }),
+            ),
+            translateData(recommendedArr, currentLanguage, [
+              'full_name',
+              'city',
+            ]) as Promise<RecommendedPandit[]>,
+          ],
+        );
+
+        // Update state
+        setPujas(tPujas);
+        setInProgressPujas(tInProgress);
+        setPendingPujas(tPending);
+        setRecomendedPandits(tRecommended);
+        setOriginalRecomendedPandits(recommendedArr);
+      } catch (err) {
+        console.error('Error loading home data:', err);
+        setPujas([]);
+        setInProgressPujas([]);
+        setPendingPujas([]);
+        setRecomendedPandits([]);
+        setOriginalRecomendedPandits([]);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    [currentLanguage],
+  );
+
+  // Initial load: get location + load data
+  useEffect(() => {
+    let isMounted = true;
+
+    const init = async () => {
+      setLoading(true);
+
+      // Start non-location APIs immediately
+      const [upcomingRes, inProgressRes, activeRes] = await Promise.all([
         getUpcomingPujas().catch(() => []),
         getInProgress().catch(() => []),
-        getActivePuja().catch(() => ({bookings: []})),
-        latNum && lngNum
-          ? getRecommendedPandit(latNum.toString(), lngNum.toString()).catch(
-              () => [],
-            )
-          : Promise.resolve([]),
+        getActivePuja().catch(() => ({ bookings: [] })),
       ]);
 
-      const upcomingArr: PujaItem[] = Array.isArray(upcoming) ? upcoming : [];
-      const inProgressArr: PujaItem[] = Array.isArray(inProgress)
-        ? inProgress
-        : [];
-      const pendingArr: PendingPuja[] = Array.isArray(active?.bookings)
-        ? active.bookings
-        : active?.bookings
-        ? [active.bookings]
-        : [];
-      const recommendedArr: RecommendedPandit[] = Array.isArray(recommended)
-        ? (recommended as RecommendedPandit[])
-        : (recommended as any)?.data || [];
+      let fetchedLocation: { latitude: number; longitude: number } | null =
+        null;
 
-      // Translations happen fresh on each load as well
-      const tPujas = (await translateData(upcomingArr, currentLanguage, [
-        'pooja_name',
-        'when_is_pooja',
-      ])) as PujaItem[];
-
-      const tInProgress = (await translateData(inProgressArr, currentLanguage, [
-        'pooja_name',
-      ])) as PujaItem[];
-
-      const tPending = await Promise.all(
-        pendingArr.map(async p => {
-          if (p.pooja) {
-            const translatedPooja = (await translateData(
-              p.pooja,
-              currentLanguage,
-              ['title', 'pooja_name'],
-            )) as any;
-            return {...p, pooja: translatedPooja} as PendingPuja;
-          }
-          return p;
-        }),
-      );
-
-      const tRecommended = (await translateData(
-        recommendedArr,
-        currentLanguage,
-        ['full_name', 'city'],
-      )) as RecommendedPandit[];
-
-      setPujas(tPujas);
-      setInProgressPujas(tInProgress);
-      setPendingPujas(tPending);
-      setRecomendedPandits(tRecommended);
-      setOriginalRecomendedPandits(recommendedArr);
-    } catch (error) {
-      setPujas([]);
-      setInProgressPujas([]);
-      setPendingPujas([]);
-      setRecomendedPandits([]);
-      setOriginalRecomendedPandits([]);
-      console.error('Error loading home data:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [currentLanguage, location]);
-
-  useEffect(() => {
-    (async () => {
-      await fetchUserAndLocation();
-      await loadHomeData();
-    })();
-
-    const handleAppStateChange = async (nextAppState: string) => {
-      if (nextAppState === 'active') {
-        try {
-          const loc = await getCurrentLocation();
-          if (loc?.latitude && loc?.longitude) {
-            const locObj: any = {
-              latitude: Number(loc.latitude),
-              longitude: Number(loc.longitude),
-            };
-            setLocation(prev => {
-              if (
-                !prev ||
-                prev.latitude !== locObj.latitude ||
-                prev.longitude !== locObj.longitude
-              ) {
-                return locObj;
-              }
-              return prev;
-            });
-            await loadHomeData();
-          }
-        } catch (error) {
-          console.error('Error checking location on app state change:', error);
+      // Try to get location in parallel
+      try {
+        const loc = await getCurrentLocation();
+        if (loc && isMounted) {
+          fetchedLocation = {
+            latitude: loc.latitude,
+            longitude: loc.longitude,
+          };
+          setLocation(fetchedLocation);
         }
+      } catch (err) {
+        console.log('Location fetch failed (non-blocking):', err);
+      }
+
+      // Load pandits only if location exists
+      let recommendedArr: RecommendedPandit[] = [];
+      if (fetchedLocation) {
+        try {
+          const rec = await getRecommendedPandit(
+            fetchedLocation.latitude.toString(),
+            fetchedLocation.longitude.toString(),
+          );
+          recommendedArr = Array.isArray(rec) ? rec : (rec as any)?.data || [];
+        } catch {
+          recommendedArr = [];
+        }
+      }
+
+      // Parse
+      const upcomingArr = Array.isArray(upcomingRes) ? upcomingRes : [];
+      const inProgressArr = Array.isArray(inProgressRes) ? inProgressRes : [];
+      const pendingArr: PendingPuja[] = Array.isArray(activeRes?.bookings)
+        ? activeRes.bookings
+        : activeRes?.bookings
+        ? [activeRes.bookings]
+        : [];
+
+      // Translate
+      const [tPujas, tInProgress, tPending, tRecommended] = await Promise.all([
+        translateData(upcomingArr, currentLanguage, [
+          'pooja_name',
+          'when_is_pooja',
+        ]) as Promise<PujaItem[]>,
+        translateData(inProgressArr, currentLanguage, [
+          'pooja_name',
+        ]) as Promise<PujaItem[]>,
+        Promise.all(
+          pendingArr.map(async p => {
+            if (p.pooja) {
+              const translatedPooja = await translateData(
+                p.pooja,
+                currentLanguage,
+                ['title', 'pooja_name'],
+              );
+              return { ...p, pooja: translatedPooja } as PendingPuja;
+            }
+            return p;
+          }),
+        ),
+        translateData(recommendedArr, currentLanguage, [
+          'full_name',
+          'city',
+        ]) as Promise<RecommendedPandit[]>,
+      ]);
+
+      if (isMounted) {
+        setPujas(tPujas);
+        setInProgressPujas(tInProgress);
+        setPendingPujas(tPending);
+        setRecomendedPandits(tRecommended);
+        setOriginalRecomendedPandits(recommendedArr);
+        setLoading(false);
       }
     };
 
-    const subscription = AppState.addEventListener(
-      'change',
-      handleAppStateChange,
-    );
-    return () => subscription?.remove();
-  }, [fetchUserAndLocation, loadHomeData]);
-
-  // 🔔 Auto-refresh when background location updates
-  useEffect(() => {
-    const locationListener = DeviceEventEmitter.addListener(
-      LOCATION_UPDATED_EVENT,
-      async (newLocation: any) => {
-        console.log(
-          '📡 Auto-refresh triggered: new location received',
-          newLocation,
-        );
-        await loadHomeData();
-      },
-    );
+    init();
 
     return () => {
-      locationListener.remove();
+      isMounted = false;
     };
-  }, [loadHomeData]);
+  }, [currentLanguage]);
 
-  const onRefresh = useCallback(() => {
+  // AppState: Re-fetch location when app is active
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async state => {
+      if (state === 'active') {
+        const loc = await getCurrentLocation();
+        if (loc) {
+          setLocation({ latitude: loc.latitude, longitude: loc.longitude });
+          loadAllData({ latitude: loc.latitude, longitude: loc.longitude });
+        } else {
+          loadAllData(null);
+        }
+      }
+    });
+
+    return () => subscription.remove();
+  }, [loadAllData]);
+
+  // Location update event listener
+  useEffect(() => {
+    const listener = DeviceEventEmitter.addListener(
+      LOCATION_UPDATED_EVENT,
+      async (newLoc: { latitude?: any; longitude?: any }) => {
+        if (newLoc?.latitude && newLoc?.longitude) {
+          const loc = {
+            latitude: Number(newLoc.latitude),
+            longitude: Number(newLoc.longitude),
+          };
+          setLocation(loc);
+          await loadAllData(loc);
+        } else {
+          await loadAllData(null);
+        }
+      },
+    );
+    return () => listener.remove();
+  }, [loadAllData]);
+
+  // Pull to refresh
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    loadHomeData();
-  }, [loadHomeData]);
+    const loc = await getCurrentLocation();
+    await loadAllData(
+      loc ? { latitude: loc.latitude, longitude: loc.longitude } : null,
+    );
+  }, [loadAllData]);
 
+  // Navigation handlers
   const handleBookPandit = useCallback(
     (
       panditId: number,
@@ -270,30 +331,31 @@ const UserHomeScreen: React.FC = () => {
       panditCity: string,
     ) => {
       navigation.navigate('SelectPujaScreen', {
-        panditId: panditId,
-        panditName: panditName,
-        panditImage: panditImage,
-        panditCity: panditCity,
+        panditId,
+        panditName,
+        panditImage,
+        panditCity,
       });
     },
     [navigation],
   );
 
   const handleNavigation = useCallback(
-    (route: string) => {
+    (route: keyof UserHomeParamList) => {
       navigation.navigate(route);
     },
     [navigation],
   );
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+    <View style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={loading} />
       <StatusBar
         backgroundColor={COLORS.primaryBackground}
         barStyle="light-content"
       />
       <UserCustomHeader title={t('home')} />
+
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
@@ -304,14 +366,16 @@ const UserHomeScreen: React.FC = () => {
             colors={[COLORS.primaryBackground]}
             tintColor={COLORS.primaryBackground}
           />
-        }>
-        {/* Recommended Panditji Section */}
+        }
+      >
+        {/* Recommended Panditji */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t('recomended_panditji')}</Text>
             <TouchableOpacity
               style={styles.seeAllContainer}
-              onPress={() => handleNavigation('UserPanditjiNavigator')}>
+              onPress={() => handleNavigation('UserPanditjiNavigator')}
+            >
               <Text style={styles.seeAllText}>{t('see_all')}</Text>
               <Ionicons
                 name="chevron-forward-outline"
@@ -320,67 +384,68 @@ const UserHomeScreen: React.FC = () => {
               />
             </TouchableOpacity>
           </View>
+
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.panditCardsContainer}
-            contentContainerStyle={styles.panditCardsContentContainer}>
-            {recomendedPandits && recomendedPandits.length > 0 ? (
+            contentContainerStyle={styles.panditCardsContentContainer}
+          >
+            {recomendedPandits.length > 0 ? (
               recomendedPandits.map((pandit: any) => {
                 const panditImage =
                   pandit.profile_img ||
                   'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU';
+
                 return (
                   <View
                     style={[styles.panditCard, THEMESHADOW.shadow]}
-                    key={pandit.id}>
+                    key={pandit.id}
+                  >
                     <View style={styles.panditImageWrapper}>
                       <Image
-                        source={{uri: panditImage}}
+                        source={{ uri: panditImage }}
                         style={styles.panditImage}
-                        accessibilityLabel={`Profile image of ${pandit.full_name}`}
                       />
                       <View
                         style={[
                           styles.ratingContainerAbsolute,
                           THEMESHADOW.shadow,
-                        ]}>
+                        ]}
+                      >
                         <Ionicons
                           name="star"
                           size={16}
                           color={COLORS.primaryBackgroundButton}
-                          style={{marginRight: 5}}
+                          style={{ marginRight: 5 }}
                         />
                         <Text style={styles.ratingText}>
-                          {pandit.average_rating}
+                          {pandit.average_rating || 'N/A'}
                         </Text>
                       </View>
                     </View>
                     <Text
                       style={styles.panditName}
                       numberOfLines={1}
-                      ellipsizeMode="tail">
+                      ellipsizeMode="tail"
+                    >
                       {pandit.full_name}
                     </Text>
-                    <View style={{alignSelf: 'center'}}>
+                    <View style={{ alignSelf: 'center', marginTop: 8 }}>
                       <PrimaryButton
                         title={t('book')}
                         onPress={() => {
-                          const originalPandit: any =
-                            originalRecomendedPandits.find(
-                              p => p.id === pandit.id,
-                            );
+                          const original = originalRecomendedPandits.find(
+                            p => p.id === pandit.id,
+                          );
                           handleBookPandit(
-                            originalPandit?.pandit_id ?? pandit.pandit_id,
-                            originalPandit?.full_name ?? pandit.full_name,
-                            originalPandit?.profile_img ?? pandit.profile_img,
-                            originalPandit?.city ?? pandit.city,
+                            original?.pandit_id ?? pandit.pandit_id,
+                            original?.full_name ?? pandit.full_name,
+                            original?.profile_img ?? pandit.profile_img,
+                            original?.city ?? pandit.city,
                           );
                         }}
-                        style={{
-                          maxWidth: 90,
-                          maxHeight: 40,
-                        }}
+                        style={{ maxWidth: 90, maxHeight: 40 }}
                         textStyle={{
                           paddingHorizontal: 12,
                           textAlign: 'center',
@@ -403,7 +468,8 @@ const UserHomeScreen: React.FC = () => {
                     backgroundColor: COLORS.white,
                     paddingVertical: 12,
                   },
-                ]}>
+                ]}
+              >
                 <Text style={styles.noPanditText}>
                   {t('no_panditji_found')}
                 </Text>
@@ -412,13 +478,11 @@ const UserHomeScreen: React.FC = () => {
           </ScrollView>
         </View>
 
-        {/* In-progress Puja Section */}
+        {/* In-progress Puja */}
         <View style={styles.pujaSection}>
-          <Text style={styles.sectionTitle}>
-            {t('in_progress_pujas') || 'In-progress Pujas'}
-          </Text>
+          <Text style={styles.sectionTitle}>{t('in_progress_pujas')}</Text>
           <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
-            {inProgressPujas && inProgressPujas.length > 0 ? (
+            {inProgressPujas.length > 0 ? (
               inProgressPujas.map((puja, idx) => (
                 <View key={puja.id}>
                   <TouchableOpacity
@@ -427,9 +491,10 @@ const UserHomeScreen: React.FC = () => {
                       navigation.navigate('UserPujaDetailsScreen', {
                         id: puja.id,
                       })
-                    }>
+                    }
+                  >
                     <Image
-                      source={{uri: puja.pooja_image_url}}
+                      source={{ uri: puja.pooja_image_url }}
                       style={styles.pujaImage}
                     />
                     <View style={styles.pujaTextContainer}>
@@ -443,26 +508,25 @@ const UserHomeScreen: React.FC = () => {
                 </View>
               ))
             ) : (
-              <Text style={{color: '#888', textAlign: 'center'}}>
-                {t('no_in_progress_pujas') || 'No in-progress pujas'}
+              <Text style={{ color: '#888', textAlign: 'center' }}>
+                {t('no_in_progress_pujas')}
               </Text>
             )}
           </View>
         </View>
 
-        {/* waiting for approval Puja Section */}
+        {/* Pending Approval */}
         <View style={styles.pujaSection}>
-          <Text style={styles.sectionTitle}>
-            {t('waiting_for_approval') || 'Waiting for Approval'}
-          </Text>
+          <Text style={styles.sectionTitle}>{t('waiting_for_approval')}</Text>
           <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
-            {Array.isArray(pendingPujas) && pendingPujas.length > 0 ? (
+            {pendingPujas.length > 0 ? (
               pendingPujas.map((puja, idx) => {
                 const pooja = puja.pooja || {};
                 const imageUrl =
                   pooja.image_url ||
                   'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg';
-                const poojaName = pooja.title || 'Unknown Puja';
+                const poojaName =
+                  pooja.title || pooja.pooja_name || 'Unknown Puja';
                 const poojaDate =
                   puja.when_is_pooja || puja.booking_date || 'No Date';
 
@@ -474,9 +538,10 @@ const UserHomeScreen: React.FC = () => {
                         navigation.navigate('ConfirmPujaDetails', {
                           bookingId: puja.id,
                         })
-                      }>
+                      }
+                    >
                       <Image
-                        source={{uri: imageUrl}}
+                        source={{ uri: imageUrl }}
                         style={styles.pujaImage}
                       />
                       <View style={styles.pujaTextContainer}>
@@ -491,18 +556,18 @@ const UserHomeScreen: React.FC = () => {
                 );
               })
             ) : (
-              <Text style={{color: '#888', textAlign: 'center'}}>
-                {t('no_pending_pujas') || 'No pending pujas'}
+              <Text style={{ color: '#888', textAlign: 'center' }}>
+                {t('no_pending_pujas')}
               </Text>
             )}
           </View>
         </View>
 
-        {/* Upcoming Puja Section */}
+        {/* Upcoming Puja */}
         <View style={styles.pujaSection}>
           <Text style={styles.sectionTitle}>{t('upcoming_pujas')}</Text>
           <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
-            {pujas && pujas.length > 0 ? (
+            {pujas.length > 0 ? (
               pujas.map((puja, idx) => (
                 <View key={puja.id}>
                   <TouchableOpacity
@@ -511,9 +576,10 @@ const UserHomeScreen: React.FC = () => {
                       navigation.navigate('UserPujaDetailsScreen', {
                         id: puja.id,
                       })
-                    }>
+                    }
+                  >
                     <Image
-                      source={{uri: puja.pooja_image_url}}
+                      source={{ uri: puja.pooja_image_url }}
                       style={styles.pujaImage}
                     />
                     <View style={styles.pujaTextContainer}>
@@ -525,17 +591,18 @@ const UserHomeScreen: React.FC = () => {
                 </View>
               ))
             ) : (
-              <Text style={{color: '#888', textAlign: 'center'}}>
+              <Text style={{ color: '#888', textAlign: 'center' }}>
                 {t('no_upcoming_pujas')}
               </Text>
             )}
           </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
+// Styles (unchanged)
 const styles = StyleSheet.create({
   container: {
     flex: 1,

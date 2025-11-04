@@ -1,5 +1,5 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import PujaCancellationScreen from '../../screens/Users/PujaCancellationScreen/PujaCancellationScreen';
 import UserHomeScreen from '../../screens/Users/HomeScreen/UserHomeScreen';
 import UserChatScreen from '../../screens/Users/UserChatScreen/UserChatScreen';
@@ -15,12 +15,13 @@ import TirthPlaceSelectionScreen from '../../screens/Users/PoojaDetailsScreen/Ti
 import PaymentScreen from '../../screens/Users/PaymentScreen/PaymentScreen';
 import BookingSuccessfullyScreen from '../../screens/Users/BookingSuccessfullyScreen/BookingSuccessfullyScreen';
 import RateYourExperienceScreen from '../../screens/Users/RateYourExperienceScreen/RateYourExperienceScreen';
+import AddAddressScreen from '../../screens/Users/AddAddressScreen/AddAddressScreen';
 
 export type UserPanditjiParamList = {
   goBack(): void;
   navigate(arg0: string): unknown;
   PanditjiScreen: undefined;
-  PanditDetailsScreen: {panditId: string};
+  PanditDetailsScreen: { panditId: string };
   NotificationScreen: undefined;
   PoojaDetailScreen: any;
   PlaceSelectionScreen: any;
@@ -31,6 +32,7 @@ export type UserPanditjiParamList = {
   SelectPanditjiScreen: any;
   BookingSuccessfullyScreen: any;
   RateYourExperienceScreen: any;
+  AddAddressScreen: any;
 };
 
 const Stack = createStackNavigator<UserPanditjiParamList>();
@@ -40,7 +42,8 @@ const UserPanditjiNavigator = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-      }}>
+      }}
+    >
       <Stack.Screen name="PanditjiScreen" component={PanditjiScreen} />
       <Stack.Screen
         name="PanditDetailsScreen"
@@ -57,6 +60,7 @@ const UserPanditjiNavigator = () => {
         name="AddressSelectionScreen"
         component={AddressSelectionScreen}
       />
+      <Stack.Screen name="AddAddressScreen" component={AddAddressScreen} />
       <Stack.Screen
         name="TirthPlaceSelectionScreen"
         component={TirthPlaceSelectionScreen}

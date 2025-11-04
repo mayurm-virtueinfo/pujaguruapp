@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,11 +9,11 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {COLORS} from '../../../theme/theme';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { COLORS } from '../../../theme/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomTextInput from '../../../components/CustomTextInput';
 import PrimaryButton from '../../../components/PrimaryButton';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import {
   getCity,
   postAddAddress,
@@ -21,18 +21,18 @@ import {
   getAddressType,
   getState,
 } from '../../../api/apiService';
-import {useCommonToast} from '../../../common/CommonToast';
-import {requestLocationPermission} from '../../../utils/locationUtils';
+import { useCommonToast } from '../../../common/CommonToast';
+import { requestLocationPermission } from '../../../utils/locationUtils';
 import Geolocation from '@react-native-community/geolocation';
 import CustomDropdown from '../../../components/CustomDropdown';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {Address} from '../AddressesScreen/AddressesScreen';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { Address } from '../AddressesScreen/AddressesScreen';
 import CustomeLoader from '../../../components/CustomeLoader';
 
 const AddAddressScreen = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const {showErrorToast, showSuccessToast} = useCommonToast();
+  const { showErrorToast, showSuccessToast } = useCommonToast();
   const [formData, setFormData] = useState({
     fullName: '',
     phoneNumber: '',
@@ -54,17 +54,17 @@ const AddAddressScreen = () => {
     addressType: '',
   });
   const navigation = useNavigation();
-  const [location, setLocation] = useState({latitude: 0, longitude: 0});
+  const [location, setLocation] = useState({ latitude: 0, longitude: 0 });
   const [isLoading, setIsLoading] = useState(false);
   const [cityName, setCityName] = useState('');
   const [cityOptions, setCityOptions] = useState<
-    {label: string; value: string; id?: number}[]
+    { label: string; value: string; id?: number }[]
   >([]);
   const [stateOptions, setStateOptions] = useState<
-    {label: string; value: string; id?: number}[]
+    { label: string; value: string; id?: number }[]
   >([]);
   const [addressTypeOptions, setAddressTypeOptions] = useState<
-    {label: string; value: string; id: number}[]
+    { label: string; value: string; id: number }[]
   >([]);
   const [cityCoordinates, setCityCoordinates] = useState<{
     latitude: number;
@@ -88,7 +88,7 @@ const AddAddressScreen = () => {
     }));
 
     if (field === 'state') {
-      setFormData(prev => ({...prev, city: ''}));
+      setFormData(prev => ({ ...prev, city: '' }));
       setCityOptions([]);
       setCityName('');
     }
@@ -162,7 +162,10 @@ const AddAddressScreen = () => {
         console.log('coordinates :: ', coordinates);
         setCityCoordinates(
           coordinates?.found
-            ? {latitude: coordinates.latitude, longitude: coordinates.longitude}
+            ? {
+                latitude: coordinates.latitude,
+                longitude: coordinates.longitude,
+              }
             : null,
         );
       }
@@ -191,7 +194,7 @@ const AddAddressScreen = () => {
           response.status,
           rawBody?.slice(0, 200),
         );
-        return {found: false, error: `HTTP ${response.status}`};
+        return { found: false, error: `HTTP ${response.status}` };
       }
 
       let data: any = null;
@@ -205,7 +208,7 @@ const AddAddressScreen = () => {
           e?.message,
           rawBody?.slice(0, 200),
         );
-        return {found: false, error: 'Invalid JSON from geocoder'};
+        return { found: false, error: 'Invalid JSON from geocoder' };
       }
       console.log('data for city coordinates :: ', data);
 
@@ -221,20 +224,22 @@ const AddAddressScreen = () => {
           found: true,
         };
       } else {
-        return {found: false};
+        return { found: false };
       }
     } catch (error: any) {
       console.error('Geocoding error:', error);
-      return {found: false, error: error.message};
+      return { found: false, error: error.message };
     }
   };
 
+  // Ensure stateId is passed as an integer to getCity
   const fetchCities = async (stateId: string) => {
     if (!stateId) return;
 
     setIsLoading(true);
     try {
-      const response: any = await getCity(stateId);
+      const stateIdInt = parseInt(stateId, 10); // Ensure stateId is an integer
+      const response: any = await getCity(stateIdInt);
       let cityList: any[] = Array.isArray(response)
         ? response
         : response?.data || [];
@@ -402,6 +407,7 @@ const AddAddressScreen = () => {
 
     let cityId = Number(formData.city) || 0;
     let addressTypeId = Number(formData.addressType) || 0;
+    let stateIdInt = formData.state ? parseInt(formData.state, 10) : 0; // ensure state as int
 
     const addressPayload = {
       name: formData.fullName,
@@ -410,7 +416,7 @@ const AddAddressScreen = () => {
       address_line2: formData.addressLine2,
       phone_number: formData.phoneNumber,
       city: cityId,
-      state: formData.state,
+      state: stateIdInt,
       pincode: formData.pincode,
       latitude: cityCoordinates?.latitude ?? 0,
       longitude: cityCoordinates?.longitude ?? 0,
@@ -434,7 +440,7 @@ const AddAddressScreen = () => {
             pincode: '',
             addressType: '',
           });
-          setLocation({latitude: 0, longitude: 0});
+          setLocation({ latitude: 0, longitude: 0 });
           setCityName('');
           handleBack();
         }
@@ -452,7 +458,7 @@ const AddAddressScreen = () => {
             pincode: '',
             addressType: '',
           });
-          setLocation({latitude: 0, longitude: 0});
+          setLocation({ latitude: 0, longitude: 0 });
           setCityName('');
           handleBack();
         }
@@ -468,7 +474,7 @@ const AddAddressScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: insets.top}]}>
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <CustomeLoader loading={isLoading} />
       <UserCustomHeader
         title={addressToEdit ? t('edit_address') : t('add_address')}
@@ -477,7 +483,8 @@ const AddAddressScreen = () => {
       />
       <ScrollView
         style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}>
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.formContainer}>
           <View style={styles.inputGroup}>
             <CustomTextInput
@@ -588,7 +595,7 @@ const AddAddressScreen = () => {
           <PrimaryButton
             title={addressToEdit ? t('update_address') : t('save_address')}
             onPress={handleSaveAddress}
-            style={{marginTop: 0}}
+            style={{ marginTop: 0 }}
             disabled={isLoading}
           />
         </View>

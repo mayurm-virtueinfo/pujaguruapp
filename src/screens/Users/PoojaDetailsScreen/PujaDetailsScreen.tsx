@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -13,18 +13,18 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {useTranslation} from 'react-i18next';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Octicons from 'react-native-vector-icons/Octicons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {useCommonToast} from '../../../common/CommonToast';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { useCommonToast } from '../../../common/CommonToast';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import {
   getPoojaDetails,
   getPoojaDetailsForPujaList,
@@ -35,7 +35,7 @@ import {
   translateText,
 } from '../../../utils/TranslateData';
 
-type ArrangedItem = {name: string; quantity?: string | number} | string;
+type ArrangedItem = { name: string; quantity?: string | number } | string;
 
 interface PujaDetails {
   id: number;
@@ -92,12 +92,12 @@ interface PricingOption {
 
 function normalizeArrangedItems(
   items?: ArrangedItem[],
-): {name: string; quantity?: string | number}[] {
+): { name: string; quantity?: string | number }[] {
   if (!items) return [];
   return items.map(item =>
     typeof item === 'string'
-      ? {name: item}
-      : {name: item.name, quantity: item.quantity},
+      ? { name: item }
+      : { name: item.name, quantity: item.quantity },
   );
 }
 
@@ -107,13 +107,13 @@ const PujaDetailsScreen: React.FC = () => {
     'UserPoojaDetails'
   >;
 
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentLanguage = i18n?.language;
 
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute() as any; // accept any, maybe route?.params?.params
-  const {showErrorToast} = useCommonToast();
+  const { showErrorToast } = useCommonToast();
 
   const resolvedParams = (() => {
     if (route?.params?.poojaId) return route.params;
@@ -123,7 +123,7 @@ const PujaDetailsScreen: React.FC = () => {
   })();
 
   // Extract these fields safely from resolvedParams
-  const {poojaId, panditId, panditName, panditImage, panditCity} =
+  const { poojaId, panditId, panditName, panditImage, panditCity } =
     resolvedParams;
 
   const [data, setData] = useState<PujaDetails | null>(null);
@@ -200,6 +200,7 @@ const PujaDetailsScreen: React.FC = () => {
       } else {
         response = await getPoojaDetailsForPujaList(id);
       }
+      console.log('response.data :: ', response.data);
       if (response && response.success) {
         setOriginalData(response.data);
         setData(response.data);
@@ -276,9 +277,10 @@ const PujaDetailsScreen: React.FC = () => {
           <TouchableOpacity
             key={img.id}
             onPress={() => handleReviewImagePress(img.image)}
-            activeOpacity={0.8}>
+            activeOpacity={0.8}
+          >
             <Image
-              source={{uri: img.image}}
+              source={{ uri: img.image }}
               style={styles.reviewImage}
               resizeMode="cover"
             />
@@ -288,7 +290,7 @@ const PujaDetailsScreen: React.FC = () => {
     );
   };
 
-  const renderUserReview = ({item}: {item: UserReview}) => (
+  const renderUserReview = ({ item }: { item: UserReview }) => (
     <View style={[styles.reviewCard, THEMESHADOW.shadow]}>
       <View style={styles.reviewHeader}>
         <Text style={styles.reviewUserName}>{item.user_name}</Text>
@@ -313,10 +315,11 @@ const PujaDetailsScreen: React.FC = () => {
         onPress={() =>
           navigation.navigate('UserPanditjiNavigator', {
             screen: 'PanditDetailsScreen',
-            params: {panditId: item.pandit_id?.toString()},
+            params: { panditId: item.pandit_id?.toString() },
           })
         }
-        style={{flexDirection: 'row', gap: 5}}>
+        style={{ flexDirection: 'row', gap: 5 }}
+      >
         <Text style={styles.PanditName}>
           {item.pandit_name ? `Pandit :` : ''}
         </Text>
@@ -356,7 +359,7 @@ const PujaDetailsScreen: React.FC = () => {
           renderItem={renderUserReview}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{paddingVertical: 8}}
+          contentContainerStyle={{ paddingVertical: 8 }}
         />
       </View>
     );
@@ -386,7 +389,8 @@ const PujaDetailsScreen: React.FC = () => {
             style={styles.expandableHeader}
             onPress={onPress}
             activeOpacity={0.7}
-            testID={testID}>
+            testID={testID}
+          >
             <Text style={styles.sectionTitle}>{title}</Text>
           </TouchableOpacity>
           <View style={[styles.itemsContainer, THEMESHADOW.shadow]}>
@@ -406,7 +410,8 @@ const PujaDetailsScreen: React.FC = () => {
                 style={styles.itemRow}
                 onPress={onPress}
                 activeOpacity={0.7}
-                testID={testID ? `${testID}-first-row` : undefined}>
+                testID={testID ? `${testID}-first-row` : undefined}
+              >
                 <View style={styles.itemTextContainer}>
                   <Text style={styles.itemNameText}>
                     {normalizedItems[0].name}
@@ -429,7 +434,8 @@ const PujaDetailsScreen: React.FC = () => {
                   onPress={onPress}
                   activeOpacity={0.7}
                   style={styles.moreTextWrapper}
-                  testID={testID ? `${testID}-more` : undefined}>
+                  testID={testID ? `${testID}-more` : undefined}
+                >
                   <Text style={styles.moreText}>{t('show_more')}</Text>
                 </TouchableOpacity>
               )}
@@ -462,7 +468,8 @@ const PujaDetailsScreen: React.FC = () => {
               onPress={onPress}
               activeOpacity={0.7}
               style={styles.collapseTextWrapper}
-              testID={testID ? `${testID}-collapse` : undefined}>
+              testID={testID ? `${testID}-collapse` : undefined}
+            >
               <View style={styles.collapseRow}>
                 <Octicons
                   name="chevron-up"
@@ -487,7 +494,7 @@ const PujaDetailsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: inset.top }]}>
       <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('puja_details')} showBackButton={true} />
@@ -496,13 +503,15 @@ const PujaDetailsScreen: React.FC = () => {
           style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           bounces={false}
-          contentContainerStyle={{paddingBottom: 30}}>
+          contentContainerStyle={{ paddingBottom: 30 }}
+        >
           <View style={styles.contentWrapper}>
             <View style={styles.imageContainer}>
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={handleMainImagePress}
-                testID="main-puja-image">
+                testID="main-puja-image"
+              >
                 <Image
                   source={{
                     uri: data?.image_url,
@@ -529,7 +538,8 @@ const PujaDetailsScreen: React.FC = () => {
                         activeOpacity={0.7}
                         onPress={() =>
                           handleCheckboxToggle(option.id, option.price)
-                        }>
+                        }
+                      >
                         <Text style={styles.pricingText}>
                           {option.priceDes} - Rs. {option.price}
                         </Text>
@@ -585,8 +595,11 @@ const PujaDetailsScreen: React.FC = () => {
         <View
           style={[
             styles.bottomButtonContainer,
-            {paddingBottom: inset.bottom || (Platform.OS === 'ios' ? 16 : 12)},
-          ]}>
+            {
+              paddingBottom: inset.bottom || (Platform.OS === 'ios' ? 16 : 12),
+            },
+          ]}
+        >
           <PrimaryButton
             title={t('next')}
             onPress={handleBookNowPress}
@@ -600,10 +613,12 @@ const PujaDetailsScreen: React.FC = () => {
         visible={imageModalVisible}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setImageModalVisible(false)}>
+        onRequestClose={() => setImageModalVisible(false)}
+      >
         <Pressable
           style={styles.modalOverlay}
-          onPress={() => setImageModalVisible(false)}>
+          onPress={() => setImageModalVisible(false)}
+        >
           <View style={styles.modalContent}>
             {modalImageUri ? (
               <>
@@ -611,11 +626,12 @@ const PujaDetailsScreen: React.FC = () => {
                   style={styles.closeButton}
                   onPress={() => setImageModalVisible(false)}
                   activeOpacity={0.8}
-                  testID="close-image-modal">
+                  testID="close-image-modal"
+                >
                   <Octicons name="x" size={20} color="#fff" />
                 </TouchableOpacity>
                 <Image
-                  source={{uri: modalImageUri}}
+                  source={{ uri: modalImageUri }}
                   style={styles.fullScreenImage}
                   resizeMode="contain"
                 />

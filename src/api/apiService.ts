@@ -153,6 +153,7 @@ export interface PanditItem {
 }
 export interface RecommendedPandit {
   id: number;
+  pandit_id: number;
   full_name: string;
   profile_img: string;
   city: number;

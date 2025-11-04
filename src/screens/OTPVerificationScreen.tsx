@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,28 +11,28 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {RouteProp} from '@react-navigation/native';
-import {AuthStackParamList} from '../navigation/AuthNavigator';
-import {getAuth, signInWithPhoneNumber} from '@react-native-firebase/auth';
-import {useCommonToast} from '../common/CommonToast';
-import {COLORS} from '../theme/theme';
-import {Images} from '../theme/Images';
-import {useTranslation} from 'react-i18next';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {moderateScale} from 'react-native-size-matters';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RouteProp } from '@react-navigation/native';
+import { AuthStackParamList } from '../navigation/AuthNavigator';
+import { getAuth, signInWithPhoneNumber } from '@react-native-firebase/auth';
+import { useCommonToast } from '../common/CommonToast';
+import { COLORS } from '../theme/theme';
+import { Images } from '../theme/Images';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { moderateScale } from 'react-native-size-matters';
 import Fonts from '../theme/fonts';
 import PrimaryButton from '../components/PrimaryButton';
 import PrimaryButtonLabeled from '../components/PrimaryButtonLabeled';
 import PrimaryButtonOutlined from '../components/PrimaryButtonOutlined';
-import {postRegisterFCMToken, postSignIn} from '../api/apiService';
-import {useAuth} from '../provider/AuthProvider';
+import { postRegisterFCMToken, postSignIn } from '../api/apiService';
+import { useAuth } from '../provider/AuthProvider';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../utils/appConstant';
-import {getFcmToken} from '../configuration/firebaseMessaging';
+import { getFcmToken } from '../configuration/firebaseMessaging';
 import CustomeLoader from '../components/CustomeLoader';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {getFirebaseAuthErrorMessage} from '../helper/firebaseErrorHandler'; // <-- Firebase error handler
+import { getFirebaseAuthErrorMessage } from '../helper/firebaseErrorHandler'; // <-- Firebase error handler
 
 type AuthNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -53,10 +53,10 @@ interface Props {
 
 const RESEND_OTP_WAIT_TIME = 30;
 
-const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
-  const {t} = useTranslation();
-  const {showErrorToast, showSuccessToast} = useCommonToast();
-  const {signIn} = useAuth();
+const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
+  const { t } = useTranslation();
+  const { showErrorToast, showSuccessToast } = useCommonToast();
+  const { signIn } = useAuth();
   const inset = useSafeAreaInsets();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setLoading] = useState(false);
@@ -64,7 +64,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
     route.params.confirmation,
   ); // No same number detect logic here
   const [isOtpExpired, setIsOtpExpired] = useState(false);
-  const {phoneNumber} = route.params;
+  const { phoneNumber } = route.params;
   const inputRefs = useRef<TextInput[]>([]);
   const [timer, setTimer] = useState(RESEND_OTP_WAIT_TIME);
   const hasNavigatedRef = useRef(false);
@@ -82,7 +82,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
         showErrorToast('OTP has expired. Please request a new one.');
       }
     }
-  }, [timer, t]);
+  }, [timer]);
 
   const handleOtpChange = (value: string, index: number) => {
     if (value.length <= 1) {
@@ -113,7 +113,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
       if (response) {
         if (response?.is_register === false) {
           hasNavigatedRef.current = true;
-          navigation.navigate('CompleteProfileScreen', {phoneNumber});
+          navigation.navigate('CompleteProfileScreen', { phoneNumber });
         } else {
           signIn(response.access_token, response.refresh_token);
           const userID = response.user?.id;
@@ -208,7 +208,7 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
     } catch (error: any) {
       console.error('Resend OTP error:', error);
       // Use firebase error handler for resend
-      let errorMessage = getFirebaseAuthErrorMessage(error); 
+      let errorMessage = getFirebaseAuthErrorMessage(error);
       showErrorToast(errorMessage);
     } finally {
       setLoading(false);
@@ -222,28 +222,28 @@ const OTPVerificationScreen: React.FC<Props> = ({navigation, route}) => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <ImageBackground
         source={Images.ic_splash_background}
         style={styles.container}
-        resizeMode="cover">
+        resizeMode="cover"
+      >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.content}>
             {/* <TouchableOpacity
               onPress={handleBackPress}
               style={styles.iconButton}>
               <Ionicons name="chevron-back" size={24} color={COLORS.white} />
             </TouchableOpacity> */}
-            <View
-              style={[
-                styles.header,
-                {paddingTop: inset.top + moderateScale(20)},
-              ]}>
+            <View style={[styles.header, { paddingTop: inset.top }]}>
               <TouchableOpacity
                 onPress={handleBackPress}
-                style={styles.backButton}>
+                style={styles.backButton}
+              >
                 <Ionicons name="chevron-back" size={28} color={COLORS.white} />
               </TouchableOpacity>
               <Image source={Images.ic_app_logo} style={styles.logo} />
@@ -353,6 +353,7 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(32),
     fontFamily: Fonts.Sen_Bold,
     color: COLORS.white,
+    marginTop: moderateScale(-20),
   },
   mainTitle: {
     fontSize: moderateScale(24),
