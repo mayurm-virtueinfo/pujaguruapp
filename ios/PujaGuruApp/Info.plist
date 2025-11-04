@@ -58,7 +58,7 @@
 		<string>We need precise location data to enhance your experience.</string>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We use your location to autofill address and improve nearby services.</string>
+	<string>We use your location to show nearby Pandits and temples in your area.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need access to your microphone for audio recording features.</string>
 	<key>NSPhotoLibraryUsageDescription</key>

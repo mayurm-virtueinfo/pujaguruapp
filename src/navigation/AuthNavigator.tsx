@@ -39,6 +39,7 @@ export type AuthStackParamList = {
   };
   UserAppBottomTabNavigator: undefined;
   TermsPolicyScreen: any;
+  PanditjiGuestScreen:any
 };
 
 const Stack = createStackNavigator<AuthStackParamList>();

@@ -17,6 +17,7 @@ import UserAppBottomTabNavigator, {
 import CompleteProfileScreen from '../screens/Users/CompleteProfileScreen/CompleteProfileScreen';
 import UserProfileScreen from '../screens/Users/ProfileScreen/UserProfileScreen';
 import {useEffect} from 'react';
+import PanditjiGuestScreen from '../screens/Users/PandijiScreen/PanditjiGuestScreen';
 
 export type MainAppStackParamList = {
   UserAppBottomTabNavigator: undefined;
@@ -46,6 +47,7 @@ const MainAppStackNavigator = () => {
 export type RootStackParamList = {
   Auth: undefined;
   Main: NavigatorScreenParams<MainAppStackParamList>;
+  PanditjiGuestScreen:undefined
 };
 
 const RootStack = createStackNavigator<RootStackParamList>();
@@ -72,6 +74,7 @@ const RootNavigator = () => {
         headerShown: false,
       }}>
       <RootStack.Screen name="Auth" component={AuthNavigator} />
+      <RootStack.Screen name="PanditjiGuestScreen" component={PanditjiGuestScreen} />
       <RootStack.Screen name="Main" component={MainAppStackNavigator} />
     </RootStack.Navigator>
   );

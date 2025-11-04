@@ -1,0 +1,4 @@
+- Build Production Hovi joie
+- BASE URL : Production nu url check karvu
+- APP NAME : Pujaguru
+- Rozarpay : Production ( key : production ni )

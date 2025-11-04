@@ -9,7 +9,7 @@ export interface LocationData {
   address?: string;
   timestamp?: string;
 }
-
+let isAlertVisible = false; // module-level flag
 // 🔹 Request location permission for Android & iOS
 export const requestLocationPermission = async (): Promise<boolean> => {
   try {
@@ -36,9 +36,11 @@ export const requestLocationPermission = async (): Promise<boolean> => {
       if (status === RESULTS.GRANTED || status === RESULTS.LIMITED) return true;
 
       if (status === RESULTS.BLOCKED || status === RESULTS.UNAVAILABLE) {
+        if (isAlertVisible) return false; // Prevent multiple alerts
+        isAlertVisible = true;
         Alert.alert(
-          'Location Services Disabled',
-          'Please enable Location Services in your device settings for accurate app functionality.',
+          '',
+          'This feature uses your location to show nearby Pandits. You can enable Location Services anytime from Settings.',
           [
             {
               text: 'Open Settings',

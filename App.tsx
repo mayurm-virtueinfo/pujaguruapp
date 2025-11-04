@@ -33,6 +33,7 @@ import {
 import {requestUserPermission} from './src/configuration/firebaseMessaging';
 import {SessionProvider} from './src/provider/SessionProvider';
 import { hideSplash } from 'react-native-splash-view';
+import Config from 'react-native-config';
 
 
 LogBox.ignoreLogs([
@@ -43,7 +44,7 @@ LogBox.ignoreLogs([
 const auth = getAuth();
 if (__DEV__) {
   // auth.useEmulator('http://127.0.0.1:9099');
-  auth.useEmulator('http://192.168.1.7:9099');
+  auth.useEmulator('http://192.168.0.105:9099');
 }
 setupNotifications();
 
@@ -61,7 +62,11 @@ const App = () => {
     requestUserPermission();
 
     checkForUpdate();
-
+    console.log('*****************   App Environment   *****************');
+    console.log('Loaded ENVIRONMENT :', Config.ENVIRONMENT);
+    console.log('Loaded BASE_URL :', Config.BASE_URL);
+    console.log('Loaded APP_NAME :', Config.APP_NAME);
+    console.log('*******************************************************');
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

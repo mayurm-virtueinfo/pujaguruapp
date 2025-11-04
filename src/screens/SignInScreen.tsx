@@ -13,6 +13,7 @@ import {
   Modal,
   StatusBar,
   useColorScheme,
+  Pressable,
 } from 'react-native';
 import {StackNavigationProp} from '@react-navigation/stack';
 import {AuthStackParamList} from '../navigation/AuthNavigator';
@@ -39,6 +40,7 @@ import {
 } from '../api/apiService';
 import CountrySelect from 'react-native-country-select';
 import { getFirebaseAuthErrorMessage } from '../helper/firebaseErrorHandler'; // <-- Added
+import Config from 'react-native-config';
 
 // Fallback mapping for country calling codes (covers all official ISO 3166 alpha-2 codes - as of 2024)
 const COUNTRY_CALLING_CODES: {[key: string]: string} = {
@@ -460,6 +462,10 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
     }
   };
 
+  const handleContinueAsGuest = async () => {
+    navigation.replace('PanditjiGuestScreen');
+  };
+
   const handlePhoneChange = (text: string) => {
     let cleaned = text.replace(/[^0-9]/g, '');
     const maxLength = PHONE_NUMBER_LENGTHS[selectedCountry?.cca2] || 10;
@@ -570,11 +576,13 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
 
               <View
                 style={[styles.containerBody, {paddingBottom: inset.bottom}]}>
-                <Text style={styles.mainTitle}>{t('sign_in')}</Text>
+                <Text onPress={() => {
+                    showSuccessToast(`${Config.BASE_URL}`);
+                    console.log(`${Config.BASE_URL}`);
+                  }} style={styles.mainTitle}>{t('sign_in')}</Text>
                 <Text style={styles.subtitle}>
                   {t('please_enter_your_credential')}
                 </Text>
-
                 <View style={styles.phoneInputGroup}>
                   <TouchableOpacity
                     style={styles.countryCodeButton}
@@ -681,8 +689,16 @@ const SignInScreen: React.FC<Props> = ({navigation, route}) => {
                   onPress={handleSignIn}
                   title={t('send_otp')}
                   disabled={!isAgreed}
-                  style={{marginBottom: 20}}
                 />
+                {
+                  Platform.OS === 'ios' && (
+                    <PrimaryButton
+                      onPress={handleContinueAsGuest}
+                      title={t('continue_as_guest')}
+                      style={{marginBottom: 20}}
+                    />
+                  )
+                }
               </View>
             </View>
           </ScrollView>
