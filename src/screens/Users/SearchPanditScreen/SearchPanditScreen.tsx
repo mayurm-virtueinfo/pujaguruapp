@@ -1,5 +1,5 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {View, Text, StyleSheet, Modal, TouchableOpacity} from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import {
   useNavigation,
   useRoute,
@@ -8,20 +8,20 @@ import {
 } from '@react-navigation/native';
 import * as Animatable from 'react-native-animatable';
 import LinearGradient from 'react-native-linear-gradient';
-import {COLORS} from '../../../theme/theme';
+import { COLORS } from '../../../theme/theme';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {moderateScale, verticalScale} from 'react-native-size-matters';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
+import { moderateScale, verticalScale } from 'react-native-size-matters';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Fonts from '../../../theme/fonts';
 
 const SearchPanditScreen: React.FC = () => {
   const route = useRoute();
-  const {booking_Id, booking_id} = route.params as any;
+  const { booking_Id, booking_id } = route.params as any;
   const bookingId = booking_Id || booking_id;
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
@@ -55,7 +55,7 @@ const SearchPanditScreen: React.FC = () => {
       }, 60 * 1000);
 
       let socketURL = __DEV__
-        ? `ws://puja-guru.com:9000/ws/bookings/${bookingId}/`
+        ? `ws://puja-guru.com/ws/bookings/${bookingId}/`
         : `wss://puja-guru.com/ws/bookings/${bookingId}/`;
 
       console.log('socketURL :: ', socketURL);
@@ -170,7 +170,7 @@ const SearchPanditScreen: React.FC = () => {
               screen: 'UserAppBottomTabNavigator',
               params: {
                 screen: 'UserHomeNavigator',
-                params: {screen: 'UserHomeScreen'},
+                params: { screen: 'UserHomeScreen' },
               },
             } as never,
           },
@@ -180,14 +180,14 @@ const SearchPanditScreen: React.FC = () => {
   };
 
   const pulseAnimation = {
-    0: {scale: 1, opacity: 0.7},
-    0.5: {scale: 1.2, opacity: 1},
-    1: {scale: 1, opacity: 0.7},
+    0: { scale: 1, opacity: 0.7 },
+    0.5: { scale: 1.2, opacity: 1 },
+    1: { scale: 1, opacity: 0.7 },
   };
 
   const radarAnimation = {
-    0: {scale: 0.5, opacity: 1},
-    1: {scale: 2.5, opacity: 0},
+    0: { scale: 0.5, opacity: 1 },
+    1: { scale: 2.5, opacity: 0 },
   };
 
   useEffect(() => {
@@ -200,7 +200,7 @@ const SearchPanditScreen: React.FC = () => {
   }, [loading]);
 
   return (
-    <View style={[styles.safeArea, {paddingTop: inset.top}]}>
+    <View style={[styles.safeArea, { paddingTop: inset.top }]}>
       <UserCustomHeader
         title={t('search_pandit_screen_title')}
         showBackButton={true}
@@ -215,7 +215,7 @@ const SearchPanditScreen: React.FC = () => {
                     screen: 'UserAppBottomTabNavigator',
                     params: {
                       screen: 'UserHomeNavigator',
-                      params: {screen: 'UserHomeScreen'},
+                      params: { screen: 'UserHomeScreen' },
                     },
                   } as never,
                 },
@@ -231,9 +231,10 @@ const SearchPanditScreen: React.FC = () => {
           {t('search_pandit_screen_subheading')}
         </Text>
         {wsError ? (
-          <View style={{marginVertical: 20}}>
+          <View style={{ marginVertical: 20 }}>
             <Text
-              style={{color: 'red', textAlign: 'center', fontWeight: 'bold'}}>
+              style={{ color: 'red', textAlign: 'center', fontWeight: 'bold' }}
+            >
               {t('search_pandit_screen_ws_error') ||
                 'Unable to connect to server. Please check your internet connection or try again later.'}
             </Text>
@@ -243,7 +244,8 @@ const SearchPanditScreen: React.FC = () => {
                 textAlign: 'center',
                 marginTop: 8,
                 fontSize: 13,
-              }}>
+              }}
+            >
               {wsError}
             </Text>
           </View>
@@ -254,14 +256,14 @@ const SearchPanditScreen: React.FC = () => {
                 ref={circle1Ref}
                 style={[
                   styles.radarCircle,
-                  {borderColor: COLORS.primary + '50'},
+                  { borderColor: COLORS.primary + '50' },
                 ]}
               />
               <Animatable.View
                 ref={circle2Ref}
                 style={[
                   styles.radarCircle,
-                  {borderColor: COLORS.gradientEnd + '40'},
+                  { borderColor: COLORS.gradientEnd + '40' },
                 ]}
               />
               <Animatable.View
@@ -269,15 +271,17 @@ const SearchPanditScreen: React.FC = () => {
                 animation={pulseAnimation}
                 iterationCount="infinite"
                 duration={1500}
-                style={styles.iconContainer}>
+                style={styles.iconContainer}
+              >
                 <LinearGradient
                   colors={[COLORS.primary, COLORS.gradientEnd]}
-                  style={styles.iconGradient}>
+                  style={styles.iconGradient}
+                >
                   <Ionicons
                     name="search"
                     size={moderateScale(60)}
                     color="#fff"
-                    style={{alignSelf: 'center'}}
+                    style={{ alignSelf: 'center' }}
                   />
                 </LinearGradient>
               </Animatable.View>
@@ -287,7 +291,8 @@ const SearchPanditScreen: React.FC = () => {
               easing="ease-in-out"
               iterationCount="infinite"
               duration={2000}
-              style={styles.loadingText}>
+              style={styles.loadingText}
+            >
               {searchText}
             </Animatable.Text>
           </>
@@ -299,7 +304,8 @@ const SearchPanditScreen: React.FC = () => {
         visible={showNoPanditModal}
         transparent
         animationType="fade"
-        onRequestClose={handleModalClose}>
+        onRequestClose={handleModalClose}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>{t('no_pandit_accepted')}</Text>
@@ -383,7 +389,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     elevation: 8,
     shadowColor: COLORS.primary,
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
