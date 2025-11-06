@@ -420,7 +420,7 @@ const UserHomeScreen: React.FC = () => {
                           style={{ marginRight: 5 }}
                         />
                         <Text style={styles.ratingText}>
-                          {pandit.average_rating || 'N/A'}
+                          {pandit?.average_rating}
                         </Text>
                       </View>
                     </View>

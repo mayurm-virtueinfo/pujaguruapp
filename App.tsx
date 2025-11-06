@@ -1,6 +1,6 @@
 import './src/i18n';
-import React, {useEffect, useState} from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
 // import SplashScreen from 'react-native-splash-screen';
 import RootNavigator from './src/navigation/RootNavigator';
 import {
@@ -15,26 +15,26 @@ import {
   StyleSheet,
 } from 'react-native';
 import 'react-native-gesture-handler';
-import {AuthProvider} from './src/provider/AuthProvider';
-import {ToastProvider} from 'react-native-toast-notifications';
-import {moderateScale} from 'react-native-size-matters';
-import {COLORS} from './src/theme/theme';
-import {getAuth} from '@react-native-firebase/auth';
-import {I18nextProvider, useTranslation} from 'react-i18next';
-import i18n, {initializeI18n} from './src/i18n';
-import {navigationRef} from './src/utils/NavigationService';
-import {getMessaging} from '@react-native-firebase/messaging';
+import { AuthProvider } from './src/provider/AuthProvider';
+import { ToastProvider } from 'react-native-toast-notifications';
+import { moderateScale } from 'react-native-size-matters';
+import { COLORS } from './src/theme/theme';
+import { getAuth } from '@react-native-firebase/auth';
+import { I18nextProvider, useTranslation } from 'react-i18next';
+import i18n, { initializeI18n } from './src/i18n';
+import { navigationRef } from './src/utils/NavigationService';
+import { getMessaging } from '@react-native-firebase/messaging';
 import DeviceInfo from 'react-native-device-info';
 import checkVersion from 'react-native-store-version';
 import {
   handleNotificationNavigation,
   setupNotifications,
 } from './src/configuration/notificationSetup';
-import {requestUserPermission} from './src/configuration/firebaseMessaging';
-import {SessionProvider} from './src/provider/SessionProvider';
+import { requestUserPermission } from './src/configuration/firebaseMessaging';
+import { SessionProvider } from './src/provider/SessionProvider';
+import { NetworkProvider } from './src/provider/NetworkProvider';
 import { hideSplash } from 'react-native-splash-view';
 import Config from 'react-native-config';
-
 
 LogBox.ignoreLogs([
   "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
@@ -44,12 +44,12 @@ LogBox.ignoreLogs([
 const auth = getAuth();
 if (__DEV__) {
   // auth.useEmulator('http://127.0.0.1:9099');
-  auth.useEmulator('http://192.168.0.105:9099');
+  auth.useEmulator('http://192.168.1.13:9099');
 }
 setupNotifications();
 
 const App = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const [isUpdateRequired, setIsUpdateRequired] = useState(false);
 
   useEffect(() => {
@@ -140,7 +140,8 @@ const App = () => {
         onRequestClose={() => {
           /* Optionally, handle hardware back button or prevent closing */
         }}
-        statusBarTranslucent>
+        statusBarTranslucent
+      >
         {/* Backdrop */}
         <Pressable style={styles.backdrop} onPress={() => {}} />
 
@@ -172,18 +173,22 @@ const App = () => {
         textStyle={{
           fontSize: moderateScale(16),
           color: COLORS.textPrimary,
-        }}>
-        <AuthProvider>
-          <SessionProvider>
-            <NavigationContainer
-              ref={navigationRef}
-              onReady={() => {
-                handleInitialNotification();
-              }}>
-              <RootNavigator />
-            </NavigationContainer>
-          </SessionProvider>
-        </AuthProvider>
+        }}
+      >
+        <NetworkProvider>
+          <AuthProvider>
+            <SessionProvider>
+              <NavigationContainer
+                ref={navigationRef}
+                onReady={() => {
+                  handleInitialNotification();
+                }}
+              >
+                <RootNavigator />
+              </NavigationContainer>
+            </SessionProvider>
+          </AuthProvider>
+        </NetworkProvider>
       </ToastProvider>
     </I18nextProvider>
   );
@@ -214,7 +219,7 @@ const styles = StyleSheet.create({
     elevation: 5,
     width: '80%',
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },

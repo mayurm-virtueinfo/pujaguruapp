@@ -30,6 +30,12 @@ import { translateData, translateText } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
 
 // TYPES for safer data handling and remove linter errors
+type PanditDataType = {
+  id?: string | number;
+  pandit_name?: string;
+  profile_img_url?: string | null;
+};
+
 type PujaDetailsType = {
   id?: number | string;
   pooja_name?: string;
@@ -42,11 +48,7 @@ type PujaDetailsType = {
   samagri_required?: boolean;
   user_arranged_items?: any[];
   pandit_arranged_items?: any[];
-  assigned_pandit?: {
-    id?: string | number;
-    pandit_name?: string;
-    profile_img_url?: string | null;
-  } | null;
+  assigned_pandit?: PanditDataType | null;
   booking_status?: string;
   verification_pin?: string;
   completion_pin?: string;
@@ -75,6 +77,8 @@ const UserPujaDetailsScreen: React.FC = () => {
   }>({ value: '', type: null });
 
   const [initialLoaded, setInitialLoaded] = useState(false);
+
+  const [wasNavigatedToReview, setWasNavigatedToReview] = useState(false);
 
   // Fix for "Cannot find namespace 'NodeJS'": use built-in type or global setTimeout type for ref
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -544,7 +548,61 @@ const UserPujaDetailsScreen: React.FC = () => {
     />
   );
 
-  if (isNavigating && pujaDetails?.booking_status === 'completed') {
+  // Important: navigation logic for RateYourExperienceScreen
+  useEffect(() => {
+    if (
+      pujaDetails?.booking_status === 'completed' &&
+      pujaDetails?.assigned_pandit
+    ) {
+      console.log(
+        'Navigating to RateYourExperienceScreen - bookingId:',
+        pujaDetails.id,
+        'panditjiData:',
+        pujaDetails.assigned_pandit,
+      );
+      setTimeout(() => {
+        navigation.navigate('RateYourExperienceScreen', {
+          booking: pujaDetails.id,
+          panditData: pujaDetails.assigned_pandit,
+          panditjiData: pujaDetails.assigned_pandit,
+          onGoBack: () => {
+            setWasNavigatedToReview(true);
+            fetchInitialPujaDetails();
+            console.log('Returned from RateYourExperienceScreen');
+          },
+        });
+      }, 100); // Slight delay to let loader display
+    }
+    // eslint-disable-next-line
+  }, [isNavigating, pujaDetails?.booking_status, pujaDetails?.assigned_pandit]);
+
+  // If returning from RateYourExperienceScreen, refresh data
+  useEffect(() => {
+    if (wasNavigatedToReview) {
+      console.log(
+        'Trigger: wasNavigatedToReview is true, fetchInitialPujaDetails',
+      );
+      fetchInitialPujaDetails();
+      setWasNavigatedToReview(false);
+    }
+  }, [wasNavigatedToReview]);
+
+  // Show loader only during first screen load; after that, even background polling doesn't show loader unless user pulls to refresh.
+  if (!initialLoaded || loading) {
+    return (
+      <>
+        <SafeAreaView style={styles.container} edges={['top']}>
+          <CustomeLoader loading={true} />
+        </SafeAreaView>
+      </>
+    );
+  }
+
+  if (
+    pujaDetails?.booking_status === 'completed' &&
+    pujaDetails?.assigned_pandit
+  ) {
+    console.log('Showing completion loader before navigation');
     return (
       <View style={styles.container}>
         <StatusBar
@@ -560,17 +618,6 @@ const UserPujaDetailsScreen: React.FC = () => {
           <Text style={styles.loadingText}>{t('processing_completion')}</Text>
         </View>
       </View>
-    );
-  }
-
-  // Show loader only during first screen load; after that, even background polling doesn't show loader unless user pulls to refresh.
-  if (!initialLoaded || loading) {
-    return (
-      <>
-        <SafeAreaView style={styles.container} edges={['top']}>
-          <CustomeLoader loading={true} />
-        </SafeAreaView>
-      </>
     );
   }
 

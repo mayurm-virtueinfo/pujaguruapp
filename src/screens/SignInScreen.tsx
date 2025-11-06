@@ -534,7 +534,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
         <KeyboardAvoidingView
           style={styles.container}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+          // keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
           <Loader loading={isLoading} />
           <ScrollView
@@ -579,11 +579,17 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
               </View>
 
               <View
-                style={[styles.containerBody, {paddingBottom: inset.bottom}]}>
-                <Text onPress={() => {
+                style={[styles.containerBody, { paddingBottom: inset.bottom }]}
+              >
+                <Text
+                  onPress={() => {
                     showSuccessToast(`${Config.BASE_URL}`);
                     console.log(`${Config.BASE_URL}`);
-                  }} style={styles.mainTitle}>{t('sign_in')}</Text>
+                  }}
+                  style={styles.mainTitle}
+                >
+                  {t('sign_in')}
+                </Text>
                 <Text style={styles.subtitle}>
                   {t('please_enter_your_credential')}
                 </Text>
@@ -702,15 +708,13 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                   title={t('send_otp')}
                   disabled={!isAgreed}
                 />
-                {
-                  Platform.OS === 'ios' && (
-                    <PrimaryButton
-                      onPress={handleContinueAsGuest}
-                      title={t('continue_as_guest')}
-                      style={{marginBottom: 20}}
-                    />
-                  )
-                }
+                {Platform.OS === 'ios' && (
+                  <PrimaryButton
+                    onPress={handleContinueAsGuest}
+                    title={t('continue_as_guest')}
+                    style={{ marginBottom: 20 }}
+                  />
+                )}
               </View>
             </View>
           </ScrollView>

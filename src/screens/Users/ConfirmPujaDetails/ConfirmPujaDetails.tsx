@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useCallback} from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,29 +6,60 @@ import {
   ScrollView,
   StatusBar,
   Image,
-  ActivityIndicator,
   TouchableOpacity,
 } from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
 import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
 import Fonts from '../../../theme/fonts';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {Images} from '../../../theme/Images';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {useTranslation} from 'react-i18next';
+import { Images } from '../../../theme/Images';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import {
   getUpcomingPujaDetails,
   updateWaitingUser,
 } from '../../../api/apiService';
-import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
-import {useCommonToast} from '../../../common/CommonToast';
-import {translateData} from '../../../utils/TranslateData';
+import { UserHomeParamList } from '../../../navigation/User/UsetHomeStack';
+import { useCommonToast } from '../../../common/CommonToast';
+import { translateData } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
+
+// Utility function: format string or array items to [{ name, quantity, units }]
+function normalizeArrangedItems(arr: any) {
+  if (Array.isArray(arr)) {
+    // Array of strings: ['item1', 'item2']
+    if (arr.every(item => typeof item === 'string')) {
+      return arr.map(name => ({
+        name: name,
+        quantity: '',
+        units: '',
+      }));
+    }
+    // Already in [{ name, quantity, units }]
+    if (arr.every(item => typeof item === 'object' && item.name)) {
+      return arr;
+    }
+    // Fallback: array of numbers or mixed
+    return arr.map(item => ({
+      name: String(item),
+      quantity: '',
+      units: '',
+    }));
+  } else if (typeof arr === 'string' && arr) {
+    // Single comma-separated string
+    return arr.split(',').map((name: string) => ({
+      name: name.trim(),
+      quantity: '',
+      units: '',
+    }));
+  }
+  return [];
+}
 
 const ConfirmPujaDetails: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -40,8 +71,8 @@ const ConfirmPujaDetails: React.FC = () => {
   >;
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const {bookingId, search} = route.params as any;
-  const {t, i18n} = useTranslation();
+  const { bookingId } = route.params as any;
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const currentLanguage = i18n.language;
@@ -51,12 +82,10 @@ const ConfirmPujaDetails: React.FC = () => {
   const [pujaDetails, setPujaDetails] = useState<any>(null);
   const [originalPujaDetails, setOriginalPujaDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const {showSuccessToast} = useCommonToast();
+  const { showSuccessToast } = useCommonToast();
   // State for show more/less for arranged items
   const [showMorePanditArranged, setShowMorePanditArranged] = useState(false);
   const [showMoreUserArranged, setShowMoreUserArranged] = useState(false);
-
-  console.log('pujaDetails :: ', pujaDetails);
 
   const fetchPujaDetails = useCallback(async () => {
     try {
@@ -120,15 +149,19 @@ const ConfirmPujaDetails: React.FC = () => {
     return `https://pujapaath.com${url}`;
   };
 
+  // ---- MAIN FIX: normalize items to always array of {name, quantity, units (optional)} ----
   const renderArrangedItemsSection = () => {
     if (!pujaDetails) return null;
 
-    const {pandit_arranged_items, user_arranged_items} = pujaDetails;
+    const pandit_arranged_items_norm = normalizeArrangedItems(
+      pujaDetails.pandit_arranged_items,
+    );
+    const user_arranged_items_norm = normalizeArrangedItems(
+      pujaDetails.user_arranged_items,
+    );
 
-    const hasPanditItems =
-      Array.isArray(pandit_arranged_items) && pandit_arranged_items.length > 0;
-    const hasUserItems =
-      Array.isArray(user_arranged_items) && user_arranged_items.length > 0;
+    const hasPanditItems = pandit_arranged_items_norm.length > 0;
+    const hasUserItems = user_arranged_items_norm.length > 0;
 
     // If both are empty, show a fallback
     if (!hasPanditItems && !hasUserItems) {
@@ -156,13 +189,19 @@ const ConfirmPujaDetails: React.FC = () => {
           <View style={styles.arrangedList}>
             {hasPanditItems ? (
               (showMorePanditArranged
-                ? pandit_arranged_items
-                : pandit_arranged_items.slice(0, 1)
+                ? pandit_arranged_items_norm
+                : pandit_arranged_items_norm.slice(0, 1)
               ).map((item: any, idx: number) => (
                 <View key={`pandit-item-${idx}`} style={styles.arrangedItemRow}>
                   <View style={styles.redDot} />
                   <Text style={styles.arrangedItemName}>
-                    {item.name} - {item.quantity} {item.units}
+                    {item.name}
+                    {/* Only show " - qty unit" if quantity or units present */}
+                    {item.quantity || item.units
+                      ? ` - ${item.quantity ? item.quantity : ''}${
+                          item.units ? ` ${item.units}` : ''
+                        }`
+                      : ''}
                   </Text>
                 </View>
               ))
@@ -171,17 +210,19 @@ const ConfirmPujaDetails: React.FC = () => {
                 {t('no_pandit_items') || 'No Pandit arranged items'}
               </Text>
             )}
-            {hasPanditItems && pandit_arranged_items.length > 1 && (
+            {hasPanditItems && pandit_arranged_items_norm.length > 1 && (
               <TouchableOpacity
                 onPress={() =>
                   setShowMorePanditArranged(!showMorePanditArranged)
                 }
-                style={{paddingVertical: 6}}>
+                style={{ paddingVertical: 6 }}
+              >
                 <Text
                   style={{
                     color: COLORS.primaryBackgroundButton,
                     fontFamily: Fonts.Sen_Medium,
-                  }}>
+                  }}
+                >
                   {showMorePanditArranged
                     ? t('show_less') || 'Show Less'
                     : t('show_more') || 'Show More'}
@@ -199,13 +240,18 @@ const ConfirmPujaDetails: React.FC = () => {
           <View style={styles.arrangedList}>
             {hasUserItems ? (
               (showMoreUserArranged
-                ? user_arranged_items
-                : user_arranged_items.slice(0, 1)
+                ? user_arranged_items_norm
+                : user_arranged_items_norm.slice(0, 1)
               ).map((item: any, idx: number) => (
                 <View key={`user-item-${idx}`} style={styles.arrangedItemRow}>
                   <View style={styles.redDot} />
                   <Text style={styles.arrangedItemName}>
-                    {item.name} - {item.quantity} {item.units}
+                    {item.name}
+                    {item.quantity || item.units
+                      ? ` - ${item.quantity ? item.quantity : ''}${
+                          item.units ? ` ${item.units}` : ''
+                        }`
+                      : ''}
                   </Text>
                 </View>
               ))
@@ -214,15 +260,17 @@ const ConfirmPujaDetails: React.FC = () => {
                 {t('no_user_items') || 'No User arranged items'}
               </Text>
             )}
-            {hasUserItems && user_arranged_items.length > 1 && (
+            {hasUserItems && user_arranged_items_norm.length > 1 && (
               <TouchableOpacity
                 onPress={() => setShowMoreUserArranged(!showMoreUserArranged)}
-                style={{paddingVertical: 6}}>
+                style={{ paddingVertical: 6 }}
+              >
                 <Text
                   style={{
                     color: COLORS.primaryBackgroundButton,
                     fontFamily: Fonts.Sen_Medium,
-                  }}>
+                  }}
+                >
                   {showMoreUserArranged
                     ? t('show_less') || 'Show Less'
                     : t('show_more') || 'Show More'}
@@ -247,7 +295,7 @@ const ConfirmPujaDetails: React.FC = () => {
                 <Image
                   source={
                     pujaDetails.pooja_image_url
-                      ? {uri: getPujaImageUrl(pujaDetails.pooja_image_url)}
+                      ? { uri: getPujaImageUrl(pujaDetails.pooja_image_url) }
                       : Images.ic_app_logo
                   }
                   style={styles.pujaIcon}
@@ -319,7 +367,7 @@ const ConfirmPujaDetails: React.FC = () => {
       <View style={styles.totalContainer}>
         <View style={[styles.totalCard, THEMESHADOW.shadow]}>
           <View style={styles.totalContent}>
-            <View style={{gap: 6}}>
+            <View style={{ gap: 6 }}>
               <Text style={styles.totalLabel}>{t('total_amount')}</Text>
               <Text style={styles.totalSubtext}>
                 {pujaDetails.pooja_name || t('puja')}
@@ -344,7 +392,7 @@ const ConfirmPujaDetails: React.FC = () => {
   const renderPanditDetails = () => {
     if (!pujaDetails) return null;
     const pandit = pujaDetails.assigned_pandit;
-    if (!pandit) return null;
+    if (!pandit || typeof pandit === 'string') return null;
     return (
       <View style={styles.totalContainer}>
         <View style={[styles.totalCard, THEMESHADOW.shadow]}>
@@ -354,7 +402,8 @@ const ConfirmPujaDetails: React.FC = () => {
                 flexDirection: 'row',
                 justifyContent: 'center',
                 alignItems: 'center',
-              }}>
+              }}
+            >
               <Image
                 source={{
                   uri:
@@ -375,8 +424,12 @@ const ConfirmPujaDetails: React.FC = () => {
 
   const renderPanditjiSection = () => {
     if (!pujaDetails) return null;
-    // Only show if no assigned_pandit
-    if (pujaDetails.assigned_pandit) return null;
+    // Only show if no assigned_pandit or it is a "not assigned" string
+    if (
+      pujaDetails.assigned_pandit &&
+      typeof pujaDetails.assigned_pandit !== 'string'
+    )
+      return null;
     return (
       <View style={styles.panditjiContainer}>
         <View style={[styles.panditjiCard, THEMESHADOW.shadow]}>
@@ -416,7 +469,9 @@ const ConfirmPujaDetails: React.FC = () => {
   // Handler for "Choose Another Panditji" (manual mode)
   const onChoosePanditClick = () => {
     if (!pujaDetails.assigned_pandit?.id) {
-      navigation.navigate('FilteredPanditListScreen', {booking_id: bookingId});
+      navigation.navigate('FilteredPanditListScreen', {
+        booking_id: bookingId,
+      });
     } else {
       showSuccessToast(t('panditji_confirmation'));
     }
@@ -441,7 +496,7 @@ const ConfirmPujaDetails: React.FC = () => {
           <PrimaryButtonOutlined
             title={t('cancel') || 'Cancel'}
             onPress={() => {
-              navigation.navigate('PujaCancellationScreen', {id: bookingId});
+              navigation.navigate('PujaCancellationScreen', { id: bookingId });
             }}
             style={styles.bottomOutlinedButton}
             textStyle={styles.bottomOutlinedButtonText}
@@ -463,7 +518,7 @@ const ConfirmPujaDetails: React.FC = () => {
           <PrimaryButtonOutlined
             title={t('cancel') || 'Cancel'}
             onPress={() => {
-              navigation.navigate('PujaCancellationScreen', {id: bookingId});
+              navigation.navigate('PujaCancellationScreen', { id: bookingId });
             }}
             style={styles.bottomOutlinedButton}
             textStyle={styles.bottomOutlinedButtonText}
@@ -477,7 +532,7 @@ const ConfirmPujaDetails: React.FC = () => {
 
   return (
     <>
-      <View style={[styles.container, {paddingTop: insets.top}]}>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
         <CustomeLoader loading={loading} />
         <StatusBar
           barStyle="light-content"
@@ -488,7 +543,8 @@ const ConfirmPujaDetails: React.FC = () => {
           <ScrollView
             style={styles.content}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.contentContainer}>
+            contentContainerStyle={styles.contentContainer}
+          >
             {renderPanditDetails()}
             {renderPanditjiSection()}
             {renderPujaDetails()}
@@ -687,10 +743,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: moderateScale(24),
-    paddingBottom: moderateScale(12),
-    // paddingTop: moderateScale(8),
+    paddingBottom: moderateScale(14),
+    paddingTop: moderateScale(4),
     backgroundColor: COLORS.pujaBackground,
     gap: moderateScale(24),
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
   },
   bottomOutlinedButton: {
     flex: 1,

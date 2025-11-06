@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -10,18 +10,21 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import {moderateScale, verticalScale} from 'react-native-size-matters';
+import { moderateScale, verticalScale } from 'react-native-size-matters';
 import Calendar from '../../../components/Calendar';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import PanditjiSelectionModal from '../../../components/PanditjiSelectionModal';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import {
@@ -30,10 +33,10 @@ import {
   getPanditAvailability,
   postAutoBooking,
 } from '../../../api/apiService';
-import {useCommonToast} from '../../../common/CommonToast';
+import { useCommonToast } from '../../../common/CommonToast';
 import CustomeLoader from '../../../components/CustomeLoader';
 import PrimaryButton from '../../../components/PrimaryButton';
-import {translateData} from '../../../utils/TranslateData';
+import { translateData } from '../../../utils/TranslateData';
 
 const formatDateYYYYMMDD = (date: Date | string) => {
   if (typeof date === 'string') {
@@ -58,7 +61,6 @@ const formatDateYYYYMMDD = (date: Date | string) => {
 const isDateInPast = (dateStr: string) => {
   if (!dateStr) return false;
   const todayStr = formatDateYYYYMMDD(new Date());
-  // YYYY-MM-DD lexical comparison matches chronological order
   return dateStr < todayStr;
 };
 
@@ -109,11 +111,11 @@ const PujaBookingScreen: React.FC = () => {
     selectedAddressLongitude,
   } = route?.params as any;
 
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const currentLanguage = i18n.language;
 
-  const {showErrorToast} = useCommonToast();
+  const { showErrorToast } = useCommonToast();
 
   const [translatedPoojaName, setTranslatedPoojaName] = useState<string>(
     poojaName || '',
@@ -133,10 +135,10 @@ const PujaBookingScreen: React.FC = () => {
       }
       try {
         const result = (await translateData(
-          [{poojaName, poojaDescription}],
+          [{ poojaName, poojaDescription }],
           currentLanguage,
           ['poojaName', 'poojaDescription'],
-        )) as Array<{poojaName: string; poojaDescription: string}>;
+        )) as Array<{ poojaName: string; poojaDescription: string }>;
         if (isMounted) {
           setTranslatedPoojaName(result[0]?.poojaName || poojaName || '');
           setTranslatedPoojaDescription(
@@ -173,9 +175,11 @@ const PujaBookingScreen: React.FC = () => {
         return;
       }
       try {
-        const result = (await translateData([{description}], currentLanguage, [
-          'description',
-        ])) as Array<{description: string}>;
+        const result = (await translateData(
+          [{ description }],
+          currentLanguage,
+          ['description'],
+        )) as Array<{ description: string }>;
         if (isMounted)
           setTranslatedDescription(result[0]?.description || description || '');
       } catch {
@@ -187,8 +191,6 @@ const PujaBookingScreen: React.FC = () => {
       isMounted = false;
     };
   }, [currentLanguage, description]);
-
-  console.log('PujaBookingScreen route?.params :: ', route?.params);
 
   const [selectedSlot, setSelectedSlot] = useState<string>('');
   const [selectedSlotObj, setSelectedSlotObj] = useState<any>(null);
@@ -243,19 +245,17 @@ const PujaBookingScreen: React.FC = () => {
 
       const response = await getPanditAvailability(panditId);
 
-      if (response && Array.isArray(response)) {
-        // Get all available dates from the response
-        const availableDatesList = response
-          .filter((item: any) => item.is_available && item.date)
-          .map((item: any) => item.date);
+      const Data = response?.data;
 
-        console.log('All available dates:', availableDatesList);
+      if (Data && Array.isArray(Data)) {
+        // Get all available dates from the response
+        const availableDatesList = Data.filter(
+          (item: any) => item.is_available && item.date,
+        ).map((item: any) => item.date);
 
         if (availableDatesList.length > 0) {
-          // Set all available dates as an array
           setAvailableDates(availableDatesList);
 
-          // Prefer today's date if it is available; otherwise, use the first available
           const todayFormatted = formatDateYYYYMMDD(new Date());
           const defaultDate = availableDatesList.includes(todayFormatted)
             ? todayFormatted
@@ -285,8 +285,6 @@ const PujaBookingScreen: React.FC = () => {
       }
     } catch (error: any) {
       setAvailableDates(null);
-      console.log('error :: ', error?.response?.data);
-
       showErrorToast(
         error?.message ||
           t('no_available_date_for_pandit') ||
@@ -317,7 +315,6 @@ const PujaBookingScreen: React.FC = () => {
     async (dateString?: string) => {
       try {
         setLoading(true);
-
         const dateToFetch = formatDateYYYYMMDD(dateString || today);
         const response = await getMuhrat(
           dateToFetch,
@@ -336,13 +333,34 @@ const PujaBookingScreen: React.FC = () => {
           const cachedData = translationCacheRef.current.get(cacheKey);
 
           if (cachedData) {
-            setMuhurats(cachedData);
+            // We NEVER show all muhurats for today, always only show future slots.
+            let result = cachedData;
+            if (dateToFetch === formatDateYYYYMMDD(new Date())) {
+              const now = new Date();
+              const nowMinutes = now.getHours() * 60 + now.getMinutes();
+              result = cachedData.filter((slot: any) => {
+                const startMinutes = parseTimeToMinutes(slot.start);
+                return startMinutes !== null && startMinutes > nowMinutes;
+              });
+            }
+            setMuhurats(result);
             setLoading(false);
             return;
           }
 
           translationCacheRef.current.set(cacheKey, translated);
-          setMuhurats(translated);
+
+          // -- Always for "today", show only future slots, never all --
+          let filteredMuhurats = translated;
+          if (dateToFetch === formatDateYYYYMMDD(new Date())) {
+            const now = new Date();
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+            filteredMuhurats = translated.filter((slot: any) => {
+              const startMinutes = parseTimeToMinutes(slot.start);
+              return startMinutes !== null && startMinutes > nowMinutes;
+            });
+          }
+          setMuhurats(filteredMuhurats);
         } else {
           setMuhurats([]);
           setOriginalMuhurats([]);
@@ -355,9 +373,10 @@ const PujaBookingScreen: React.FC = () => {
         setLoading(false);
       }
     },
-    [currentLanguage, location, selectedDateString, availableDates, panditId],
+    [currentLanguage, location],
   );
 
+  // Always fetch muhurat for selectedDateString, never show all muhurats for today
   useEffect(() => {
     if (
       location &&
@@ -368,6 +387,7 @@ const PujaBookingScreen: React.FC = () => {
     ) {
       fetchMuhurat(selectedDateString);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDateString, location, availableDates, panditId, fetchMuhurat]);
 
   const handleSlotSelect = (slot: any) => {
@@ -392,15 +412,12 @@ const PujaBookingScreen: React.FC = () => {
       );
       return;
     }
-
     let selectedDateISO = selectedDateString;
     if (!selectedDateISO) {
       selectedDateISO = formatDateYYYYMMDD(today);
     } else {
       selectedDateISO = formatDateYYYYMMDD(selectedDateISO);
     }
-
-    // Past date validation
     if (isDateInPast(selectedDateISO)) {
       showErrorToast(
         t('cannot_select_past_date') || 'You cannot select a past date.',
@@ -420,7 +437,6 @@ const PujaBookingScreen: React.FC = () => {
       muhuratType = originalSlot ? originalSlot.type : selectedSlotObj.type;
     }
 
-    // For today, ensure muhurat start time is in the future and at least 2 hours after now
     if (isToday(selectedDateISO) && selectedSlotObj) {
       const startMinutes = parseTimeToMinutes(selectedSlotObj.start);
       const now = new Date();
@@ -454,19 +470,12 @@ const PujaBookingScreen: React.FC = () => {
         pandit: panditId,
         long_distance: false,
       };
-
       if (data) {
         const response: any = await postPujaBookingData(
           data,
           selectedAddressLatitude,
           selectedAddressLongitude,
         );
-
-        console.log(
-          'direct pandit select response of post puja booking data :: ',
-          response,
-        );
-
         if (response) {
           navigation.navigate('PaymentScreen', {
             poojaId: poojaId,
@@ -492,7 +501,6 @@ const PujaBookingScreen: React.FC = () => {
       }
       return;
     }
-
     setModalVisible(true);
   };
 
@@ -505,20 +513,16 @@ const PujaBookingScreen: React.FC = () => {
   ) => {
     setPanditjiSelection(selection);
     setModalVisible(false);
-
     let selectedDateISO = selectedDateString;
-
     if (!selectedDateISO) {
       selectedDateISO = formatDateYYYYMMDD(today);
     } else {
       selectedDateISO = formatDateYYYYMMDD(selectedDateISO);
     }
-
     let muhuratTime = '';
     let muhuratType = '';
     if (selectedSlotObj) {
       muhuratTime = `${selectedSlotObj.start} - ${selectedSlotObj.end}`;
-      // Always use original type from originalMuhurats
       const originalSlot = originalMuhurats.find(
         slot =>
           slot.start === selectedSlotObj.start &&
@@ -526,7 +530,6 @@ const PujaBookingScreen: React.FC = () => {
       );
       muhuratType = originalSlot ? originalSlot.type : selectedSlotObj.type;
     }
-
     if (!selectedDateISO) {
       showErrorToast(t('please_select_date') || 'Please select a date.');
       return;
@@ -537,16 +540,12 @@ const PujaBookingScreen: React.FC = () => {
       );
       return;
     }
-
-    // Past date validation
     if (isDateInPast(selectedDateISO)) {
       showErrorToast(
         t('cannot_select_past_date') || 'You cannot select a past date.',
       );
       return;
     }
-
-    // For today, ensure muhurat start time is in the future
     if (isToday(selectedDateISO) && selectedSlotObj) {
       const startMinutes = parseTimeToMinutes(selectedSlotObj.start);
       const now = new Date();
@@ -597,9 +596,6 @@ const PujaBookingScreen: React.FC = () => {
           selectedAddressLatitude,
           selectedAddressLongitude,
         );
-
-        console.log('response of post puja booking data :: ', response);
-
         if (response) {
           navigation.navigate('PaymentScreen', {
             poojaId: poojaId,
@@ -641,7 +637,8 @@ const PujaBookingScreen: React.FC = () => {
                   panditId &&
                   availableDates &&
                   !availableDates.includes(selectedDateString)
-                }>
+                }
+              >
                 <View style={styles.slotContent}>
                   <View style={styles.slotTextContainer}>
                     <Text style={styles.slotName}>{slot.type}</Text>
@@ -675,11 +672,9 @@ const PujaBookingScreen: React.FC = () => {
   const calendarProps =
     panditId && availableDates && availableDates.length > 0
       ? {
-          // Use the currently selected date/month instead of forcing first available
           date: selectedDate,
           month: currentMonth,
           onDateSelect: (dateString: string) => {
-            // Only allow selection if dateString is in availableDates
             if (!availableDates.includes(dateString)) {
               showErrorToast(
                 t('only_this_date_available') ||
@@ -687,11 +682,13 @@ const PujaBookingScreen: React.FC = () => {
               );
               return;
             }
-            setSelectedDate(new Date(dateString).getDate());
+            const parsedDate = new Date(dateString);
+            setSelectedDate(parsedDate.getDate());
             setSelectedDateString(dateString);
             setSelectedSlot('');
             setSelectedSlotObj(null);
             setMuhurats([]);
+            fetchMuhurat(dateString);
           },
           onMonthChange: () => {},
           selectableDates: availableDates,
@@ -734,6 +731,7 @@ const PujaBookingScreen: React.FC = () => {
                   'Location not found. Please set your location first.',
               );
             }
+            fetchMuhurat(dateString);
           },
           onMonthChange: (direction: 'prev' | 'next') => {
             const [monthName, yearStr] = currentMonth.split(' ');
@@ -755,7 +753,7 @@ const PujaBookingScreen: React.FC = () => {
             }
             const newMonthName = new Date(newYear, newMonthIdx).toLocaleString(
               'default',
-              {month: 'long'},
+              { month: 'long' },
             );
             setCurrentMonth(`${newMonthName} ${newYear}`);
             setSelectedDate(1);
@@ -770,23 +768,22 @@ const PujaBookingScreen: React.FC = () => {
         };
 
   return (
-    <View style={[styles.container, {paddingTop: insets.top}]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
         <View style={styles.flex1}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}>
-            {/* Puja Description */}
+            showsVerticalScrollIndicator={false}
+          >
             <Text style={styles.description}>{translatedDescription}</Text>
-
-            {/* Puja Place Section */}
             <View style={[styles.pujaPlaceContainer, THEMESHADOW.shadow]}>
               <View style={styles.pujaPlaceContent}>
                 <View style={styles.pujaPlaceTextContainer}>
@@ -797,7 +794,8 @@ const PujaBookingScreen: React.FC = () => {
                 </View>
                 <TouchableOpacity
                   style={styles.editButton}
-                  onPress={() => navigation.goBack()}>
+                  onPress={() => navigation.goBack()}
+                >
                   <Ionicons
                     name="create-outline"
                     size={20}
@@ -814,7 +812,8 @@ const PujaBookingScreen: React.FC = () => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 marginBottom: verticalScale(12),
-              }}>
+              }}
+            >
               {/* Current date legend */}
               <View
                 style={{
@@ -832,10 +831,10 @@ const PujaBookingScreen: React.FC = () => {
                   fontSize: moderateScale(12),
                   color: COLORS.primaryTextDark,
                   marginRight: 16,
-                }}>
+                }}
+              >
                 {t('current_date')}
               </Text>
-              {/* Available date legend */}
               {panditId && (
                 <>
                   <View
@@ -853,15 +852,14 @@ const PujaBookingScreen: React.FC = () => {
                     style={{
                       fontSize: moderateScale(12),
                       color: COLORS.primaryTextDark,
-                    }}>
+                    }}
+                  >
                     {t('available_date')}
                   </Text>
                 </>
               )}
             </View>
             {renderMuhuratSlots()}
-
-            {/* Additional Notes Section */}
             <View style={styles.notesContainer}>
               <Text style={styles.notesLabel}>{t('additional_notes')}</Text>
               <TextInput
@@ -875,14 +873,12 @@ const PujaBookingScreen: React.FC = () => {
               />
             </View>
           </ScrollView>
-          {/* Next Button at the bottom, fixed, not scrollable */}
           <View style={styles.bottomButtonContainerFixed}>
             <PrimaryButton title={t('next')} onPress={handleNextButtonPress} />
           </View>
         </View>
       </KeyboardAvoidingView>
 
-      {/* Panditji Selection Modal */}
       <PanditjiSelectionModal
         visible={modalVisible}
         onClose={handlePanditjiSelectionModalClose}
@@ -900,14 +896,13 @@ const styles = StyleSheet.create({
   },
   flex1: {
     flex: 1,
-    borderTopLeftRadius:30,
-    borderTopRightRadius:30,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
     backgroundColor: COLORS.pujaBackground,
   },
   scrollContent: {
     padding: moderateScale(24),
     paddingBottom: verticalScale(50),
-
   },
   content: {
     flex: 1,
@@ -1016,7 +1011,6 @@ const styles = StyleSheet.create({
     minHeight: verticalScale(100),
     textAlignVertical: 'top',
   },
-  // Remove old bottomButtonContainer, add fixed one
   bottomButtonContainerFixed: {
     position: 'absolute',
     left: 0,

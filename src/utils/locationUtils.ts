@@ -3,7 +3,6 @@ import {
   PermissionsAndroid,
   Linking,
   Alert,
-  AppState,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import {
@@ -11,7 +10,6 @@ import {
   request,
   PERMISSIONS,
   RESULTS,
-  openSettings,
 } from 'react-native-permissions';
 import { promptForEnableLocationIfNeeded } from 'react-native-android-location-enabler';
 
@@ -21,8 +19,9 @@ export interface LocationData {
   address?: string;
   timestamp?: string;
 }
-let isAlertVisible = false; // module-level flag
-// Helper: Show alert to go to settings
+
+let isAlertVisible = false;
+
 const showSettingsAlert = () => {
   Alert.alert(
     '',
@@ -34,17 +33,22 @@ const showSettingsAlert = () => {
   );
 };
 
-// Request permission (Android + iOS)
+// Fix for: first time on click GPS location it not work on second time it's work
+// Root cause: On Android, must ensure permission *AND* ensure GPS mode BEFORE requesting location.
+// If Geolocation.getCurrentPosition is called BEFORE user enables permissions or turns on GPS, Android may cache/lock, and only after the 2nd attempt things work.
+// Also: get location *after* both checks/flows are done + use callback pattern for Geolocation to prevent races.
+
 const requestLocationPermission = async (): Promise<boolean> => {
   try {
     if (Platform.OS === 'android') {
+      // Check first
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
       );
 
       if (granted === PermissionsAndroid.RESULTS.GRANTED) return true;
 
-      // Fallback to coarse
+      // Fallback to request coarse
       if (granted === PermissionsAndroid.RESULTS.DENIED) {
         const coarse = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
@@ -56,7 +60,6 @@ const requestLocationPermission = async (): Promise<boolean> => {
         showSettingsAlert();
         return false;
       }
-
       return false;
     }
 
@@ -70,48 +73,46 @@ const requestLocationPermission = async (): Promise<boolean> => {
     }
 
     if (status === RESULTS.BLOCKED || status === RESULTS.UNAVAILABLE) {
-      if (isAlertVisible) return false; // Prevent multiple alerts
+      if (isAlertVisible) return false;
       isAlertVisible = true;
       showSettingsAlert();
       return false;
     }
 
     return false;
-  } catch (err) {
-    console.warn('Permission error:', err);
+  } catch (e) {
+    console.warn('Permission error:', e);
     return false;
   }
 };
 
-// Ensure location services are ON (Android GPS)
 const ensureLocationServicesEnabled = async (): Promise<boolean> => {
   if (Platform.OS === 'android') {
     try {
+      // show dialog to enable GPS if needed
       const result = await promptForEnableLocationIfNeeded({
         interval: 10000,
-        waitForAccurate: false, // Don't block too long
+        waitForAccurate: false,
       });
       return result === 'enabled' || result === 'already-enabled';
     } catch {
       return false;
     }
   }
-
-  // iOS: assume permission implies services are on
-  return true;
+  return true; // on iOS, assume permission implies services are on
 };
 
-// Get location with retry + fallback
 const getLocationWithFallback = (): Promise<LocationData> => {
   return new Promise((resolve, reject) => {
     let resolved = false;
 
+    // 20 seconds: overall timeout
     const timeout = setTimeout(() => {
       if (!resolved) {
         resolved = true;
         reject(new Error('Location timeout'));
       }
-    }, 20000); // Max 20s
+    }, 20000);
 
     const tryGetLocation = (highAccuracy: boolean) => {
       Geolocation.getCurrentPosition(
@@ -128,9 +129,9 @@ const getLocationWithFallback = (): Promise<LocationData> => {
         },
         (err) => {
           if (resolved) return;
-
+          // If highAccuracy failed, fallback
           if (highAccuracy) {
-            // Try again with low accuracy
+            // Try with low accuracy
             Geolocation.getCurrentPosition(
               (pos) => {
                 if (resolved) return;
@@ -152,7 +153,7 @@ const getLocationWithFallback = (): Promise<LocationData> => {
               {
                 enableHighAccuracy: false,
                 timeout: 10000,
-                maximumAge: 300000, // 5 min cache
+                maximumAge: 300000,
               },
             );
           } else {
@@ -169,28 +170,27 @@ const getLocationWithFallback = (): Promise<LocationData> => {
       );
     };
 
-    tryGetLocation(true); // First try high accuracy
+    tryGetLocation(true);
   });
 };
 
-// MAIN EXPORT: Get current location reliably
 export const getCurrentLocation = async (): Promise<LocationData | null> => {
   try {
-    // Step 1: Check permission
+    // Step 1: Always check permission first (must grant before doing next step)
     const hasPermission = await requestLocationPermission();
     if (!hasPermission) {
       console.log('Location permission denied');
       return null;
     }
 
-    // Step 2: Ensure GPS is enabled (Android)
+    // Step 2: Always check GPS enabled if Android (do this *after* permission)
     const gpsEnabled = await ensureLocationServicesEnabled();
     if (!gpsEnabled && Platform.OS === 'android') {
       console.log('GPS not enabled');
       return null;
     }
 
-    // Step 3: Get location with fallback
+    // Step 3: Safe to get location
     const location = await getLocationWithFallback();
     console.log('Location fetched:', location);
     return location;

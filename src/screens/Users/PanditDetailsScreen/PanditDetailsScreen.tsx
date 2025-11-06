@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -13,20 +13,20 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
-import {moderateScale, verticalScale} from 'react-native-size-matters';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { moderateScale, verticalScale } from 'react-native-size-matters';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import {getPanditDetails} from '../../../api/apiService';
+import { getPanditDetails } from '../../../api/apiService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {useCommonToast} from '../../../common/CommonToast';
-import {useTranslation} from 'react-i18next';
-import {translateData} from '../../../utils/TranslateData';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useCommonToast } from '../../../common/CommonToast';
+import { useTranslation } from 'react-i18next';
+import { translateData } from '../../../utils/TranslateData';
 
-const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface PanditPhotoGalleryItem {
   id: number;
@@ -85,9 +85,9 @@ interface PanditList {
 const PanditDetailsScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const route = useRoute();
-  const {panditId} = route.params as {panditId: string};
-  const {t, i18n} = useTranslation();
-  const {showErrorToast} = useCommonToast();
+  const { panditId } = route.params as { panditId: string };
+  const { t, i18n } = useTranslation();
+  const { showErrorToast } = useCommonToast();
   const navigation = useNavigation();
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedPandit, setSelectedPandit] = useState<PanditDetails | null>(
@@ -182,7 +182,7 @@ const PanditDetailsScreen: React.FC = () => {
 
   const renderStars = (count: number) => {
     return (
-      <View style={{flexDirection: 'row'}}>
+      <View style={{ flexDirection: 'row' }}>
         {[...Array(5)].map((_, i) => (
           <Ionicons
             key={i}
@@ -191,7 +191,7 @@ const PanditDetailsScreen: React.FC = () => {
             color={
               i < count ? COLORS.primaryBackgroundButton : COLORS.inputBoder
             }
-            style={{marginRight: 2}}
+            style={{ marginRight: 2 }}
           />
         ))}
       </View>
@@ -229,9 +229,10 @@ const PanditDetailsScreen: React.FC = () => {
             onPress={() => {
               setModalImageUri(imgObj.image);
               setModalVisible(true);
-            }}>
+            }}
+          >
             <Image
-              source={{uri: imgObj.image}}
+              source={{ uri: imgObj.image }}
               style={styles.reviewImageThumb}
             />
           </TouchableOpacity>
@@ -240,21 +241,25 @@ const PanditDetailsScreen: React.FC = () => {
     );
   };
 
-  const renderGalleryItem = ({item}: {item: PanditPhotoGalleryItem}) => (
+  const renderGalleryItem = ({ item }: { item: PanditPhotoGalleryItem }) => (
     <TouchableOpacity
       style={[styles.galleryItemHorizontal, THEMESHADOW.shadow]}
       onPress={() => {
         setModalImageUri(item.image);
         setModalVisible(true);
-      }}>
-      <Image source={{uri: item.image}} style={styles.galleryImageHorizontal} />
+      }}
+    >
+      <Image
+        source={{ uri: item.image }}
+        style={styles.galleryImageHorizontal}
+      />
       <Text style={styles.galleryLabelHorizontal}>
         {item.pooja_name ? item.pooja_name : 'Photo'}
       </Text>
     </TouchableOpacity>
   );
 
-  const renderPujaItem = ({item}: {item: PanditList}) => (
+  const renderPujaItem = ({ item }: { item: PanditList }) => (
     <TouchableOpacity
       style={styles.poojaItem}
       onPress={() =>
@@ -267,9 +272,10 @@ const PanditDetailsScreen: React.FC = () => {
             panditCity: originalPanditData?.address_city_name,
           },
         })
-      }>
+      }
+    >
       <Image
-        source={{uri: item.pooja_image_url}}
+        source={{ uri: item.pooja_image_url }}
         style={styles.poojaImage}
         resizeMode="cover"
       />
@@ -280,7 +286,8 @@ const PanditDetailsScreen: React.FC = () => {
             flexDirection: 'row',
             alignItems: 'center',
             marginBottom: moderateScale(4),
-          }}>
+          }}
+        >
           <>
             <Text style={styles.poojaPrice}>₹{item.price_with_samagri}</Text>
             <Text
@@ -288,19 +295,21 @@ const PanditDetailsScreen: React.FC = () => {
                 marginLeft: 8,
                 color: COLORS.textSecondary,
                 fontSize: moderateScale(13),
-              }}>
+              }}
+            >
               {t('with_samagri')}
             </Text>
           </>
         </View>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           <Text style={styles.poojaPrice}>₹{item.price_without_samagri}</Text>
           <Text
             style={{
               marginLeft: 8,
               color: COLORS.textSecondary,
               fontSize: moderateScale(13),
-            }}>
+            }}
+          >
             {t('without_samagri')}
           </Text>
         </View>
@@ -312,7 +321,7 @@ const PanditDetailsScreen: React.FC = () => {
     showAllPuja || pujaList.length <= 3 ? pujaList : pujaList.slice(0, 3);
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('panditji_details')} showBackButton={true} />
@@ -321,16 +330,19 @@ const PanditDetailsScreen: React.FC = () => {
         visible={modalVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setModalVisible(false)}>
+        onRequestClose={() => setModalVisible(false)}
+      >
         <View style={styles.modalOverlay}>
           <Pressable
             style={styles.modalOverlay}
-            onPress={() => setModalVisible(false)}></Pressable>
+            onPress={() => setModalVisible(false)}
+          ></Pressable>
           <View style={styles.modalContent}>
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setModalVisible(false)}
-              hitSlop={{top: 20, bottom: 20, left: 20, right: 20}}>
+              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+            >
               <Ionicons name="close" size={32} color="#fff" />
             </TouchableOpacity>
             {modalImageUri && (
@@ -352,7 +364,8 @@ const PanditDetailsScreen: React.FC = () => {
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.contentContainer}>
           <View style={[styles.panditCard, THEMESHADOW.shadow]}>
             <Image
@@ -413,7 +426,7 @@ const PanditDetailsScreen: React.FC = () => {
               <View style={[styles.poojaList, THEMESHADOW.shadow]}>
                 {displayedPujaList.map((item, idx) => (
                   <React.Fragment key={item.pooja}>
-                    {renderPujaItem({item})}
+                    {renderPujaItem({ item })}
                     {idx < displayedPujaList.length - 1 && (
                       <View style={styles.separator} />
                     )}
@@ -423,7 +436,8 @@ const PanditDetailsScreen: React.FC = () => {
                   <TouchableOpacity
                     style={styles.moreButton}
                     onPress={() => setShowAllPuja(true)}
-                    activeOpacity={0.7}>
+                    activeOpacity={0.7}
+                  >
                     <Text style={styles.moreButtonText}>More...</Text>
                   </TouchableOpacity>
                 )}
@@ -448,7 +462,8 @@ const PanditDetailsScreen: React.FC = () => {
                           flexDirection: 'row',
                           alignItems: 'center',
                           marginBottom: moderateScale(8),
-                        }}>
+                        }}
+                      >
                         <Image
                           source={{
                             uri: getReviewAvatar(review),
@@ -470,7 +485,8 @@ const PanditDetailsScreen: React.FC = () => {
                               color: COLORS.textDark,
                               fontSize: moderateScale(14),
                               marginBottom: moderateScale(6),
-                            }}>
+                            }}
+                          >
                             {review.user_name}
                           </Text>
                           {renderStars(review.rating)}
