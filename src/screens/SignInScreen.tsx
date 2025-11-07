@@ -14,6 +14,7 @@ import {
   StatusBar,
   useColorScheme,
   Pressable,
+  Keyboard,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
@@ -39,10 +40,9 @@ import {
   getRefundPolicy,
 } from '../api/apiService';
 import CountrySelect from 'react-native-country-select';
-import { getFirebaseAuthErrorMessage } from '../helper/firebaseErrorHandler'; // <-- Added
+import { getFirebaseAuthErrorMessage } from '../helper/firebaseErrorHandler';
 import Config from 'react-native-config';
 
-// Fallback mapping for country calling codes (covers all official ISO 3166 alpha-2 codes - as of 2024)
 const COUNTRY_CALLING_CODES: { [key: string]: string } = {
   AF: '+93',
   AX: '+358',
@@ -295,12 +295,11 @@ const COUNTRY_CALLING_CODES: { [key: string]: string } = {
   ZW: '+263',
 };
 
-// Optional: Mapping for country-specific phone number lengths
 const PHONE_NUMBER_LENGTHS: { [key: string]: number } = {
   IN: 10,
   US: 10,
   GB: 10,
-  AX: 7, // Åland Islands (Finland)
+  AX: 7,
   FR: 9,
   DE: 10,
   CA: 10,
@@ -392,6 +391,14 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
     return '';
   };
 
+  // Helper for waiting after Keyboard.dismiss for all devices
+  const waitKeyboardDismiss = () =>
+    new Promise<void>(resolve => {
+      Keyboard.dismiss();
+      // Always give a short delay after Keyboard.dismiss, regardless of platform/device
+      setTimeout(() => resolve(), 200);
+    });
+
   const handleSignIn = async () => {
     const errorMsg = validateInput(phoneNumber);
     if (errorMsg) {
@@ -444,9 +451,11 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
       showErrorToast(errorText);
       return;
     }
+
     const auth = getAuth();
     try {
       setLoading(true);
+      await waitKeyboardDismiss();
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone);
       showSuccessToast(t('otp_sent'));
       setLoading(false);
@@ -522,19 +531,20 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
 
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
-      <StatusBar
+      {/* <StatusBar
         translucent
         backgroundColor="transparent"
         barStyle="light-content"
-      />
+      /> */}
       <ImageBackground
         source={Images.ic_splash_background}
         style={styles.container}
       >
         <KeyboardAvoidingView
           style={styles.container}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          // keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          // Always use "padding" so no button is hidden (set for all devices)
+          // behavior={'padding'}
+          // keyboardVerticalOffset={40}
         >
           <Loader loading={isLoading} />
           <ScrollView
@@ -643,7 +653,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                       callingCode: correctCallingCode,
                       cca2: country.cca2 || 'IN',
                     });
-                    setPhoneNumber(''); // Reset phone number on country change
+                    setPhoneNumber('');
                     setCountryModalVisible(false);
                   }}
                   initialCountry={selectedCountry?.cca2 || DEFAULT_COUNTRY_ISO}
@@ -707,6 +717,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                   onPress={handleSignIn}
                   title={t('send_otp')}
                   disabled={!isAgreed}
+                  style={{ marginBottom: 20 }}
                 />
                 {Platform.OS === 'ios' && (
                   <PrimaryButton
@@ -761,7 +772,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                     color={Platform.OS === 'ios' ? undefined : pickerTextColor}
                     style={
                       colorScheme === 'dark'
-                        ? { backgroundColor: COLORS.primaryTextDark }
+                        ? { backgroundColor: COLORS.white }
                         : undefined
                     }
                   />
@@ -771,7 +782,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                     color={Platform.OS === 'ios' ? undefined : pickerTextColor}
                     style={
                       colorScheme === 'dark'
-                        ? { backgroundColor: COLORS.primaryTextDark }
+                        ? { backgroundColor: COLORS.white }
                         : undefined
                     }
                   />
@@ -781,7 +792,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                     color={Platform.OS === 'ios' ? undefined : pickerTextColor}
                     style={
                       colorScheme === 'dark'
-                        ? { backgroundColor: COLORS.primaryTextDark }
+                        ? { backgroundColor: COLORS.white }
                         : undefined
                     }
                   />

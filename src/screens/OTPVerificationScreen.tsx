@@ -51,7 +51,8 @@ interface Props {
   route: OTPVerificationScreenRouteProp;
 }
 
-const RESEND_OTP_WAIT_TIME = 30;
+// One minute timer for OTP resend
+const RESEND_OTP_WAIT_TIME = 60;
 
 const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
   const { t } = useTranslation();
@@ -63,25 +64,24 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
   const [otpConfirmation, setOtpConfirmation] = useState(
     route.params.confirmation,
   ); // No same number detect logic here
-  const [isOtpExpired, setIsOtpExpired] = useState(false);
+  // Remove OTP expired logic
   const { phoneNumber } = route.params;
   const inputRefs = useRef<TextInput[]>([]);
   const [timer, setTimer] = useState(RESEND_OTP_WAIT_TIME);
   const hasNavigatedRef = useRef(false);
 
   useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
     if (timer > 0) {
-      const interval = setInterval(() => {
+      interval = setInterval(() => {
         setTimer(prev => prev - 1);
       }, 1000);
-      return () => clearInterval(interval);
-    } else {
-      setIsOtpExpired(true);
-      setOtpConfirmation(null as any);
-      if (!hasNavigatedRef.current) {
-        showErrorToast('OTP has expired. Please request a new one.');
-      }
     }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, [timer]);
 
   const handleOtpChange = (value: string, index: number) => {
@@ -151,8 +151,9 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
   const verifyOtp = async (code: string) => {
     try {
       setLoading(true);
-      if (isOtpExpired || !otpConfirmation) {
-        showErrorToast('OTP has expired. Please request a new one.');
+      // Don't check isOtpExpired
+      if (!otpConfirmation) {
+        showErrorToast('Unable to verify OTP. Please request a new one.');
         return;
       }
 
@@ -197,7 +198,6 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
 
       const confirmation = await signInWithPhoneNumber(getAuth(), phoneNumber);
       setOtpConfirmation(confirmation);
-      setIsOtpExpired(false);
       setOtp(['', '', '', '', '', '']);
       showSuccessToast(t('otp_resent'));
       setTimer(RESEND_OTP_WAIT_TIME);

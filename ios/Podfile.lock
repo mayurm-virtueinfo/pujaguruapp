@@ -2350,7 +2350,7 @@ PODS:
   - react-native-webrtc (124.0.7):
     - JitsiWebRTC (~> 124.0.0)
     - React-Core
-  - react-native-webview (13.13.5):
+  - react-native-webview (13.16.0):
     - boost
     - DoubleConversion
     - fast_float
@@ -4009,7 +4009,7 @@ SPEC CHECKSUMS:
   react-native-slider: 0f7a5cb61157140d48bb138691f4261d38970dc2
   react-native-video: d9d12aa2325ae06222e97e8bd801bbc31df2675d
   react-native-webrtc: e8f0ce746353adc2744a2b933645e1aeb41eaa74
-  react-native-webview: 4cd7d5698662192457276378751776cd5c8edf4f
+  react-native-webview: cdce419e8022d0ef6f07db21890631258e7a9e6e
   react-native-worklets-core: 2b8f8cd5c1fe549ae658a757e3d7b84eab21a6fb
   React-NativeModulesApple: efd0906463c79d9b86197dbcf0d58358dff8c5ed
   React-oscompat: 95875e81f5d4b3c7b2c888d5bd2c9d83450d8bdb

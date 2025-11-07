@@ -1,13 +1,13 @@
 import React from 'react';
-import {StyleSheet, View} from 'react-native';
-import {WebView} from 'react-native-webview';
-import {useRoute} from '@react-navigation/native';
+import { StyleSheet, View } from 'react-native';
+import { WebView } from 'react-native-webview';
+import { useRoute } from '@react-navigation/native';
 import CustomHeader from '../../../components/CustomHeader';
-import {COLORS} from '../../../theme/theme';
+import { COLORS } from '../../../theme/theme';
 
 export default function TermsPolicyScreen() {
   const route = useRoute<any>();
-  const {htmlContent, title} = route.params || {};
+  const { htmlContent, title } = route.params || {};
 
   let htmlToShow = '';
   if (
@@ -29,7 +29,7 @@ export default function TermsPolicyScreen() {
       <CustomHeader title={title || 'Policy'} showBackButton />
       <WebView
         originWhitelist={['*']}
-        source={{html: htmlToShow}}
+        source={{ html: htmlToShow }}
         style={styles.webview}
         startInLoadingState
         scalesPageToFit
@@ -41,7 +41,7 @@ export default function TermsPolicyScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: COLORS.primaryBackground},
+  container: { flex: 1, backgroundColor: COLORS.primaryBackground },
   webview: {
     flex: 1,
     backgroundColor: '#fff',
