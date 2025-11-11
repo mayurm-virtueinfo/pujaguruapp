@@ -372,5 +372,6 @@
   "invalid_pincode": "Invalid pincode",
   "failed_to_fetch_cities": "Failed to fetch city list. Please try again.",
   "failed_to_fetch_data": "Failed to fetch data. Please try again.",
-  "failed_to_save_address": "Failed to save address. Please try again."
+  "failed_to_save_address": "Failed to save address. Please try again.",
+  "updating_location": "Updating location..."
 }

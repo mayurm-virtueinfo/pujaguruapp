@@ -34,7 +34,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import PrimaryButton from '../../../components/PrimaryButton';
 import { getCurrentLocation } from '../../../utils/locationUtils';
-import { LOCATION_UPDATED_EVENT } from '../../../helper/helper';
+import {
+  getLocationForAPI,
+  LOCATION_UPDATED_EVENT,
+} from '../../../helper/helper';
 
 interface PendingPuja {
   id: number;
@@ -89,14 +92,14 @@ const UserHomeScreen: React.FC = () => {
     ) => {
       setLoading(true);
       try {
-        // Parallel API calls (non-blocking)
+        // Always fetch non-location data immediately
         const [upcomingRes, inProgressRes, activeRes] = await Promise.all([
           getUpcomingPujas().catch(() => []),
           getInProgress().catch(() => []),
           getActivePuja().catch(() => ({ bookings: [] })),
         ]);
 
-        // Recommended Pandits (only if location)
+        // Recommended Pandits: Only if location provided
         let recommendedArr: RecommendedPandit[] = [];
         if (locationForPandit) {
           try {
@@ -109,33 +112,25 @@ const UserHomeScreen: React.FC = () => {
               : (rec as any)?.data || [];
           } catch (err) {
             console.warn('Failed to fetch recommended pandits:', err);
-            recommendedArr = [];
           }
         }
 
-        // Parse responses
-        const upcomingArr: PujaItem[] = Array.isArray(upcomingRes)
-          ? upcomingRes
-          : [];
-        const inProgressArr: PujaItem[] = Array.isArray(inProgressRes)
-          ? inProgressRes
-          : [];
+        // Parse + Translate (same as before)
+        const upcomingArr = Array.isArray(upcomingRes) ? upcomingRes : [];
+        const inProgressArr = Array.isArray(inProgressRes) ? inProgressRes : [];
         const pendingArr: PendingPuja[] = Array.isArray(activeRes?.bookings)
           ? activeRes.bookings
           : activeRes?.bookings
           ? [activeRes.bookings]
           : [];
 
-        // Translate all data in parallel
         const [tPujas, tInProgress, tPending, tRecommended] = await Promise.all(
           [
             translateData(upcomingArr, currentLanguage, [
               'pooja_name',
               'when_is_pooja',
-            ]) as Promise<PujaItem[]>,
-            translateData(inProgressArr, currentLanguage, [
-              'pooja_name',
-            ]) as Promise<PujaItem[]>,
+            ]),
+            translateData(inProgressArr, currentLanguage, ['pooja_name']),
             Promise.all(
               pendingArr.map(async p => {
                 if (p.pooja) {
@@ -152,23 +147,17 @@ const UserHomeScreen: React.FC = () => {
             translateData(recommendedArr, currentLanguage, [
               'full_name',
               'city',
-            ]) as Promise<RecommendedPandit[]>,
+            ]),
           ],
         );
 
-        // Update state
-        setPujas(tPujas);
-        setInProgressPujas(tInProgress);
-        setPendingPujas(tPending);
-        setRecomendedPandits(tRecommended);
+        setPujas(Array.isArray(tPujas) ? tPujas : []);
+        setInProgressPujas(Array.isArray(tInProgress) ? tInProgress : []);
+        setPendingPujas(Array.isArray(tPending) ? tPending : []);
+        setRecomendedPandits(Array.isArray(tRecommended) ? tRecommended : []);
         setOriginalRecomendedPandits(recommendedArr);
       } catch (err) {
         console.error('Error loading home data:', err);
-        setPujas([]);
-        setInProgressPujas([]);
-        setPendingPujas([]);
-        setRecomendedPandits([]);
-        setOriginalRecomendedPandits([]);
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -184,12 +173,26 @@ const UserHomeScreen: React.FC = () => {
     const init = async () => {
       setLoading(true);
 
-      // Start non-location APIs immediately
-      const [upcomingRes, inProgressRes, activeRes] = await Promise.all([
+      // Start fetching non-location data immediately
+      const nonLocationPromise = Promise.all([
         getUpcomingPujas().catch(() => []),
         getInProgress().catch(() => []),
         getActivePuja().catch(() => ({ bookings: [] })),
       ]);
+
+      // Get location instantly (cached or null)
+      const loc = await getLocationForAPI(); // Fast — uses cache
+
+      if (isMounted) {
+        setLocation(loc);
+      }
+
+      // Load everything with current (cached) location
+      if (loc) {
+        await loadAllData(loc);
+      } else {
+        await loadAllData(null);
+      }
 
       let fetchedLocation: { latitude: number; longitude: number } | null =
         null;
@@ -208,7 +211,6 @@ const UserHomeScreen: React.FC = () => {
         console.log('Location fetch failed (non-blocking):', err);
       }
 
-      // Load pandits only if location exists
       let recommendedArr: RecommendedPandit[] = [];
       if (fetchedLocation) {
         try {
@@ -222,7 +224,8 @@ const UserHomeScreen: React.FC = () => {
         }
       }
 
-      // Parse
+      // Load non-location data in parallel
+      const [upcomingRes, inProgressRes, activeRes] = await nonLocationPromise;
       const upcomingArr = Array.isArray(upcomingRes) ? upcomingRes : [];
       const inProgressArr = Array.isArray(inProgressRes) ? inProgressRes : [];
       const pendingArr: PendingPuja[] = Array.isArray(activeRes?.bookings)
@@ -274,13 +277,13 @@ const UserHomeScreen: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [currentLanguage]);
+  }, [currentLanguage, loadAllData]);
 
   // AppState: Re-fetch location when app is active
   useEffect(() => {
     const subscription = AppState.addEventListener('change', async state => {
       if (state === 'active') {
-        const loc = await getCurrentLocation();
+        const loc = await getLocationForAPI();
         if (loc) {
           setLocation({ latitude: loc.latitude, longitude: loc.longitude });
           loadAllData({ latitude: loc.latitude, longitude: loc.longitude });
@@ -304,9 +307,7 @@ const UserHomeScreen: React.FC = () => {
             longitude: Number(newLoc.longitude),
           };
           setLocation(loc);
-          await loadAllData(loc);
-        } else {
-          await loadAllData(null);
+          await loadAllData(loc); // Only updates pandits
         }
       },
     );
@@ -316,7 +317,7 @@ const UserHomeScreen: React.FC = () => {
   // Pull to refresh
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    const loc = await getCurrentLocation();
+    const loc = await getLocationForAPI();
     await loadAllData(
       loc ? { latitude: loc.latitude, longitude: loc.longitude } : null,
     );
@@ -470,9 +471,15 @@ const UserHomeScreen: React.FC = () => {
                   },
                 ]}
               >
-                <Text style={styles.noPanditText}>
-                  {t('no_panditji_found')}
-                </Text>
+                {location ? (
+                  <Text style={styles.noPanditText}>
+                    {t('updating_location')}
+                  </Text>
+                ) : (
+                  <Text style={styles.noPanditText}>
+                    {t('location_not_available')}
+                  </Text>
+                )}
               </View>
             )}
           </ScrollView>
@@ -499,7 +506,19 @@ const UserHomeScreen: React.FC = () => {
                     />
                     <View style={styles.pujaTextContainer}>
                       <Text style={styles.pujaName}>{puja.pooja_name}</Text>
-                      <Text style={styles.pujaDate}>{puja.booking_date}</Text>
+                      <Text style={styles.pujaDate}>
+                        {puja.booking_date
+                          ? (() => {
+                              const dateParts = puja.booking_date.split('-');
+                              // booking_date is assumed to be in YYYY-MM-DD
+                              if (dateParts.length === 3) {
+                                const [yyyy, mm, dd] = dateParts;
+                                return `${dd}-${mm}-${yyyy}`;
+                              }
+                              return puja.booking_date;
+                            })()
+                          : ''}
+                      </Text>
                     </View>
                   </TouchableOpacity>
                   {idx !== inProgressPujas.length - 1 && (
@@ -527,8 +546,19 @@ const UserHomeScreen: React.FC = () => {
                   'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg';
                 const poojaName =
                   pooja.title || pooja.pooja_name || 'Unknown Puja';
-                const poojaDate =
+                // Set date in format DDMMYYYY (without dashes or spaces)
+                let poojaDateRaw =
                   puja.when_is_pooja || puja.booking_date || 'No Date';
+                let poojaDate = poojaDateRaw;
+                if (
+                  poojaDateRaw &&
+                  poojaDateRaw !== 'No Date' &&
+                  typeof poojaDateRaw === 'string' &&
+                  poojaDateRaw.split('-').length === 3
+                ) {
+                  const [yyyy, mm, dd] = poojaDateRaw.split('-');
+                  poojaDate = `${dd}-${mm}-${yyyy}`;
+                }
 
                 return (
                   <View key={puja.id || idx}>
