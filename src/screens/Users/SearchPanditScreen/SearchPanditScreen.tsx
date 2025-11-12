@@ -55,7 +55,7 @@ const SearchPanditScreen: React.FC = () => {
       }, 60 * 1000);
 
       let socketURL = __DEV__
-        ? `ws://puja-guru.com/ws/bookings/${bookingId}/`
+        ? `wss://dev.puja-guru.com/ws/bookings/${bookingId}/`
         : `wss://puja-guru.com/ws/bookings/${bookingId}/`;
 
       console.log('socketURL :: ', socketURL);

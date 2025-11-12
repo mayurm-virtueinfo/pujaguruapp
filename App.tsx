@@ -35,6 +35,12 @@ import { SessionProvider } from './src/provider/SessionProvider';
 import { NetworkProvider } from './src/provider/NetworkProvider';
 import { hideSplash } from 'react-native-splash-view';
 import Config from 'react-native-config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from './src/utils/appConstant';
+import {
+  closeUserWebSocket,
+  initUserWebSocket,
+} from './src/utils/WebSocketService';
 
 LogBox.ignoreLogs([
   "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
@@ -44,7 +50,7 @@ LogBox.ignoreLogs([
 const auth = getAuth();
 if (__DEV__) {
   // auth.useEmulator('http://127.0.0.1:9099');
-  auth.useEmulator('http://192.168.1.13:9099');
+  auth.useEmulator('http://192.168.1.11:9099');
 }
 setupNotifications();
 
@@ -69,6 +75,29 @@ const App = () => {
     console.log('*******************************************************');
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const setupWebSocket = async () => {
+      try {
+        const token = await AsyncStorage.getItem(AppConstant.ACCESS_TOKEN);
+        if (token) {
+          console.log('🔌 Initializing user WebSocket connection...');
+          initUserWebSocket(token);
+        } else {
+          console.log('⚠️ No token found — skipping WebSocket setup');
+        }
+      } catch (error) {
+        console.error('WebSocket setup error:', error);
+      }
+    };
+
+    setupWebSocket();
+
+    return () => {
+      console.log('🧹 Closing WebSocket connection...');
+      closeUserWebSocket();
+    };
   }, []);
 
   const getCurrentVersion = async () => {

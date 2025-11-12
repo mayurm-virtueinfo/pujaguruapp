@@ -1,10 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../utils/appConstant';
-import {getCurrentLocation} from '../utils/locationUtils';
-import {Message} from '../screens/Users/UserChatScreen/UserChatScreen';
-import {DeviceEventEmitter} from 'react-native';
+import { getCurrentLocation } from '../utils/locationUtils';
+import { Message } from '../screens/Users/UserChatScreen/UserChatScreen';
+import { DeviceEventEmitter } from 'react-native';
 
-const SIXTY_MINUTES = 2 * 60 * 1000;
+const SIXTY_MINUTES = 30 * 60 * 1000;
 
 export const LOCATION_UPDATED_EVENT = 'LOCATION_UPDATED';
 

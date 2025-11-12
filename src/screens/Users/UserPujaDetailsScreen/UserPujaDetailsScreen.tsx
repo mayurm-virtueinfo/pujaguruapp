@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  DeviceEventEmitter,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -28,6 +29,7 @@ import { useTranslation } from 'react-i18next';
 import { getUpcomingPujaDetails, postStartChat } from '../../../api/apiService';
 import { translateData, translateText } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
+import { WEBSOCKET_UPDATE_EVENT } from '../../../utils/WebSocketService';
 
 // TYPES for safer data handling and remove linter errors
 type PanditDataType = {
@@ -80,9 +82,6 @@ const UserPujaDetailsScreen: React.FC = () => {
 
   const [wasNavigatedToReview, setWasNavigatedToReview] = useState(false);
 
-  // Fix for "Cannot find namespace 'NodeJS'": use built-in type or global setTimeout type for ref
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
   const currentLanguage = i18n.language;
 
   // Helper: fetch API for initial load (with loader)
@@ -133,6 +132,29 @@ const UserPujaDetailsScreen: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    const listener = DeviceEventEmitter.addListener(
+      WEBSOCKET_UPDATE_EVENT,
+      async (data: any) => {
+        // Check if this event belongs to the current booking
+        if (data.type === 'booking_update' && data.booking_id === id) {
+          console.log('🔔 WebSocket update for this puja:', data.action);
+
+          setTimeout(async () => {
+            try {
+              await fetchInitialPujaDetails();
+              console.log('✅ Puja details refreshed after WS event');
+            } catch (err) {
+              console.error('❌ Failed to refresh puja details:', err);
+            }
+          }, 400);
+        }
+      },
+    );
+
+    return () => listener.remove();
+  }, [id, fetchInitialPujaDetails]);
+
   // Initial load: loader, then polling begins
   useEffect(() => {
     let isMounted = true;
@@ -141,16 +163,11 @@ const UserPujaDetailsScreen: React.FC = () => {
 
     fetchInitialPujaDetails().then(() => {
       if (!isMounted) return;
-      // After initial loader & load, start polling every 3s in background
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      intervalRef.current = setInterval(() => {}, 3000);
     });
 
     return () => {
       isMounted = false;
-      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-    // eslint-disable-next-line
   }, [currentLanguage, id]);
 
   const onRefresh = async () => {
@@ -423,22 +440,19 @@ const UserPujaDetailsScreen: React.FC = () => {
     const pandit = pujaDetails.assigned_pandit;
     if (!pandit || typeof pandit !== 'object') return null;
 
+    const isInProgress = pujaDetails.booking_status === 'in_progress';
+
     return (
       <View style={styles.totalContainer}>
         <View style={[styles.totalCard, THEMESHADOW.shadow]}>
           <View style={styles.totalContent}>
+            {/* Left section: pandit info */}
             <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                flex: 1,
-              }}
+              style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
             >
               {pandit?.profile_img_url && (
                 <Image
-                  source={{
-                    uri: getPanditImageUrl(pandit?.profile_img_url),
-                  }}
+                  source={{ uri: getPanditImageUrl(pandit?.profile_img_url) }}
                   style={styles.pujaIcon}
                 />
               )}
@@ -459,20 +473,29 @@ const UserPujaDetailsScreen: React.FC = () => {
                     {pandit.pandit_name || t('panditji')}
                   </Text>
                 </TouchableOpacity>
+
                 {pujaDetails.booking_status === 'in_progress' && (
                   <Text
-                    style={[styles.statusText, { fontSize: moderateScale(11) }]}
+                    style={{
+                      color: COLORS.pujaCardSubtext,
+                      fontSize: moderateScale(12),
+                      marginTop: 4,
+                      fontFamily: Fonts.Sen_Medium,
+                    }}
                   >
-                    {t('performing_puja')}
+                    {t('you_cannot_chat_during_puja')}
                   </Text>
                 )}
               </View>
             </View>
+
+            {/* Right section: chat icon */}
             <TouchableOpacity
-              onPress={startChatConversation}
+              onPress={isInProgress ? undefined : startChatConversation}
               accessible
               accessibilityLabel={t('start_chat')}
-              disabled={isNavigating}
+              disabled={isInProgress || isNavigating}
+              style={{ opacity: isInProgress ? 0.4 : 1 }}
             >
               {isNavigating ? (
                 <ActivityIndicator

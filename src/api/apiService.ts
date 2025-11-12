@@ -1351,7 +1351,10 @@ export const postRegisterFCMToken = (
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error in registering fcm token :: ', error);
+        console.error(
+          'Error in registering fcm token :: ',
+          error?.response?.data,
+        );
         reject(error);
       });
   });
@@ -1512,7 +1515,7 @@ export const postNewPanditOffer = (data: any): Promise<any> => {
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error in registering fcm token :: ', error);
+        console.error('Error in new pandit offer :: ', error);
         reject(error);
       });
   });
@@ -1614,7 +1617,7 @@ export const postCreateMeeting = (booking_id: any): Promise<any> => {
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error in registering fcm token :: ', error);
+        console.error('Error in post create meeting api :: ', error);
         reject(error);
       });
   });
@@ -1634,4 +1637,3 @@ export const updateWaitingUser = (booking_id: any): Promise<any> => {
       });
   });
 };
-

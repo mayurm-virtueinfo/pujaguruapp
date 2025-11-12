@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -38,6 +38,7 @@ import {
   getLocationForAPI,
   LOCATION_UPDATED_EVENT,
 } from '../../../helper/helper';
+import { WEBSOCKET_UPDATE_EVENT } from '../../../utils/WebSocketService';
 
 interface PendingPuja {
   id: number;
@@ -73,6 +74,8 @@ const UserHomeScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
   const inset = useSafeAreaInsets();
+
+  const isRefreshingRef = useRef(false);
 
   // Fetch user ID
   useEffect(() => {
@@ -307,7 +310,7 @@ const UserHomeScreen: React.FC = () => {
             longitude: Number(newLoc.longitude),
           };
           setLocation(loc);
-          await loadAllData(loc); // Only updates pandits
+          await loadAllData(loc);
         }
       },
     );
@@ -316,12 +319,26 @@ const UserHomeScreen: React.FC = () => {
 
   // Pull to refresh
   const onRefresh = useCallback(async () => {
+    if (isRefreshingRef.current) return;
     setRefreshing(true);
-    const loc = await getLocationForAPI();
-    await loadAllData(
-      loc ? { latitude: loc.latitude, longitude: loc.longitude } : null,
-    );
+    isRefreshingRef.current = true;
+    try {
+      const loc = await getLocationForAPI();
+      await loadAllData(loc);
+    } finally {
+      setRefreshing(false);
+      isRefreshingRef.current = false;
+    }
   }, [loadAllData]);
+
+  // handle websocket useEffect
+  useEffect(() => {
+    const listener = DeviceEventEmitter.addListener(
+      WEBSOCKET_UPDATE_EVENT,
+      () => onRefresh(),
+    );
+    return () => listener.remove();
+  }, [onRefresh]);
 
   // Navigation handlers
   const handleBookPandit = useCallback(
@@ -534,7 +551,7 @@ const UserHomeScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Pending Approval */}
+        {/* Waiting for Approval */}
         <View style={styles.pujaSection}>
           <Text style={styles.sectionTitle}>{t('waiting_for_approval')}</Text>
           <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
@@ -632,7 +649,6 @@ const UserHomeScreen: React.FC = () => {
   );
 };
 
-// Styles (unchanged)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
