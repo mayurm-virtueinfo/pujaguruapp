@@ -37,10 +37,7 @@ import { hideSplash } from 'react-native-splash-view';
 import Config from 'react-native-config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from './src/utils/appConstant';
-import {
-  closeUserWebSocket,
-  initUserWebSocket,
-} from './src/utils/WebSocketService';
+import WebSocketWrapper from './src/components/WebSocketWrapper';
 
 LogBox.ignoreLogs([
   "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
@@ -75,29 +72,6 @@ const App = () => {
     console.log('*******************************************************');
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const setupWebSocket = async () => {
-      try {
-        const token = await AsyncStorage.getItem(AppConstant.ACCESS_TOKEN);
-        if (token) {
-          console.log('🔌 Initializing user WebSocket connection...');
-          initUserWebSocket(token);
-        } else {
-          console.log('⚠️ No token found — skipping WebSocket setup');
-        }
-      } catch (error) {
-        console.error('WebSocket setup error:', error);
-      }
-    };
-
-    setupWebSocket();
-
-    return () => {
-      console.log('🧹 Closing WebSocket connection...');
-      closeUserWebSocket();
-    };
   }, []);
 
   const getCurrentVersion = async () => {
@@ -207,14 +181,16 @@ const App = () => {
         <NetworkProvider>
           <AuthProvider>
             <SessionProvider>
-              <NavigationContainer
-                ref={navigationRef}
-                onReady={() => {
-                  handleInitialNotification();
-                }}
-              >
-                <RootNavigator />
-              </NavigationContainer>
+              <WebSocketWrapper>
+                <NavigationContainer
+                  ref={navigationRef}
+                  onReady={() => {
+                    handleInitialNotification();
+                  }}
+                >
+                  <RootNavigator />
+                </NavigationContainer>
+              </WebSocketWrapper>
             </SessionProvider>
           </AuthProvider>
         </NetworkProvider>

@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
-  DeviceEventEmitter,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -29,7 +28,7 @@ import { useTranslation } from 'react-i18next';
 import { getUpcomingPujaDetails, postStartChat } from '../../../api/apiService';
 import { translateData, translateText } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
-import { WEBSOCKET_UPDATE_EVENT } from '../../../utils/WebSocketService';
+import { useWebSocket } from '../../../context/WebSocketContext';
 
 // TYPES for safer data handling and remove linter errors
 type PanditDataType = {
@@ -84,6 +83,10 @@ const UserPujaDetailsScreen: React.FC = () => {
 
   const currentLanguage = i18n.language;
 
+  const { messages } = useWebSocket();
+
+  const lastMessageIdRef = useRef<string | null>(null);
+
   // Helper: fetch API for initial load (with loader)
   const fetchInitialPujaDetails = async () => {
     setLoading(true);
@@ -132,28 +135,26 @@ const UserPujaDetailsScreen: React.FC = () => {
     }
   };
 
+  // Handle WebSocket messages
   useEffect(() => {
-    const listener = DeviceEventEmitter.addListener(
-      WEBSOCKET_UPDATE_EVENT,
-      async (data: any) => {
-        // Check if this event belongs to the current booking
-        if (data.type === 'booking_update' && data.booking_id === id) {
-          console.log('🔔 WebSocket update for this puja:', data.action);
+    if (messages.length === 0) return;
 
-          setTimeout(async () => {
-            try {
-              await fetchInitialPujaDetails();
-              console.log('✅ Puja details refreshed after WS event');
-            } catch (err) {
-              console.error('❌ Failed to refresh puja details:', err);
-            }
-          }, 400);
-        }
-      },
-    );
+    const latest = messages[messages.length - 1];
+    const messageKey = JSON.stringify(latest);
 
-    return () => listener.remove();
-  }, [id, fetchInitialPujaDetails]);
+    if (lastMessageIdRef.current === messageKey) return;
+    lastMessageIdRef.current = messageKey;
+
+    const { type, action, booking_id } = latest;
+
+    if (type === 'booking_update' && String(booking_id) === String(id)) {
+      console.log(`🔔 Booking #${booking_id} ${action}`);
+
+      setTimeout(() => {
+        fetchInitialPujaDetails();
+      }, 1000);
+    }
+  }, [messages, id, fetchInitialPujaDetails]);
 
   // Initial load: loader, then polling begins
   useEffect(() => {

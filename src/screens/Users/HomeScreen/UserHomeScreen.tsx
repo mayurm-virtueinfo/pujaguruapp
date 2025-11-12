@@ -25,20 +25,16 @@ import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { UserHomeParamList } from '../../../navigation/User/UsetHomeStack';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import { useTranslation } from 'react-i18next';
 import { translateData } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import AppConstant from '../../../utils/appConstant';
 import PrimaryButton from '../../../components/PrimaryButton';
-import { getCurrentLocation } from '../../../utils/locationUtils';
 import {
   getLocationForAPI,
   LOCATION_UPDATED_EVENT,
 } from '../../../helper/helper';
-import { WEBSOCKET_UPDATE_EVENT } from '../../../utils/WebSocketService';
+import { useWebSocket } from '../../../context/WebSocketContext';
 
 interface PendingPuja {
   id: number;
@@ -53,12 +49,11 @@ interface PendingPuja {
 }
 
 const UserHomeScreen: React.FC = () => {
-  const navigation = useNavigation<UserHomeParamList>();
+  const navigation: any = useNavigation();
   const [pujas, setPujas] = useState<PujaItem[]>([]);
   const [inProgressPujas, setInProgressPujas] = useState<PujaItem[]>([]);
   const [pendingPujas, setPendingPujas] = useState<PendingPuja[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [user, setUser] = useState<string | null>(null);
   const [location, setLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -74,66 +69,67 @@ const UserHomeScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
   const inset = useSafeAreaInsets();
+  const { messages } = useWebSocket();
 
-  const isRefreshingRef = useRef(false);
+  // 🧠 Refs for controlling repeated fetches
+  const isFetchingRef = useRef(false);
+  const lastFetched = useRef<number>(0);
+  const lastHandledMessageId = useRef<string | null>(null);
+  const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Fetch user ID
-  useEffect(() => {
-    let isMounted = true;
-    AsyncStorage.getItem(AppConstant.USER_ID).then(uid => {
-      if (isMounted) setUser(uid);
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  // Load all data (with optional location)
+  // 🔄 Unified API loader
   const loadAllData = useCallback(
-    async (
-      locationForPandit?: { latitude: number; longitude: number } | null,
-    ) => {
+    async (loc?: { latitude: number; longitude: number } | null) => {
+      if (isFetchingRef.current) {
+        console.log('⏳ Skipping duplicate loadAllData call...');
+        return;
+      }
+
+      // Skip if last fetch was <30 seconds ago
+      if (Date.now() - lastFetched.current < 30000 && !refreshing) {
+        console.log('⏳ Skipping refresh: data is recent');
+        return;
+      }
+
+      isFetchingRef.current = true;
       setLoading(true);
+
       try {
-        // Always fetch non-location data immediately
-        const [upcomingRes, inProgressRes, activeRes] = await Promise.all([
+        const [upcomingRes, inProgressRes, activeRes]: any = await Promise.all([
           getUpcomingPujas().catch(() => []),
           getInProgress().catch(() => []),
           getActivePuja().catch(() => ({ bookings: [] })),
         ]);
 
-        // Recommended Pandits: Only if location provided
         let recommendedArr: RecommendedPandit[] = [];
-        if (locationForPandit) {
+        if (loc) {
           try {
             const rec = await getRecommendedPandit(
-              locationForPandit.latitude.toString(),
-              locationForPandit.longitude.toString(),
+              loc.latitude.toString(),
+              loc.longitude.toString(),
             );
             recommendedArr = Array.isArray(rec)
               ? rec
               : (rec as any)?.data || [];
           } catch (err) {
-            console.warn('Failed to fetch recommended pandits:', err);
+            console.warn('⚠️ Failed to fetch recommended pandits:', err);
           }
         }
 
-        // Parse + Translate (same as before)
-        const upcomingArr = Array.isArray(upcomingRes) ? upcomingRes : [];
-        const inProgressArr = Array.isArray(inProgressRes) ? inProgressRes : [];
         const pendingArr: PendingPuja[] = Array.isArray(activeRes?.bookings)
           ? activeRes.bookings
           : activeRes?.bookings
           ? [activeRes.bookings]
           : [];
 
-        const [tPujas, tInProgress, tPending, tRecommended] = await Promise.all(
-          [
-            translateData(upcomingArr, currentLanguage, [
+        // 🔠 Translate all content
+        const [tPujas, tInProgress, tPending, tRecommended]: any =
+          await Promise.all([
+            translateData(upcomingRes, currentLanguage, [
               'pooja_name',
               'when_is_pooja',
             ]),
-            translateData(inProgressArr, currentLanguage, ['pooja_name']),
+            translateData(inProgressRes, currentLanguage, ['pooja_name']),
             Promise.all(
               pendingArr.map(async p => {
                 if (p.pooja) {
@@ -151,159 +147,51 @@ const UserHomeScreen: React.FC = () => {
               'full_name',
               'city',
             ]),
-          ],
-        );
+          ]);
 
-        setPujas(Array.isArray(tPujas) ? tPujas : []);
-        setInProgressPujas(Array.isArray(tInProgress) ? tInProgress : []);
-        setPendingPujas(Array.isArray(tPending) ? tPending : []);
-        setRecomendedPandits(Array.isArray(tRecommended) ? tRecommended : []);
-        setOriginalRecomendedPandits(recommendedArr);
+        setPujas(tPujas || []);
+        setInProgressPujas(tInProgress || []);
+        setPendingPujas(tPending || []);
+        setRecomendedPandits(tRecommended || []);
+        setOriginalRecomendedPandits(recommendedArr || []);
+        lastFetched.current = Date.now();
       } catch (err) {
-        console.error('Error loading home data:', err);
+        console.error('❌ Error loading home data:', err);
       } finally {
         setLoading(false);
         setRefreshing(false);
+        isFetchingRef.current = false;
       }
     },
-    [currentLanguage],
+    [currentLanguage, refreshing],
   );
 
-  // Initial load: get location + load data
+  // 🧭 Initial load
   useEffect(() => {
-    let isMounted = true;
-
     const init = async () => {
-      setLoading(true);
-
-      // Start fetching non-location data immediately
-      const nonLocationPromise = Promise.all([
-        getUpcomingPujas().catch(() => []),
-        getInProgress().catch(() => []),
-        getActivePuja().catch(() => ({ bookings: [] })),
-      ]);
-
-      // Get location instantly (cached or null)
-      const loc = await getLocationForAPI(); // Fast — uses cache
-
-      if (isMounted) {
-        setLocation(loc);
-      }
-
-      // Load everything with current (cached) location
-      if (loc) {
-        await loadAllData(loc);
-      } else {
-        await loadAllData(null);
-      }
-
-      let fetchedLocation: { latitude: number; longitude: number } | null =
-        null;
-
-      // Try to get location in parallel
-      try {
-        const loc = await getCurrentLocation();
-        if (loc && isMounted) {
-          fetchedLocation = {
-            latitude: loc.latitude,
-            longitude: loc.longitude,
-          };
-          setLocation(fetchedLocation);
-        }
-      } catch (err) {
-        console.log('Location fetch failed (non-blocking):', err);
-      }
-
-      let recommendedArr: RecommendedPandit[] = [];
-      if (fetchedLocation) {
-        try {
-          const rec = await getRecommendedPandit(
-            fetchedLocation.latitude.toString(),
-            fetchedLocation.longitude.toString(),
-          );
-          recommendedArr = Array.isArray(rec) ? rec : (rec as any)?.data || [];
-        } catch {
-          recommendedArr = [];
-        }
-      }
-
-      // Load non-location data in parallel
-      const [upcomingRes, inProgressRes, activeRes] = await nonLocationPromise;
-      const upcomingArr = Array.isArray(upcomingRes) ? upcomingRes : [];
-      const inProgressArr = Array.isArray(inProgressRes) ? inProgressRes : [];
-      const pendingArr: PendingPuja[] = Array.isArray(activeRes?.bookings)
-        ? activeRes.bookings
-        : activeRes?.bookings
-        ? [activeRes.bookings]
-        : [];
-
-      // Translate
-      const [tPujas, tInProgress, tPending, tRecommended] = await Promise.all([
-        translateData(upcomingArr, currentLanguage, [
-          'pooja_name',
-          'when_is_pooja',
-        ]) as Promise<PujaItem[]>,
-        translateData(inProgressArr, currentLanguage, [
-          'pooja_name',
-        ]) as Promise<PujaItem[]>,
-        Promise.all(
-          pendingArr.map(async p => {
-            if (p.pooja) {
-              const translatedPooja = await translateData(
-                p.pooja,
-                currentLanguage,
-                ['title', 'pooja_name'],
-              );
-              return { ...p, pooja: translatedPooja } as PendingPuja;
-            }
-            return p;
-          }),
-        ),
-        translateData(recommendedArr, currentLanguage, [
-          'full_name',
-          'city',
-        ]) as Promise<RecommendedPandit[]>,
-      ]);
-
-      if (isMounted) {
-        setPujas(tPujas);
-        setInProgressPujas(tInProgress);
-        setPendingPujas(tPending);
-        setRecomendedPandits(tRecommended);
-        setOriginalRecomendedPandits(recommendedArr);
-        setLoading(false);
-      }
+      const loc = await getLocationForAPI();
+      if (loc) setLocation(loc);
+      await loadAllData(loc);
     };
-
     init();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [currentLanguage, loadAllData]);
-
-  // AppState: Re-fetch location when app is active
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', async state => {
-      if (state === 'active') {
-        const loc = await getLocationForAPI();
-        if (loc) {
-          setLocation({ latitude: loc.latitude, longitude: loc.longitude });
-          loadAllData({ latitude: loc.latitude, longitude: loc.longitude });
-        } else {
-          loadAllData(null);
-        }
-      }
-    });
-
-    return () => subscription.remove();
   }, [loadAllData]);
 
-  // Location update event listener
+  // 📱 AppState listener (only when foregrounded)
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async state => {
+      if (state === 'active') {
+        const loc = await getLocationForAPI();
+        await loadAllData(loc);
+      }
+    });
+    return () => sub.remove();
+  }, [loadAllData]);
+
+  // 📍 Location update listener
   useEffect(() => {
     const listener = DeviceEventEmitter.addListener(
       LOCATION_UPDATED_EVENT,
-      async (newLoc: { latitude?: any; longitude?: any }) => {
+      async newLoc => {
         if (newLoc?.latitude && newLoc?.longitude) {
           const loc = {
             latitude: Number(newLoc.latitude),
@@ -317,30 +205,38 @@ const UserHomeScreen: React.FC = () => {
     return () => listener.remove();
   }, [loadAllData]);
 
-  // Pull to refresh
+  // 🔁 Pull to refresh
   const onRefresh = useCallback(async () => {
-    if (isRefreshingRef.current) return;
     setRefreshing(true);
-    isRefreshingRef.current = true;
-    try {
-      const loc = await getLocationForAPI();
-      await loadAllData(loc);
-    } finally {
-      setRefreshing(false);
-      isRefreshingRef.current = false;
-    }
+    const loc = await getLocationForAPI();
+    await loadAllData(loc);
   }, [loadAllData]);
 
-  // handle websocket useEffect
+  // ⚡ WebSocket real-time updates
   useEffect(() => {
-    const listener = DeviceEventEmitter.addListener(
-      WEBSOCKET_UPDATE_EVENT,
-      () => onRefresh(),
-    );
-    return () => listener.remove();
-  }, [onRefresh]);
+    if (messages.length === 0) return;
+    const latest = messages[messages.length - 1];
+    if (!latest) return;
 
-  // Navigation handlers
+    const uniqueKey = `${latest.type}-${latest.action}-${latest.booking_id}`;
+    if (lastHandledMessageId.current === uniqueKey) return;
+
+    lastHandledMessageId.current = uniqueKey;
+
+    const { type, action, booking_id } = latest;
+
+    if (type === 'booking_update' && ['accepted'].includes(action)) {
+      console.log(`✅ Updating puja list due to booking #${booking_id}`);
+
+      if (refreshTimeout.current) clearTimeout(refreshTimeout.current);
+
+      refreshTimeout.current = setTimeout(() => {
+        onRefresh();
+      }, 1000);
+    }
+  }, [messages, onRefresh]);
+
+  // 🔗 Navigation helper
   const handleBookPandit = useCallback(
     (
       panditId: number,
@@ -359,7 +255,7 @@ const UserHomeScreen: React.FC = () => {
   );
 
   const handleNavigation = useCallback(
-    (route: keyof UserHomeParamList) => {
+    (route: any) => {
       navigation.navigate(route);
     },
     [navigation],
@@ -551,7 +447,7 @@ const UserHomeScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Waiting for Approval */}
+        {/* Pending Approval */}
         <View style={styles.pujaSection}>
           <Text style={styles.sectionTitle}>{t('waiting_for_approval')}</Text>
           <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
@@ -649,6 +545,7 @@ const UserHomeScreen: React.FC = () => {
   );
 };
 
+// Styles (unchanged)
 const styles = StyleSheet.create({
   container: {
     flex: 1,

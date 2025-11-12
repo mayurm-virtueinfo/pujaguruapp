@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,18 +8,18 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import Fonts from '../../../theme/fonts';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import {useTranslation} from 'react-i18next';
-import {changeLanguage} from '../../../i18n';
-import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
-import {useAuth} from '../../../provider/AuthProvider';
+import { useTranslation } from 'react-i18next';
+import { changeLanguage } from '../../../i18n';
+import { UserProfileParamList } from '../../../navigation/User/userProfileNavigator';
+import { useAuth } from '../../../provider/AuthProvider';
 import LanguageSwitcher from '../../../components/LanguageSwitcher';
 import {
   deleteAccount,
@@ -30,15 +30,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomModal from '../../../components/CustomModal';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {getFcmToken} from '../../../configuration/firebaseMessaging';
-import {translateData, translateText} from '../../../utils/TranslateData';
+import { getFcmToken } from '../../../configuration/firebaseMessaging';
+import { translateData, translateText } from '../../../utils/TranslateData';
 
 interface ProfileFieldProps {
   label: string;
   value: string;
 }
 
-const ProfileField: React.FC<ProfileFieldProps> = ({label, value}) => (
+const ProfileField: React.FC<ProfileFieldProps> = ({ label, value }) => (
   <View style={styles.fieldContainer}>
     <Text style={styles.fieldLabel}>{label}</Text>
     <Text style={styles.fieldValue}>{value}</Text>
@@ -50,11 +50,11 @@ type ProfileNavigationProp = StackNavigationProp<UserProfileParamList>;
 const BottomUserProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ProfileNavigationProp>();
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const currentLanguage = i18n.language;
 
-  const {signOutApp} = useAuth();
+  const { signOutApp } = useAuth();
 
   const [loading, setLoading] = useState(false);
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
@@ -86,8 +86,6 @@ const BottomUserProfileScreen: React.FC = () => {
   }
 
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
-
-  console.log('currentUser :: ', currentUser);
 
   const translationCacheRef = useRef<Map<string, any>>(new Map());
 
@@ -166,7 +164,7 @@ const BottomUserProfileScreen: React.FC = () => {
     navigation.navigate('WalletScreen');
   };
   const handleEditNavigation = () => {
-    navigation.navigate('EditProfile', {edit: true});
+    navigation.navigate('EditProfile', { edit: true });
   };
   const handleUpcomingPuja = () => {
     navigation.navigate('UpcomingPuja');
@@ -195,7 +193,7 @@ const BottomUserProfileScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={logoutLoading || loading} />
       {/* <LinearGradient
         colors={[COLORS.gradientStart, COLORS.gradientEnd]}
@@ -218,7 +216,8 @@ const BottomUserProfileScreen: React.FC = () => {
       <View style={styles.contentContainer}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          style={styles.scrollView}>
+          style={styles.scrollView}
+        >
           {!loading && currentUser && (
             <View style={[styles.infoSection, THEMESHADOW.shadow]}>
               <ProfileField
@@ -249,7 +248,8 @@ const BottomUserProfileScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.editFieldContainer}
               onPress={handleEditNavigation}
-              activeOpacity={0.7}>
+              activeOpacity={0.7}
+            >
               <Text style={styles.editFieldLabel}>{t('edit_profile')} </Text>
               <Ionicons
                 name="chevron-forward"
@@ -260,7 +260,8 @@ const BottomUserProfileScreen: React.FC = () => {
             <View style={styles.divider} />
             <TouchableOpacity
               onPress={handleUpcomingPuja}
-              style={styles.editFieldContainer}>
+              style={styles.editFieldContainer}
+            >
               <Text style={styles.editFieldLabel}>{t('upcoming_puja')} </Text>
               <Ionicons
                 name="chevron-forward"
@@ -271,7 +272,8 @@ const BottomUserProfileScreen: React.FC = () => {
             <View style={styles.divider} />
             <TouchableOpacity
               onPress={handlePastPuja}
-              style={styles.editFieldContainer}>
+              style={styles.editFieldContainer}
+            >
               <Text style={styles.editFieldLabel}>{t('past_puja')} </Text>
               <Ionicons
                 name="chevron-forward"
@@ -283,7 +285,8 @@ const BottomUserProfileScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.editFieldContainer}
               onPress={handleWalletNavigation}
-              activeOpacity={0.7}>
+              activeOpacity={0.7}
+            >
               <Text style={styles.editFieldLabel}>{t('wallet')}</Text>
               <Ionicons
                 name="chevron-forward"
@@ -295,7 +298,8 @@ const BottomUserProfileScreen: React.FC = () => {
             <TouchableOpacity
               style={styles.editFieldContainer}
               onPress={handleSavedAddressNavigation}
-              activeOpacity={0.7}>
+              activeOpacity={0.7}
+            >
               <Text style={styles.editFieldLabel}>{t('saved_addresses')}</Text>
               <Ionicons
                 name="chevron-forward"
@@ -320,7 +324,8 @@ const BottomUserProfileScreen: React.FC = () => {
           <LanguageSwitcher />
           <TouchableOpacity
             style={[styles.editSection, THEMESHADOW.shadow]}
-            onPress={() => setLogoutModalVisible(true)}>
+            onPress={() => setLogoutModalVisible(true)}
+          >
             <View style={styles.editFieldContainer}>
               <Text style={styles.logoutLabel}>{t('logout')}</Text>
               <Ionicons
@@ -333,7 +338,8 @@ const BottomUserProfileScreen: React.FC = () => {
 
           <TouchableOpacity
             style={[styles.editSection, THEMESHADOW.shadow]}
-            onPress={() => setDeleteAccountModalVisible(true)}>
+            onPress={() => setDeleteAccountModalVisible(true)}
+          >
             <View style={styles.editFieldContainer}>
               <Text style={styles.logoutLabel}>{t('delete_account')}</Text>
               <Ionicons

@@ -1,16 +1,6 @@
-import {
-  Platform,
-  PermissionsAndroid,
-  Linking,
-  Alert,
-} from 'react-native';
+import { Platform, PermissionsAndroid, Linking, Alert } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-import {
-  check,
-  request,
-  PERMISSIONS,
-  RESULTS,
-} from 'react-native-permissions';
+import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { promptForEnableLocationIfNeeded } from 'react-native-android-location-enabler';
 
 export interface LocationData {
@@ -32,11 +22,6 @@ const showSettingsAlert = () => {
     ],
   );
 };
-
-// Fix for: first time on click GPS location it not work on second time it's work
-// Root cause: On Android, must ensure permission *AND* ensure GPS mode BEFORE requesting location.
-// If Geolocation.getCurrentPosition is called BEFORE user enables permissions or turns on GPS, Android may cache/lock, and only after the 2nd attempt things work.
-// Also: get location *after* both checks/flows are done + use callback pattern for Geolocation to prevent races.
 
 const requestLocationPermission = async (): Promise<boolean> => {
   try {
@@ -116,7 +101,7 @@ const getLocationWithFallback = (): Promise<LocationData> => {
 
     const tryGetLocation = (highAccuracy: boolean) => {
       Geolocation.getCurrentPosition(
-        (pos) => {
+        pos => {
           if (resolved) return;
           resolved = true;
           clearTimeout(timeout);
@@ -127,13 +112,13 @@ const getLocationWithFallback = (): Promise<LocationData> => {
             timestamp: new Date(pos.timestamp).toISOString(),
           });
         },
-        (err) => {
+        err => {
           if (resolved) return;
           // If highAccuracy failed, fallback
           if (highAccuracy) {
             // Try with low accuracy
             Geolocation.getCurrentPosition(
-              (pos) => {
+              pos => {
                 if (resolved) return;
                 resolved = true;
                 clearTimeout(timeout);

@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -14,21 +14,25 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import CustomHeader from '../../../components/CustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import {
+  CommonActions,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
-import {postRatePandit, postReviewImageUpload} from '../../../api/apiService';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { postRatePandit, postReviewImageUpload } from '../../../api/apiService';
 import ImagePicker from 'react-native-image-crop-picker';
-import {useCommonToast} from '../../../common/CommonToast';
-import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
+import { useCommonToast } from '../../../common/CommonToast';
+import { UserHomeParamList } from '../../../navigation/User/UsetHomeStack';
 
 const RateYourExperienceScreen: React.FC = () => {
   const [rating, setRating] = useState<number>(0);
@@ -39,10 +43,10 @@ const RateYourExperienceScreen: React.FC = () => {
     'UserHomeScreen'
   >;
   console.log('photos', photos);
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const inset = useSafeAreaInsets();
-  const {showErrorToast, showSuccessToast} = useCommonToast();
+  const { showErrorToast, showSuccessToast } = useCommonToast();
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const route = useRoute();
@@ -107,8 +111,21 @@ const RateYourExperienceScreen: React.FC = () => {
       setRating(0);
       setFeedback('');
       showSuccessToast(t('rate_submit_successfully'));
-      navigation.navigate('UserHomeScreen');
-    } catch (error) {
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'UserHomeNavigator',
+              state: {
+                routes: [{ name: 'UserHomeScreen' }],
+                index: 0,
+              },
+            },
+          ],
+        }),
+      );
+    } catch (error: any) {
       // Optionally handle error, e.g. show a toast
       showErrorToast(error?.response?.data?.message);
       console.error('Failed to submit rating:', error);
@@ -150,7 +167,8 @@ const RateYourExperienceScreen: React.FC = () => {
       <TouchableOpacity
         key={index}
         onPress={() => handleStarPress(index)}
-        style={styles.starButton}>
+        style={styles.starButton}
+      >
         <Icon
           name="star"
           size={36}
@@ -163,7 +181,7 @@ const RateYourExperienceScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
       <StatusBar barStyle="light-content" />
 
       <UserCustomHeader title={t('rate_experience')} showBackButton={true} />
@@ -172,7 +190,8 @@ const RateYourExperienceScreen: React.FC = () => {
         style={styles.scrollContainer}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled">
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.mainContent}>
           {/* Pandit Details Card */}
           <View style={[styles.panditCard, THEMESHADOW.shadow]}>
@@ -212,7 +231,8 @@ const RateYourExperienceScreen: React.FC = () => {
               activeOpacity={0.7}
               onPress={() => {
                 navigation.navigate('PaymentScreen');
-              }}>
+              }}
+            >
               <AntDesign name="wallet" size={24} color={COLORS.primary} />
             </TouchableOpacity>
           </View>
@@ -238,13 +258,14 @@ const RateYourExperienceScreen: React.FC = () => {
               {photos.map((photo, idx) => (
                 <View key={idx} style={styles.photoItem}>
                   <Image
-                    source={{uri: photo.uri}}
+                    source={{ uri: photo.uri }}
                     style={styles.photoImage}
                     resizeMode="cover"
                   />
                   <TouchableOpacity
                     style={styles.removePhotoBtn}
-                    onPress={() => handleRemovePhoto(idx)}>
+                    onPress={() => handleRemovePhoto(idx)}
+                  >
                     <AntDesign
                       name="closecircle"
                       size={20}
@@ -255,7 +276,8 @@ const RateYourExperienceScreen: React.FC = () => {
               ))}
               <TouchableOpacity
                 style={styles.addPhotoBtn}
-                onPress={handleAddPhotos}>
+                onPress={handleAddPhotos}
+              >
                 <AntDesign
                   name="pluscircleo"
                   size={32}

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,7 +7,6 @@ import {
   ScrollView,
   SafeAreaView,
   TouchableOpacity,
-  Text,
   Platform,
   Keyboard,
   Alert,
@@ -20,14 +19,13 @@ import {
 } from '@react-navigation/native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Fonts from '../../../theme/fonts';
-import {COLORS} from '../../../theme/theme';
+import { COLORS } from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
-import CustomTextInput from '../../../components/CustomTextInput';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import {useTranslation} from 'react-i18next';
-import {AuthStackParamList} from '../../../navigation/AuthNavigator';
+import { useTranslation } from 'react-i18next';
+import { AuthStackParamList } from '../../../navigation/AuthNavigator';
 import {
   getCity,
   getState,
@@ -40,11 +38,10 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import ThemedInput from '../../../components/ThemedInput';
-import {moderateScale} from 'react-native-size-matters';
-import {useCommonToast} from '../../../common/CommonToast';
-import {getMessaging, getToken} from '@react-native-firebase/messaging';
-import {getFcmToken} from '../../../configuration/firebaseMessaging';
-import {getCurrentLocation} from '../../../utils/locationUtils';
+import { moderateScale } from 'react-native-size-matters';
+import { useCommonToast } from '../../../common/CommonToast';
+import { getFcmToken } from '../../../configuration/firebaseMessaging';
+import { getCurrentLocation } from '../../../utils/locationUtils';
 
 type CompleteProfileScreenRouteProp = NavigationProp<
   AuthStackParamList,
@@ -65,11 +62,11 @@ interface FormErrors {
 }
 
 const UserProfileScreen: React.FC = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<CompleteProfileScreenRouteProp>();
   const route = useRoute<CompleteProfileScreenRouteProps>();
-  const {phoneNumber, firstName, lastName, address, uid} = route?.params;
+  const { phoneNumber, firstName, lastName, address, uid } = route?.params;
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState(phoneNumber);
@@ -89,7 +86,7 @@ const UserProfileScreen: React.FC = () => {
     longitude: number;
   } | null>(null);
 
-  const {showErrorToast} = useCommonToast();
+  const { showErrorToast } = useCommonToast();
 
   useEffect(() => {
     const getStateData = async () => {
@@ -259,9 +256,9 @@ const UserProfileScreen: React.FC = () => {
   const handleImagePicker = () => {
     Keyboard.dismiss();
     Alert.alert(t('select_profile_picture'), t('choose_an_option'), [
-      {text: t('take_photo'), onPress: () => openCamera()},
-      {text: t('choose_from_gallery'), onPress: () => openGallery()},
-      {text: t('cancel'), style: 'cancel'},
+      { text: t('take_photo'), onPress: () => openCamera() },
+      { text: t('choose_from_gallery'), onPress: () => openGallery() },
+      { text: t('cancel'), style: 'cancel' },
     ]);
   };
 
@@ -323,7 +320,7 @@ const UserProfileScreen: React.FC = () => {
     try {
       console.log('🎯 Fetching current location...');
 
-      const locationData = await getCurrentLocation();
+      const locationData: any = await getCurrentLocation();
       setgpsLocation(locationData);
 
       console.log('📍 Location fetched successfully:', {
@@ -350,11 +347,11 @@ const UserProfileScreen: React.FC = () => {
       cleaned = cleaned.slice(0, 13);
     }
     setPhone(cleaned);
-    setFormErrors(prev => ({...prev, phone: undefined}));
+    setFormErrors(prev => ({ ...prev, phone: undefined }));
   };
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={isLoading} />
       <StatusBar
         translucent
@@ -389,7 +386,7 @@ const UserProfileScreen: React.FC = () => {
               value={userName}
               onChangeText={text => {
                 setUserName(text);
-                setFormErrors(prev => ({...prev, userName: undefined}));
+                setFormErrors(prev => ({ ...prev, userName: undefined }));
               }}
               labelStyle={themedInputLabelStyle}
               error={formErrors.userName}
@@ -401,7 +398,7 @@ const UserProfileScreen: React.FC = () => {
               value={email}
               onChangeText={text => {
                 setEmail(text);
-                setFormErrors(prev => ({...prev, email: undefined}));
+                setFormErrors(prev => ({ ...prev, email: undefined }));
               }}
               keyboardType="email-address"
               textContentType="emailAddress"
@@ -449,7 +446,7 @@ const UserProfileScreen: React.FC = () => {
               selectedValue={location}
               onSelect={value => {
                 setLocation(value);
-                setFormErrors(prev => ({...prev, location: undefined}));
+                setFormErrors(prev => ({ ...prev, location: undefined }));
               }}
               placeholder={
                 selectState ? t('enter_your_location') : t('select_state_first')
