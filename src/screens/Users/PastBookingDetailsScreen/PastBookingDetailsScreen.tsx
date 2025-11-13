@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,26 +8,26 @@ import {
   Dimensions,
   TouchableOpacity,
 } from 'react-native';
-import {useRoute} from '@react-navigation/native';
-import {useTranslation} from 'react-i18next';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {moderateScale, verticalScale} from 'react-native-size-matters';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { useRoute } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { moderateScale, verticalScale } from 'react-native-size-matters';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import {getPastBookings} from '../../../api/apiService';
+import { getPastBookings } from '../../../api/apiService';
 import CustomeLoader from '../../../components/CustomeLoader';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 
-const {width: screenWidth} = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
 
 // Helper: how many items previewed when collapsed
 const SAMAGRI_COLLAPSE_COUNT = 3;
 
-const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
+const PastBookingDetailsScreen = ({ navigation }: { navigation?: any }) => {
   const route = useRoute();
   const insets = useSafeAreaInsets();
-  const {t} = useTranslation();
-  const {pujaId, id} = (route.params as any) || {};
+  const { t } = useTranslation();
+  const { pujaId, id } = (route.params as any) || {};
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [bookingDetails, setBookingDetails] = useState<any>(null);
@@ -66,7 +66,7 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
     const dateObj = new Date(dateString);
     if (isNaN(dateObj.getTime())) return dateString;
     const day = dateObj.getDate();
-    const month = dateObj.toLocaleString('default', {month: 'long'});
+    const month = dateObj.toLocaleString('default', { month: 'long' });
     const s = ['th', 'st', 'nd', 'rd'];
     const v = day % 100;
     const ordinal = s[(v - 20) % 10] || s[v] || s[0];
@@ -110,13 +110,13 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
   };
 
   // Loader
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <CustomeLoader loading={loading} />
-      </View>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <View style={styles.centered}>
+  //       <CustomeLoader loading={loading} />
+  //     </View>
+  //   );
+  // }
   // Error
   if (error) {
     return (
@@ -126,15 +126,15 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
     );
   }
   // Not found
-  if (!bookingDetails) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.notFoundText}>
-          {t('no_item_available') || 'No details found.'}
-        </Text>
-      </View>
-    );
-  }
+  // if (!bookingDetails) {
+  //   return (
+  //     <View style={styles.centered}>
+  //       <Text style={styles.notFoundText}>
+  //         {t('no_item_available') || 'No details found.'}
+  //       </Text>
+  //     </View>
+  //   );
+  // }
 
   // Data destructure for past booking
   const {
@@ -185,14 +185,15 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
       ? items
       : items.slice(0, SAMAGRI_COLLAPSE_COUNT);
     return (
-      <View style={{marginBottom: moderateScale(12)}}>
+      <View style={{ marginBottom: moderateScale(12) }}>
         <Text
           style={[
             styles.samagriListLabel,
             isPandit
               ? styles.samagriListLabelPandit
               : styles.samagriListLabelUser,
-          ]}>
+          ]}
+        >
           {label}
         </Text>
         {items && items.length > 0 ? (
@@ -206,12 +207,16 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
                     isPandit
                       ? styles.samagriChipPandit
                       : styles.samagriChipUser,
-                  ]}>
+                  ]}
+                >
                   <Text
                     style={[
                       styles.samagriChipText,
-                      isPandit ? {color: COLORS.gray} : {color: COLORS.primary},
-                    ]}>
+                      isPandit
+                        ? { color: COLORS.gray }
+                        : { color: COLORS.primary },
+                    ]}
+                  >
                     {item.name ?? item.item_name ?? '-'}
                   </Text>
                 </View>
@@ -219,10 +224,12 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
               {showCollapse && (
                 <TouchableOpacity
                   onPress={onToggle}
-                  style={styles.samagriShowMoreBtn}>
+                  style={styles.samagriShowMoreBtn}
+                >
                   <Text
                     style={styles.samagriShowMoreText}
-                    testID={testID ? `${testID}-show-toggle` : undefined}>
+                    testID={testID ? `${testID}-show-toggle` : undefined}
+                  >
                     {isExpanded
                       ? t('Show Less') || 'Show Less'
                       : t('Show More') || 'Show More'}
@@ -319,7 +326,8 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
 
   // Large Card, as in reference
   return (
-    <View style={[styles.container, {paddingTop: insets.top}]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      <CustomeLoader loading={loading || !bookingDetails} />
       <UserCustomHeader
         title={t('past_booking_details') || 'Completed Puja Details'}
         showBackButton
@@ -328,19 +336,20 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}>
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* Hero image */}
         <Image
           source={
             pooja_image_url
-              ? {uri: pooja_image_url}
+              ? { uri: pooja_image_url }
               : {
                   uri: 'https://cdn.builder.io/api/v1/image/assets/TEMP/db9492299c701c6ca2a23d6de9fc258e7ec2b5fd?width=160',
                 }
           }
           style={[
             styles.heroImage,
-            {width: screenWidth, height: verticalScale(200)},
+            { width: screenWidth, height: verticalScale(200) },
           ]}
           resizeMode="stretch"
         />
@@ -349,7 +358,8 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
             flex: 1,
             paddingHorizontal: moderateScale(24),
             paddingTop: verticalScale(24),
-          }}>
+          }}
+        >
           <Text style={styles.pujaTitle}>{pooja_name || t('Puja Name')}</Text>
           {/* Booking Info Card */}
           <View style={[styles.card, THEMESHADOW.shadow]}>
@@ -362,7 +372,7 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
               </View>
               <View style={styles.detailRow}>
                 <Text style={styles.detailLabel}>{t('amount')}</Text>
-                <Text style={[styles.detailValue, {color: COLORS.success}]}>
+                <Text style={[styles.detailValue, { color: COLORS.success }]}>
                   ₹{amount || '0'}
                 </Text>
               </View>
@@ -395,7 +405,8 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
                           ? COLORS.error
                           : COLORS.textPrimary,
                     },
-                  ]}>
+                  ]}
+                >
                   {samagri_required === true
                     ? t('Yes')
                     : samagri_required === false
@@ -408,8 +419,9 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
                 <Text
                   style={[
                     styles.detailValue,
-                    {color: getStatusColor(payment_status)},
-                  ]}>
+                    { color: getStatusColor(payment_status) },
+                  ]}
+                >
                   {payment_status
                     ? payment_status.charAt(0).toUpperCase() +
                       payment_status.slice(1)
@@ -421,8 +433,9 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
                 <Text
                   style={[
                     styles.detailValue,
-                    {color: getStatusColor(booking_status)},
-                  ]}>
+                    { color: getStatusColor(booking_status) },
+                  ]}
+                >
                   {booking_status
                     ? booking_status.charAt(0).toUpperCase() +
                       booking_status.slice(1)
@@ -444,7 +457,7 @@ const PastBookingDetailsScreen = ({navigation}: {navigation?: any}) => {
               <Image
                 source={
                   assigned_pandit.profile_img_url
-                    ? {uri: assigned_pandit.profile_img_url}
+                    ? { uri: assigned_pandit.profile_img_url }
                     : {
                         uri: 'https://cdn.builder.io/api/v1/image/assets/TEMP/db9492299c701c6ca2a23d6de9fc258e7ec2b5fd?width=160',
                       }

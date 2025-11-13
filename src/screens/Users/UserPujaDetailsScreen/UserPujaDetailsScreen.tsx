@@ -612,15 +612,15 @@ const UserPujaDetailsScreen: React.FC = () => {
   }, [wasNavigatedToReview]);
 
   // Show loader only during first screen load; after that, even background polling doesn't show loader unless user pulls to refresh.
-  if (!initialLoaded || loading) {
-    return (
-      <>
-        <SafeAreaView style={styles.container} edges={['top']}>
-          <CustomeLoader loading={true} />
-        </SafeAreaView>
-      </>
-    );
-  }
+  // if (!initialLoaded || loading) {
+  //   return (
+  //     <>
+  //       <View style={styles.loaderContainer}>
+  //         <CustomeLoader loading={true} />
+  //       </View>
+  //     </>
+  //   );
+  // }
 
   if (
     pujaDetails?.booking_status === 'completed' &&
@@ -628,7 +628,7 @@ const UserPujaDetailsScreen: React.FC = () => {
   ) {
     console.log('Showing completion loader before navigation');
     return (
-      <View style={styles.container}>
+      <View style={styles.loaderContainer}>
         <StatusBar
           barStyle="light-content"
           backgroundColor={COLORS.primaryBackground}
@@ -648,7 +648,7 @@ const UserPujaDetailsScreen: React.FC = () => {
   return (
     <>
       <SafeAreaView style={styles.container} edges={['top']}>
-        <CustomeLoader loading={false} />
+        <CustomeLoader loading={loading} />
         <StatusBar
           barStyle="light-content"
           backgroundColor={COLORS.primaryBackground}
@@ -706,11 +706,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
+  loaderContainer: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.primaryBackground,
+    backgroundColor: COLORS.white,
     padding: moderateScale(20),
   },
   loadingText: {
