@@ -83,9 +83,10 @@ const ConfirmPujaDetails: React.FC = () => {
   const [originalPujaDetails, setOriginalPujaDetails] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const { showSuccessToast } = useCommonToast();
-  // State for show more/less for arranged items
   const [showMorePanditArranged, setShowMorePanditArranged] = useState(false);
   const [showMoreUserArranged, setShowMoreUserArranged] = useState(false);
+
+  console.log('pujaDetails :: ', pujaDetails);
 
   const fetchPujaDetails = useCallback(async () => {
     try {
@@ -124,7 +125,6 @@ const ConfirmPujaDetails: React.FC = () => {
 
   useEffect(() => {
     fetchPujaDetails();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId, fetchPujaDetails]);
 
   const formatDate = (dateStr: string | null | undefined) => {
@@ -149,7 +149,6 @@ const ConfirmPujaDetails: React.FC = () => {
     return `https://pujapaath.com${url}`;
   };
 
-  // ---- MAIN FIX: normalize items to always array of {name, quantity, units (optional)} ----
   const renderArrangedItemsSection = () => {
     if (!pujaDetails) return null;
 
@@ -457,10 +456,9 @@ const ConfirmPujaDetails: React.FC = () => {
     setLoading(true);
     try {
       const response = await updateWaitingUser(bookingId?.toString());
-      // Optionally show a toast or feedback
       showSuccessToast(response?.message);
     } catch (e) {
-      // Optionally show error
+      console.log('error in i am waiting button :: ', e);
     } finally {
       setLoading(false);
     }

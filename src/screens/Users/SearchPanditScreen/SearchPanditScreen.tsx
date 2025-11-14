@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Fonts from '../../../theme/fonts';
+import { getDynamicHours } from '../../../api/apiService';
 
 const SearchPanditScreen: React.FC = () => {
   const route = useRoute();
@@ -30,6 +31,8 @@ const SearchPanditScreen: React.FC = () => {
     t('search_pandit_screen_scanning_location') || 'Scanning your location...',
   );
   const [showNoPanditModal, setShowNoPanditModal] = useState(false);
+  const [dynamicTimeout, setDynamicTimeout] = useState<number | null>(null);
+
   const pulseRef = useRef<Animatable.View & View>(null);
   const circle1Ref = useRef<Animatable.View & View>(null);
   const circle2Ref = useRef<Animatable.View & View>(null);
@@ -45,117 +48,122 @@ const SearchPanditScreen: React.FC = () => {
     );
   }, [t]);
 
+  console.log('dynamicTimeout :: ', dynamicTimeout);
+
   useEffect(() => {
-    if (bookingId) {
-      // Start 1-minute timeout: if no acceptance, show modal
-      timeoutRef.current = setTimeout(() => {
-        if (!hasNavigatedRef.current) {
-          setShowNoPanditModal(true);
-        }
-      }, 60 * 1000);
-
-      let socketURL = __DEV__
-        ? `wss://dev.puja-guru.com/ws/bookings/${bookingId}/`
-        : `wss://puja-guru.com/ws/bookings/${bookingId}/`;
-
-      console.log('socketURL :: ', socketURL);
-
-      let socket: WebSocket | null = null;
+    const fetchDynamicTime = async () => {
       try {
-        socket = new WebSocket(socketURL);
-        ws.current = socket;
-      } catch (err) {
-        setWsError('WebSocket initialization failed');
-        console.error('WebSocket initialization error:', err);
-        return;
+        if (!bookingId) {
+          console.error('not found bookingId');
+          return;
+        }
+
+        const response = await getDynamicHours(bookingId);
+
+        if (response && response.timeout) {
+          console.log('response of dynamicTime api :: ', response);
+          setDynamicTimeout(response.timeout);
+        } else {
+          // fallback if API fails or timeout missing
+          setDynamicTimeout(1);
+        }
+      } catch (error) {
+        console.log('Error in dynamic time api :: ', error);
+        setDynamicTimeout(1); // fallback default 1 min
       }
+    };
 
-      console.log('socketURL : ', socketURL);
+    fetchDynamicTime();
+  }, [bookingId]);
 
-      socket.onopen = () => {
-        console.log('✅ Connected to WebSocket');
-        setWsError(null);
-      };
+  useEffect(() => {
+    if (!bookingId || dynamicTimeout === null) return;
 
-      socket.onerror = e => {
-        setWsError('WebSocket connection error');
-        console.error('WebSocket error:', e?.message || e);
-      };
+    console.log('⏱ Using dynamic timeout (minutes):', dynamicTimeout);
 
-      socket.onclose = e => {
-        console.log('WebSocket closed:', e.code, e.reason);
-        if (!hasNavigatedRef.current && !wsError) {
-          setWsError('WebSocket connection closed');
-        }
-      };
+    // start timer for modal
+    timeoutRef.current = setTimeout(() => {
+      if (!hasNavigatedRef.current) {
+        setShowNoPanditModal(true);
+      }
+    }, dynamicTimeout * 60 * 1000);
 
-      socket.onmessage = event => {
-        try {
-          // Check if event.data exists and is a string
-          if (!event.data || typeof event.data !== 'string') {
-            console.warn('WebSocket received non-string data:', event.data);
-            return;
-          }
+    let socketURL = __DEV__
+      ? `wss://dev.puja-guru.com/ws/bookings/${bookingId}/`
+      : `wss://puja-guru.com/ws/bookings/${bookingId}/`;
 
-          const data = JSON.parse(event.data);
+    console.log('socketURL :: ', socketURL);
 
-          // Validate the parsed data structure
-          if (!data || typeof data !== 'object') {
-            console.warn('WebSocket received invalid JSON data:', data);
-            return;
-          }
-
-          if (data.status === 'accepted' || data.status === 'ACCEPTED') {
-            if (!hasNavigatedRef.current) {
-              hasNavigatedRef.current = true;
-              setLoading(false);
-              if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
-              }
-              setShowNoPanditModal(false);
-              navigation.dispatch(
-                StackActions.replace(
-                  'UserPujaDetailsScreen' as never,
-                  {
-                    id: bookingId,
-                  } as never,
-                ),
-              );
-              // navigation.dispatch(
-              //   StackActions.navigate(
-              //     'Main' as never,
-              //     {
-              //       screen: 'UserAppBottomTabNavigator',
-              //       params: {
-              //         screen: 'UserHomeNavigator',
-              //         params: {
-              //           screen: 'UserPujaDetailsScreen',
-              //           params: {id: bookingId},
-              //         },
-              //       },
-              //     } as never,
-              //   ),
-              // );
-            }
-          }
-        } catch (err) {
-          console.error('Error parsing WebSocket message:', err);
-          console.error('Raw message data:', event.data);
-        }
-      };
-
-      return () => {
-        if (ws.current) {
-          ws.current.close();
-        }
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-          timeoutRef.current = null;
-        }
-      };
+    let socket: WebSocket | null = null;
+    try {
+      socket = new WebSocket(socketURL);
+      ws.current = socket;
+    } catch (err) {
+      setWsError('WebSocket initialization failed');
+      console.error('WebSocket initialization error:', err);
+      return;
     }
-  }, [bookingId, navigation, wsError]);
+
+    socket.onopen = () => {
+      console.log('✅ Connected to WebSocket');
+      setWsError(null);
+    };
+
+    socket.onerror = e => {
+      setWsError('WebSocket connection error');
+      console.error('WebSocket error:', e?.message || e);
+    };
+
+    socket.onclose = e => {
+      console.log('WebSocket closed:', e.code, e.reason);
+      if (!hasNavigatedRef.current && !wsError) {
+        setWsError('WebSocket connection closed');
+      }
+    };
+
+    socket.onmessage = event => {
+      try {
+        if (!event.data || typeof event.data !== 'string') {
+          console.warn('WebSocket received non-string data:', event.data);
+          return;
+        }
+
+        const data = JSON.parse(event.data);
+        console.log('data of web socket :: ', data);
+
+        if (data.status === 'accepted' || data.status === 'ACCEPTED') {
+          if (!hasNavigatedRef.current) {
+            hasNavigatedRef.current = true;
+            setLoading(false);
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = null;
+            }
+            setShowNoPanditModal(false);
+            navigation.dispatch(
+              StackActions.replace(
+                'UserPujaDetailsScreen' as never,
+                { id: bookingId } as never,
+              ),
+            );
+          }
+        }
+      } catch (err) {
+        console.error('Error parsing WebSocket message:', err);
+        console.error('Raw message data:', event.data);
+      }
+    };
+
+    return () => {
+      if (ws.current) {
+        ws.current.close();
+      }
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [bookingId, dynamicTimeout, navigation, wsError]);
 
   const handleModalClose = () => {
     setShowNoPanditModal(false);

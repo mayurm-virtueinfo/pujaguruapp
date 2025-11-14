@@ -54,6 +54,7 @@ import ApiEndpoints, {
   GET_REFUND_POLICY,
   POST_CREATE_MEETING,
   UPDATE_WAITING_USER,
+  GET_DYNAMIC_HOURS,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -1633,6 +1634,21 @@ export const updateWaitingUser = (booking_id: any): Promise<any> => {
       })
       .catch(error => {
         console.error('Error updating waiting user:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getDynamicHours = (booking_id: any): Promise<any> => {
+  const apiUrl = GET_DYNAMIC_HOURS.replace('{booking_id}', booking_id);
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching dynamic hours date:', error);
         reject(error);
       });
   });
