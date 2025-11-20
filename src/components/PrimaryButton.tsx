@@ -10,9 +10,9 @@ import {
   ActivityIndicator,
   View,
 } from 'react-native';
-import {COLORS} from '../theme/theme';
+import { COLORS } from '../theme/theme';
 import Fonts from '../theme/fonts';
-import {moderateScale} from 'react-native-size-matters';
+import { moderateScale } from 'react-native-size-matters';
 
 interface Props {
   title: string;
@@ -21,6 +21,7 @@ interface Props {
   style?: ViewStyle;
   textStyle?: TextStyle;
   loading?: boolean;
+  activeOpacity?: number;
 }
 
 const PrimaryButton: React.FC<Props> = ({
@@ -30,13 +31,15 @@ const PrimaryButton: React.FC<Props> = ({
   style,
   textStyle,
   loading = false,
+  activeOpacity = 0.7,
 }) => {
   return (
     <TouchableOpacity
       style={[styles.button, style, (disabled || loading) && styles.disabled]}
       onPress={onPress}
-      activeOpacity={0.7}
-      disabled={disabled || loading}>
+      activeOpacity={activeOpacity}
+      disabled={disabled || loading}
+    >
       {loading ? (
         <ActivityIndicator size="small" color={COLORS.white} />
       ) : (

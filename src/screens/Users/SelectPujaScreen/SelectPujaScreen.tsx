@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,21 +9,21 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
-import {getPanditPujaList} from '../../../api/apiService';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import { getPanditPujaList } from '../../../api/apiService';
 import Fonts from '../../../theme/fonts';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {moderateScale} from 'react-native-size-matters';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
+import { moderateScale } from 'react-native-size-matters';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {useCommonToast} from '../../../common/CommonToast';
-import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
+import { useCommonToast } from '../../../common/CommonToast';
+import { UserHomeParamList } from '../../../navigation/User/UsetHomeStack';
 import Octicons from 'react-native-vector-icons/Octicons';
 import PrimaryButton from '../../../components/PrimaryButton';
-import {translateData} from '../../../utils/TranslateData';
+import { translateData } from '../../../utils/TranslateData';
 
 type PujaItem = {
   pooja_id: number;
@@ -42,11 +42,11 @@ type ScreenNavigationProp = StackNavigationProp<
 
 const SelectPujaScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const currentLanguage = i18n.language;
 
-  const {showErrorToast} = useCommonToast();
+  const { showErrorToast } = useCommonToast();
 
   const [originalPujaList, setOriginalPujaList] = useState<PujaItem[]>([]);
   const [pujaList, setPujaList] = useState<PujaItem[]>([]);
@@ -54,7 +54,7 @@ const SelectPujaScreen: React.FC = () => {
   const [selectedPujaId, setSelectedPujaId] = useState<number | null>(null);
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute() as any;
-  const {panditId, panditName, panditImage, panditCity} = route?.params;
+  const { panditId, panditName, panditImage, panditCity } = route?.params;
 
   console.log('SelectPujaScreen route?.params :: ', route?.params);
 
@@ -123,7 +123,7 @@ const SelectPujaScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={loading} />
       <StatusBar
         barStyle="light-content"
@@ -140,9 +140,10 @@ const SelectPujaScreen: React.FC = () => {
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollViewContent,
-            {paddingBottom: 100 + inset.bottom},
+            { paddingBottom: 100 + inset.bottom },
           ]}
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.pujaListSection}>
             <Text style={styles.sectionTitle}>{t('select_puja')}</Text>
             <Text style={styles.sectionSubtitle}>
@@ -150,12 +151,13 @@ const SelectPujaScreen: React.FC = () => {
             </Text>
             <View style={[styles.pujaListContainer, THEMESHADOW.shadow]}>
               {pujaList.length === 0 ? (
-                <View style={{padding: 24, alignItems: 'center'}}>
+                <View style={{ padding: 24, alignItems: 'center' }}>
                   <Text
                     style={{
                       color: COLORS.pujaTextSecondary,
                       fontFamily: Fonts.Sen_Regular,
-                    }}>
+                    }}
+                  >
                     {t('no_puja_found') || 'No puja found.'}
                   </Text>
                 </View>
@@ -165,20 +167,22 @@ const SelectPujaScreen: React.FC = () => {
                     <TouchableOpacity
                       style={styles.item}
                       activeOpacity={0.7}
-                      onPress={() => handleSelectPuja(puja.pooja_id)}>
+                      onPress={() => handleSelectPuja(puja.pooja_id)}
+                    >
                       <View style={styles.imageContainer}>
                         <Image
-                          source={{uri: puja.pooja_image}}
+                          source={{ uri: puja.pooja_image }}
                           style={styles.image}
                         />
                       </View>
-                      <View style={{flex: 1, marginLeft: 14}}>
+                      <View style={{ flex: 1, marginLeft: 14 }}>
                         <View style={styles.content}>
                           <Text style={styles.title}>{puja.pooja_name}</Text>
                           <Text
                             style={styles.description}
                             numberOfLines={2}
-                            ellipsizeMode="tail">
+                            ellipsizeMode="tail"
+                          >
                             {puja.pooja_caption}
                           </Text>
                         </View>
@@ -187,7 +191,8 @@ const SelectPujaScreen: React.FC = () => {
                             style={{
                               flexDirection: 'row',
                               alignItems: 'center',
-                            }}>
+                            }}
+                          >
                             <Text style={styles.price}>
                               ₹{parseFloat(puja.price_with_samagri).toFixed(2)}
                             </Text>
@@ -203,7 +208,8 @@ const SelectPujaScreen: React.FC = () => {
                           justifyContent: 'center',
                           alignItems: 'center',
                           marginLeft: 8,
-                        }}>
+                        }}
+                      >
                         <Octicons
                           name={
                             selectedPujaId === puja.pooja_id
@@ -220,7 +226,7 @@ const SelectPujaScreen: React.FC = () => {
                       </View>
                     </TouchableOpacity>
                     {idx < pujaList.length - 1 && (
-                      <View style={{marginHorizontal: 12}}>
+                      <View style={{ marginHorizontal: 12 }}>
                         <View style={styles.separator} />
                       </View>
                     )}
@@ -231,11 +237,12 @@ const SelectPujaScreen: React.FC = () => {
           </View>
         </ScrollView>
         {/* Fixed Next Button */}
-        <View style={[styles.fixedButtonContainer, {paddingBottom: 16}]}>
+        <View style={[styles.fixedButtonContainer, { paddingBottom: 16 }]}>
           <PrimaryButton
             title={t('next')}
             onPress={handleNext}
             disabled={!selectedPujaId}
+            activeOpacity={1}
           />
         </View>
       </View>

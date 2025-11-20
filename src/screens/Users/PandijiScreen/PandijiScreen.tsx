@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback, useRef} from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,21 +12,21 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {COLORS, THEMESHADOW, wp} from '../../../theme/theme';
+import { COLORS, THEMESHADOW, wp } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {useNavigation} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPanditjiParamList} from '../../../navigation/User/UserPanditjiNavigator';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {getAllPanditji} from '../../../api/apiService';
+import { useNavigation } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { UserPanditjiParamList } from '../../../navigation/User/UserPanditjiNavigator';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { getAllPanditji } from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {useCommonToast} from '../../../common/CommonToast';
-import {translateData} from '../../../utils/TranslateData';
+import { useCommonToast } from '../../../common/CommonToast';
+import { translateData } from '../../../utils/TranslateData';
 
 interface PanditjiItem {
   id: string;
@@ -45,7 +45,7 @@ interface PanditjiResponse {
 
 const PanditjiScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const currentLanguage = i18n.language;
   console.log('Current Language:', currentLanguage);
@@ -56,7 +56,7 @@ const PanditjiScreen: React.FC = () => {
   const [panditjiData, setPanditjiData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const {showErrorToast} = useCommonToast();
+  const { showErrorToast } = useCommonToast();
 
   const translationCacheRef = useRef<Map<string, any>>(new Map());
 
@@ -138,12 +138,19 @@ const PanditjiScreen: React.FC = () => {
     </View>
   );
 
-  const renderPanditjiItem = ({item, index}: {item: any; index: number}) => (
+  const renderPanditjiItem = ({
+    item,
+    index,
+  }: {
+    item: any;
+    index: number;
+  }) => (
     <View style={styles.panditjiContainer}>
       <TouchableOpacity
         style={styles.panditjiItem}
         onPress={() => handlePanditjiSelect(item.pandit_id)}
-        activeOpacity={0.7}>
+        activeOpacity={0.7}
+      >
         <View style={styles.panditjiContent}>
           <View style={styles.imageContainer}>
             <Image
@@ -172,7 +179,8 @@ const PanditjiScreen: React.FC = () => {
           </View>
           <TouchableOpacity
             style={styles.selectionButton}
-            onPress={() => handlePanditjiSelect(item.pandit_id)}>
+            onPress={() => handlePanditjiSelect(item.pandit_id)}
+          >
             <Ionicons
               name="chevron-forward"
               size={20}
@@ -192,7 +200,7 @@ const PanditjiScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: inset.top }]}>
       <CustomeLoader loading={isLoading} />
       <StatusBar
         barStyle="light-content"
@@ -202,7 +210,8 @@ const PanditjiScreen: React.FC = () => {
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={verticalScale(90)}>
+        keyboardVerticalOffset={verticalScale(90)}
+      >
         <View style={styles.absoluteMainContainer}>
           <View style={[styles.container, THEMESHADOW.shadow]}>
             {renderSearchInput()}

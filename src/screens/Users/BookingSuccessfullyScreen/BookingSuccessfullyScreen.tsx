@@ -12,41 +12,41 @@ import React from 'react';
 import CustomHeader from '../../../components/CustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Fonts from '../../../theme/fonts';
-import {COLORS} from '../../../theme/theme';
-import {Images} from '../../../theme/Images';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import { COLORS } from '../../../theme/theme';
+import { Images } from '../../../theme/Images';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 const BookingSuccessfullyScreen: React.FC = () => {
   type ScreenNavigationProps = StackNavigationProp<
     UserPoojaListParamList,
     'BookingSuccessfullyScreen'
   >;
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const inset = useSafeAreaInsets();
 
-  const navigation = useNavigation<ScreenNavigationProps>();
+  const navigation: any = useNavigation();
   const route = useRoute();
-  // Check if route.params exists and has the expected property
-  // Always extract booking from route.params, even if it's null/undefined
-  const {booking, auto} = route.params as any;
+
+  const { booking, auto } = route.params as any;
 
   console.log('auto', auto);
 
   return (
-    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: inset.top }]}>
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('booking_successfully')} />
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
         bounces={false}
-        contentContainerStyle={styles.scrollContent}>
+        contentContainerStyle={styles.scrollContent}
+      >
         <View style={styles.contentWrapper}>
           <View style={styles.detailsContainer}>
             <Image
@@ -60,13 +60,9 @@ const BookingSuccessfullyScreen: React.FC = () => {
             <PrimaryButton
               title={t('go_to_home')}
               onPress={() => {
-                if (auto === 'true') {
-                  navigation.replace('PujaList');
-                } else {
-                  navigation.navigate('UserHomeNavigator', {
-                    screen: 'UserHomeScreen',
-                  });
-                }
+                navigation.navigate('UserHomeNavigator', {
+                  screen: 'UserHomeScreen',
+                });
               }}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}

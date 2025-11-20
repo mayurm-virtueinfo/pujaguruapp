@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,11 +8,11 @@ import {
   ModalProps,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {COLORS} from '../theme/theme';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { COLORS } from '../theme/theme';
 import Fonts from '../theme/fonts';
 import RadioButton from './RadioButton';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 interface PanditjiSelectionModalProps extends Partial<ModalProps> {
   visible: boolean;
@@ -28,13 +28,24 @@ const PanditjiSelectionModal: React.FC<PanditjiSelectionModalProps> = ({
   initialSelection = 'automatic',
   ...modalProps
 }) => {
-  const {t, i18n} = useTranslation();
+  const { t } = useTranslation();
 
   const [selectedOption, setSelectedOption] = useState<'automatic' | 'manual'>(
     initialSelection,
   );
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
 
   const handleConfirm = () => {
+    if (selectedOption === 'manual' && !showDisclaimer) {
+      setShowDisclaimer(true);
+      return;
+    }
+    onConfirm(selectedOption);
+    onClose();
+  };
+
+  const handleDisclaimerAcknowledge = () => {
+    setShowDisclaimer(false);
     onConfirm(selectedOption);
     onClose();
   };
@@ -52,7 +63,7 @@ const PanditjiSelectionModal: React.FC<PanditjiSelectionModalProps> = ({
           name="checkmark-circle-outline"
           size={24}
           color="#FA1927"
-          style={{marginLeft: moderateScale(8)}}
+          style={{ marginLeft: moderateScale(8) }}
         />
       );
     }
@@ -61,93 +72,147 @@ const PanditjiSelectionModal: React.FC<PanditjiSelectionModalProps> = ({
         name="ellipse-outline"
         size={24}
         color="#C4C4C4"
-        style={{marginLeft: moderateScale(8)}}
+        style={{ marginLeft: moderateScale(8) }}
       />
     );
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-      {...modalProps}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContainer}>
-          {/* Header */}
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>
-              {t('select_option_for_panditji')}
+    <>
+      <Modal
+        visible={visible}
+        transparent
+        animationType="fade"
+        onRequestClose={onClose}
+        {...modalProps}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            {/* Header */}
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {t('select_option_for_panditji')}
+              </Text>
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <View style={styles.closeIconContainer}>
+                  <Ionicons name="close" size={20} color="#191313" />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Description */}
+            <Text style={styles.description}>
+              {t('description_for_select_pandit_type')}
             </Text>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <View style={styles.closeIconContainer}>
-                <Ionicons name="close" size={20} color="#191313" />
+
+            {/* Options Container */}
+            <View style={styles.optionsContainer}>
+              {/* Automatic Option */}
+              <TouchableOpacity
+                style={styles.optionItem}
+                onPress={() => setSelectedOption('automatic')}
+              >
+                <View style={styles.optionContent}>
+                  <View style={styles.optionTextContainer}>
+                    <Text style={styles.optionTitle}>{t('automatic')}</Text>
+                    <Text style={styles.optionDescription}>
+                      {t('description_for_automatic')}
+                    </Text>
+                  </View>
+                  <View style={styles.radioButtonRightIconContainer}>
+                    {renderRadioButtonRightIcon(selectedOption === 'automatic')}
+                  </View>
+                </View>
+              </TouchableOpacity>
+
+              {/* Divider */}
+              <View style={styles.divider} />
+
+              {/* Manual Option */}
+              <TouchableOpacity
+                style={styles.optionItem}
+                onPress={() => setSelectedOption('manual')}
+              >
+                <View style={styles.optionContent}>
+                  <View style={styles.optionTextContainer}>
+                    <Text style={styles.optionTitle}>{t('manual')}</Text>
+                    <Text style={styles.optionDescription}>
+                      {t('description_for_manual')}
+                    </Text>
+                  </View>
+                  <View style={styles.radioButtonRightIconContainer}>
+                    {renderRadioButtonRightIcon(selectedOption === 'manual')}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* Manual Selection Disclaimer */}
+            {selectedOption === 'manual' && (
+              <View style={styles.manualNoteContainer}>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={20}
+                  color="#FA1927"
+                  style={{ marginRight: moderateScale(8) }}
+                />
+                <Text style={styles.manualNoteText}>
+                  {t('manual_selection_disclaimer')}
+                </Text>
               </View>
-            </TouchableOpacity>
+            )}
+
+            {/* Action Buttons */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCancel}
+              >
+                <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={handleConfirm}
+              >
+                <Text style={styles.confirmButtonText}>{t('confirm')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
+        </View>
+      </Modal>
 
-          {/* Description */}
-          <Text style={styles.description}>
-            {t('description_for_select_pandit_type')}
-          </Text>
-
-          {/* Options Container */}
-          <View style={styles.optionsContainer}>
-            {/* Automatic Option */}
+      <Modal
+        visible={visible && showDisclaimer}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDisclaimer(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.disclaimerContainer}>
+            <Ionicons
+              name="alert-circle-outline"
+              size={32}
+              color="#FA1927"
+              style={styles.disclaimerIcon}
+            />
+            <Text style={styles.disclaimerTitle}>
+              {t('manual_selection_notice_title')}
+            </Text>
+            <Text style={styles.disclaimerMessage}>
+              {t('manual_selection_notice_message')}
+            </Text>
             <TouchableOpacity
-              style={styles.optionItem}
-              onPress={() => setSelectedOption('automatic')}>
-              <View style={styles.optionContent}>
-                <View style={styles.optionTextContainer}>
-                  <Text style={styles.optionTitle}>{t('automatic')}</Text>
-                  <Text style={styles.optionDescription}>
-                    {t('description_for_automatic')}
-                  </Text>
-                </View>
-                <View style={styles.radioButtonRightIconContainer}>
-                  {renderRadioButtonRightIcon(selectedOption === 'automatic')}
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Divider */}
-            <View style={styles.divider} />
-
-            {/* Manual Option */}
-            <TouchableOpacity
-              style={styles.optionItem}
-              onPress={() => setSelectedOption('manual')}>
-              <View style={styles.optionContent}>
-                <View style={styles.optionTextContainer}>
-                  <Text style={styles.optionTitle}>{t('manual')}</Text>
-                  <Text style={styles.optionDescription}>
-                    {t('description_for_manual')}
-                  </Text>
-                </View>
-                <View style={styles.radioButtonRightIconContainer}>
-                  {renderRadioButtonRightIcon(selectedOption === 'manual')}
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={handleCancel}>
-              <Text style={styles.cancelButtonText}>{t('cancel')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.confirmButton}
-              onPress={handleConfirm}>
-              <Text style={styles.confirmButtonText}>{t('confirm')}</Text>
+              style={styles.disclaimerButton}
+              onPress={handleDisclaimerAcknowledge}
+            >
+              <Text style={styles.disclaimerButtonText}>
+                {t('manual_selection_notice_acknowledge')}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-    </Modal>
+      </Modal>
+    </>
   );
 };
 
@@ -202,7 +267,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(24),
     // Shadow for iOS
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 8,
     // Elevation for Android
@@ -271,6 +336,58 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(24),
   },
   confirmButtonText: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Medium,
+    color: '#191313',
+    textTransform: 'uppercase',
+  },
+  manualNoteContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: COLORS.pujaBackground,
+    borderRadius: moderateScale(10),
+    padding: moderateScale(12),
+    marginBottom: verticalScale(16),
+  },
+  manualNoteText: {
+    flex: 1,
+    fontSize: moderateScale(13),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primaryTextDark,
+  },
+  disclaimerContainer: {
+    width: moderateScale(300),
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(12),
+    padding: moderateScale(20),
+    alignItems: 'center',
+  },
+  disclaimerIcon: {
+    marginBottom: verticalScale(12),
+  },
+  disclaimerTitle: {
+    fontSize: moderateScale(16),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+    textAlign: 'center',
+    marginBottom: verticalScale(8),
+  },
+  disclaimerMessage: {
+    fontSize: moderateScale(13),
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.pujaCardSubtext,
+    textAlign: 'center',
+    marginBottom: verticalScale(20),
+  },
+  disclaimerButton: {
+    width: '100%',
+    height: moderateScale(46),
+    borderRadius: moderateScale(10),
+    backgroundColor: COLORS.primaryBackgroundButton,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  disclaimerButtonText: {
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_Medium,
     color: '#191313',

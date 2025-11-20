@@ -37,7 +37,7 @@ const SearchPanditScreen: React.FC = () => {
   const circle1Ref = useRef<Animatable.View & View>(null);
   const circle2Ref = useRef<Animatable.View & View>(null);
   const ws = useRef<WebSocket | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const hasNavigatedRef = useRef(false);
 

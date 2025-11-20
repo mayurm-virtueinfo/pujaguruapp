@@ -1142,7 +1142,7 @@ export const postVerrifyPayment = (
         resolve(response);
       })
       .catch(error => {
-        console.error('Error create razorpay order', error);
+        console.error('Error create razorpay order', error.response?.data);
         reject(error);
       });
   });

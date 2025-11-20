@@ -32,6 +32,8 @@ import CustomModal from '../../../components/CustomModal';
 import CustomeLoader from '../../../components/CustomeLoader';
 import { getFcmToken } from '../../../configuration/firebaseMessaging';
 import { translateData, translateText } from '../../../utils/TranslateData';
+import notifee from '@notifee/react-native';
+import messaging from '@react-native-firebase/messaging';
 
 interface ProfileFieldProps {
   label: string;
@@ -136,9 +138,18 @@ const BottomUserProfileScreen: React.FC = () => {
   const handleLogout = async () => {
     setLogoutLoading(true);
     try {
+      await notifee.cancelAllNotifications();
       const refreshToken =
         (await AsyncStorage.getItem(AppConstant.REFRESH_TOKEN)) || '';
-      const fcmToken = await getFcmToken();
+      const fcmToken = (await getFcmToken()) || '';
+      try {
+        await messaging().deleteToken();
+      } catch (messagingError) {
+        console.warn(
+          'Unable to delete FCM token during logout, proceeding anyway',
+          messagingError,
+        );
+      }
 
       const params = {
         refresh_token: refreshToken,

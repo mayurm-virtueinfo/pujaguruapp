@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef, useCallback} from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,25 +12,25 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {COLORS, THEMESHADOW, wp} from '../../../theme/theme';
+import { COLORS, THEMESHADOW, wp } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Octicons from 'react-native-vector-icons/Octicons';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {getPanditji, postAutoBooking} from '../../../api/apiService';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { getPanditji, postAutoBooking } from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
-import {useCommonToast} from '../../../common/CommonToast';
-import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
-import {translateData} from '../../../utils/TranslateData';
+import { useCommonToast } from '../../../common/CommonToast';
+import { UserHomeParamList } from '../../../navigation/User/UsetHomeStack';
+import { translateData } from '../../../utils/TranslateData';
 
 interface PanditjiItem {
   id: string;
@@ -40,10 +40,12 @@ interface PanditjiItem {
   image: string;
   isSelected: boolean;
   isVerified: boolean;
+  price?: number;
+  priceStatus?: number;
 }
 
 const SelectPanditjiScreen: React.FC = () => {
-  const {t, i18n}: {t: any; i18n: {language: string}} = useTranslation();
+  const { t, i18n }: { t: any; i18n: { language: string } } = useTranslation();
   const inset = useSafeAreaInsets();
 
   const route = useRoute();
@@ -70,7 +72,7 @@ const SelectPanditjiScreen: React.FC = () => {
 
   console.log('SelectPanditjiScreen route?.params :: ', route?.params);
 
-  const {showErrorToast, showSuccessToast} = useCommonToast();
+  const { showErrorToast, showSuccessToast } = useCommonToast();
 
   const navigation = useNavigation<StackNavigationProp<UserHomeParamList>>();
   const [searchText, setSearchText] = useState('');
@@ -93,6 +95,13 @@ const SelectPanditjiScreen: React.FC = () => {
   } | null>(null);
 
   const translationCacheRef = useRef<Map<string, any>>(new Map());
+
+  const formatCurrency = (value?: number) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return null;
+    }
+    return `₹ ${Number(value).toLocaleString('en-IN')}`;
+  };
 
   useEffect(() => {
     fetchLocation();
@@ -164,6 +173,10 @@ const SelectPanditjiScreen: React.FC = () => {
                 image: item.profile_img,
                 isSelected: false,
                 isVerified: item.isVerified || false,
+                price: samagri_required
+                  ? item.price?.with_samagri
+                  : item.price?.without_samagri,
+                priceStatus: item.price_status,
               }),
             );
             setOriginalPanditjiData(transformedData);
@@ -214,7 +227,9 @@ const SelectPanditjiScreen: React.FC = () => {
       setSelectPanditData(null);
       setSelectedPanditjiName(null);
       setSelectedPanditjiImage(null);
-      setPanditjiData(prev => prev.map(item => ({...item, isSelected: false})));
+      setPanditjiData(prev =>
+        prev.map(item => ({ ...item, isSelected: false })),
+      );
       return;
     }
     const selected = originalPanditjiData.find(item => item.id === id);
@@ -264,7 +279,7 @@ const SelectPanditjiScreen: React.FC = () => {
           pandit_image: selectedPanditjiImage,
           puja_image: puja_image,
           puja_name: puja_name,
-          price: price,
+          price: selectPanditData?.price ?? price,
           selectAddress: selectAddress,
           selectManualPanitData: selectPanditData,
           booking_Id: response?.data?.booking_id,
@@ -364,90 +379,103 @@ const SelectPanditjiScreen: React.FC = () => {
   }: {
     item: PanditjiItem;
     index: number;
-  }) => (
-    <View style={styles.panditjiContainer}>
-      <TouchableOpacity
-        style={styles.panditjiItem}
-        onPress={() => handlePanditjiSelect(item.id)}
-        activeOpacity={0.7}>
-        <View style={styles.panditjiContent}>
-          <View style={styles.imageContainer}>
-            <Image
-              source={{
-                uri:
-                  item.image ||
-                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
-              }}
-              style={styles.panditjiImage}
-            />
-            {item.isVerified && (
-              <View style={styles.verifiedBadge}>
-                <MaterialIcons
-                  name="verified"
-                  size={16}
-                  color={COLORS.success}
+  }) => {
+    const formattedPrice = formatCurrency(item.price);
+
+    return (
+      <View style={styles.panditjiContainer}>
+        <TouchableOpacity
+          style={styles.panditjiItem}
+          onPress={() => handlePanditjiSelect(item.id)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.panditjiContent}>
+            <View style={styles.imageContainer}>
+              <Image
+                source={{
+                  uri:
+                    item.image ||
+                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+                }}
+                style={styles.panditjiImage}
+              />
+              {item.isVerified && (
+                <View style={styles.verifiedBadge}>
+                  <MaterialIcons
+                    name="verified"
+                    size={16}
+                    color={COLORS.success}
+                  />
+                </View>
+              )}
+            </View>
+            <View style={styles.panditjiDetails}>
+              <Text style={styles.panditjiName}>{item.name}</Text>
+              <Text style={styles.panditjiLocation}>{item.location}</Text>
+              <Text style={styles.panditjiLanguages}>{item.languages}</Text>
+              {formattedPrice && (
+                <View style={styles.priceRow}>
+                  <Text style={styles.priceValue}>{formattedPrice}</Text>
+                </View>
+              )}
+            </View>
+            <TouchableOpacity
+              style={styles.selectionButton}
+              onPress={() => handlePanditjiSelect(item.id)}
+            >
+              {item.isSelected ? (
+                <Octicons
+                  name={'check-circle'}
+                  size={24}
+                  color={item.isSelected ? COLORS.primary : COLORS.inputBoder}
                 />
-              </View>
-            )}
+              ) : (
+                <MaterialIcons
+                  name={'radio-button-unchecked'}
+                  size={24}
+                  color={item.isSelected ? COLORS.primary : COLORS.inputBoder}
+                />
+              )}
+            </TouchableOpacity>
           </View>
-          <View style={styles.panditjiDetails}>
-            <Text style={styles.panditjiName}>{item.name}</Text>
-            <Text style={styles.panditjiLocation}>{item.location}</Text>
-            <Text style={styles.panditjiLanguages}>{item.languages}</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.selectionButton}
-            onPress={() => handlePanditjiSelect(item.id)}>
-            {item.isSelected ? (
-              <Octicons
-                name={'check-circle'}
-                size={24}
-                color={item.isSelected ? COLORS.primary : COLORS.inputBoder}
-              />
-            ) : (
-              <MaterialIcons
-                name={'radio-button-unchecked'}
-                size={24}
-                color={item.isSelected ? COLORS.primary : COLORS.inputBoder}
-              />
-            )}
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-      {index !== panditjiData.length - 1 && <View style={styles.separator} />}
-    </View>
-  );
+        </TouchableOpacity>
+        {index !== panditjiData.length - 1 && <View style={styles.separator} />}
+      </View>
+    );
+  };
 
   // Custom ListEmptyComponent with button to trigger auto booking via postAutoBooking
   const renderEmptyComponent = () => (
-    <View style={{alignItems: 'center', padding: 20}}>
+    <View style={{ alignItems: 'center', padding: 20 }}>
       <Text
         style={{
           color: COLORS.pujaCardSubtext,
           fontFamily: Fonts.Sen_Regular,
           fontSize: moderateScale(15),
           marginBottom: 16,
-        }}>
+        }}
+      >
         {t('no_panditji_found') || 'No Panditji found'}
       </Text>
       <PrimaryButton
         title={t('search_panditji_automatic')}
         onPress={handleSearchPandit}
         textStyle={styles.buttonText}
-        style={{width: 200}}
+        style={{ width: 200 }}
       />
     </View>
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: inset.top }]}>
       <CustomeLoader loading={isLoading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('select_panditji')} showBackButton={true} />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={verticalScale(90)}>
+        keyboardVerticalOffset={verticalScale(90)}
+      >
         <View style={styles.absoluteMainContainer}>
           {renderSearchInput()}
           <FlatList
@@ -472,7 +500,8 @@ const SelectPanditjiScreen: React.FC = () => {
                 paddingBottom: verticalScale(14),
                 backgroundColor: COLORS.pujaBackground,
               },
-            ]}>
+            ]}
+          >
             <PrimaryButton
               title={t('next')}
               onPress={handleNextPress}
@@ -616,6 +645,16 @@ const styles = StyleSheet.create({
   },
   selectionButton: {
     padding: scale(4),
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: verticalScale(6),
+  },
+  priceValue: {
+    fontFamily: Fonts.Sen_SemiBold,
+    fontSize: moderateScale(14),
+    color: COLORS.primaryTextDark,
   },
   separator: {
     height: 1,
