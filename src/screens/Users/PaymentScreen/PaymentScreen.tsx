@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useRef, useCallback} from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -14,21 +14,21 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
 import PrimaryButton from '../../../components/PrimaryButton';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {Images} from '../../../theme/Images';
+import { Images } from '../../../theme/Images';
 import Octicons from 'react-native-vector-icons/Octicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {useCommonToast} from '../../../common/CommonToast';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useCommonToast } from '../../../common/CommonToast';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import RazorpayCheckout from 'react-native-razorpay';
 import {
   getWallet,
@@ -38,8 +38,8 @@ import {
 } from '../../../api/apiService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
-import {WebView} from 'react-native-webview';
-import {translateData} from '../../../utils/TranslateData';
+import { WebView } from 'react-native-webview';
+import { translateData } from '../../../utils/TranslateData';
 import Config from 'react-native-config';
 
 const PaymentScreen: React.FC = () => {
@@ -47,7 +47,7 @@ const PaymentScreen: React.FC = () => {
     UserPoojaListParamList,
     'PaymentScreen'
   >;
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
@@ -76,8 +76,6 @@ const PaymentScreen: React.FC = () => {
     poojaDescription,
   } = route.params as any;
 
-  console.log('paymentScreen route?.params :: ', route?.params);
-
   const displayPanditName =
     panditName ||
     pandit_name ||
@@ -91,7 +89,7 @@ const PaymentScreen: React.FC = () => {
     pandit_image ||
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU';
 
-  const {showErrorToast, showSuccessToast} = useCommonToast();
+  const { showErrorToast, showSuccessToast } = useCommonToast();
 
   const [usePoints, setUsePoints] = useState<boolean>(false);
   const [acceptTerms, setAcceptTerms] = useState<boolean>(false);
@@ -119,6 +117,20 @@ const PaymentScreen: React.FC = () => {
     useState('');
   const [translatedPanditName, setTranslatedPanditName] = useState('');
 
+  // Clear cached orderId whenever the payment _attempt_ changes or params change or on critical input change.
+  useEffect(() => {
+    setOrderId(null);
+  }, [
+    usePoints,
+    selectedPaymentMethod,
+    price,
+    booking_Id,
+    walletData.balance,
+    location?.latitude,
+    location?.longitude,
+  ]);
+  // (This ensures a new order is always triggered on changes that affect the payment/order.)
+
   useEffect(() => {
     let isMounted = true;
     const translatePoojaFields = async () => {
@@ -132,7 +144,7 @@ const PaymentScreen: React.FC = () => {
       }
       try {
         const result = (await translateData(
-          [{puja_name, poojaDescription, displayPanditName}],
+          [{ puja_name, poojaDescription, displayPanditName }],
           currentLanguage,
           ['puja_name', 'poojaDescription', 'displayPanditName'],
         )) as Array<{
@@ -163,7 +175,7 @@ const PaymentScreen: React.FC = () => {
     };
   }, [currentLanguage, puja_name, poojaDescription]);
 
-  // New: Only allow payment method selection if usePoints is false or wallet covers the amount
+  // Only allow payment method selection if usePoints is false or wallet does not cover the full amount
   const walletBalanceForCalc =
     walletData &&
     (typeof walletData.balance === 'number' ||
@@ -202,9 +214,23 @@ const PaymentScreen: React.FC = () => {
     fetchCurrentUser();
   }, []);
 
+  // Reset orderId when user changes usePoints or payment method after selecting payment option
+  useEffect(() => {
+    setOrderId(null);
+  }, [usePoints, selectedPaymentMethod]);
+
+  // If user toggles "Use Points" after payment method (to handle "first select method, then use points" case), possibly reset payment method if wallet covers all
+  useEffect(() => {
+    // If wallet fully covers amount after toggle, force payment method to 'online'
+    if (usePoints && walletBalanceForCalc >= grossAmount) {
+      setSelectedPaymentMethod('online');
+    }
+  }, [usePoints, walletBalanceForCalc, grossAmount]);
+
   const razorpayOrderInProgress = useRef(false);
 
-  const razorpayOrderBookingId = useRef<string | null>(booking_Id);
+  // Always reference latest bookingId for order creation (after fixing issue with orderId caching).
+  const razorpayOrderBookingId = useRef<string | null>(null);
 
   useEffect(() => {
     fetchLocation();
@@ -222,7 +248,7 @@ const PaymentScreen: React.FC = () => {
         'Payment in progress',
         'Are you sure you want to cancel the payment?',
         [
-          {text: 'Stay', style: 'cancel'},
+          { text: 'Stay', style: 'cancel' },
           {
             text: 'Cancel Payment',
             style: 'destructive',
@@ -244,7 +270,7 @@ const PaymentScreen: React.FC = () => {
         'Payment in progress',
         'Are you sure you want to cancel the payment?',
         [
-          {text: 'Stay', style: 'cancel'},
+          { text: 'Stay', style: 'cancel' },
           {
             text: 'Cancel Payment',
             style: 'destructive',
@@ -285,7 +311,7 @@ const PaymentScreen: React.FC = () => {
         setWalletData(data.data);
       }
     } catch (error: any) {
-      showErrorToast(error.response.data.message);
+      showErrorToast(error.response?.data?.message || 'Failed to get wallet');
       setWalletData({});
     } finally {
       setIsLoading(false);
@@ -303,13 +329,14 @@ const PaymentScreen: React.FC = () => {
     return 0;
   };
 
-  // Amount calculations simplified to base amount only (no platform fees)
-  // (already done above for baseAmount, grossAmount, walletBalanceForCalc, walletUseAmountCalc, payableAmount)
-
+  // Always create new order after user cancels once and tries again (fix the stale order/cancel bug)
   const handleCreateRazorpayOrder = useCallback(
     async (bookingIdForOrder: string) => {
+      // Always reset orderId to allow new creation
       if (razorpayOrderBookingId.current === bookingIdForOrder && orderId) {
-        return {order_id: orderId};
+        // If user has just returned after cancel, always create a new one
+        // Reset order id so new one is created
+        setOrderId(null);
       }
 
       if (razorpayOrderInProgress.current) {
@@ -337,6 +364,7 @@ const PaymentScreen: React.FC = () => {
           }),
         };
 
+        // Always create fresh order, and store orderId
         const response: any = await postCreateRazorpayOrder(requestData);
         if (response?.data?.order_id || response?.data?.booking_id) {
           setOrderId(response.data.order_id || response?.data?.booking_id);
@@ -363,6 +391,9 @@ const PaymentScreen: React.FC = () => {
       showErrorToast,
       getWalletBalance,
       selectedPaymentMethod,
+      location?.latitude,
+      location?.longitude,
+      grossAmount,
     ],
   );
 
@@ -425,8 +456,10 @@ const PaymentScreen: React.FC = () => {
 
     try {
       setIsProcessingPayment(true);
+      setOrderId(null); // Always reset orderId at the very start of payment attempt
+
       const walletBalance = getWalletBalance();
-      const totalPrice = grossAmount; // include tax in payable
+      const totalPrice = grossAmount;
       const walletUseAmount = usePoints
         ? Math.min(totalPrice, walletBalance)
         : 0;
@@ -499,7 +532,7 @@ const PaymentScreen: React.FC = () => {
             currentUser?.last_name || ''
           }`,
         },
-        theme: {color: COLORS.primary},
+        theme: { color: COLORS.primary },
       } as const;
 
       // Step 3: Open Razorpay checkout
@@ -521,6 +554,8 @@ const PaymentScreen: React.FC = () => {
         showErrorToast('Payment data incomplete. Please try again.');
       }
     } catch (error: any) {
+      // Always clear orderId on cancel or failure, so next payment creates a fresh booking
+      setOrderId(null);
       if (error.code === 'payment_cancelled') {
         showErrorToast('Payment cancelled by user');
       } else if (error.code === 'payment_failed') {
@@ -539,7 +574,6 @@ const PaymentScreen: React.FC = () => {
     setRefundPolicyContent('');
     try {
       const data = await getRefundPolicy();
-      // The API returns HTML, so we store it as is
       setRefundPolicyContent(data);
     } catch (error) {
       setRefundPolicyContent(
@@ -562,8 +596,6 @@ const PaymentScreen: React.FC = () => {
     setRefundPolicyContent('');
   };
 
-  console.log('translatedPoojaDescription :: ', translatedPoojaDescription);
-
   const renderBookingData = () => (
     <View style={styles.bookingDataItem}>
       <View style={styles.textContainer}>
@@ -574,13 +606,15 @@ const PaymentScreen: React.FC = () => {
             justifyContent: 'center',
             alignItems: 'center',
             marginRight: scale(14),
-          }}>
+          }}
+        >
           <Octicons name="location" size={20} color={COLORS.pujaCardSubtext} />
         </View>
-        <View style={{flex: 1}}>
+        <View style={{ flex: 1 }}>
           <Text
-            style={[styles.bookingDataText, {flexWrap: 'wrap'}]}
-            numberOfLines={0}>
+            style={[styles.bookingDataText, { flexWrap: 'wrap' }]}
+            numberOfLines={0}
+          >
             {translatedPoojaDescription}
           </Text>
         </View>
@@ -593,7 +627,8 @@ const PaymentScreen: React.FC = () => {
             justifyContent: 'center',
             alignItems: 'center',
             marginRight: scale(14),
-          }}>
+          }}
+        >
           <Octicons name="calendar" size={20} color={COLORS.pujaCardSubtext} />
         </View>
         <View>
@@ -609,7 +644,8 @@ const PaymentScreen: React.FC = () => {
               !(displayPanditName || displayPanditImage))) && {
             borderBottomWidth: 0,
           },
-        ]}>
+        ]}
+      >
         <View
           style={{
             width: 40,
@@ -617,7 +653,8 @@ const PaymentScreen: React.FC = () => {
             justifyContent: 'center',
             alignItems: 'center',
             marginRight: scale(14),
-          }}>
+          }}
+        >
           <Octicons name="clock" size={20} color={COLORS.pujaCardSubtext} />
         </View>
         <View>
@@ -633,7 +670,8 @@ const PaymentScreen: React.FC = () => {
               flexDirection: 'row',
               alignItems: 'center',
               paddingTop: 12,
-            }}>
+            }}
+          >
             <Image
               source={{
                 uri: displayPanditImage,
@@ -648,7 +686,6 @@ const PaymentScreen: React.FC = () => {
 
   // Payment method selection UI
   const renderPaymentMethods = () => {
-    // If user has enough points to cover the booking, do not allow payment method selection
     const walletCoversBooking =
       usePoints && walletBalanceForCalc >= grossAmount;
     return (
@@ -659,20 +696,22 @@ const PaymentScreen: React.FC = () => {
             fontFamily: Fonts.Sen_SemiBold,
             color: COLORS.primaryTextDark,
             marginBottom: 8,
-          }}>
+          }}
+        >
           {t('select_payment_method') || 'Select Payment Method'}
         </Text>
         <TouchableOpacity
           style={[
             styles.paymentMethodRow,
-            walletCoversBooking && {opacity: 0.5},
+            walletCoversBooking && { opacity: 0.5 },
           ]}
           activeOpacity={walletCoversBooking ? 1 : 0.7}
           onPress={() => {
             if (!walletCoversBooking) setSelectedPaymentMethod('online');
           }}
-          disabled={walletCoversBooking}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          disabled={walletCoversBooking}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={styles.radioButton}>
               <MaterialIcons
                 name={
@@ -697,14 +736,15 @@ const PaymentScreen: React.FC = () => {
         <TouchableOpacity
           style={[
             styles.paymentMethodRow,
-            walletCoversBooking && {opacity: 0.5},
+            walletCoversBooking && { opacity: 0.5 },
           ]}
           activeOpacity={walletCoversBooking ? 1 : 0.7}
           onPress={() => {
             if (!walletCoversBooking) setSelectedPaymentMethod('cod');
           }}
-          disabled={walletCoversBooking}>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+          disabled={walletCoversBooking}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={styles.radioButton}>
               <MaterialIcons
                 name={
@@ -727,7 +767,12 @@ const PaymentScreen: React.FC = () => {
         </TouchableOpacity>
         {walletCoversBooking && (
           <Text
-            style={{color: COLORS.pujaCardSubtext, fontSize: 13, marginTop: 8}}>
+            style={{
+              color: COLORS.pujaCardSubtext,
+              fontSize: 13,
+              marginTop: 8,
+            }}
+          >
             {t('payment_method_disabled_wallet_full') ||
               'Payment method selection is disabled because your wallet fully covers the booking amount.'}
           </Text>
@@ -737,12 +782,12 @@ const PaymentScreen: React.FC = () => {
   };
 
   // Modal width/height for WebView
-  const {width, height} = Dimensions.get('window');
+  const { width, height } = Dimensions.get('window');
   const modalWidth = width * 0.96;
   const modalHeight = height * 0.9;
 
   return (
-    <View style={[styles.safeArea, {paddingTop: inset.top}]}>
+    <View style={[styles.safeArea, { paddingTop: inset.top }]}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.primary} />
       <View style={styles.contentContainer}>
         <UserCustomHeader
@@ -754,28 +799,31 @@ const PaymentScreen: React.FC = () => {
             style={styles.scrollView}
             contentContainerStyle={[
               styles.scrollContentContainer,
-              {paddingBottom: verticalScale(32)},
+              { paddingBottom: verticalScale(32) },
             ]}
             showsVerticalScrollIndicator={false}
             bounces={true}
             keyboardShouldPersistTaps="handled"
             removeClippedSubviews={false}
-            scrollEventThrottle={16}>
+            scrollEventThrottle={16}
+          >
             {/* Total Amount Section */}
             <View style={[styles.totalSection, THEMESHADOW.shadow]}>
               <View style={styles.totalRow}>
                 <Text
                   style={[
                     styles.totalAmountLabel,
-                    {fontFamily: Fonts.Sen_SemiBold},
-                  ]}>
+                    { fontFamily: Fonts.Sen_SemiBold },
+                  ]}
+                >
                   {t('total_payable')}
                 </Text>
                 <Text
                   style={[
                     styles.totalAmount,
-                    {fontFamily: Fonts.Sen_SemiBold},
-                  ]}>
+                    { fontFamily: Fonts.Sen_SemiBold },
+                  ]}
+                >
                   ₹ {grossAmount.toFixed(2)}
                 </Text>
               </View>
@@ -792,15 +840,17 @@ const PaymentScreen: React.FC = () => {
                     <Text
                       style={[
                         styles.totalAmountLabel,
-                        {fontFamily: Fonts.Sen_SemiBold},
-                      ]}>
+                        { fontFamily: Fonts.Sen_SemiBold },
+                      ]}
+                    >
                       To pay
                     </Text>
                     <Text
                       style={[
                         styles.totalAmount,
-                        {fontFamily: Fonts.Sen_SemiBold},
-                      ]}>
+                        { fontFamily: Fonts.Sen_SemiBold },
+                      ]}
+                    >
                       ₹ {payableAmount.toFixed(2)}
                     </Text>
                   </View>
@@ -814,8 +864,16 @@ const PaymentScreen: React.FC = () => {
                 <View style={styles.pointsLeft}>
                   <View style={styles.checkboxContainer}>
                     <TouchableOpacity
-                      onPress={() => setUsePoints(!usePoints)}
-                      style={styles.customCheckbox}>
+                      onPress={() => {
+                        setUsePoints(!usePoints);
+                        // When changing usePoints, for extra safety, always reset orderId and payment method if wallet covers full
+                        setOrderId(null);
+                        if (!usePoints && walletBalanceForCalc >= grossAmount) {
+                          setSelectedPaymentMethod('online');
+                        }
+                      }}
+                      style={styles.customCheckbox}
+                    >
                       <FontAwesome
                         name={usePoints ? 'check-square-o' : 'square-o'}
                         size={22}
@@ -841,11 +899,12 @@ const PaymentScreen: React.FC = () => {
             <View style={[styles.suggestedSection, THEMESHADOW.shadow]}>
               <TouchableOpacity
                 style={styles.suggestedPujaRow}
-                activeOpacity={0.7}>
+                activeOpacity={0.7}
+              >
                 <View style={styles.suggestedLeft}>
                   <View style={styles.pujaImageContainer}>
                     <Image
-                      source={{uri: puja_image}}
+                      source={{ uri: puja_image }}
                       style={styles.pujaImage}
                     />
                   </View>
@@ -859,7 +918,8 @@ const PaymentScreen: React.FC = () => {
                     width: 24,
                     justifyContent: 'center',
                     alignItems: 'center',
-                  }}></View>
+                  }}
+                ></View>
               </TouchableOpacity>
               <View style={styles.bookingDataContainer}>
                 {renderBookingData()}
@@ -884,7 +944,8 @@ const PaymentScreen: React.FC = () => {
                     textDecorationLine: 'underline',
                     fontFamily: Fonts.Sen_Medium,
                   }}
-                  onPress={handleOpenRefundPolicy}>
+                  onPress={handleOpenRefundPolicy}
+                >
                   {t('view_details') || 'View Details'}
                 </Text>
               </View>
@@ -893,8 +954,9 @@ const PaymentScreen: React.FC = () => {
           <View
             style={[
               styles.fixedButtonContainer,
-              {paddingBottom: Platform.OS === 'ios' ? 16 : 16},
-            ]}>
+              { paddingBottom: Platform.OS === 'ios' ? 16 : 16 },
+            ]}
+          >
             <PrimaryButton
               title={t('confirm_booking')}
               onPress={handlePayment}
@@ -910,7 +972,8 @@ const PaymentScreen: React.FC = () => {
         visible={refundPolicyVisible}
         animationType="slide"
         transparent={true}
-        onRequestClose={handleCloseRefundPolicy}>
+        onRequestClose={handleCloseRefundPolicy}
+      >
         <View style={styles.modalOverlay}>
           <View
             style={[
@@ -921,7 +984,8 @@ const PaymentScreen: React.FC = () => {
                 marginBottom: 0,
                 marginTop: 'auto',
               },
-            ]}>
+            ]}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
                 {t('refund_policy') || 'Refund Policy'}
@@ -941,13 +1005,13 @@ const PaymentScreen: React.FC = () => {
                 refundPolicyContent.startsWith('<!DOCTYPE html') ? (
                 <WebView
                   originWhitelist={['*']}
-                  source={{html: refundPolicyContent}}
+                  source={{ html: refundPolicyContent }}
                   style={{
                     flex: 1,
                     minHeight: 200,
                     backgroundColor: 'transparent',
                   }}
-                  containerStyle={{flex: 1, backgroundColor: 'transparent'}}
+                  containerStyle={{ flex: 1, backgroundColor: 'transparent' }}
                   showsVerticalScrollIndicator={true}
                   bounces={true}
                 />
@@ -1072,7 +1136,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  pointsIcon: {width: 18, height: 18, marginRight: 4},
+  pointsIcon: { width: 18, height: 18, marginRight: 4 },
   pointsValue: {
     fontSize: moderateScale(15),
     fontFamily: Fonts.Sen_SemiBold,
