@@ -23,6 +23,8 @@ import { Images } from '../../../theme/Images';
 import Octicons from 'react-native-vector-icons/Octicons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCommonToast } from '../../../common/CommonToast';
 import UserCustomHeader from '../../../components/UserCustomHeader';
@@ -69,8 +71,6 @@ const PaymentScreen: React.FC = () => {
     auto,
     poojaDescription,
   } = route.params as any;
-
-  console.log('paymentScreen route?.params :: ', route?.params);
 
   const displayPanditName =
     panditName ||
@@ -282,7 +282,7 @@ const PaymentScreen: React.FC = () => {
         setWalletData(data.data);
       }
     } catch (error: any) {
-      showErrorToast(error.response.data.message);
+      showErrorToast(error.response?.data?.message || 'Failed to get wallet');
       setWalletData({});
     } finally {
       setIsLoading(false);
@@ -302,6 +302,7 @@ const PaymentScreen: React.FC = () => {
 
   const handleCreateRazorpayOrder = useCallback(
     async (bookingIdForOrder: string) => {
+      // Always reset orderId to allow new creation
       if (razorpayOrderBookingId.current === bookingIdForOrder && orderId) {
         return { order_id: orderId };
       }
@@ -331,6 +332,7 @@ const PaymentScreen: React.FC = () => {
           }),
         };
 
+        // Always create fresh order, and store orderId
         const response: any = await postCreateRazorpayOrder(requestData);
         if (response?.data?.order_id || response?.data?.booking_id) {
           setOrderId(response.data.order_id || response?.data?.booking_id);
@@ -357,6 +359,9 @@ const PaymentScreen: React.FC = () => {
       showErrorToast,
       getWalletBalance,
       selectedPaymentMethod,
+      location?.latitude,
+      location?.longitude,
+      grossAmount,
     ],
   );
 
@@ -456,8 +461,10 @@ const PaymentScreen: React.FC = () => {
 
     try {
       setIsProcessingPayment(true);
+      setOrderId(null); // Always reset orderId at the very start of payment attempt
+
       const walletBalance = getWalletBalance();
-      const totalPrice = grossAmount; // include tax in payable
+      const totalPrice = grossAmount;
       const walletUseAmount = usePoints
         ? Math.min(totalPrice, walletBalance)
         : 0;
@@ -626,6 +633,8 @@ const PaymentScreen: React.FC = () => {
         showErrorToast('Payment data incomplete. Please try again.');
       }
     } catch (error: any) {
+      // Always clear orderId on cancel or failure, so next payment creates a fresh booking
+      setOrderId(null);
       if (error.code === 'payment_cancelled') {
         showErrorToast('Payment cancelled by user');
       } else if (error.code === 'payment_failed') {
@@ -755,7 +764,6 @@ const PaymentScreen: React.FC = () => {
 
   // Payment method selection UI
   const renderPaymentMethods = () => {
-    // If user has enough points to cover the booking, do not allow payment method selection
     const walletCoversBooking =
       usePoints && walletBalanceForCalc >= grossAmount;
     return (

@@ -244,6 +244,7 @@ const styles = StyleSheet.create({
     margin: 24,
     borderRadius: 10,
     overflow: 'hidden',
+    marginBottom: 60,
   },
   absoluteMainContainer: {
     flex: 1,

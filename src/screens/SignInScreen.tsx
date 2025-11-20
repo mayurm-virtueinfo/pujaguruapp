@@ -42,6 +42,7 @@ import {
 import CountrySelect from 'react-native-country-select';
 import { getFirebaseAuthErrorMessage } from '../helper/firebaseErrorHandler';
 import Config from 'react-native-config';
+import CustomeLoader from '../components/CustomeLoader';
 
 const COUNTRY_CALLING_CODES: { [key: string]: string } = {
   AF: '+93',
@@ -546,7 +547,7 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
           // behavior={'padding'}
           // keyboardVerticalOffset={40}
         >
-          <Loader loading={isLoading} />
+          <CustomeLoader loading={isLoading} />
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             keyboardShouldPersistTaps="handled"
