@@ -9,6 +9,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  Alert,
 } from 'react-native';
 import {
   SafeAreaView,
@@ -37,6 +38,7 @@ import { useCommonToast } from '../../../common/CommonToast';
 import CustomeLoader from '../../../components/CustomeLoader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import { translateData } from '../../../utils/TranslateData';
+import CustomModal from '../../../components/CustomModal';
 
 const formatDateYYYYMMDD = (date: Date | string) => {
   if (typeof date === 'string') {
@@ -214,6 +216,9 @@ const PujaBookingScreen: React.FC = () => {
   const [originalMuhurats, setOriginalMuhurats] = useState<any[]>([]);
   const [availableDates, setAvailableDates] = useState<string[] | null>(null);
   const insets = useSafeAreaInsets();
+  const [customModalVisible, setCustomModalVisible] = useState<boolean>(false);
+  const [customModalTitle, setCustomModalTitle] = useState<string>('');
+  const [customModalMessage, setCustomModalMessage] = useState<string>('');
 
   const translationCacheRef = useRef<Map<string, any>>(new Map());
 
@@ -597,28 +602,42 @@ const PujaBookingScreen: React.FC = () => {
           selectedAddressLongitude,
         );
         if (response) {
-          navigation.navigate('PaymentScreen', {
-            poojaId: poojaId,
-            samagri_required: samagri_required,
-            address: address,
-            tirth: tirth,
-            booking_date: selectedDateISO,
-            muhurat_time: muhuratTime,
-            muhurat_type: muhuratType,
-            notes: additionalNotes,
-            puja_image: puja_image,
-            puja_name: puja_name,
-            price: price,
-            selectAddress: selectTirthPlaceName || selectAddressName,
-            booking_Id: response?.data?.booking_id,
-            AutoModeSelection: true,
-            poojaDescription: poojaDescription,
-          });
+          const autoBookingEnabled = response?.auto_booking_enabled;
+          const autoBookingMessage = response?.auto_booking_message;
+
+          if (autoBookingEnabled === false) {
+            setCustomModalTitle(t('feture_coming_soon') || 'Feature Coming Soon');
+            setCustomModalMessage(autoBookingMessage);
+            setCustomModalVisible(true);
+          } else {
+            navigation.navigate('PaymentScreen', {
+              poojaId: poojaId,
+              samagri_required: samagri_required,
+              address: address,
+              tirth: tirth,
+              booking_date: selectedDateISO,
+              muhurat_time: muhuratTime,
+              muhurat_type: muhuratType,
+              notes: additionalNotes,
+              puja_image: puja_image,
+              puja_name: puja_name,
+              price: price,
+              selectAddress: selectTirthPlaceName || selectAddressName,
+              booking_Id: response?.data?.booking_id,
+              AutoModeSelection: true,
+              poojaDescription: poojaDescription,
+            });
+          }
         }
       }
     } else if (selection === 'manual') {
       navigation.navigate('SelectPanditjiScreen', navigationParams);
     }
+  };
+
+  const handleCustomModalConfirm = () => {
+    setCustomModalVisible(false);
+    setModalVisible(true);
   };
 
   const renderMuhuratSlots = () => (
@@ -886,6 +905,15 @@ const PujaBookingScreen: React.FC = () => {
         onClose={handlePanditjiSelectionModalClose}
         onConfirm={handlePanditjiSelectionConfirm}
         initialSelection={panditjiSelection}
+      />
+      <CustomModal
+        visible={customModalVisible}
+        title={customModalTitle}
+        message={customModalMessage}
+        onConfirm={handleCustomModalConfirm}
+        onCancel={() => setCustomModalVisible(false)}
+        confirmText={t('ok') || 'OK'}
+        cancelText={t('cancel') || 'Cancel'}
       />
     </View>
   );
