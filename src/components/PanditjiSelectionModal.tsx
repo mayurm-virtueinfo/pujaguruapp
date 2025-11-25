@@ -78,15 +78,38 @@ const PanditjiSelectionModal: React.FC<PanditjiSelectionModalProps> = ({
   };
 
   return (
-    <>
-      <Modal
-        visible={visible}
-        transparent
-        animationType="fade"
-        onRequestClose={onClose}
-        {...modalProps}
-      >
-        <View style={styles.modalOverlay}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={showDisclaimer ? () => setShowDisclaimer(false) : onClose}
+      {...modalProps}
+    >
+      <View style={styles.modalOverlay}>
+        {showDisclaimer ? (
+          <View style={styles.disclaimerContainer}>
+            <Ionicons
+              name="alert-circle-outline"
+              size={32}
+              color="#FA1927"
+              style={styles.disclaimerIcon}
+            />
+            <Text style={styles.disclaimerTitle}>
+              {t('manual_selection_notice_title')}
+            </Text>
+            <Text style={styles.disclaimerMessage}>
+              {t('manual_selection_notice_message')}
+            </Text>
+            <TouchableOpacity
+              style={styles.disclaimerButton}
+              onPress={handleDisclaimerAcknowledge}
+            >
+              <Text style={styles.disclaimerButtonText}>
+                {t('manual_selection_notice_acknowledge')}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
           <View style={styles.modalContainer}>
             {/* Header */}
             <View style={styles.modalHeader}>
@@ -178,41 +201,9 @@ const PanditjiSelectionModal: React.FC<PanditjiSelectionModalProps> = ({
               </TouchableOpacity>
             </View>
           </View>
-        </View>
-      </Modal>
-
-      <Modal
-        visible={visible && showDisclaimer}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowDisclaimer(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.disclaimerContainer}>
-            <Ionicons
-              name="alert-circle-outline"
-              size={32}
-              color="#FA1927"
-              style={styles.disclaimerIcon}
-            />
-            <Text style={styles.disclaimerTitle}>
-              {t('manual_selection_notice_title')}
-            </Text>
-            <Text style={styles.disclaimerMessage}>
-              {t('manual_selection_notice_message')}
-            </Text>
-            <TouchableOpacity
-              style={styles.disclaimerButton}
-              onPress={handleDisclaimerAcknowledge}
-            >
-              <Text style={styles.disclaimerButtonText}>
-                {t('manual_selection_notice_acknowledge')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </>
+        )}
+      </View>
+    </Modal>
   );
 };
 

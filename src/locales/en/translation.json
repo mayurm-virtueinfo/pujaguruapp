@@ -378,5 +378,7 @@
   "failed_to_fetch_data": "Failed to fetch data. Please try again.",
   "failed_to_save_address": "Failed to save address. Please try again.",
   "updating_location": "Updating location...",
-  "you_cannot_chat_during_puja": "You cannot chat during puja."
+  "you_cannot_chat_during_puja": "You cannot chat during puja.",
+  "Please_enter_valid_number": "Please enter a valid mobile number",
+  "deleting": "Deleting..."
 }

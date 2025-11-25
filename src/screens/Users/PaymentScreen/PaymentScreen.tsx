@@ -141,6 +141,26 @@ const PaymentScreen: React.FC = () => {
   }, [loading]);
 
   useEffect(() => {
+    if (usePoints) {
+      if (walletBalanceForCalc >= grossAmount) {
+        // Full payment via wallet
+        setSelectedPaymentMethod('online'); // Default to online, but UI will disable selection
+      } else {
+        // Partial payment via wallet -> Force Online
+        setSelectedPaymentMethod('online');
+      }
+    }
+  }, [usePoints, walletBalanceForCalc, grossAmount]);
+
+  const handlePaymentMethodChange = (method: 'online' | 'cod') => {
+    if (method === 'cod') {
+      setUsePoints(false);
+    }
+    setSelectedPaymentMethod(method);
+  };
+
+
+  useEffect(() => {
     let isMounted = true;
     const translatePoojaFields = async () => {
       if (currentLanguage === 'en') {
@@ -210,7 +230,7 @@ const PaymentScreen: React.FC = () => {
 
   // Prevent navigating back while payment is in progress
   useEffect(() => {
-    const beforeRemove = navigation.addListener('beforeRemove', e => {
+    const beforeRemove = navigation.addListener('beforeRemove', (e: { preventDefault: () => void; data: { action: any; }; }) => {
       if (!isProcessingPaymentRef.current && !loadingRef.current) {
         return;
       }
@@ -785,7 +805,7 @@ const PaymentScreen: React.FC = () => {
           ]}
           activeOpacity={walletCoversBooking ? 1 : 0.7}
           onPress={() => {
-            if (!walletCoversBooking) setSelectedPaymentMethod('online');
+            if (!walletCoversBooking) handlePaymentMethodChange('online');
           }}
           disabled={walletCoversBooking}
         >
@@ -818,7 +838,7 @@ const PaymentScreen: React.FC = () => {
           ]}
           activeOpacity={walletCoversBooking ? 1 : 0.7}
           onPress={() => {
-            if (!walletCoversBooking) setSelectedPaymentMethod('cod');
+            if (!walletCoversBooking) handlePaymentMethodChange('cod');
           }}
           disabled={walletCoversBooking}
         >

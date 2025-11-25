@@ -129,11 +129,11 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontSize: 13,
     fontFamily: Fonts.Sen_Regular,
-    marginBottom: 14,
+    // marginBottom: 14,
   },
   cardSeparator: {
     height: 1,
     backgroundColor: COLORS.separatorColor,
-    marginBottom: 14,
+    marginVertical: 14,
   },
 });

@@ -313,9 +313,8 @@ const PujaDetailsScreen: React.FC = () => {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() =>
-          navigation.navigate('UserPanditjiNavigator', {
-            screen: 'PanditDetailsScreen',
-            params: { panditId: item.pandit_id?.toString() },
+          navigation.navigate('PanditDetailsScreen', {
+            panditId: item.pandit_id?.toString(),
           })
         }
         style={{ flexDirection: 'row', gap: 5 }}
@@ -729,10 +728,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.inputBoder,
     marginBottom: 25,
+    justifyContent: 'center',
   },
   itemRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
   },
   itemIcon: {

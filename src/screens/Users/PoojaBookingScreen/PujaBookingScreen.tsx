@@ -624,7 +624,8 @@ const PujaBookingScreen: React.FC = () => {
   const renderMuhuratSlots = () => (
     <View style={styles.slotsContainer}>
       <Text style={styles.slotsTitle}>{t('select_muhurat_time_slot')}</Text>
-      <View style={[styles.slotsListContainer, THEMESHADOW.shadow]}>
+      {
+        loading ? (<View style={styles.slotsListContainer}><Text>Muhurat Loading...</Text></View>) : (<View style={[styles.slotsListContainer, THEMESHADOW.shadow]}>
         {muhurats.map((slot, index) => {
           const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
           const isSelected = selectedSlot === slotKey;
@@ -665,7 +666,8 @@ const PujaBookingScreen: React.FC = () => {
             </View>
           );
         })}
-      </View>
+      </View>)
+      }
     </View>
   );
 

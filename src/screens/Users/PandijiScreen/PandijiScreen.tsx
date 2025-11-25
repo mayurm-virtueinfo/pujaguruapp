@@ -115,6 +115,7 @@ const PanditjiScreen: React.FC = () => {
   const handlePanditjiSelect = (id: string) => {
     navigation.navigate('PanditDetailsScreen', {
       panditId: id,
+      pandit: true,
     });
   };
 

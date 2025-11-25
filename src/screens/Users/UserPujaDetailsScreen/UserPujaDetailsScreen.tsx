@@ -673,7 +673,7 @@ const UserPujaDetailsScreen: React.FC = () => {
             {renderTotalAmount()}
             {renderPanditDetails()}
             {renderPanditjiSection()}
-            {renderCancelButton()}
+            {loading ? null : renderCancelButton()}
           </ScrollView>
         </View>
 

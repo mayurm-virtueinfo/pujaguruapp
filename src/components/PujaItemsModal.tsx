@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -9,18 +9,37 @@ import {
   ModalProps,
   Animated,
 } from 'react-native';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {COLORS} from '../theme/theme';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { COLORS } from '../theme/theme';
 import Fonts from '../theme/fonts';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
+
+type PujaItem =
+  | string
+  | {
+      name: string;
+      quantity?: string | number;
+      units?: string;
+    };
 
 interface PujaItemsModalProps extends Partial<ModalProps> {
   visible: boolean;
   onClose: () => void;
-  userItems: {name: string; quantity: string | number; units: string}[];
-  panditjiItems: {name: string; quantity: string | number; units: string}[];
+  userItems: PujaItem[];
+  panditjiItems: PujaItem[];
 }
+
+// Helper to always work with standardized list of items
+const normalizeItems = (items: PujaItem[]) => {
+  if (!Array.isArray(items)) return [];
+  return items.map(item => {
+    if (typeof item === 'string') {
+      return { name: item };
+    }
+    return item;
+  });
+};
 
 const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
   visible,
@@ -29,7 +48,7 @@ const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
   panditjiItems,
   ...modalProps
 }) => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
@@ -70,53 +89,70 @@ const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
 
   const CloseIcon = () => (
     <Animated.View
-      style={[styles.closeIconContainer, {transform: [{scale: scaleAnim}]}]}>
+      style={[styles.closeIconContainer, { transform: [{ scale: scaleAnim }] }]}
+    >
       <TouchableOpacity
         onPressIn={handleClosePressIn}
         onPressOut={handleClosePressOut}
         accessibilityLabel={t('close_modal')}
-        accessibilityRole="button">
+        accessibilityRole="button"
+      >
         <MaterialIcons name="close" size={24} color={COLORS.primaryTextDark} />
       </TouchableOpacity>
     </Animated.View>
   );
 
-  const ItemsList = ({
-    items,
-    index,
-  }: {
-    items: {name: string; quantity: string | number}[];
-  }) => (
-    <View style={styles.itemsList}>
-      {items.map((item, index) => (
-        <View key={index} style={styles.itemRow}>
-          {/* <MaterialIcons
-            name="fiber-manual-record"
-            size={moderateScale(8)}
-            color={COLORS.textPrimary}
-            style={styles.itemBullet}
-          /> */}
-          <Text style={styles.itemNumber}>{index + 1}.</Text>
-          <Text style={styles.itemText}>
-            {item.name}
-            <Text style={styles.quantityBadge}>
-              {' '}
-              ({item.quantity} {item.units})
-            </Text>
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
+  const ItemsList: React.FC<{ items: PujaItem[] }> = ({ items }) => {
+    return (
+      <View style={styles.itemsList}>
+        {items.map((item, index) => {
+          // Normalized object always provides '.name'.
+          let name: string;
+          let quantity: string | number | undefined;
+          let units: string | undefined;
+          if (typeof item === 'string') {
+            name = item;
+          } else {
+            name = item.name;
+            quantity = item.quantity;
+            units = item.units;
+          }
+
+          return (
+            <View key={index} style={styles.itemRow}>
+              <Text style={styles.itemNumber}>{index + 1}.</Text>
+              <Text style={styles.itemText}>
+                {name}
+                {quantity !== undefined && units !== undefined && (
+                  <Text style={styles.quantityBadge}>
+                    {' '}
+                    ({quantity} {units})
+                  </Text>
+                )}
+                {quantity !== undefined && units === undefined && (
+                  <Text style={styles.quantityBadge}> ({quantity})</Text>
+                )}
+              </Text>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
+
+  // Standardize items so lists always receive arrays of PujaItem
+  const normalizedUserItems = normalizeItems(userItems);
+  const normalizedPanditjiItems = normalizeItems(panditjiItems);
 
   return (
     <Modal
       visible={visible}
       transparent
-      animationType="none"
+      animationType="slide"
       onRequestClose={onClose}
-      {...modalProps}>
-      <Animated.View style={[styles.modalOverlay, {opacity: fadeAnim}]}>
+      {...modalProps}
+    >
+      <Animated.View style={[styles.modalOverlay, { opacity: fadeAnim }]}>
         <View style={styles.modalContainer}>
           {/* Header */}
           <View style={styles.header}>
@@ -128,7 +164,8 @@ const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
           <ScrollView
             style={styles.content}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.contentContainer}>
+            contentContainerStyle={styles.contentContainer}
+          >
             {/* Items to be Arranged by You */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>
@@ -138,8 +175,8 @@ const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
                 {t('arrenged_item_by_you')}
               </Text>
               <View style={styles.itemsContainer}>
-                {userItems.length > 0 ? (
-                  <ItemsList items={userItems} />
+                {normalizedUserItems.length > 0 ? (
+                  <ItemsList items={normalizedUserItems} />
                 ) : (
                   <Text style={styles.noItemsText}>{t('no_items_found')}</Text>
                 )}
@@ -158,8 +195,8 @@ const PujaItemsModal: React.FC<PujaItemsModalProps> = ({
                 {t('arrenged_item_by_panditji')}
               </Text>
               <View style={styles.itemsContainer}>
-                {panditjiItems.length > 0 ? (
-                  <ItemsList items={panditjiItems} />
+                {normalizedPanditjiItems.length > 0 ? (
+                  <ItemsList items={normalizedPanditjiItems} />
                 ) : (
                   <Text style={styles.noItemsText}>{t('no_items_found')}</Text>
                 )}
@@ -186,7 +223,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: moderateScale(20),
     paddingTop: verticalScale(16),
     shadowColor: COLORS.black,
-    shadowOffset: {width: 0, height: -2},
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 6,
@@ -213,7 +250,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(20),
     shadowColor: COLORS.black,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
@@ -245,7 +282,7 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(12),
     padding: moderateScale(16),
     shadowColor: COLORS.black,
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
     elevation: 4,

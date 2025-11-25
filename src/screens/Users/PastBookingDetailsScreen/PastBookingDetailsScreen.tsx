@@ -35,18 +35,24 @@ const PastBookingDetailsScreen = ({ navigation }: { navigation?: any }) => {
   const [samagriExpand, setSamagriExpand] = useState<null | 'user' | 'pandit'>(
     null,
   );
-
+  console.log("bookingDetails",bookingDetails);
+  
+useEffect(() => {
+    fetchBookingDetails();
+  }, []);
   // Fetch Booking Details (by pujaId/id)
   const fetchBookingDetails = useCallback(async () => {
     setError(null);
     setLoading(true);
     try {
       const response: any = await getPastBookings();
+      
       let data = response?.data;
       let matched;
       if (data && Array.isArray(data)) {
         matched = data.find(item => String(item.id) === String(pujaId || id));
       }
+      
       setBookingDetails(matched || null);
     } catch (err) {
       setError(t('error_loading_data') || 'Error loading data');
@@ -54,11 +60,7 @@ const PastBookingDetailsScreen = ({ navigation }: { navigation?: any }) => {
     } finally {
       setLoading(false);
     }
-  }, [pujaId, id, t]);
-
-  useEffect(() => {
-    fetchBookingDetails();
-  }, [fetchBookingDetails]);
+  }, [pujaId, t]);
 
   // Date formatting helper
   const formatDateWithOrdinal = (dateString: string) => {
@@ -126,15 +128,15 @@ const PastBookingDetailsScreen = ({ navigation }: { navigation?: any }) => {
     );
   }
   // Not found
-  // if (!bookingDetails) {
-  //   return (
-  //     <View style={styles.centered}>
-  //       <Text style={styles.notFoundText}>
-  //         {t('no_item_available') || 'No details found.'}
-  //       </Text>
-  //     </View>
-  //   );
-  // }
+  if (!bookingDetails && !loading) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.notFoundText}>
+          {t('no_item_available') || 'No details found.'}
+        </Text>
+      </View>
+    );
+  }
 
   // Data destructure for past booking
   const {
@@ -158,7 +160,7 @@ const PastBookingDetailsScreen = ({ navigation }: { navigation?: any }) => {
     pandit_arranged_items,
     address, // fallback
     location_display, // fallback
-  } = bookingDetails;
+  } = bookingDetails || {};
 
   // Items
   const userItems = flattenItems(user_arranged_items);
@@ -217,7 +219,9 @@ const PastBookingDetailsScreen = ({ navigation }: { navigation?: any }) => {
                         : { color: COLORS.primary },
                     ]}
                   >
-                    {item.name ?? item.item_name ?? '-'}
+                    {typeof item === 'string'
+                      ? item
+                      : item.name ?? item.item_name ?? '-'}
                   </Text>
                 </View>
               ))}
@@ -327,13 +331,14 @@ const PastBookingDetailsScreen = ({ navigation }: { navigation?: any }) => {
   // Large Card, as in reference
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <CustomeLoader loading={loading || !bookingDetails} />
+      <CustomeLoader loading={loading} />
       <UserCustomHeader
         title={t('past_booking_details') || 'Completed Puja Details'}
         showBackButton
         onBackPress={() => navigation?.goBack && navigation.goBack()}
       />
-      <ScrollView
+      {
+        loading ? (<View style={{flex:1,backgroundColor:COLORS.white}}></View>): (<ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -492,7 +497,8 @@ const PastBookingDetailsScreen = ({ navigation }: { navigation?: any }) => {
             </View>
           )}
         </View>
-      </ScrollView>
+      </ScrollView>)
+      }
     </View>
   );
 };

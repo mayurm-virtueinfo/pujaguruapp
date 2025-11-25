@@ -164,7 +164,7 @@ const PastPujaScreen: React.FC = () => {
       />
       <UserCustomHeader title={t('past_bookings')} showBackButton={true} />
       <View style={styles.contentContainer}>
-        <View style={[styles.listContainer, THEMESHADOW.shadow]}>
+        <View style={[styles.listContainer, THEMESHADOW.shadow, {padding: loading ? 0 : 14}]}>
           <FlatList
             data={pastBookings}
             renderItem={renderBookingItem}
@@ -221,7 +221,6 @@ const styles = StyleSheet.create({
   listContainer: {
     backgroundColor: COLORS.white,
     borderRadius: 10,
-    padding: 14,
     margin: 24,
   },
   flatListContent: {

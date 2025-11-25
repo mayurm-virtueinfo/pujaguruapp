@@ -177,7 +177,7 @@ const AddressesScreen: React.FC = () => {
             </View>
           ) : (
             <ScrollView
-              style={[styles.addressList, THEMESHADOW.shadow]}
+              style={[styles.addressList, THEMESHADOW.shadow, {padding: loading ? 0 : 14}]}
               showsVerticalScrollIndicator={false}>
               {addresses.map((address, idx) => (
                 <AddressCard
@@ -235,7 +235,6 @@ const styles = StyleSheet.create({
   addressList: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
-    padding: 14,
   },
   noDataContainer: {
     alignItems: 'center',

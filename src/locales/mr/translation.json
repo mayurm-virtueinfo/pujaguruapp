@@ -378,5 +378,7 @@
   "failed_to_fetch_data": "डेटा मिळवण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.",
   "failed_to_save_address": "पत्ता जतन करण्यात अयशस्वी. कृपया पुन्हा प्रयत्न करा.",
   "updating_location": "स्थान अद्ययावत करत आहे...",
-  "you_cannot_chat_during_puja": "पूजेदरम्यान तुम्ही चॅट करू शकत नाही."
+  "you_cannot_chat_during_puja": "पूजेदरम्यान तुम्ही चॅट करू शकत नाही.",
+  "Please_enter_valid_number": "कृपया वैध मोबाईल नंबर भरा",
+  "deleting": "डिलिट करत आहे..."
 }

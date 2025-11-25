@@ -378,5 +378,7 @@
   "failed_to_fetch_data": "ડેટા મેળવવામાં નિષ્ફળ. કૃપા કરીને ફરી પ્રયાસ કરો.",
   "failed_to_save_address": "સરનામું સેવ કરવામાં નિષ્ફળ. ફરી પ્રયત્ન કરો.",
   "updating_location": "સ્થાન સુધારી રહ્યા છીએ...",
-  "you_cannot_chat_during_puja": "પૂજા દરમિયાન તમે ચેટ નથી કરી શકતા."
+  "you_cannot_chat_during_puja": "પૂજા દરમિયાન તમે ચેટ નથી કરી શકતા.",
+  "Please_enter_valid_number": "કૃપા કરીને યોગ્ય મોબાઇલ નંબર દાખલ કરો",
+  "deleting": "ડિલીટ કરી રહ્યા છીએ..."
 }

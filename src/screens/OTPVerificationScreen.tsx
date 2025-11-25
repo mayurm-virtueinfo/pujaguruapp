@@ -10,6 +10,7 @@ import {
   ImageBackground,
   Image,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -32,7 +33,10 @@ import AppConstant from '../utils/appConstant';
 import { getFcmToken } from '../configuration/firebaseMessaging';
 import CustomeLoader from '../components/CustomeLoader';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { getFirebaseAuthErrorMessage } from '../helper/firebaseErrorHandler'; // <-- Firebase error handler
+import { getFirebaseAuthErrorMessage } from '../helper/firebaseErrorHandler';
+
+// Get device window dimensions for responsive design
+const { width: windowWidth } = Dimensions.get('window');
 
 type AuthNavigationProp = StackNavigationProp<
   AuthStackParamList,
@@ -51,7 +55,6 @@ interface Props {
   route: OTPVerificationScreenRouteProp;
 }
 
-// One minute timer for OTP resend
 const RESEND_OTP_WAIT_TIME = 60;
 
 const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
@@ -63,10 +66,9 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
   const [isLoading, setLoading] = useState(false);
   const [otpConfirmation, setOtpConfirmation] = useState(
     route.params.confirmation,
-  ); // No same number detect logic here
-  // Remove OTP expired logic
+  );
   const { phoneNumber } = route.params;
-  const inputRefs = useRef<TextInput[]>([]);
+  const inputRefs = useRef<Array<TextInput | null>>([]);
   const [timer, setTimer] = useState(RESEND_OTP_WAIT_TIME);
   const hasNavigatedRef = useRef(false);
 
@@ -151,7 +153,6 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
   const verifyOtp = async (code: string) => {
     try {
       setLoading(true);
-      // Don't check isOtpExpired
       if (!otpConfirmation) {
         showErrorToast('Unable to verify OTP. Please request a new one.');
         return;
@@ -166,7 +167,6 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
         );
       }
     } catch (error: any) {
-      // Use firebase error handler for all errors
       if (!hasNavigatedRef.current) {
         const message = getFirebaseAuthErrorMessage(error);
         showErrorToast(message);
@@ -182,17 +182,14 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
       showErrorToast(t('invalid_otp_length'));
       return;
     }
-
     await verifyOtp(otpValue);
   };
 
   const handleResendOTP = async () => {
     try {
       setLoading(true);
-      console.log('Resending OTP to:', phoneNumber);
       const auth = getAuth();
       if (auth.currentUser) {
-        console.log('Clearing auth state before resend');
         await auth.signOut();
       }
 
@@ -204,10 +201,7 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
       setTimeout(() => {
         inputRefs.current[0]?.focus();
       }, 100);
-      // No same number detect logic here
     } catch (error: any) {
-      console.error('Resend OTP error:', error);
-      // Use firebase error handler for resend
       let errorMessage = getFirebaseAuthErrorMessage(error);
       showErrorToast(errorMessage);
     } finally {
@@ -217,6 +211,17 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handleBackPress = () => {
     navigation.goBack();
+  };
+
+  // Responsive header: scale spacings/logos based on screen size.
+  const headerHeight = Math.max(moderateScale(140), windowWidth * 0.44); // minimum 140, else 44% of width (for e.g. 375 -> 165)
+  const logoWidth = Math.min(windowWidth * 0.34, moderateScale(120));
+  const logoStyle = {
+    width: logoWidth,
+    height: logoWidth * 0.9, // Maintain ic_app_logo aspect ratio (if 41:100 as example), fallback as proportional
+    resizeMode: 'contain' as const,
+    alignSelf: 'center' as const,
+    marginTop: moderateScale(10),
   };
 
   return (
@@ -234,20 +239,55 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.content}>
-            {/* <TouchableOpacity
-              onPress={handleBackPress}
-              style={styles.iconButton}>
-              <Ionicons name="chevron-back" size={24} color={COLORS.white} />
-            </TouchableOpacity> */}
-            <View style={[styles.header, { paddingTop: inset.top }]}>
+            {/* HEADER: maximally responsive */}
+            <View
+              style={[
+                styles.header,
+                {
+                  height: headerHeight + inset.top,
+                  paddingTop: inset.top + moderateScale(10),
+                  alignItems: 'center',
+                  justifyContent: 'flex-start',
+                  backgroundColor: 'transparent',
+                  marginBottom: moderateScale(-24), // slightly overlap body
+                },
+              ]}
+            >
               <TouchableOpacity
                 onPress={handleBackPress}
-                style={styles.backButton}
+                style={[
+                  styles.backButton,
+                  {
+                    position: 'absolute',
+                    top: inset.top,
+                    left: moderateScale(12),
+                    zIndex: 10,
+                  },
+                ]}
+                hitSlop={{ top: 12, left: 12, right: 12, bottom: 12 }}
               >
-                <Ionicons name="chevron-back" size={28} color={COLORS.white} />
+                <Ionicons
+                  name="chevron-back"
+                  size={moderateScale(28)}
+                  color={COLORS.white}
+                />
               </TouchableOpacity>
-              <Image source={Images.ic_app_logo} style={styles.logo} />
-              <Text style={styles.title}>{t('hi_welcome')}</Text>
+              <Image source={Images.ic_app_logo} style={logoStyle} />
+              <Text
+                style={[
+                  styles.title,
+                  {
+                    fontSize: Math.max(moderateScale(25), windowWidth * 0.07),
+                    // marginTop: moderateScale(10),
+                    color: COLORS.white,
+                    textAlign: 'center',
+                  },
+                ]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+              >
+                {t('hi_welcome')}
+              </Text>
             </View>
 
             <View style={styles.body}>
@@ -261,7 +301,9 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
                 {otp.map((digit, index) => (
                   <TextInput
                     key={index}
-                    ref={ref => (inputRefs.current[index] = ref!)}
+                    ref={ref => {
+                      inputRefs.current[index] = ref;
+                    }}
                     style={styles.otpInput}
                     value={digit}
                     onChangeText={value => handleOtpChange(value, index)}
@@ -328,8 +370,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: moderateScale(220),
-    alignItems: 'center',
+    flexDirection: 'column',
+    width: '100%',
   },
   body: {
     flex: 1,
@@ -337,23 +379,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.white,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
+    minHeight: moderateScale(400),
+    justifyContent: 'flex-start',
+    marginTop: moderateScale(40),
   },
   backButton: {
-    position: 'absolute',
-    top: moderateScale(20),
-    left: moderateScale(16),
-    zIndex: 10,
     padding: moderateScale(8),
   },
   logo: {
     width: '33%',
     resizeMode: 'contain',
+    alignSelf: 'center',
+    marginTop: moderateScale(10),
   },
   title: {
     fontSize: moderateScale(32),
     fontFamily: Fonts.Sen_Bold,
     color: COLORS.white,
-    marginTop: moderateScale(-20),
+    textAlign: 'center',
+    marginTop: moderateScale(10),
   },
   mainTitle: {
     fontSize: moderateScale(24),

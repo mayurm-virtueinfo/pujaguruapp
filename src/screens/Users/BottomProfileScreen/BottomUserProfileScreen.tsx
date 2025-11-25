@@ -5,7 +5,6 @@ import {
   Image,
   ScrollView,
   Text,
-  SafeAreaView,
   TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -195,6 +194,7 @@ const BottomUserProfileScreen: React.FC = () => {
       if (response.data.success) {
         setDeleteAccountModalVisible(false);
         signOutApp();
+        await notifee.cancelAllNotifications();
       }
     } catch (error) {
       console.error('Error deleting account', error);
@@ -204,7 +204,7 @@ const BottomUserProfileScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
+    <View style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={logoutLoading || loading} />
       {/* <LinearGradient
         colors={[COLORS.gradientStart, COLORS.gradientEnd]}
@@ -375,12 +375,12 @@ const BottomUserProfileScreen: React.FC = () => {
         visible={deleteAccountModalVisible}
         title={t('delete_account')}
         message={t('are_you_sure_delete_account')}
-        confirmText={t('delete')}
+        confirmText={logoutLoading ? t('deleting') : t('delete')}
         cancelText={t('cancel')}
         onConfirm={handleDeleteAccount}
         onCancel={() => setDeleteAccountModalVisible(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 

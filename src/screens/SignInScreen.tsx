@@ -543,9 +543,8 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
       >
         <KeyboardAvoidingView
           style={styles.container}
-          // Always use "padding" so no button is hidden (set for all devices)
-          // behavior={'padding'}
-          // keyboardVerticalOffset={40}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : 0}
         >
           <CustomeLoader loading={isLoading} />
           <ScrollView

@@ -85,7 +85,10 @@ interface PanditList {
 const PanditDetailsScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const route = useRoute();
-  const { panditId } = route.params as { panditId: string };
+  const { panditId, pandit } = route?.params as {
+    panditId: string;
+    pandit: boolean;
+  };
   const { t, i18n } = useTranslation();
   const { showErrorToast } = useCommonToast();
   const navigation = useNavigation();
@@ -262,17 +265,19 @@ const PanditDetailsScreen: React.FC = () => {
   const renderPujaItem = ({ item }: { item: PanditList }) => (
     <TouchableOpacity
       style={styles.poojaItem}
-      onPress={() =>
-        navigation.navigate('PoojaDetailScreen', {
-          params: {
-            poojaId: item?.pooja,
-            panditId: panditId,
-            panditName: originalPanditData?.pandit_name,
-            panditImage: originalPanditData?.profile_img,
-            panditCity: originalPanditData?.address_city_name,
-          },
-        })
-      }
+      onPress={() => {
+        if (pandit) {
+          navigation.navigate('PoojaDetailScreen', {
+            params: {
+              poojaId: item?.pooja,
+              panditId: panditId,
+              panditName: originalPanditData?.pandit_name,
+              panditImage: originalPanditData?.profile_img,
+              panditCity: originalPanditData?.address_city_name,
+            },
+          });
+        }
+      }}
     >
       <Image
         source={{ uri: item.pooja_image_url }}
