@@ -317,6 +317,7 @@ export interface SignupRequest {
   email: string;
   role: number;
   address: string;
+  dob: string;
 }
 
 export interface CreateUserResponse {
@@ -744,7 +745,7 @@ export const postSignIn = (data: SignInRequest): Promise<SignInResponse> => {
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error fetching sign in data:', error);
+        console.error('Error fetching sign in data:', error?.response?.data);
         reject(error);
       });
   });

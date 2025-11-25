@@ -381,6 +381,7 @@
   "you_cannot_chat_during_puja": "आप पूजा के दौरान चैट नहीं कर सकते।",
   "Please_enter_valid_number": "कृपया एक मान्य मोबाइल नंबर दर्ज करें",
   "deleting": "हटा रहे हैं...",
-  "feature_coming_soon": "सुविधा जल्द आ रही है"
-
+  "feature_coming_soon": "सुविधा जल्द आ रही है",
+  "dob": "जन्म तिथि",
+  "select_dob": "जन्म तिथि चुनें"
 }

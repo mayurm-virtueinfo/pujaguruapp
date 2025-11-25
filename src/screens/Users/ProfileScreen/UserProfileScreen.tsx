@@ -18,6 +18,7 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import ImagePicker from 'react-native-image-crop-picker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import Fonts from '../../../theme/fonts';
 import { COLORS } from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
@@ -69,6 +70,8 @@ const UserProfileScreen: React.FC = () => {
   const { phoneNumber, firstName, lastName, address, uid } = route?.params;
   const [userName, setUserName] = useState('');
   const [email, setEmail] = useState('');
+  const [dob, setDob] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [phone, setPhone] = useState(phoneNumber);
   const [selectState, setSelectState] = useState('');
   const [location, setLocation] = useState('');
@@ -87,6 +90,8 @@ const UserProfileScreen: React.FC = () => {
   } | null>(null);
 
   const { showErrorToast } = useCommonToast();
+
+  console.log('dob :: ', dob);
 
   useEffect(() => {
     const getStateData = async () => {
@@ -202,6 +207,7 @@ const UserProfileScreen: React.FC = () => {
       params.append('address', address);
       params.append('role', 1);
       params.append('email', email);
+      params.append('dob', dob);
       params.append('state', selectState);
       params.append('city', location);
       params.append('latitude', gpslocation?.latitude?.toString() || '0');
@@ -350,6 +356,17 @@ const UserProfileScreen: React.FC = () => {
     setFormErrors(prev => ({ ...prev, phone: undefined }));
   };
 
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+
+    if (selectedDate) {
+      const formattedDate = selectedDate.toISOString().split('T')[0];
+      setDob(formattedDate);
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={isLoading} />
@@ -407,6 +424,27 @@ const UserProfileScreen: React.FC = () => {
               error={formErrors.email}
               required
             />
+            <TouchableOpacity onPress={() => setShowDatePicker(prev => !prev)}>
+              <View pointerEvents="none">
+                <ThemedInput
+                  label={t('dob') || 'Date of Birth'}
+                  placeholder={t('select_dob') || 'Select Date of Birth'}
+                  value={dob}
+                  onChangeText={() => {}}
+                  labelStyle={themedInputLabelStyle}
+                  editable={false}
+                />
+              </View>
+            </TouchableOpacity>
+            {showDatePicker && (
+              <DateTimePicker
+                value={dob ? new Date(dob) : new Date()}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+              />
+            )}
             <ThemedInput
               label={t('phone')}
               placeholder={t('enter_your_phone')}
