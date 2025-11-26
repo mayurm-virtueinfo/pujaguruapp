@@ -457,12 +457,12 @@ const SelectPanditjiScreen: React.FC = () => {
       >
         {t('no_panditji_found') || 'No Panditji found'}
       </Text>
-      <PrimaryButton
+      {/* <PrimaryButton
         title={t('search_panditji_automatic')}
         onPress={handleSearchPandit}
         textStyle={styles.buttonText}
         style={{ width: 200 }}
-      />
+      /> */}
     </View>
   );
 
