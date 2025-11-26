@@ -1,4 +1,4 @@
-ENVIRONMENT=development
-BASE_URL=https:/$()/dev.puja-guru.com
-APP_NAME=Pujaguru-dev
-RAZORPAY_KEY=rzp_test_birUVdrhV4Jm7l
+ENVIRONMENT=production
+BASE_URL=https:/$()/puja-guru.com
+APP_NAME=Pujaguru
+RAZORPAY_KEY=rzp_live_RbxpUmXqeEDklf
