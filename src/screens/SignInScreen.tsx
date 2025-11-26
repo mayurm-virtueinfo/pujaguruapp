@@ -592,10 +592,14 @@ const SignInScreen: React.FC<Props> = ({ navigation, route }) => {
                 style={[styles.containerBody, { paddingBottom: inset.bottom }]}
               >
                 <Text
-                  onPress={() => {
-                    showSuccessToast(`${Config.BASE_URL}`);
-                    console.log(`${Config.BASE_URL}`);
-                  }}
+                  onPress={
+                    __DEV__
+                      ? () => {
+                          showSuccessToast(`${Config.BASE_URL}`);
+                          console.log(`${Config.BASE_URL}`);
+                        }
+                      : undefined
+                  }
                   style={styles.mainTitle}
                 >
                   {t('sign_in')}
