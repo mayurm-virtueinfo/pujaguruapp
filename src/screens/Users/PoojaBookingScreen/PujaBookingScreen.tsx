@@ -606,7 +606,9 @@ const PujaBookingScreen: React.FC = () => {
           const autoBookingMessage = response?.auto_booking_message;
 
           if (autoBookingEnabled === false) {
-            setCustomModalTitle(t('feture_coming_soon') || 'Feature Coming Soon');
+            setCustomModalTitle(
+              t('feature_coming_soon') || 'Feature Coming Soon',
+            );
             setCustomModalMessage(autoBookingMessage);
             setCustomModalVisible(true);
           } else {
@@ -643,50 +645,54 @@ const PujaBookingScreen: React.FC = () => {
   const renderMuhuratSlots = () => (
     <View style={styles.slotsContainer}>
       <Text style={styles.slotsTitle}>{t('select_muhurat_time_slot')}</Text>
-      {
-        loading ? (<View style={styles.slotsListContainer}><Text>Muhurat Loading...</Text></View>) : (<View style={[styles.slotsListContainer, THEMESHADOW.shadow]}>
-        {muhurats.map((slot, index) => {
-          const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
-          const isSelected = selectedSlot === slotKey;
-          return (
-            <View key={slotKey}>
-              <TouchableOpacity
-                style={styles.slotItem}
-                onPress={() => handleSlotSelect(slot)}
-                disabled={
-                  panditId &&
-                  availableDates &&
-                  !availableDates.includes(selectedDateString)
-                }
-              >
-                <View style={styles.slotContent}>
-                  <View style={styles.slotTextContainer}>
-                    <Text style={styles.slotName}>{slot.type}</Text>
-                    <Text style={styles.slotTime}>
-                      {slot.start} - {slot.end}
-                    </Text>
+      {loading ? (
+        <View style={styles.slotsListContainer}>
+          <Text>Muhurat Loading...</Text>
+        </View>
+      ) : (
+        <View style={[styles.slotsListContainer, THEMESHADOW.shadow]}>
+          {muhurats.map((slot, index) => {
+            const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
+            const isSelected = selectedSlot === slotKey;
+            return (
+              <View key={slotKey}>
+                <TouchableOpacity
+                  style={styles.slotItem}
+                  onPress={() => handleSlotSelect(slot)}
+                  disabled={
+                    panditId &&
+                    availableDates &&
+                    !availableDates.includes(selectedDateString)
+                  }
+                >
+                  <View style={styles.slotContent}>
+                    <View style={styles.slotTextContainer}>
+                      <Text style={styles.slotName}>{slot.type}</Text>
+                      <Text style={styles.slotTime}>
+                        {slot.start} - {slot.end}
+                      </Text>
+                    </View>
+                    <View style={styles.slotSelection}>
+                      <Ionicons
+                        name={
+                          isSelected
+                            ? 'checkmark-circle-outline'
+                            : 'ellipse-outline'
+                        }
+                        size={24}
+                        color={isSelected ? COLORS.gradientEnd : '#E4E8E9'}
+                      />
+                    </View>
                   </View>
-                  <View style={styles.slotSelection}>
-                    <Ionicons
-                      name={
-                        isSelected
-                          ? 'checkmark-circle-outline'
-                          : 'ellipse-outline'
-                      }
-                      size={24}
-                      color={isSelected ? COLORS.gradientEnd : '#E4E8E9'}
-                    />
-                  </View>
-                </View>
-              </TouchableOpacity>
-              {index < muhurats.length - 1 && (
-                <View style={styles.slotDivider} />
-              )}
-            </View>
-          );
-        })}
-      </View>)
-      }
+                </TouchableOpacity>
+                {index < muhurats.length - 1 && (
+                  <View style={styles.slotDivider} />
+                )}
+              </View>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 

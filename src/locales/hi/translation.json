@@ -383,5 +383,6 @@
   "deleting": "हटा रहे हैं...",
   "feature_coming_soon": "सुविधा जल्द आ रही है",
   "dob": "जन्म तिथि",
-  "select_dob": "जन्म तिथि चुनें"
+  "select_dob": "जन्म तिथि चुनें",
+  "no_available_date_for_pandit": "पंडित के लिए कोई उपलब्ध तिथि नहीं है"
 }

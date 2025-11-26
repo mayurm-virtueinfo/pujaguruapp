@@ -66,6 +66,9 @@ const UserHomeScreen: React.FC = () => {
   >([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
+  console.log('location :: ', location);
+  console.log('recomendedPandits :: ', recomendedPandits);
+
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
   const inset = useSafeAreaInsets();
@@ -384,13 +387,15 @@ const UserHomeScreen: React.FC = () => {
                   },
                 ]}
               >
-                {location ? (
+                {loading ? (
                   <Text style={styles.noPanditText}>
                     {t('updating_location')}
                   </Text>
                 ) : (
                   <Text style={styles.noPanditText}>
-                    {t('location_not_available')}
+                    {location
+                      ? t('no_panditji_found')
+                      : t('location_not_available')}
                   </Text>
                 )}
               </View>

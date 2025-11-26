@@ -243,8 +243,9 @@ const SearchPanditScreen: React.FC = () => {
             <Text
               style={{ color: 'red', textAlign: 'center', fontWeight: 'bold' }}
             >
-              {t('search_pandit_screen_ws_error') ||
-                'Unable to connect to server. Please check your internet connection or try again later.'}
+              {
+                'Unable to connect to server. Please check your internet connection or try again later.'
+              }
             </Text>
             <Text
               style={{

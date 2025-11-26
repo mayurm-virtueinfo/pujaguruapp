@@ -383,5 +383,6 @@
   "deleting": "Deleting...",
   "feature_coming_soon": "Feature Coming Soon",
   "dob": "Date of Birth",
-  "select_dob": "Select Date of Birth"
+  "select_dob": "Select Date of Birth",
+  "no_available_date_for_pandit": "No available date for pandit"
 }
