@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -8,21 +8,26 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {useNavigation, useRoute, CommonActions} from '@react-navigation/native';
-import {postCancelBooking} from '../../../api/apiService';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import {
+  useNavigation,
+  useRoute,
+  CommonActions,
+} from '@react-navigation/native';
+import { postCancelBooking } from '../../../api/apiService';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
 import CancellationPolicyModal from '../../../components/CancellationPolicyModal';
 import Fonts from '../../../theme/fonts';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import CustomModal from '../../../components/CustomModal';
-import {useCommonToast} from '../../../common/CommonToast';
+import { useCommonToast } from '../../../common/CommonToast';
 
 interface CancellationReason {
   key: string;
@@ -34,13 +39,13 @@ const PujaCancellationScreen = () => {
   const inset = useSafeAreaInsets();
   const route = useRoute();
   const navigation = useNavigation<any>();
-  const {t, i18n} = useTranslation();
-  const {id} = route.params as any;
+  const { t, i18n } = useTranslation();
+  const { id } = route.params as any;
   const [cancellationReasons] = useState<CancellationReason[]>([
-    {key: 'user_personal', label: 'personal_reason'},
-    {key: 'user_another_service', label: 'found_another_service'},
-    {key: 'user_financial', label: 'financial_reasons'},
-    {key: 'user_other', label: 'other', requiresSpecification: true},
+    { key: 'user_personal', label: 'personal_reason' },
+    { key: 'user_another_service', label: 'found_another_service' },
+    { key: 'user_financial', label: 'financial_reasons' },
+    { key: 'user_other', label: 'other', requiresSpecification: true },
   ]);
 
   const [selectedReasonKey, setSelectedReasonKey] = useState<string | null>(
@@ -54,7 +59,10 @@ const PujaCancellationScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirmModalVisible, setIsConfirmModalVisible] = useState(false);
 
-  const {showErrorToast, showSuccessToast} = useCommonToast();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const customInputRef = useRef<TextInput>(null);
+
+  const { showErrorToast, showSuccessToast } = useCommonToast();
 
   const englishLabelMap: Record<string, string> = {
     personal_reason: 'Personal Reason',
@@ -106,7 +114,7 @@ const PujaCancellationScreen = () => {
                 name: 'UserHomeNavigator',
                 state: {
                   index: 0,
-                  routes: [{name: 'UserHomeScreen'}],
+                  routes: [{ name: 'UserHomeScreen' }],
                 },
               },
             ],
@@ -132,7 +140,8 @@ const PujaCancellationScreen = () => {
       <TouchableOpacity
         style={styles.reasonOption}
         onPress={() => setSelectedReasonKey(reason.key)}
-        activeOpacity={0.7}>
+        activeOpacity={0.7}
+      >
         <Text style={styles.reasonText}>{t(reason.label) || reason.label}</Text>
         <Ionicons
           name={
@@ -155,14 +164,19 @@ const PujaCancellationScreen = () => {
   );
 
   return (
-    <View style={[styles.container, {paddingTop: inset.top}]}>
+    <View style={[styles.container, { paddingTop: inset.top }]}>
       <UserCustomHeader title={t('puja_cancellation')} showBackButton={true} />
-      <View style={styles.flex1}>
+      <KeyboardAvoidingView
+        style={styles.flex1}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <ScrollView
+          ref={scrollViewRef}
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled">
+          keyboardShouldPersistTaps="handled"
+        >
           <View style={styles.content}>
             <Text style={styles.heading}>{t('cancellation_reason')}</Text>
             <Text style={styles.warningText}>
@@ -176,6 +190,7 @@ const PujaCancellationScreen = () => {
             {showCustomInput && (
               <View style={styles.customInputContainer}>
                 <TextInput
+                  ref={customInputRef}
                   style={styles.customInput}
                   placeholder={t('enter_your_cancellation_reason')}
                   placeholderTextColor={COLORS.inputLabelText}
@@ -183,18 +198,24 @@ const PujaCancellationScreen = () => {
                   onChangeText={setCustomReason}
                   multiline
                   textAlignVertical="top"
+                  onFocus={() => {
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollToEnd({ animated: true });
+                    }, 500);
+                  }}
                 />
               </View>
             )}
             <TouchableOpacity
               onPress={() => setIsCancellationPolicyModalVisible(true)}
-              style={styles.policyLinkContainer}>
+              style={styles.policyLinkContainer}
+            >
               <Text style={styles.policyLinkText}>
                 {t('cancellation_policy')}
               </Text>
             </TouchableOpacity>
             {isSubmitting && (
-              <View style={{marginTop: 16, alignItems: 'center'}}>
+              <View style={{ marginTop: 16, alignItems: 'center' }}>
                 <ActivityIndicator
                   size="small"
                   color={COLORS.primaryBackgroundButton}
@@ -203,7 +224,7 @@ const PujaCancellationScreen = () => {
             )}
           </View>
         </ScrollView>
-        <View style={[styles.fixedButtonContainer, {paddingBottom: 24}]}>
+        <View style={[styles.fixedButtonContainer, { paddingBottom: 24 }]}>
           <PrimaryButton
             title={isSubmitting ? t('submitting') : t('submit_cancellation')}
             onPress={handleSubmit}
@@ -212,7 +233,7 @@ const PujaCancellationScreen = () => {
             disabled={isSubmitting}
           />
         </View>
-      </View>
+      </KeyboardAvoidingView>
 
       <CancellationPolicyModal
         visible={isCancellationPolicyModalVisible}
