@@ -27,6 +27,7 @@ interface UserCustomHeaderProps {
   showBackButton?: boolean;
   showMenuButton?: boolean;
   showBellButton?: boolean;
+  showCalendarButton?: boolean;
   showCirclePlusButton?: boolean;
   showCallButton?: boolean;
   showVideoCallButton?: boolean;
@@ -35,6 +36,7 @@ interface UserCustomHeaderProps {
   onPlusPress?: () => void;
   onBackPress?: () => void;
   onNotificationPress?: () => void;
+  onCalendarPress?: () => void;
   onVideoButtonPress?: () => void;
 }
 
@@ -43,6 +45,7 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
   showBackButton = false,
   showMenuButton = false,
   showBellButton = false,
+  showCalendarButton = false,
   showCirclePlusButton = false,
   showCallButton = false,
   showSliderButton = false,
@@ -51,6 +54,7 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
   onPlusPress,
   onBackPress,
   onNotificationPress,
+  onCalendarPress,
   onVideoButtonPress,
 }) => {
   const {t, i18n} = useTranslation();
@@ -113,6 +117,17 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
           </View>
 
           <View style={styles.rightContainer}>
+            {showCalendarButton && (
+              <TouchableOpacity
+                onPress={onCalendarPress}
+                style={styles.iconButton}>
+                <Ionicons
+                  name="calendar-outline"
+                  size={24}
+                  color={COLORS.white}
+                />
+              </TouchableOpacity>
+            )}
             {showBellButton && (
               <TouchableOpacity
                 onPress={handleNotificationPress}
@@ -218,8 +233,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rightContainer: {
-    width: 40,
+    minWidth: 40,
+    flexDirection: 'row',
     alignItems: 'flex-end',
+    justifyContent: 'flex-end',
   },
   titleText: {
     color: COLORS.white,

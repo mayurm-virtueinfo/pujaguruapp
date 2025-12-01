@@ -318,6 +318,16 @@
   "date": "Date",
   "muhurat_time": "Muhurat Time",
   "muhurat_type": "Muhurat Type",
+  "muhurat_calendar": "Muhurat Calendar",
+  "muhurats_for_date": "Muhurat for {{date}}",
+  "no_muhurats_available": "No muhurat slots available for the selected date.",
+  "unable_to_fetch_muhurat": "Unable to load muhurat slots right now.",
+  "daily_muhurat_title": "Today's Auspicious Time",
+  "daily_muhurat_subtitle": "Best slot near you for a successful puja.",
+  "view_today_muhurat": "View Muhurat",
+  "streak_days": "{{count}} day streak",
+  "streak_hint": "Check the muhurat daily to keep your streak alive.",
+  "no_daily_muhurat": "We'll show suggestions once we have your location.",
   "amount": "Amount",
   "payment_status": "Payment Status",
   "assigned_pandit": "Assigned Pandit",
@@ -384,5 +394,7 @@
   "feature_coming_soon": "Feature Coming Soon",
   "dob": "Date of Birth",
   "select_dob": "Select Date of Birth",
-  "no_available_date_for_pandit": "No available date for pandit"
+  "no_available_date_for_pandit": "No available date for pandit",
+  "pooja_will_be_on": "Pooja will be on",
+  "invalid_address": "Invalid address"
 }

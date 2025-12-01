@@ -13,11 +13,13 @@ import {
 } from 'react-native';
 import { moderateScale } from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   getRecommendedPandit,
   getUpcomingPujas,
   getInProgress,
   getActivePuja,
+  getMuhrat,
   PujaItem,
   RecommendedPandit,
 } from '../../../api/apiService';
@@ -48,6 +50,61 @@ interface PendingPuja {
   when_is_pooja?: string;
 }
 
+const DAILY_STREAK_KEY = '@daily_muhurat_streak';
+const DAILY_LAST_VIEWED_KEY = '@daily_muhurat_last_viewed';
+
+const formatDateYYYYMMDD = (date: Date | string) => {
+  if (typeof date === 'string') {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      return date;
+    }
+    const parsed = new Date(date);
+    if (!Number.isNaN(parsed.getTime())) {
+      return formatDateYYYYMMDD(parsed);
+    }
+    return formatDateYYYYMMDD(new Date());
+  }
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return formatDateYYYYMMDD(new Date());
+  }
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const parseTimeToMinutes = (timeStr: string): number | null => {
+  if (!timeStr || typeof timeStr !== 'string') return null;
+  const match = timeStr
+    .trim()
+    .match(/^\s*(\d{1,2}):(\d{2})\s*([AaPp][Mm])?\s*$/);
+  if (!match) return null;
+  let hours = parseInt(match[1], 10);
+  const minutes = parseInt(match[2], 10);
+  const meridian = match[3]?.toLowerCase();
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+  if (meridian === 'pm' && hours !== 12) hours += 12;
+  if (meridian === 'am' && hours === 12) hours = 0;
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
+  return hours * 60 + minutes;
+};
+
+const selectPreferredMuhuratSlot = (slots: any[]) => {
+  if (!Array.isArray(slots) || slots.length === 0) return null;
+  const now = new Date();
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  const futureSlots = slots.filter(slot => {
+    const startMinutes = parseTimeToMinutes(slot?.start);
+    return startMinutes !== null && startMinutes > nowMinutes;
+  });
+  const prioritized = futureSlots.length > 0 ? futureSlots : slots;
+  const auspiciousSlot = prioritized.find(
+    slot =>
+      typeof slot?.type === 'string' && /shubh|labh|amrit/i.test(slot.type),
+  );
+  return auspiciousSlot || prioritized[0];
+};
+
 const UserHomeScreen: React.FC = () => {
   const navigation: any = useNavigation();
   const [pujas, setPujas] = useState<PujaItem[]>([]);
@@ -65,6 +122,13 @@ const UserHomeScreen: React.FC = () => {
     RecommendedPandit[]
   >([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [dailyMuhurat, setDailyMuhurat] = useState<any | null>(null);
+  const [dailyMuhuratLoading, setDailyMuhuratLoading] =
+    useState<boolean>(false);
+  const [dailyStreak, setDailyStreak] = useState<number>(0);
+  const [dailyLastViewedDate, setDailyLastViewedDate] = useState<string | null>(
+    null,
+  );
 
   console.log('location :: ', location);
   console.log('recomendedPandits :: ', recomendedPandits);
@@ -169,15 +233,81 @@ const UserHomeScreen: React.FC = () => {
     [currentLanguage, refreshing],
   );
 
+  const fetchDailyMuhurat = useCallback(
+    async (
+      overrideLocation?: { latitude: number; longitude: number } | null,
+    ) => {
+      const targetLocation = overrideLocation || location;
+      if (!targetLocation?.latitude || !targetLocation?.longitude) {
+        setDailyMuhurat(null);
+        return;
+      }
+      try {
+        setDailyMuhuratLoading(true);
+        const todayStr = formatDateYYYYMMDD(new Date());
+        const response = await getMuhrat(
+          todayStr,
+          String(targetLocation.latitude),
+          String(targetLocation.longitude),
+        );
+        const slots = Array.isArray(response?.choghadiya)
+          ? response.choghadiya
+          : [];
+        if (!slots.length) {
+          setDailyMuhurat(null);
+          return;
+        }
+        const translated = await translateData(slots, currentLanguage, [
+          'type',
+        ]);
+        const translatedSlots = Array.isArray(translated) ? translated : slots;
+        const bestSlot = selectPreferredMuhuratSlot(translatedSlots);
+        setDailyMuhurat(bestSlot || null);
+      } catch (error) {
+        console.warn('Failed to fetch daily muhurat', error);
+        setDailyMuhurat(null);
+      } finally {
+        setDailyMuhuratLoading(false);
+      }
+    },
+    [currentLanguage, location],
+  );
+
   // 🧭 Initial load
   useEffect(() => {
     const init = async () => {
       const loc = await getLocationForAPI();
       if (loc) setLocation(loc);
       await loadAllData(loc);
+      await fetchDailyMuhurat(loc);
     };
     init();
   }, [loadAllData]);
+
+  useEffect(() => {
+    const loadStreakData = async () => {
+      try {
+        const [storedStreak, storedLastViewed] = await Promise.all([
+          AsyncStorage.getItem(DAILY_STREAK_KEY),
+          AsyncStorage.getItem(DAILY_LAST_VIEWED_KEY),
+        ]);
+        if (storedStreak) {
+          const parsedStreak = Number(storedStreak);
+          setDailyStreak(Number.isNaN(parsedStreak) ? 0 : parsedStreak);
+        }
+        if (storedLastViewed) {
+          setDailyLastViewedDate(storedLastViewed);
+        }
+      } catch (error) {
+        console.warn('Failed to load muhurat streak', error);
+      }
+    };
+    loadStreakData();
+  }, []);
+
+  useEffect(() => {
+    fetchDailyMuhurat();
+  }, [fetchDailyMuhurat]);
 
   // 📱 AppState listener (only when foregrounded)
   useEffect(() => {
@@ -185,10 +315,11 @@ const UserHomeScreen: React.FC = () => {
       if (state === 'active') {
         const loc = await getLocationForAPI();
         await loadAllData(loc);
+        await fetchDailyMuhurat(loc || location);
       }
     });
     return () => sub.remove();
-  }, [loadAllData]);
+  }, [fetchDailyMuhurat, loadAllData, location]);
 
   // 📍 Location update listener
   useEffect(() => {
@@ -202,18 +333,20 @@ const UserHomeScreen: React.FC = () => {
           };
           setLocation(loc);
           await loadAllData(loc);
+          await fetchDailyMuhurat(loc);
         }
       },
     );
     return () => listener.remove();
-  }, [loadAllData]);
+  }, [fetchDailyMuhurat, loadAllData]);
 
   // 🔁 Pull to refresh
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     const loc = await getLocationForAPI();
     await loadAllData(loc);
-  }, [loadAllData]);
+    await fetchDailyMuhurat(loc || location);
+  }, [loadAllData, fetchDailyMuhurat, location]);
 
   // ⚡ WebSocket real-time updates
   useEffect(() => {
@@ -264,6 +397,82 @@ const UserHomeScreen: React.FC = () => {
     [navigation],
   );
 
+  const handleCalendarPress = useCallback(() => {
+    navigation.navigate('MuhuratCalendarScreen');
+  }, [navigation]);
+
+  const updateDailyMuhuratStreak = useCallback(async () => {
+    const todayStr = formatDateYYYYMMDD(new Date());
+    if (dailyLastViewedDate === todayStr) return;
+    let nextStreak = 1;
+    if (dailyLastViewedDate) {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (dailyLastViewedDate === formatDateYYYYMMDD(yesterday)) {
+        nextStreak = dailyStreak + 1;
+      }
+    }
+    try {
+      setDailyStreak(nextStreak);
+      setDailyLastViewedDate(todayStr);
+      await AsyncStorage.multiSet([
+        [DAILY_STREAK_KEY, String(nextStreak)],
+        [DAILY_LAST_VIEWED_KEY, todayStr],
+      ]);
+    } catch (error) {
+      console.warn('Failed to persist muhurat streak', error);
+    }
+  }, [dailyLastViewedDate, dailyStreak]);
+
+  const handleDailyMuhuratCTA = useCallback(async () => {
+    await updateDailyMuhuratStreak();
+    navigation.navigate('MuhuratCalendarScreen');
+  }, [navigation, updateDailyMuhuratStreak]);
+
+  const renderDailyMuhuratCard = () => {
+    const hasSlot = !!dailyMuhurat;
+    const buttonDisabled = dailyMuhuratLoading || !hasSlot;
+    return (
+      <View style={[styles.dailyCard, THEMESHADOW.shadow]}>
+        <View style={styles.dailyCardHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.dailyCardTitle}>
+              {t('daily_muhurat_title')}
+            </Text>
+            <Text style={styles.dailyCardSubtitle}>
+              {t('daily_muhurat_subtitle')}
+            </Text>
+          </View>
+          <View style={styles.streakChip}>
+            <Text style={styles.streakChipText}>
+              {t('streak_days', { count: dailyStreak })}
+            </Text>
+          </View>
+        </View>
+        {dailyMuhuratLoading ? (
+          <Text style={styles.placeholderText}>{t('updating_location')}</Text>
+        ) : hasSlot ? (
+          <View style={styles.dailySlotRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.dailySlotType}>{dailyMuhurat?.type}</Text>
+              <Text style={styles.dailySlotTime}>
+                {dailyMuhurat?.start} - {dailyMuhurat?.end}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <Text style={styles.placeholderText}>{t('no_daily_muhurat')}</Text>
+        )}
+        <PrimaryButton
+          title={t('view_today_muhurat')}
+          onPress={handleDailyMuhuratCTA}
+          disabled={buttonDisabled}
+        />
+        <Text style={styles.streakHint}>{t('streak_hint')}</Text>
+      </View>
+    );
+  };
+
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={loading} />
@@ -271,7 +480,11 @@ const UserHomeScreen: React.FC = () => {
         backgroundColor={COLORS.primaryBackground}
         barStyle="light-content"
       />
-      <UserCustomHeader title={t('home')} />
+      <UserCustomHeader
+        title={t('home')}
+        showCalendarButton
+        onCalendarPress={handleCalendarPress}
+      />
 
       <ScrollView
         style={styles.content}
@@ -285,6 +498,7 @@ const UserHomeScreen: React.FC = () => {
           />
         }
       >
+        {/* {renderDailyMuhuratCard()} */}
         {/* Recommended Panditji */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -567,6 +781,73 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: moderateScale(24),
+  },
+  dailyCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(16),
+    padding: moderateScale(16),
+    marginBottom: moderateScale(24),
+  },
+  dailyCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: moderateScale(12),
+  },
+  dailyCardTitle: {
+    fontSize: moderateScale(18),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+  },
+  dailyCardSubtitle: {
+    fontSize: moderateScale(13),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.pujaCardSubtext,
+    marginTop: moderateScale(4),
+  },
+  streakChip: {
+    backgroundColor: COLORS.primaryBackgroundButton,
+    borderRadius: moderateScale(999),
+    paddingHorizontal: moderateScale(12),
+    paddingVertical: moderateScale(6),
+    marginLeft: moderateScale(12),
+  },
+  streakChipText: {
+    fontSize: moderateScale(12),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+  },
+  dailySlotRow: {
+    paddingVertical: moderateScale(12),
+    paddingHorizontal: moderateScale(10),
+    borderRadius: moderateScale(12),
+    backgroundColor: COLORS.lightGray,
+    marginBottom: moderateScale(12),
+  },
+  dailySlotType: {
+    fontSize: moderateScale(16),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primary,
+    marginBottom: moderateScale(4),
+  },
+  dailySlotTime: {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primaryTextDark,
+  },
+  placeholderText: {
+    fontSize: moderateScale(13),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.pujaCardSubtext,
+    marginBottom: moderateScale(12),
+  },
+  dailyCtaButton: {
+    marginTop: moderateScale(4),
+  },
+  streakHint: {
+    fontSize: moderateScale(12),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.pujaCardSubtext,
+    marginTop: moderateScale(10),
   },
   sectionHeader: {
     flexDirection: 'row',

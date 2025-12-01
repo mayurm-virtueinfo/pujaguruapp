@@ -34,13 +34,24 @@ import {
   KeyboardProvider,
   KeyboardStickyView,
 } from 'react-native-keyboard-controller';
+import { requestCallPermissions } from '../../../configuration/firebaseMessaging';
 
+// Add a new date field to the Message interface
 export interface Message {
   id: string;
   text: string;
   time: string;
+  date?: string; // <-- Added
   isOwn: boolean;
 }
+
+const formatDate = (dateObj: Date) => {
+  // Format date as YYYY-MM-DD
+  const y = dateObj.getFullYear();
+  const m = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+  const d = dateObj.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
 
 const UserChatScreen: React.FC = () => {
   const snapToOffsets = [125, 225, 325, 425, 525, 625];
@@ -110,18 +121,35 @@ const UserChatScreen: React.FC = () => {
       ws.current.onmessage = e => {
         const data = JSON.parse(e.data);
         console.log('Chat Data ::', data);
-        // const newMsg: Message = {
-        //   id: data.uuid,
-        //   text: data.message,
-        //   time: new Date(data.timestamp).toLocaleTimeString([], {
-        //     hour: '2-digit',
-        //     minute: '2-digit',
-        //   }),
-        //   isOwn: data.sender_id == myUserId,
-        // };
-        // setMessages(prev => [...prev, newMsg]);
 
-        setMessages(prev => handleIncomingMessage(prev, data, myUserId));
+        // Extract both time and date for the message
+        setMessages(prev => {
+          const normalized = handleIncomingMessage(prev, data, myUserId);
+
+          // Add a date property to the last message if it is missing
+          if (normalized.length > 0) {
+            const lastIdx = normalized.length - 1;
+            const rawTimestamp = data.timestamp;
+            let dateStr = '';
+            if (rawTimestamp) {
+              try {
+                // Use Date
+                const dateObj = new Date(rawTimestamp);
+                dateStr = formatDate(dateObj);
+              } catch {
+                dateStr = '';
+              }
+            }
+            // Only overwrite if not already set
+            if (!normalized[lastIdx].date) {
+              normalized[lastIdx] = {
+                ...normalized[lastIdx],
+                date: dateStr,
+              };
+            }
+          }
+          return normalized;
+        });
       };
       ws.current.onerror = e => console.error('WebSocket error:', e.message);
       ws.current.onclose = e =>
@@ -154,15 +182,19 @@ const UserChatScreen: React.FC = () => {
     try {
       const response: any = await getMessageHistory(booking_id);
       if (response) {
-        const normalized = response.map((msg: any) => ({
-          id: msg.uuid,
-          text: msg.content || msg.message,
-          time: new Date(msg.timestamp).toLocaleTimeString([], {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-          isOwn: msg.sender == myUserId,
-        }));
+        const normalized = response.map((msg: any) => {
+          const dateObj = msg.timestamp ? new Date(msg.timestamp) : new Date();
+          return {
+            id: msg.uuid,
+            text: msg.content || msg.message,
+            time: dateObj.toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            date: formatDate(dateObj), // <-- add date
+            isOwn: msg.sender == myUserId,
+          };
+        });
         setMessages(normalized);
         isUserAtBottom.current = true;
       }
@@ -183,6 +215,8 @@ const UserChatScreen: React.FC = () => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
       const tempId = `temp-${Date.now()}`; // ✅ unique string ID
 
+      const now = new Date();
+
       const messageData = {
         message: text,
         sender_id: myUserId,
@@ -192,25 +226,22 @@ const UserChatScreen: React.FC = () => {
       const newMsg: Message = {
         id: tempId, // temporary unique ID
         text,
-        time: new Date().toLocaleTimeString([], {
+        time: now.toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
         }),
+        date: formatDate(now), // <-- set date to today
         isOwn: true,
       };
 
       setMessages(prev => [...prev, newMsg]);
-      // ws.current.send(JSON.stringify(messageData));
       try {
         ws.current.send(JSON.stringify(messageData));
         isUserAtBottom.current = true;
       } catch (err) {
         console.log('Send failed:', err);
-        // 3️⃣ Mark as failed in UI
         setMessages(prev => prev.filter(msg => msg.id !== tempId));
       }
-
-      // isUserAtBottom.current = true;
     } else {
       console.warn('WebSocket not connected');
     }
@@ -229,7 +260,9 @@ const UserChatScreen: React.FC = () => {
     }
   }, [messages, scrollToBottom]);
 
-  const handleVideoCall = () => {
+  const handleVideoCall = async () => {
+    const hasPermission = await requestCallPermissions();
+    if (!hasPermission) return;
     if (!booking_id) {
       Alert.alert('Error', 'No booking ID available for video call.');
       return;
@@ -383,52 +416,47 @@ const UserChatScreen: React.FC = () => {
           ) : JitsiMeeting ? (
             <JitsiMeeting
               ref={jitsiMeeting}
-              room={roomName ? String(roomName) : 'defaultRoom'}
-              serverURL={
-                serverUrl ? String(serverUrl) : 'https://meet.puja-guru.com/'
-              }
-              token={meetingToken ? String(meetingToken) : undefined}
+              room={roomName || 'defaultRoom'}
+              serverURL={serverUrl}
+              token={meetingToken || undefined}
+              disableScreenSharing={true}
+              disableInviteFunctions={true}
               userInfo={{
-                avatarUrl: currentUser?.profile_img_url,
                 displayName: currentUser?.first_name || 'User',
-                email: currentUser?.email,
+                email: currentUser?.email || '',
+                avatarUrl: profile_img_url || currentUser?.profile_img_url,
               }}
               config={{
-                hideConferenceTimer: true,
-                whiteboard: {
-                  enabled: true,
-                  collabServerBaseUrl: serverUrl
-                    ? String(serverUrl)
-                    : 'https://meet.puja-guru.com/',
-                },
-                analytics: {
-                  disabled: true,
-                },
-                prejoinPageEnabled: false,
-                prejoinConfig: {
-                  enabled: false,
-                },
-                requireDisplayName: false,
                 startWithAudioMuted: false,
                 startWithVideoMuted: false,
+                hideConferenceTimer: true,
+                prejoinPageEnabled: false,
+                requireDisplayName: false,
+                toolbarButtons: [
+                  'microphone',
+                  'camera',
+                  'hangup',
+                  'tileview',
+                  'fullscreen',
+                ],
               }}
               flags={{
-                'audioMute.enabled': true,
-                'ios.screensharing.enabled': true,
+                'audio-mute.enabled': true,
+                'audio-unmute.enabled': true,
+                'video-mute.enabled': true,
+                'video-unmute.enabled': true,
                 'fullscreen.enabled': true,
-                'audioOnly.enabled': false,
-                'android.screensharing.enabled': true,
-                'pip.enabled': true,
-                'pip-while-screen-sharing.enabled': true,
-                'conference-timer.enabled': true,
-                'close-captions.enabled': false,
                 'toolbox.enabled': true,
+                'microphone.enabled': true,
+                'camera.enabled': true,
                 'chat.enabled': false,
-                'prejoin.enabled': false,
+                'pip.enabled': true,
+                'tile-view.enabled': true,
+                'ios.screensharing.enabled': true,
+                'android.screensharing.enabled': true,
               }}
-              eventListeners={eventListeners as any}
-              style={[styles.jitsiView, styles.jitsiFull]}
-              onReadyToClose={onReadyToClose}
+              eventListeners={eventListeners}
+              style={StyleSheet.absoluteFillObject}
             />
           ) : (
             <View style={styles.jitsiView}>

@@ -5,7 +5,6 @@ import {
   StatusBar,
   Image,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   Platform,
   Keyboard,
@@ -62,6 +61,17 @@ interface FormErrors {
   location?: string;
 }
 
+// Helper to format date as DD/MM/YYYY for Indian display
+const formatDateIndian = (dateStr: string) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+};
+
 const UserProfileScreen: React.FC = () => {
   const { t } = useTranslation();
   const inset = useSafeAreaInsets();
@@ -90,8 +100,6 @@ const UserProfileScreen: React.FC = () => {
   } | null>(null);
 
   const { showErrorToast } = useCommonToast();
-
-  console.log('dob :: ', dob);
 
   useEffect(() => {
     const getStateData = async () => {
@@ -324,15 +332,8 @@ const UserProfileScreen: React.FC = () => {
   const handleFetchGPS = async () => {
     // setIsLoading(true);
     try {
-      console.log('🎯 Fetching current location...');
-
       const locationData: any = await getCurrentLocation();
       setgpsLocation(locationData);
-
-      console.log('📍 Location fetched successfully:', {
-        lat: locationData.latitude.toFixed(4),
-        lng: locationData.longitude.toFixed(4),
-      });
     } catch (error: any) {
       console.warn('❌ Error getting location:', error.message);
       setFormErrors(prev => ({
@@ -346,9 +347,7 @@ const UserProfileScreen: React.FC = () => {
 
   // Helper: Only allow numeric input and max 10 numbers in phone field
   const handlePhoneChange = (text: string) => {
-    // Remove all non-numeric characters
     let cleaned = text.replace(/[^0-9+]/g, '');
-    // Limit to 10 digits
     if (cleaned.length > 13) {
       cleaned = cleaned.slice(0, 13);
     }
@@ -356,19 +355,20 @@ const UserProfileScreen: React.FC = () => {
     setFormErrors(prev => ({ ...prev, phone: undefined }));
   };
 
+  // This handler sets dob in API format (YYYY-MM-DD)
   const handleDateChange = (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
     }
 
     if (selectedDate) {
-      const formattedDate = selectedDate.toISOString().split('T')[0];
+      const formattedDate = selectedDate.toISOString().split('T')[0]; // API (YYYY-MM-DD)
       setDob(formattedDate);
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
+    <View style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={isLoading} />
       <StatusBar
         translucent
@@ -429,7 +429,7 @@ const UserProfileScreen: React.FC = () => {
                 <ThemedInput
                   label={t('dob') || 'Date of Birth'}
                   placeholder={t('select_dob') || 'Select Date of Birth'}
-                  value={dob}
+                  value={formatDateIndian(dob)}
                   onChangeText={() => {}}
                   labelStyle={themedInputLabelStyle}
                   editable={false}
@@ -443,6 +443,7 @@ const UserProfileScreen: React.FC = () => {
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                 onChange={handleDateChange}
                 maximumDate={new Date()}
+                themeVariant="light"
               />
             )}
             <ThemedInput
@@ -503,7 +504,7 @@ const UserProfileScreen: React.FC = () => {
           </View>
         </ScrollView>
       </View>
-    </SafeAreaView>
+    </View>
   );
 };
 

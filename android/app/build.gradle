@@ -98,8 +98,8 @@ android {
         applicationId "com.panditjiapp.pujaguru"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 15
-        versionName "1.0.6"
+        versionCode 16
+        versionName "1.0.7"
         missingDimensionStrategy "react-native-capture-protection", "fullMediaCapture"
         resValue "string", "app_name", (project.env.get("APP_NAME") ?: "Pujaguru")
     }

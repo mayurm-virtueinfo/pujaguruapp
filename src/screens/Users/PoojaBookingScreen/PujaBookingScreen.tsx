@@ -91,6 +91,19 @@ const parseTimeToMinutes = (timeStr: string): number | null => {
   return hours * 60 + minutes;
 };
 
+function addDaysToDate(dateStr: string, days: number) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return formatDateYYYYMMDD(d);
+}
+
+// Adds is_next_day logic for "booking_date"
+function shouldSlotSetIsNextDay(slot: any): boolean {
+  return slot && typeof slot.is_next_day === 'boolean'
+    ? slot.is_next_day
+    : false;
+}
+
 const PujaBookingScreen: React.FC = () => {
   const route = useRoute();
   const {
@@ -406,6 +419,18 @@ const PujaBookingScreen: React.FC = () => {
     setSelectedSlotObj(slot);
   };
 
+  // The booking date may be next day for certain muhurat slots
+  function getBookingDateWithNextDay(
+    selectedDateString: string,
+    slotObj: any,
+  ): string {
+    const isNextDay = shouldSlotSetIsNextDay(slotObj);
+    if (isNextDay) {
+      return addDaysToDate(selectedDateString, 1);
+    }
+    return formatDateYYYYMMDD(selectedDateString);
+  }
+
   const handleNextButtonPress = async () => {
     if (!selectedDateString) {
       showErrorToast(t('please_select_date') || 'Please select a date.');
@@ -417,12 +442,17 @@ const PujaBookingScreen: React.FC = () => {
       );
       return;
     }
-    let selectedDateISO = selectedDateString;
-    if (!selectedDateISO) {
-      selectedDateISO = formatDateYYYYMMDD(today);
+    // Use is_next_day logic for booking_date
+    let selectedDateISO = '';
+    if (!selectedSlotObj) {
+      selectedDateISO = formatDateYYYYMMDD(selectedDateString || today);
     } else {
-      selectedDateISO = formatDateYYYYMMDD(selectedDateISO);
+      selectedDateISO = getBookingDateWithNextDay(
+        selectedDateString,
+        selectedSlotObj,
+      );
     }
+
     if (isDateInPast(selectedDateISO)) {
       showErrorToast(
         t('cannot_select_past_date') || 'You cannot select a past date.',
@@ -442,7 +472,7 @@ const PujaBookingScreen: React.FC = () => {
       muhuratType = originalSlot ? originalSlot.type : selectedSlotObj.type;
     }
 
-    if (isToday(selectedDateISO) && selectedSlotObj) {
+    if (isToday(selectedDateString) && selectedSlotObj) {
       const startMinutes = parseTimeToMinutes(selectedSlotObj.start);
       const now = new Date();
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -518,11 +548,15 @@ const PujaBookingScreen: React.FC = () => {
   ) => {
     setPanditjiSelection(selection);
     setModalVisible(false);
-    let selectedDateISO = selectedDateString;
-    if (!selectedDateISO) {
-      selectedDateISO = formatDateYYYYMMDD(today);
+    // Use is_next_day logic for booking_date
+    let selectedDateISO = '';
+    if (!selectedSlotObj) {
+      selectedDateISO = formatDateYYYYMMDD(selectedDateString || today);
     } else {
-      selectedDateISO = formatDateYYYYMMDD(selectedDateISO);
+      selectedDateISO = getBookingDateWithNextDay(
+        selectedDateString,
+        selectedSlotObj,
+      );
     }
     let muhuratTime = '';
     let muhuratType = '';
@@ -551,7 +585,7 @@ const PujaBookingScreen: React.FC = () => {
       );
       return;
     }
-    if (isToday(selectedDateISO) && selectedSlotObj) {
+    if (isToday(selectedDateString) && selectedSlotObj) {
       const startMinutes = parseTimeToMinutes(selectedSlotObj.start);
       const now = new Date();
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -654,6 +688,14 @@ const PujaBookingScreen: React.FC = () => {
           {muhurats.map((slot, index) => {
             const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
             const isSelected = selectedSlot === slotKey;
+            // is_next_day presentation
+            const isNextDay = shouldSlotSetIsNextDay(slot);
+
+            // Calculate which date the booking would be
+            const shownBookingDate = isNextDay
+              ? addDaysToDate(selectedDateString, 1)
+              : formatDateYYYYMMDD(selectedDateString);
+
             return (
               <View key={slotKey}>
                 <TouchableOpacity
@@ -669,7 +711,28 @@ const PujaBookingScreen: React.FC = () => {
                     <View style={styles.slotTextContainer}>
                       <Text style={styles.slotName}>{slot.type}</Text>
                       <Text style={styles.slotTime}>
-                        {slot.start} - {slot.end}
+                        {slot.start} - {slot.end}{' '}
+                        <Text
+                          style={{
+                            color: COLORS.primaryTextDark,
+                            fontSize: moderateScale(12),
+                          }}
+                        >
+                          {isNextDay && (
+                            <>
+                              {'\n'}
+                              {t('pooja_will_be_on') || 'Pooja on'}{' '}
+                              {new Date(shownBookingDate).toLocaleDateString(
+                                'en-IN',
+                                {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                },
+                              )}
+                            </>
+                          )}
+                        </Text>
                       </Text>
                     </View>
                     <View style={styles.slotSelection}>

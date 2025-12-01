@@ -159,7 +159,6 @@ const PaymentScreen: React.FC = () => {
     setSelectedPaymentMethod(method);
   };
 
-
   useEffect(() => {
     let isMounted = true;
     const translatePoojaFields = async () => {
@@ -230,28 +229,31 @@ const PaymentScreen: React.FC = () => {
 
   // Prevent navigating back while payment is in progress
   useEffect(() => {
-    const beforeRemove = navigation.addListener('beforeRemove', (e: { preventDefault: () => void; data: { action: any; }; }) => {
-      if (!isProcessingPaymentRef.current && !loadingRef.current) {
-        return;
-      }
-      e.preventDefault();
-      Alert.alert(
-        'Payment in progress',
-        'Are you sure you want to cancel the payment?',
-        [
-          { text: 'Stay', style: 'cancel' },
-          {
-            text: 'Cancel Payment',
-            style: 'destructive',
-            onPress: () => {
-              setIsProcessingPayment(false);
-              setIsLoading(false);
-              navigation.dispatch(e.data.action);
+    const beforeRemove = navigation.addListener(
+      'beforeRemove',
+      (e: { preventDefault: () => void; data: { action: any } }) => {
+        if (!isProcessingPaymentRef.current && !loadingRef.current) {
+          return;
+        }
+        e.preventDefault();
+        Alert.alert(
+          'Payment in progress',
+          'Are you sure you want to cancel the payment?',
+          [
+            { text: 'Stay', style: 'cancel' },
+            {
+              text: 'Cancel Payment',
+              style: 'destructive',
+              onPress: () => {
+                setIsProcessingPayment(false);
+                setIsLoading(false);
+                navigation.dispatch(e.data.action);
+              },
             },
-          },
-        ],
-      );
-    });
+          ],
+        );
+      },
+    );
 
     const backSub = BackHandler.addEventListener('hardwareBackPress', () => {
       if (!isProcessingPaymentRef.current && !loadingRef.current) {
@@ -730,7 +732,17 @@ const PaymentScreen: React.FC = () => {
           <Octicons name="calendar" size={20} color={COLORS.pujaCardSubtext} />
         </View>
         <View>
-          <Text style={styles.bookingDataText}>{booking_date}</Text>
+          <Text style={styles.bookingDataText}>
+            {(() => {
+              if (!booking_date) return '';
+              const date = new Date(booking_date);
+              if (isNaN(date.getTime())) return booking_date;
+              const dd = String(date.getDate()).padStart(2, '0');
+              const mm = String(date.getMonth() + 1).padStart(2, '0');
+              const yyyy = date.getFullYear();
+              return `${dd}/${mm}/${yyyy}`;
+            })()}
+          </Text>
         </View>
       </View>
 

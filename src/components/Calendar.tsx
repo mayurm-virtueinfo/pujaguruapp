@@ -1,9 +1,9 @@
-import React, {useMemo, useState} from 'react';
-import {View, Text, StyleSheet} from 'react-native';
-import {Calendar as RNCalendar} from 'react-native-calendars';
-import {COLORS, wp, hp} from '../theme/theme';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+import { Calendar as RNCalendar } from 'react-native-calendars';
+import { COLORS, wp, hp, THEMESHADOW } from '../theme/theme';
 import Fonts from '../theme/fonts';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
 
 interface CalendarProps {
   onDateSelect?: (date: string) => void;
@@ -31,7 +31,7 @@ function getMonthYearFromString(monthStr: string) {
     'December',
   ].findIndex(m => m.toLowerCase() === monthName.toLowerCase());
   const year = parseInt(yearStr, 10);
-  return {month, year};
+  return { month, year };
 }
 
 function getMonthName(month: number): string {
@@ -68,10 +68,10 @@ const Calendar: React.FC<CalendarProps> = ({
 }) => {
   const [currentSelected, setCurrentSelected] = useState<string>();
 
-  const {month: monthIdx, year} = useMemo(() => {
+  const { month: monthIdx, year } = useMemo(() => {
     if (month) return getMonthYearFromString(month);
     const today = new Date();
-    return {month: today.getMonth(), year: today.getFullYear()};
+    return { month: today.getMonth(), year: today.getFullYear() };
   }, [month]);
 
   const initialDate = useMemo(() => {
@@ -83,7 +83,7 @@ const Calendar: React.FC<CalendarProps> = ({
     todayObj.getMonth() + 1,
   ).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
 
-  const markedDates: {[date: string]: any} = {};
+  const markedDates: { [date: string]: any } = {};
 
   // Always mark the current date with primaryBackgroundButton background color
   markedDates[todayStr] = {
@@ -172,7 +172,7 @@ const Calendar: React.FC<CalendarProps> = ({
   };
 
   return (
-    <View style={styles.calendarContainer}>
+    <View style={[styles.calendarContainer, THEMESHADOW.shadow]}>
       <RNCalendar
         current={initialDate}
         minDate={todayStr}
@@ -229,11 +229,11 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(10),
     padding: moderateScale(10),
     marginBottom: verticalScale(24),
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    // shadowColor: '#000',
+    // shadowOffset: {width: 0, height: 1},
+    // shadowOpacity: 0.1,
+    // shadowRadius: 2,
+    // elevation: 2,
   },
   currentDataContainer: {
     marginBottom: verticalScale(8),

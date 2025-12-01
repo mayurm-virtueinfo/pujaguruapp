@@ -7,7 +7,11 @@ import {
   Text,
   TouchableOpacity,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import {
+  CommonActions,
+  useFocusEffect,
+  useNavigation,
+} from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Fonts from '../../../theme/fonts';
 import { COLORS, THEMESHADOW } from '../../../theme/theme';
@@ -33,6 +37,7 @@ import { getFcmToken } from '../../../configuration/firebaseMessaging';
 import { translateData, translateText } from '../../../utils/TranslateData';
 import notifee from '@notifee/react-native';
 import messaging from '@react-native-firebase/messaging';
+import { AuthStackParamList } from '../../../navigation/AuthNavigator';
 
 interface ProfileFieldProps {
   label: string;
@@ -46,7 +51,9 @@ const ProfileField: React.FC<ProfileFieldProps> = ({ label, value }) => (
   </View>
 );
 
-type ProfileNavigationProp = StackNavigationProp<UserProfileParamList>;
+type ProfileNavigationProp = StackNavigationProp<
+  UserProfileParamList & AuthStackParamList
+>;
 
 const BottomUserProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
@@ -161,6 +168,12 @@ const BottomUserProfileScreen: React.FC = () => {
           await changeLanguage('en');
         } catch (e) {}
         signOutApp();
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'SignIn' }],
+          }),
+        );
       }
     } catch (error: any) {
       setLogoutModalVisible(false);
@@ -195,6 +208,12 @@ const BottomUserProfileScreen: React.FC = () => {
         setDeleteAccountModalVisible(false);
         signOutApp();
         await notifee.cancelAllNotifications();
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: 'SignIn' }],
+          }),
+        );
       }
     } catch (error) {
       console.error('Error deleting account', error);
