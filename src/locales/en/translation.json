@@ -396,5 +396,6 @@
   "select_dob": "Select Date of Birth",
   "no_available_date_for_pandit": "No available date for pandit",
   "pooja_will_be_on": "Pooja will be on",
-  "invalid_address": "Invalid address"
+  "invalid_address": "Invalid address",
+  "dob_required": "Date of Birth is required"
 }

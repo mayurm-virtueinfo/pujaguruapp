@@ -9,6 +9,7 @@ import {
   Platform,
   Keyboard,
   Alert,
+  Text,
 } from 'react-native';
 import {
   NavigationProp,
@@ -30,8 +31,8 @@ import {
   getCity,
   getState,
   postRegisterFCMToken,
-  postSignUp,
 } from '../../../api/apiService';
+import ApiEndpoints, { APP_URL, POST_SIGNUP } from '../../../api/apiEndpoints';
 import CustomDropdown from '../../../components/CustomDropdown';
 import CustomeLoader from '../../../components/CustomeLoader';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -59,6 +60,7 @@ interface FormErrors {
   phone?: string;
   state?: string;
   location?: string;
+  dob?: string;
 }
 
 // Helper to format date as DD/MM/YYYY for Indian display
@@ -78,13 +80,21 @@ const UserProfileScreen: React.FC = () => {
   const navigation = useNavigation<CompleteProfileScreenRouteProp>();
   const route = useRoute<CompleteProfileScreenRouteProps>();
   const { phoneNumber, firstName, lastName, address, uid } = route?.params;
-  const [userName, setUserName] = useState('');
-  const [email, setEmail] = useState('');
-  const [dob, setDob] = useState('');
+  const [formData, setFormData] = useState({
+    mobile: phoneNumber || '',
+    firebase_uid: uid || '',
+    first_name: firstName || '',
+    last_name: lastName || '',
+    address: address || '',
+    role: 1,
+    email: '',
+    dob: '',
+    state: '',
+    city: '',
+    latitude: '0',
+    longitude: '0',
+  });
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [phone, setPhone] = useState(phoneNumber);
-  const [selectState, setSelectState] = useState('');
-  const [location, setLocation] = useState('');
   const [state, setState] = useState([]);
   const [city, setCity] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -94,12 +104,32 @@ const UserProfileScreen: React.FC = () => {
     name: string;
     type: string;
   } | null>(null);
-  const [gpslocation, setgpsLocation] = useState<{
-    latitude: number;
-    longitude: number;
-  } | null>(null);
 
   const { showErrorToast } = useCommonToast();
+
+  console.log('formData :: ', formData);
+  console.log('profileImage :: ', profileImage);
+
+  useEffect(() => {
+    handleFetchGPS();
+  }, []);
+
+  const handleFetchGPS = async () => {
+    setIsLoading(true);
+    try {
+      const locationData = await getCurrentLocation();
+      if (locationData) {
+        setFormData(prev => ({
+          ...prev,
+          latitude: locationData.latitude.toString(),
+          longitude: locationData.longitude.toString(),
+        }));
+      }
+    } catch (err) {
+      showErrorToast('Location permission required');
+    }
+    setIsLoading(false);
+  };
 
   useEffect(() => {
     const getStateData = async () => {
@@ -122,19 +152,18 @@ const UserProfileScreen: React.FC = () => {
       }
     };
     getStateData();
-    handleFetchGPS();
   }, []);
 
   useEffect(() => {
     const getCityData = async () => {
-      if (!selectState) {
+      if (!formData.state) {
         setCity([]);
         return;
       }
 
       setIsLoading(true);
       try {
-        const response = await getCity(selectState);
+        const response = await getCity(formData.state);
         if (Array.isArray(response)) {
           const cityData: any = response.map((item: any) => ({
             label: item.name,
@@ -153,40 +182,41 @@ const UserProfileScreen: React.FC = () => {
     };
 
     getCityData();
-  }, [selectState]);
-
-  // Strict phone validation for 10 digits only
-  const phoneRegex = /^[0-9]{10}$/;
+  }, [formData.state]);
 
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!userName) {
+    if (!formData.first_name) {
       errors.userName = t('invalid_user_name');
     }
 
-    if (!email || !emailRegex.test(email)) {
+    if (!formData.email || !emailRegex.test(formData.email)) {
       errors.email = t('invalid_email');
     }
 
     // Phone field is required, must be 10 digits, only numbers allowed
-    if (!phone) {
+    if (!formData.mobile) {
       errors.phone = t('phone_required') || 'Phone number is required';
-    } else if (!/^\+?\d+$/.test(phone)) {
+    } else if (!/^\+?\d+$/.test(formData.mobile)) {
       errors.phone =
         t('invalid_phone_digits') || 'Phone number must contain only numbers';
-    } else if (phone.length !== 13) {
+    } else if (formData.mobile.length !== 13) {
       errors.phone =
         t('invalid_phone_length') || 'Phone number must be exactly 10 digits';
     }
 
-    if (!selectState) {
+    if (!formData.state) {
       errors.state = t('state_required');
     }
 
-    if (!location) {
+    if (!formData.city) {
       errors.location = t('city_required');
+    }
+
+    if (!formData.dob) {
+      errors.dob = t('dob_required') || 'Date of Birth is required';
     }
 
     setFormErrors(errors);
@@ -201,6 +231,13 @@ const UserProfileScreen: React.FC = () => {
   };
 
   const handleSignUp = async () => {
+    console.log('formData :: ', formData);
+
+    if (formData.latitude === '0' || formData.longitude === '0') {
+      showErrorToast('Please wait, fetching GPS location...');
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -208,49 +245,95 @@ const UserProfileScreen: React.FC = () => {
     setIsLoading(true);
     try {
       const params = new FormData();
-      params.append('mobile', phoneNumber);
-      params.append('firebase_uid', uid);
-      params.append('first_name', firstName);
-      params.append('last_name', lastName);
-      params.append('address', address);
-      params.append('role', 1);
-      params.append('email', email);
-      params.append('dob', dob);
-      params.append('state', selectState);
-      params.append('city', location);
-      params.append('latitude', gpslocation?.latitude?.toString() || '0');
-      params.append('longitude', gpslocation?.longitude?.toString() || '0');
+
+      // Append all text fields from formData
+      Object.keys(formData).forEach(key => {
+        params.append(key, formData[key as keyof typeof formData]);
+      });
 
       if (profileImage) {
+        // FIX 1: Ensure proper URI format for Android
+        // We now handle this in the picker functions, so we can trust profileImage.uri
+        const imageUri = profileImage.uri;
+
+        // FIX 2: Use proper object structure for React Native
         params.append('profile_img', {
-          uri: profileImage.uri,
+          uri: imageUri,
           name: profileImage.name,
           type: profileImage.type,
-        });
+        } as any);
       }
 
-      const response = await postSignUp(params as any);
-      if (response) {
+      console.log('FormData params:', params); // Debug log
+
+      const fullUrl = `${APP_URL}${POST_SIGNUP}`;
+      console.log('Full Fetch URL:', fullUrl);
+
+      if (!APP_URL) {
+        showErrorToast('Configuration Error: APP_URL is missing');
+        setIsLoading(false);
+        return;
+      }
+
+      // Create a timeout promise
+      const timeout = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out')), 15000); // 15s timeout
+      });
+
+      // Race the fetch against the timeout
+      const response: any = await Promise.race([
+        fetch(`${APP_URL}${POST_SIGNUP}`, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'X-Master-Key': ApiEndpoints.XMasterKey,
+            // 'Content-Type': 'multipart/form-data', // Do NOT set this manually for fetch + FormData
+          },
+          body: params,
+        }),
+        timeout,
+      ]);
+
+      const responseText = await response.text();
+      console.log('Response text:', responseText);
+
+      let responseJson;
+      try {
+        responseJson = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse response as JSON', e);
+        throw {
+          response: {
+            data: { message: 'Invalid server response', raw: responseText },
+          },
+        };
+      }
+
+      if (!response.ok) {
+        throw { response: { data: responseJson } };
+      }
+
+      if (responseJson) {
         await AsyncStorage.setItem(
           AppConstant.ACCESS_TOKEN,
-          response.access_token,
+          responseJson.access_token,
         );
         await AsyncStorage.setItem(
           AppConstant.REFRESH_TOKEN,
-          response.refresh_token,
+          responseJson.refresh_token,
         );
         await AsyncStorage.setItem(
           AppConstant.CURRENT_USER,
-          JSON.stringify(response.user),
+          JSON.stringify(responseJson.user),
         );
         await AsyncStorage.setItem(
           AppConstant.LOCATION,
           JSON.stringify({
-            ...response.location,
+            ...responseJson.location,
             timestamp: new Date().toISOString(),
           }),
         );
-        const userID = response.user?.id;
+        const userID = responseJson.user?.id;
         await AsyncStorage.setItem(AppConstant.USER_ID, String(userID));
         const fcmToken = await getFcmToken();
 
@@ -260,8 +343,9 @@ const UserProfileScreen: React.FC = () => {
         navigation.navigate('UserAppBottomTabNavigator');
       }
     } catch (error: any) {
+      console.log('Error in user profile screen signup :: ', error);
       console.log('error in sign up :: ', error?.response?.data || error);
-      showErrorToast(error?.response?.data?.message);
+      showErrorToast('Network Error, Please try again');
     } finally {
       setIsLoading(false);
     }
@@ -278,70 +362,61 @@ const UserProfileScreen: React.FC = () => {
 
   const openCamera = async () => {
     try {
-      const image = await ImagePicker.openCamera({
-        width: 300,
-        height: 300,
+      const image1 = await ImagePicker.openCamera({
+        mediaType: 'photo',
+        width: 160,
+        height: 160,
+        compressImageQuality: 0.5,
         cropping: true,
-        cropperCircleOverlay: true,
-        compressImageQuality: 0.7,
       });
-      await processImage(image);
+
+      const ext = image1.path.substr(image1.path.lastIndexOf('.') + 1);
+      const partPhoto = {
+        name: (image1.modificationDate || Date.now()) + '.' + ext,
+        type: image1.mime,
+        uri:
+          Platform.OS === 'android'
+            ? image1.path.startsWith('file://')
+              ? image1.path
+              : `file://${image1.path}`
+            : image1.path.replace('file://', ''),
+      };
+      setProfileImage(partPhoto);
     } catch (error: any) {
       if (error.code !== 'E_PICKER_CANCELLED') {
         console.log('Error accessing camera:', error);
-        Alert.alert(t('error'), t('camera_access_failed'));
+        showErrorToast(error?.message || 'Failed to take photo');
       }
     }
   };
 
   const openGallery = async () => {
     try {
-      const image = await ImagePicker.openPicker({
-        width: 300,
-        height: 300,
+      const image1 = await ImagePicker.openPicker({
+        mediaType: 'photo',
+        width: 160,
+        height: 160,
+        compressImageQuality: 0.5,
         cropping: true,
-        cropperCircleOverlay: true,
-        compressImageQuality: 0.7,
       });
-      await processImage(image);
+
+      const ext = image1.path.substr(image1.path.lastIndexOf('.') + 1);
+      const partPhoto = {
+        name: (image1.modificationDate || Date.now()) + '.' + ext,
+        type: image1.mime,
+        uri:
+          Platform.OS === 'android'
+            ? image1.path.startsWith('file://')
+              ? image1.path
+              : `file://${image1.path}`
+            : image1.path.replace('file://', ''),
+      };
+      setProfileImage(partPhoto);
     } catch (error: any) {
       if (error.code !== 'E_PICKER_CANCELLED') {
         console.log('Error accessing gallery:', error);
-        Alert.alert(t('error'), t('gallery_access_failed'));
+        showErrorToast(error?.message || 'Failed to select photo');
       }
-    }
-  };
-
-  const processImage = async (image: any) => {
-    try {
-      const imageData = {
-        uri:
-          Platform.OS === 'ios'
-            ? image.path.replace('file://', '')
-            : image.path,
-        type: image.mime,
-        name: `profile_${Date.now()}.${image.mime.split('/')[1]}`,
-      };
-      setProfileImage(imageData);
-    } catch (error) {
-      console.log('Error processing image:', error);
-      Alert.alert(t('error'), t('image_processing_failed'));
-    }
-  };
-
-  const handleFetchGPS = async () => {
-    // setIsLoading(true);
-    try {
-      const locationData: any = await getCurrentLocation();
-      setgpsLocation(locationData);
-    } catch (error: any) {
-      console.warn('❌ Error getting location:', error.message);
-      setFormErrors(prev => ({
-        ...prev,
-        address: t('location_fetch_failed'),
-      }));
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -351,7 +426,7 @@ const UserProfileScreen: React.FC = () => {
     if (cleaned.length > 13) {
       cleaned = cleaned.slice(0, 13);
     }
-    setPhone(cleaned);
+    setFormData(prev => ({ ...prev, mobile: cleaned }));
     setFormErrors(prev => ({ ...prev, phone: undefined }));
   };
 
@@ -363,7 +438,8 @@ const UserProfileScreen: React.FC = () => {
 
     if (selectedDate) {
       const formattedDate = selectedDate.toISOString().split('T')[0]; // API (YYYY-MM-DD)
-      setDob(formattedDate);
+      setFormData(prev => ({ ...prev, dob: formattedDate }));
+      setFormErrors(prev => ({ ...prev, dob: undefined }));
     }
   };
 
@@ -385,7 +461,9 @@ const UserProfileScreen: React.FC = () => {
         <TouchableOpacity onPress={handleImagePicker}>
           <Image
             source={{
-              uri: profileImage?.uri || 'https://via.placeholder.com/100',
+              uri:
+                profileImage?.uri ||
+                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
             }}
             style={styles.profileImage}
           />
@@ -400,9 +478,9 @@ const UserProfileScreen: React.FC = () => {
             <ThemedInput
               label={t('user_name')}
               placeholder={t('enter_your_name')}
-              value={userName}
+              value={formData.first_name}
               onChangeText={text => {
-                setUserName(text);
+                setFormData(prev => ({ ...prev, first_name: text }));
                 setFormErrors(prev => ({ ...prev, userName: undefined }));
               }}
               labelStyle={themedInputLabelStyle}
@@ -412,9 +490,9 @@ const UserProfileScreen: React.FC = () => {
             <ThemedInput
               label={t('email')}
               placeholder={t('enter_your_email')}
-              value={email}
+              value={formData.email}
               onChangeText={text => {
-                setEmail(text);
+                setFormData(prev => ({ ...prev, email: text }));
                 setFormErrors(prev => ({ ...prev, email: undefined }));
               }}
               keyboardType="email-address"
@@ -429,27 +507,60 @@ const UserProfileScreen: React.FC = () => {
                 <ThemedInput
                   label={t('dob') || 'Date of Birth'}
                   placeholder={t('select_dob') || 'Select Date of Birth'}
-                  value={formatDateIndian(dob)}
+                  value={formatDateIndian(formData.dob)}
                   onChangeText={() => {}}
                   labelStyle={themedInputLabelStyle}
                   editable={false}
+                  error={formErrors.dob}
+                  required
                 />
               </View>
             </TouchableOpacity>
             {showDatePicker && (
-              <DateTimePicker
-                value={dob ? new Date(dob) : new Date()}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={handleDateChange}
-                maximumDate={new Date()}
-                themeVariant="light"
-              />
+              <View>
+                {Platform.OS === 'ios' && (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      justifyContent: 'flex-end',
+                      marginBottom: 8,
+                    }}
+                  >
+                    <TouchableOpacity
+                      onPress={() => setShowDatePicker(false)}
+                      style={{
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        backgroundColor: COLORS.primary,
+                        borderRadius: 8,
+                      }}
+                    >
+                      <Text
+                        style={{
+                          color: COLORS.white,
+                          fontFamily: Fonts.Sen_Bold,
+                          fontSize: 14,
+                        }}
+                      >
+                        {t('done') || 'Done'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+                <DateTimePicker
+                  value={formData.dob ? new Date(formData.dob) : new Date()}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={handleDateChange}
+                  maximumDate={new Date()}
+                  themeVariant="light"
+                />
+              </View>
             )}
             <ThemedInput
               label={t('phone')}
               placeholder={t('enter_your_phone')}
-              value={phone}
+              value={formData.mobile}
               // Phone input: only allow numbers, max 10, clear error on edit
               onChangeText={handlePhoneChange}
               autoComplete="tel"
@@ -465,10 +576,9 @@ const UserProfileScreen: React.FC = () => {
             <CustomDropdown
               label={t('state')}
               items={state}
-              selectedValue={selectState}
+              selectedValue={formData.state}
               onSelect={value => {
-                setSelectState(value);
-                setLocation('');
+                setFormData(prev => ({ ...prev, state: value, city: '' }));
                 setFormErrors(prev => ({
                   ...prev,
                   state: undefined,
@@ -482,13 +592,15 @@ const UserProfileScreen: React.FC = () => {
             <CustomDropdown
               label={t('city')}
               items={city}
-              selectedValue={location}
+              selectedValue={formData.city}
               onSelect={value => {
-                setLocation(value);
+                setFormData(prev => ({ ...prev, city: value }));
                 setFormErrors(prev => ({ ...prev, location: undefined }));
               }}
               placeholder={
-                selectState ? t('enter_your_location') : t('select_state_first')
+                formData.state
+                  ? t('enter_your_location')
+                  : t('select_state_first')
               }
               error={formErrors.location}
               required
@@ -499,7 +611,7 @@ const UserProfileScreen: React.FC = () => {
               onPress={handleSignUp}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}
-              disabled={isLoading}
+              disabled={isLoading || formData.latitude === '0'}
             />
           </View>
         </ScrollView>

@@ -1,14 +1,13 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  FlatList,
   StyleSheet,
   ScrollView,
 } from 'react-native';
-import {moderateScale} from 'react-native-size-matters';
-import {COLORS, FONTS, THEMESHADOW} from '../theme/theme';
+import { moderateScale } from 'react-native-size-matters';
+import { COLORS, FONTS, THEMESHADOW } from '../theme/theme';
 import Fonts from '../theme/fonts';
 import Icon from 'react-native-vector-icons/Feather';
 
@@ -24,7 +23,7 @@ interface CustomDropdownProps {
   placeholder?: string;
   label?: string;
   error?: string;
-  required?: boolean; // New prop to indicate if * should be red
+  required?: boolean;
 }
 
 function renderLabelWithRedStar(label?: string, required?: boolean) {
@@ -52,13 +51,14 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
 
   const selectedItem = items.find(item => item.value === selectedValue);
 
-  const renderItem = ({item}: {item: DropdownItem}) => (
+  const renderItem = ({ item }: { item: DropdownItem }) => (
     <TouchableOpacity
       style={styles.dropdownItem}
       onPress={() => {
         onSelect(item.value);
         setIsOpen(false);
-      }}>
+      }}
+    >
       <Text style={styles.dropdownItemText}>{item.label}</Text>
     </TouchableOpacity>
   );
@@ -72,12 +72,11 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
           isOpen && styles.dropdownActive,
           error && styles.dropdownError,
         ]}
-        onPress={() => setIsOpen(!isOpen)}>
+        onPress={() => setIsOpen(!isOpen)}
+      >
         <Text
-          style={[
-            styles.dropdownText,
-            !selectedItem && styles.placeholderText,
-          ]}>
+          style={[styles.dropdownText, !selectedItem && styles.placeholderText]}
+        >
           {selectedItem ? selectedItem.label : placeholder}
         </Text>
         <Icon
@@ -89,15 +88,17 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
       {error && <Text style={styles.errorText}>{error}</Text>}
       {isOpen && (
         <View style={[styles.dropdownList, THEMESHADOW.shadow]}>
-          <FlatList
-            data={items}
-            renderItem={renderItem}
-            keyExtractor={item => item.value}
+          <ScrollView
             style={styles.flatList}
-            scrollEnabled={true}
             nestedScrollEnabled={true}
             showsVerticalScrollIndicator={true}
-          />
+          >
+            {items.map(item => (
+              <React.Fragment key={item.value}>
+                {renderItem({ item })}
+              </React.Fragment>
+            ))}
+          </ScrollView>
         </View>
       )}
     </View>

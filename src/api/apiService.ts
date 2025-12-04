@@ -776,16 +776,25 @@ export const getPanchang = (
 };
 
 export const postSignUp = (data: SignupRequest): Promise<SignUpResponse> => {
-  console.log('params data ::', data);
+  console.log('Sending signup request with FormData');
   let apiUrl = POST_SIGNUP;
   return new Promise((resolve, reject) => {
     apiDev
-      .postForm(apiUrl, data)
+      .post(apiUrl, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      })
       .then(response => {
         resolve(response.data);
       })
       .catch(error => {
-        console.error('Error fetching sign up data:', JSON.stringify(error));
+        console.error('Error fetching sign up data:', error);
+        console.log('Signup error details:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status,
+        });
         reject(error);
       });
   });
