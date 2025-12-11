@@ -395,5 +395,12 @@
   "dob": "જન્મ તારીખ",
   "select_dob": "જન્મ તારીખ પસંદ કરો",
   "no_available_date_for_pandit": "પંડિત માટે કોઈ ઉપલબ્ધ તારીખ નથી",
-  "dob_required": "જન્મ તારીખ જરૂરી છે"
+  "dob_required": "જન્મ તારીખ જરૂરી છે",
+  "rashi_ful": "જન્મ તારીખ પસંદ કરો",
+  "birth_date": "જન્મ તારીખ",
+  "birth_time": "જન્મ સમય",
+  "birth_place": "જન્મ સ્થાન",
+  "enter_birth_place": "જન્મ સ્થાન દાખલ કરો",
+  "submit": "સબમિટ કરો",
+  "no_kundli_found": "કોઈ સાચવેલી કુંડળી મળી નથી."
 }

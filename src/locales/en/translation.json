@@ -397,5 +397,12 @@
   "no_available_date_for_pandit": "No available date for pandit",
   "pooja_will_be_on": "Pooja will be on",
   "invalid_address": "Invalid address",
-  "dob_required": "Date of Birth is required"
+  "dob_required": "Date of Birth is required",
+  "rashi_ful": "Get your kundli",
+  "birth_date": "Birth Date",
+  "birth_time": "Birth Time",
+  "birth_place": "Birth Place",
+  "enter_birth_place": "Enter Birth Place",
+  "submit": "Submit",
+  "no_kundli_found": "No saved kundlis found."
 }

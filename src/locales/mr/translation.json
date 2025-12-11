@@ -395,5 +395,12 @@
   "dob": "जन्मतारीख",
   "select_dob": "जन्मतारीख निवडा",
   "no_available_date_for_pandit": "पंडितांसाठी कोणतीही उपलब्ध तारीख नाही",
-  "dob_required": "जन्मतारीख आवश्यक आहे"
+  "dob_required": "जन्मतारीख आवश्यक आहे",
+  "rashi_ful": "जन्मतारीख निवड",
+  "birth_date": "जन्मतारीख",
+  "birth_time": "जन्मवेळ",
+  "birth_place": "जन्मस्थान",
+  "enter_birth_place": "जन्मस्थान प्रविष्ट करा",
+  "submit": "सादर करा",
+  "no_kundli_found": "कोणतीही कुंडली सापडली नाही."
 }

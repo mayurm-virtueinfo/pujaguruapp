@@ -55,6 +55,9 @@ import ApiEndpoints, {
   POST_CREATE_MEETING,
   UPDATE_WAITING_USER,
   GET_DYNAMIC_HOURS,
+  CREATE_KUNDLI,
+  GET_KUNDLI_LIST,
+  GET_KUNDLI_DETAILS,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -1663,3 +1666,70 @@ export const getDynamicHours = (booking_id: any): Promise<any> => {
       });
   });
 };
+export const postCreateKundli = (data: any): Promise<any> => {
+  console.log('Sending create kundli request');
+  let apiUrl = CREATE_KUNDLI;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .post(apiUrl, data)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error creating kundli:', error);
+        reject(error);
+      });
+  });
+};
+
+export const searchCity = async (query: string): Promise<any[]> => {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+      query,
+    )}&format=json&addressdetails=1&limit=5`;
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'PujaGuruApp/1.0',
+      },
+    });
+    if (!response.ok) {
+      return [];
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error searching city:', error);
+    return [];
+  }
+};
+
+export const getKundliList = async (): Promise<any[]> => {
+  let apiUrl = GET_KUNDLI_LIST;
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching kundli list:', error);
+        reject(error);
+      });
+  });
+};
+
+export const getKundliDetails = async (id: number): Promise<any> => {
+  let apiUrl = GET_KUNDLI_DETAILS.replace('{id}', id.toString());
+  return new Promise((resolve, reject) => {
+    apiDev
+      .get(apiUrl)
+      .then(response => {
+        resolve(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching kundli details:', error);
+        reject(error);
+      });
+  });
+};
+

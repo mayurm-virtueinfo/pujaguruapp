@@ -5,6 +5,7 @@ import {
   View,
   TextStyle,
   ViewStyle,
+  TouchableOpacity,
 } from 'react-native';
 import React from 'react';
 import {COLORS} from '../theme/theme';
@@ -26,6 +27,8 @@ interface InputFieldProps {
   required?: boolean;
   multiline?: boolean; // Add multiline prop, for explicit control
   numberOfLines?: number; // Also support numberOfLines if needed
+  rightIcon?: React.ReactNode;
+  onRightIconPress?: () => void;
 }
 
 function renderLabelWithRedStar(label: string, required?: boolean) {
@@ -56,6 +59,8 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
   maxIntegerLength,
   required = false,
   multiline = false, // <--- Set default to multiline for this rewrite
+  rightIcon,
+  onRightIconPress,
   // numberOfLines = 4, // <--- Suggest default, but allow override
 }) => {
   // Handler to allow only integer input and limit length if specified
@@ -98,6 +103,14 @@ const CustomTextInput: React.FC<InputFieldProps> = ({
           // multiline={multiline}
           // numberOfLines={multiline ? numberOfLines : undefined}
         />
+        {rightIcon && (
+          <TouchableOpacity
+            onPress={onRightIconPress}
+            disabled={!onRightIconPress}
+            style={styles.rightIconContainer}>
+            {rightIcon}
+          </TouchableOpacity>
+        )}
       </View>
       {showIntegerCount && (
         <Text style={styles.countText}>
@@ -133,7 +146,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: COLORS.inputBoder,
-    justifyContent: 'center',
+    // justifyContent: 'center', // Changed to row for icon
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.white,
     minHeight: 50,
   },
@@ -141,12 +156,18 @@ const styles = StyleSheet.create({
     borderColor: COLORS.error,
   },
   inputText: {
+    flex: 1, // Take available space
     color: '#191313',
     fontFamily: Fonts.Sen_Regular,
     fontSize: 14,
     padding: 0,
     margin: 0,
     // minHeight: 65,
+  },
+  rightIconContainer: {
+    marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   errorText: {
     color: COLORS.error,

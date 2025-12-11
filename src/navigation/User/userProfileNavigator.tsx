@@ -1,5 +1,5 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import BottomUserProfileScreen from '../../screens/Users/BottomProfileScreen/BottomUserProfileScreen';
 import WalletScreen from '../../screens/Users/WalletScreen/WalletScreen';
 import NotificationScreen from '../../screens/Users/NotificationScreen/NotificationScreen';
@@ -14,6 +14,9 @@ import SearchPanditScreen from '../../screens/Users/SearchPanditScreen/SearchPan
 import UserChatScreen from '../../screens/Users/UserChatScreen/UserChatScreen';
 import PujaCancellationScreen from '../../screens/Users/PujaCancellationScreen/PujaCancellationScreen';
 import PastBookingDetailsScreen from '../../screens/Users/PastBookingDetailsScreen/PastBookingDetailsScreen';
+import KundliScreen from '../../screens/Users/KundliScreen/KundliScreen';
+import KundliInputScreen from '../../screens/Users/KundliScreen/KundliInputScreen';
+import KundliListScreen from '../../screens/Users/KundliScreen/KundliListScreen';
 
 export type UserProfileParamList = {
   goBack(): void;
@@ -23,7 +26,7 @@ export type UserProfileParamList = {
   NotificationScreen: undefined;
   WalletTopUpScreen: undefined;
   AddressesScreen: undefined;
-  AddAddressScreen: {addressToEdit?: any};
+  AddAddressScreen: { addressToEdit?: any };
   EditProfile: any;
   UpcomingPuja: any;
   PastPujaScreen: any;
@@ -37,8 +40,11 @@ export type UserProfileParamList = {
     profile_img_url?: string;
     pandit_id: string;
   };
-  PujaCancellationScreen: {id: any};
+  PujaCancellationScreen: { id: any };
   PastBookingDetailsScreen: any;
+  KundliScreen: any;
+  KundliInputScreen: undefined;
+  KundliListScreen: undefined;
 };
 
 const Stack = createStackNavigator<UserProfileParamList>();
@@ -48,7 +54,8 @@ const UserProfileNavigator = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-      }}>
+      }}
+    >
       {/* <Stack.Screen name="SearchPanditScreen" component={SearchPanditScreen} /> */}
 
       <Stack.Screen
@@ -75,6 +82,18 @@ const UserProfileNavigator = () => {
       <Stack.Screen
         name="PastBookingDetailsScreen"
         component={PastBookingDetailsScreen}
+      />
+      <Stack.Screen
+        name="KundliScreen"
+        component={KundliScreen}
+      />
+      <Stack.Screen
+        name="KundliInputScreen"
+        component={KundliInputScreen}
+      />
+      <Stack.Screen
+        name="KundliListScreen"
+        component={KundliListScreen}
       />
     </Stack.Navigator>
   );
