@@ -401,5 +401,12 @@
   "panchang": "Panchang",
   "location_permission_desc": "We need your location to verify precise Panchang details, including local sunrise, sunset updates, and muhurats accurate to your city.",
   "open_settings": "Open Settings",
-  "allow_access": "Allow Access"
+  "allow_access": "Allow Access",
+  "rashi_ful": "Get your kundli",
+  "birth_date": "Birth Date",
+  "birth_time": "Birth Time",
+  "birth_place": "Birth Place",
+  "enter_birth_place": "Enter Birth Place",
+  "submit": "Submit",
+  "no_kundli_found": "No saved kundlis found."
 }

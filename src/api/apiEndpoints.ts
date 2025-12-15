@@ -106,3 +106,6 @@ export const GET_REFUND_POLICY = '/policies/page/refund-policy/';
 export const POST_CREATE_MEETING = '/api/chat/create_meeting/';
 export const UPDATE_WAITING_USER = '/app/user-is-waiting/';
 export const GET_DYNAMIC_HOURS = '/app/dynamic-hours/?booking_id={booking_id}';
+export const CREATE_KUNDLI = '/api/astro/kundali/create/';
+export const GET_KUNDLI_LIST = '/api/astro/kundali/list/';
+export const GET_KUNDLI_DETAILS = '/api/astro/kundali/{id}/';
