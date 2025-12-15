@@ -37,6 +37,9 @@ import {
   LOCATION_UPDATED_EVENT,
 } from '../../../helper/helper';
 import { useWebSocket } from '../../../context/WebSocketContext';
+import DailyQuoteCard from '../../../components/DailyQuoteCard';
+import UpcomingFestivalsCard from '../../../components/UpcomingFestivalsCard';
+import AuraScannerCard from '../../../components/AuraScannerCard';
 
 interface PendingPuja {
   id: number;
@@ -499,6 +502,9 @@ const UserHomeScreen: React.FC = () => {
         }
       >
         {/* {renderDailyMuhuratCard()} */}
+        <DailyQuoteCard />
+        <UpcomingFestivalsCard />
+        <AuraScannerCard />
         {/* Recommended Panditji */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>

@@ -402,5 +402,8 @@
   "birth_place": "जन्मस्थान",
   "enter_birth_place": "जन्मस्थान प्रविष्ट करा",
   "submit": "सादर करा",
-  "no_kundli_found": "कोणतीही कुंडली सापडली नाही."
+  "no_kundli_found": "कोणतीही कुंडली सापडली नाही.",
+  "daily_good_thoughts": "दिनांक सुविचार",
+  "quote_copied": "सुविचार क्लिपबोर्ड पर कॉपी किया गया",
+  "upcoming_festivals": "आगामी तहवारो"
 }

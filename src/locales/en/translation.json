@@ -404,5 +404,18 @@
   "birth_place": "Birth Place",
   "enter_birth_place": "Enter Birth Place",
   "submit": "Submit",
-  "no_kundli_found": "No saved kundlis found."
+  "no_kundli_found": "No saved kundlis found.",
+  "daily_good_thoughts": "Daily Good Thoughts",
+  "quote_copied": "Quote copied to clipboard",
+  "upcoming_festivals": "Upcoming Festivals",
+  "aura_scanner": "Aura Scanner",
+  "divine_aura_scanner": "Divine Aura Scanner",
+  "check_daily_aura": "Discover your spiritual energy color for today.",
+  "scan_now": "Scan Now",
+  "your_spiritual_energy_color": "Your spiritual energy color for today is",
+  "scanning_aura": "Reading your energy...",
+  "place_thumb": "Place your thumb on the scanner to reveal your aura",
+  "aura_scanned": "Aura scanned successfully",
+  "your_aura_is": "Your aura is",
+  "scan_again": "Scan Again"
 }

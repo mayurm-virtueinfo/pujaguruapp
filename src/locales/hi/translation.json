@@ -402,5 +402,8 @@
   "birth_place": "जन्म स्थान",
   "enter_birth_place": "जन्म स्थान दर्ज करें",
   "submit": "सबमिट",
-  "no_kundli_found": "कोई सहेजी कुंडली नहीं मिली।"
+  "no_kundli_found": "कोई सहेजी कुंडली नहीं मिली।",
+  "daily_good_thoughts": "दिनांक सुविचार",
+  "quote_copied": "सुविचार क्लिपबोर्ड पर कॉपी किया गया",
+  "upcoming_festivals": "आगामी तहवारो"
 }

@@ -402,5 +402,8 @@
   "birth_place": "જન્મ સ્થાન",
   "enter_birth_place": "જન્મ સ્થાન દાખલ કરો",
   "submit": "સબમિટ કરો",
-  "no_kundli_found": "કોઈ સાચવેલી કુંડળી મળી નથી."
+  "no_kundli_found": "કોઈ સાચવેલી કુંડળી મળી નથી.",
+  "daily_good_thoughts": "નિત્ય સુવિચાર",
+  "quote_copied": "ક્વોટ ક્લિપબોર્ડ પર કૉપિ કર્યું",
+  "upcoming_festivals": "આગામી તહેવારો"
 }

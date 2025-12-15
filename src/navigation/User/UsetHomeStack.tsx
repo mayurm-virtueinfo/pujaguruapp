@@ -21,6 +21,7 @@ import ConfirmPujaDetails from '../../screens/Users/ConfirmPujaDetails/ConfirmPu
 import SelectNewPanditjiScreen from '../../screens/Users/SelectNewPanditjiScreen/SelectNewPanditjiScreen';
 import PanditDetailsScreen from '../../screens/Users/PanditDetailsScreen/PanditDetailsScreen';
 import MuhuratCalendarScreen from '../../screens/Users/MuhuratCalendarScreen/MuhuratCalendarScreen';
+import AuraScannerScreen from '../../screens/Users/AuraScannerScreen';
 
 export type UserHomeParamList = {
   goBack(): unknown;
@@ -61,6 +62,7 @@ export type UserHomeParamList = {
   FilteredPanditListScreen: any;
   PanditDetailsScreen: any;
   MuhuratCalendarScreen: undefined;
+  AuraScannerScreen: undefined;
 };
 
 const Stack = createStackNavigator<UserHomeParamList>();
@@ -125,6 +127,7 @@ const UserHomeNavigator = () => {
         name="MuhuratCalendarScreen"
         component={MuhuratCalendarScreen}
       />
+      <Stack.Screen name="AuraScannerScreen" component={AuraScannerScreen} />
     </Stack.Navigator>
   );
 };
