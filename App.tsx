@@ -35,9 +35,8 @@ import { SessionProvider } from './src/provider/SessionProvider';
 import { NetworkProvider } from './src/provider/NetworkProvider';
 import { hideSplash } from 'react-native-splash-view';
 import Config from 'react-native-config';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import AppConstant from './src/utils/appConstant';
 import WebSocketWrapper from './src/components/WebSocketWrapper';
+import { LocationProvider } from './src/context/LocationContext';
 
 LogBox.ignoreLogs([
   "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
@@ -47,7 +46,7 @@ LogBox.ignoreLogs([
 const auth = getAuth();
 if (__DEV__) {
   // auth.useEmulator('http://127.0.0.1:9099');
-  auth.useEmulator('http://192.168.1.9:9099');
+  auth.useEmulator('http://192.168.1.10:9099');
 }
 setupNotifications();
 
@@ -179,20 +178,22 @@ const App = () => {
         }}
       >
         <NetworkProvider>
-          <AuthProvider>
-            <SessionProvider>
-              <WebSocketWrapper>
-                <NavigationContainer
-                  ref={navigationRef}
-                  onReady={() => {
-                    handleInitialNotification();
-                  }}
-                >
-                  <RootNavigator />
-                </NavigationContainer>
-              </WebSocketWrapper>
-            </SessionProvider>
-          </AuthProvider>
+          <LocationProvider>
+            <AuthProvider>
+              <SessionProvider>
+                <WebSocketWrapper>
+                  <NavigationContainer
+                    ref={navigationRef}
+                    onReady={() => {
+                      handleInitialNotification();
+                    }}
+                  >
+                    <RootNavigator />
+                  </NavigationContainer>
+                </WebSocketWrapper>
+              </SessionProvider>
+            </AuthProvider>
+          </LocationProvider>
         </NetworkProvider>
       </ToastProvider>
     </I18nextProvider>

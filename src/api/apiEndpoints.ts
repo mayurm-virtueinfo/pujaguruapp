@@ -58,6 +58,10 @@ export const GET_MUHRAT =
   '/app/choghadiya?date={date}&latitude={latitude}&longitude={longitude}';
 export const GET_PANCHANG =
   '/app/panchang/?date={date}&latitude={latitude}&longitude={longitude}';
+export const GET_CALENDAR_GRID =
+  '/app/panchang/calendar-grid/?month={month}&year={year}&lat={latitude}&lon={longitude}';
+export const GET_DAY_DETAILS =
+  '/app/panchang/day-details/?date={date}&lat={latitude}&lon={longitude}';
 export const GET_POOJA_DETAILS = '/app/puja-detail/{panditId}/{id}/';
 export const GET_POOJA_DETAIL_FOR_PUJA_LIST = '/app/puja-detail/{id}/';
 export const POST_BOOKING = '/app/booking/';

@@ -1,90 +1,6 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import AppConstant from '../utils/appConstant';
-import { getCurrentLocation } from '../utils/locationUtils';
 import { Message } from '../screens/Users/UserChatScreen/UserChatScreen';
-import { DeviceEventEmitter } from 'react-native';
-
-const SIXTY_MINUTES = 30 * 60 * 1000;
 
 export const LOCATION_UPDATED_EVENT = 'LOCATION_UPDATED';
-
-export const getLocationForAPI = async () => {
-  try {
-    const storedLocation = await AsyncStorage.getItem(AppConstant.LOCATION);
-
-    if (storedLocation) {
-      const location = JSON.parse(storedLocation);
-      const locationTime = new Date(location.timestamp).getTime();
-      const now = Date.now();
-
-      // ✅ If cache is still valid — return immediately
-      if (now - locationTime < SIXTY_MINUTES) {
-        console.log('📱 Using cached location');
-        return {
-          latitude: location.latitude,
-          longitude: location.longitude,
-        };
-      }
-
-      // ⚙️ Cache expired → use old coordinates immediately (fast)
-      console.log(
-        '⚡ Using expired cached location (will update in background)',
-      );
-      updateLocationInBackground();
-      return {
-        latitude: location.latitude,
-        longitude: location.longitude,
-      };
-    }
-
-    // 🆕 No stored location → must fetch now
-    console.log('🎯 Getting fresh GPS location (no cache found)');
-    const freshLocation = await getCurrentLocation();
-
-    if (freshLocation) {
-      await AsyncStorage.setItem(
-        AppConstant.LOCATION,
-        JSON.stringify({
-          ...freshLocation,
-          timestamp: new Date().toISOString(),
-        }),
-      );
-      // 🔔 Notify listeners
-      DeviceEventEmitter.emit(LOCATION_UPDATED_EVENT, freshLocation);
-
-      return {
-        latitude: freshLocation.latitude,
-        longitude: freshLocation.longitude,
-      };
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error getting location:', error);
-    return null;
-  }
-};
-
-// 🧩 Fetches new GPS coordinates in background (non-blocking)
-const updateLocationInBackground = async () => {
-  try {
-    const freshLocation = await getCurrentLocation();
-    if (freshLocation) {
-      await AsyncStorage.setItem(
-        AppConstant.LOCATION,
-        JSON.stringify({
-          ...freshLocation,
-          timestamp: new Date().toISOString(),
-        }),
-      );
-      console.log('📍 Background location updated successfully');
-      // 🔔 Notify any listener (like Home screen)
-      DeviceEventEmitter.emit(LOCATION_UPDATED_EVENT, freshLocation);
-    }
-  } catch (error) {
-    console.warn('⚠️ Background location update failed:', error);
-  }
-};
 
 export const handleIncomingMessage = (
   prevMessages: Message[],
@@ -123,4 +39,53 @@ export const handleIncomingMessage = (
   };
 
   return [...prevMessages, newMsg];
+};
+
+/**
+ * Get city name from coordinates using OpenStreetMap (Nominatim).
+ * @param lat Latitude
+ * @param lon Longitude
+ */
+export const getCityName = async (
+  lat: number,
+  lon: number,
+): Promise<string | null> => {
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`,
+      {
+        headers: {
+          'User-Agent': 'PujaGuruApp/1.0', // Required by Nominatim
+        },
+      },
+    );
+    const data = await response.json();
+
+    if (data && data.address) {
+      const addr = data.address;
+      // Prioritize city-level names.
+      let city =
+        addr.city ||
+        addr.town ||
+        addr.village ||
+        addr.municipality ||
+        addr.suburb;
+
+      // If strict city fail, try broader regions but clean them
+      if (!city) {
+        // Prioritize county (often Taluka/Tehsil) over state_district
+        // for better local recognition if explicit city field is missing.
+        const broader = addr.county || addr.state_district;
+        if (broader) {
+          city = broader.replace(/\s(District|Region|Taluka|Mandal)$/i, '');
+        }
+      }
+
+      return city || null;
+    }
+    return null;
+  } catch (error) {
+    console.warn('Error fetching city name:', error);
+    return null;
+  }
 };

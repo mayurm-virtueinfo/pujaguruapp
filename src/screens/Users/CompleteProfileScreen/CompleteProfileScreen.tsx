@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,22 +8,20 @@ import {
   ScrollView,
   Text,
 } from 'react-native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {COLORS} from '../../../theme/theme';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { COLORS } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import {moderateScale} from 'react-native-size-matters';
-import {AuthStackParamList} from '../../../navigation/AuthNavigator';
+import { moderateScale } from 'react-native-size-matters';
+import { AuthStackParamList } from '../../../navigation/AuthNavigator';
 import PrimaryButton from '../../../components/PrimaryButton';
 import ThemedInput from '../../../components/ThemedInput';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {useRoute} from '@react-navigation/native';
-import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
-import {getCurrentLocation, LocationData} from '../../../utils/locationUtils';
+import { useRoute } from '@react-navigation/native';
 import CustomTextInput from '../../../components/CustomTextInput';
 
 interface FormData {
@@ -54,12 +52,12 @@ interface Props {
   navigation: CompleteProfileScreenNavigationProp;
 }
 
-const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
+const CompleteProfileScreen: React.FC<Props> = ({ navigation }) => {
   const inset = useSafeAreaInsets();
-  const {t} = useTranslation();
+  const { t } = useTranslation();
 
   const route = useRoute();
-  const {phoneNumber} = route.params as {phoneNumber: string};
+  const { phoneNumber } = route.params as { phoneNumber: string };
 
   // Use a ref to always have the latest UID value
   const uidRef = useRef<string | null>(null);
@@ -100,7 +98,7 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
   useEffect(() => {
     fetchUID();
     // handleFetchGPS();
-    const onChange = (result: {window: ScreenDimensions}) => {
+    const onChange = (result: { window: ScreenDimensions }) => {
       setScreenData(result.window);
     };
     const subscription = Dimensions.addEventListener('change', onChange);
@@ -149,29 +147,6 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
       [field]: undefined,
     }));
   };
-
-  // const handleFetchGPS = async () => {
-  //   // setIsLoading(true);
-  //   try {
-  //     console.log('🎯 Fetching current location...');
-
-  //     const locationData = await getCurrentLocation();
-  //     setLocation(locationData);
-
-  //     console.log('📍 Location fetched successfully:', {
-  //       lat: locationData.latitude.toFixed(4),
-  //       lng: locationData.longitude.toFixed(4),
-  //     });
-  //   } catch (error: any) {
-  //     console.warn('❌ Error getting location:', error.message);
-  //     setFormErrors(prev => ({
-  //       ...prev,
-  //       address: t('location_fetch_failed'),
-  //     }));
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   // Modified handleNext to ensure UID is available before navigating
   const handleNext = async () => {
@@ -315,14 +290,15 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
         flex: 1,
         backgroundColor: COLORS.primaryBackground,
         paddingTop: inset.top,
-      }}>
+      }}
+    >
       <CustomeLoader loading={isLoading} />
       <StatusBar
         translucent
         backgroundColor={COLORS.primaryBackground}
         barStyle="light-content"
       />
-      <SafeAreaView style={{backgroundColor: COLORS.primaryBackground}}>
+      <SafeAreaView style={{ backgroundColor: COLORS.primaryBackground }}>
         <UserCustomHeader
           title={t('complete_your_profile')}
           showBackButton={true}
@@ -333,8 +309,9 @@ const CompleteProfileScreen: React.FC<Props> = ({navigation}) => {
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}>
-          <View style={{flex: 1}}>{renderMainContent()}</View>
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={{ flex: 1 }}>{renderMainContent()}</View>
         </ScrollView>
       </View>
     </View>

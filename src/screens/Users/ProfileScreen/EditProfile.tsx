@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -11,16 +11,16 @@ import {
   Keyboard,
   Alert,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Fonts from '../../../theme/fonts';
-import {COLORS} from '../../../theme/theme';
+import { COLORS } from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
 import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import {
   getEditProfile,
   getOldCityApi,
@@ -30,10 +30,8 @@ import CustomDropdown from '../../../components/CustomDropdown';
 import CustomeLoader from '../../../components/CustomeLoader';
 import Icon from 'react-native-vector-icons/Ionicons';
 import ThemedInput from '../../../components/ThemedInput';
-import {moderateScale} from 'react-native-size-matters';
-import {requestLocationPermission} from '../../../utils/locationUtils';
-import Geolocation from '@react-native-community/geolocation';
-import {useCommonToast} from '../../../common/CommonToast';
+import { moderateScale } from 'react-native-size-matters';
+import { useCommonToast } from '../../../common/CommonToast';
 // Removed: import CustomTextInput from '../../../components/CustomTextInput';
 
 interface FormErrors {
@@ -57,11 +55,11 @@ interface FormData {
 }
 
 const UserEditProfileScreen: React.FC = () => {
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation();
-  const {showErrorToast, showSuccessToast} = useCommonToast();
-  const {edit} = useRoute().params as {edit: boolean};
+  const { showErrorToast, showSuccessToast } = useCommonToast();
+  const { edit } = useRoute().params as { edit: boolean };
 
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
@@ -74,7 +72,7 @@ const UserEditProfileScreen: React.FC = () => {
     longitude: '',
   });
   console.log('formData', formData);
-  const [city, setCity] = useState<{label: string; value: string}[]>([]);
+  const [city, setCity] = useState<{ label: string; value: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [profileImage, setProfileImage] = useState<{
@@ -100,7 +98,7 @@ const UserEditProfileScreen: React.FC = () => {
         profileResponse = profile;
         cityResponse = cities;
 
-        let cityData: {label: string; value: string}[] = [];
+        let cityData: { label: string; value: string }[] = [];
         if (Array.isArray(cityResponse)) {
           cityData = cityResponse.map((item: any) => ({
             label: item.name,
@@ -200,8 +198,8 @@ const UserEditProfileScreen: React.FC = () => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
-      ...(latitude !== undefined ? {latitude} : {}),
-      ...(longitude !== undefined ? {longitude} : {}),
+      ...(latitude !== undefined ? { latitude } : {}),
+      ...(longitude !== undefined ? { longitude } : {}),
     }));
     setFormErrors(prev => ({
       ...prev,
@@ -265,9 +263,9 @@ const UserEditProfileScreen: React.FC = () => {
     // eslint-disable-next-line no-alert
     // @ts-ignore
     Alert.alert(t('select_profile_picture'), t('choose_an_option'), [
-      {text: t('take_photo'), onPress: () => openCamera()},
-      {text: t('choose_from_gallery'), onPress: () => openGallery()},
-      {text: t('cancel'), style: 'cancel'},
+      { text: t('take_photo'), onPress: () => openCamera() },
+      { text: t('choose_from_gallery'), onPress: () => openGallery() },
+      { text: t('cancel'), style: 'cancel' },
     ]);
   };
 
@@ -298,10 +296,7 @@ const UserEditProfileScreen: React.FC = () => {
       const image = await ImagePicker.openPicker({
         width: 300,
         height: 300,
-        // cropping: true,
-        // cropperCircleOverlay: true,
         compressImageQuality: 0.7,
-        // Ensure iOS presents picker/cropper full screen so buttons don't sit under notch
         modalPresentationStyle: 'fullScreen',
         mediaType: 'photo',
         cropperStatusBarLight: true,
@@ -336,41 +331,8 @@ const UserEditProfileScreen: React.FC = () => {
     }
   };
 
-  const handleFetchGPS = async () => {
-    setIsLoading(true);
-    const hasPermission = await requestLocationPermission();
-    if (hasPermission) {
-      Geolocation.getCurrentPosition(
-        position => {
-          const {latitude, longitude} = position.coords;
-          handleInputChange(
-            'address',
-            `${latitude}, ${longitude}`,
-            String(latitude),
-            String(longitude),
-          );
-          setIsLoading(false);
-        },
-        error => {
-          console.warn('Error getting location:', error.message);
-          showErrorToast(
-            t('error_getting_location') || 'Error getting location',
-          );
-          setIsLoading(false);
-        },
-        {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-      );
-    } else {
-      console.warn('Location permission denied');
-      showErrorToast(
-        t('location_permission_denied') || 'Location permission denied',
-      );
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={isLoading} />
       <StatusBar
         translucent

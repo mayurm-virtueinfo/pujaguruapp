@@ -25,18 +25,24 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, async user => {
+      console.log(
+        'AuthProvider: onAuthStateChanged triggered',
+        user ? 'User exists' : 'No user',
+      );
       try {
         if (user) {
           const token = await AsyncStorage.getItem(AppConstant.ACCESS_TOKEN);
+          console.log('AuthProvider: Token from storage', token);
           setIsAuthenticated(!!token);
         } else {
+          console.log('AuthProvider: Clearing session data');
           await AsyncStorage.removeItem(AppConstant.ACCESS_TOKEN);
           await AsyncStorage.removeItem(AppConstant.REFRESH_TOKEN);
           await AsyncStorage.removeItem(AppConstant.FIREBASE_UID);
@@ -64,23 +70,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
   };
 
   const signOutApp = async () => {
+    console.log('AuthProvider: signOutApp called');
     try {
       const auth = getAuth();
       await signOut(auth);
+      console.log('AuthProvider: Firebase signOut complete');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    } finally {
+      console.log('AuthProvider: Clearing local session data');
       await AsyncStorage.removeItem(AppConstant.ACCESS_TOKEN);
       await AsyncStorage.removeItem(AppConstant.REFRESH_TOKEN);
       await AsyncStorage.removeItem(AppConstant.FIREBASE_UID);
       await AsyncStorage.removeItem(AppConstant.USER_ID);
       await AsyncStorage.removeItem(AppConstant.LOCATION);
       await AsyncStorage.removeItem(AppConstant.CURRENT_USER);
+      console.log('AuthProvider: Setting isAuthenticated to false');
       setIsAuthenticated(false);
-    } catch (error) {
-      console.error('Sign out error:', error);
     }
   };
 
   return (
-    <AuthContext.Provider value={{isAuthenticated, signIn, signOutApp}}>
+    <AuthContext.Provider value={{ isAuthenticated, signIn, signOutApp }}>
       {isLoading ? null : children}
     </AuthContext.Provider>
   );

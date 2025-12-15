@@ -1959,34 +1959,8 @@ PODS:
     - react-native-config/App (= 1.5.1)
   - react-native-config/App (1.5.1):
     - React-Core
-  - react-native-geolocation (3.4.0):
-    - boost
-    - DoubleConversion
-    - fast_float
-    - fmt
-    - glog
-    - hermes-engine
-    - RCT-Folly
-    - RCT-Folly/Fabric
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - SocketRocket
-    - Yoga
+  - react-native-geolocation-service (5.3.1):
+    - React
   - react-native-get-random-values (1.11.0):
     - React-Core
   - react-native-keep-awake (1.3.1):
@@ -3615,7 +3589,7 @@ DEPENDENCIES:
   - react-native-background-timer (from `../node_modules/react-native-background-timer`)
   - react-native-capture-protection (from `../node_modules/react-native-capture-protection`)
   - react-native-config (from `../node_modules/react-native-config`)
-  - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
+  - react-native-geolocation-service (from `../node_modules/react-native-geolocation-service`)
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - "react-native-keep-awake (from `../node_modules/@sayem314/react-native-keep-awake`)"
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
@@ -3813,8 +3787,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-capture-protection"
   react-native-config:
     :path: "../node_modules/react-native-config"
-  react-native-geolocation:
-    :path: "../node_modules/@react-native-community/geolocation"
+  react-native-geolocation-service:
+    :path: "../node_modules/react-native-geolocation-service"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
   react-native-keep-awake:
@@ -4027,7 +4001,7 @@ SPEC CHECKSUMS:
   react-native-background-timer: 4638ae3bee00320753647900b21260b10587b6f7
   react-native-capture-protection: 1d51cbb839b86ed75d8aa52343b05c2015fd9029
   react-native-config: 136f9755ccc991cc6438053a44363259ad4c7813
-  react-native-geolocation: 49d39b53dfeb6c22ff1ad69e71ac9c7981affdaa
+  react-native-geolocation-service: 32b2c2a3b91e70ce2a8d0c684801aaeb0a07e0ec
   react-native-get-random-values: d16467cf726c618e9c7a8c3c39c31faa2244bbba
   react-native-keep-awake: a351e6f67006b47f316ae2b17ee8ee69386167f4
   react-native-keyboard-controller: 265435e3129116deda558cdd649c53b50c42c0cd

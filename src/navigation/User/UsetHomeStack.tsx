@@ -1,5 +1,5 @@
 import React from 'react';
-import {createStackNavigator} from '@react-navigation/stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import PujaCancellationScreen from '../../screens/Users/PujaCancellationScreen/PujaCancellationScreen';
 import UserHomeScreen from '../../screens/Users/HomeScreen/UserHomeScreen';
 import UserChatScreen from '../../screens/Users/UserChatScreen/UserChatScreen';
@@ -20,7 +20,6 @@ import SearchPanditScreen from '../../screens/Users/SearchPanditScreen/SearchPan
 import ConfirmPujaDetails from '../../screens/Users/ConfirmPujaDetails/ConfirmPujaDetails';
 import SelectNewPanditjiScreen from '../../screens/Users/SelectNewPanditjiScreen/SelectNewPanditjiScreen';
 import PanditDetailsScreen from '../../screens/Users/PanditDetailsScreen/PanditDetailsScreen';
-import MuhuratCalendarScreen from '../../screens/Users/MuhuratCalendarScreen/MuhuratCalendarScreen';
 import AuraScannerScreen from '../../screens/Users/AuraScannerScreen';
 
 export type UserHomeParamList = {
@@ -61,7 +60,6 @@ export type UserHomeParamList = {
   ConfirmPujaDetails: any;
   FilteredPanditListScreen: any;
   PanditDetailsScreen: any;
-  MuhuratCalendarScreen: undefined;
   AuraScannerScreen: undefined;
 };
 
@@ -72,7 +70,8 @@ const UserHomeNavigator = () => {
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
-      }}>
+      }}
+    >
       <Stack.Screen name="UserHomeScreen" component={UserHomeScreen} />
       <Stack.Screen name="UserChatScreen" component={UserChatScreen} />
       <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
@@ -122,10 +121,6 @@ const UserHomeNavigator = () => {
       <Stack.Screen
         name="PanditDetailsScreen"
         component={PanditDetailsScreen}
-      />
-      <Stack.Screen
-        name="MuhuratCalendarScreen"
-        component={MuhuratCalendarScreen}
       />
       <Stack.Screen name="AuraScannerScreen" component={AuraScannerScreen} />
     </Stack.Navigator>

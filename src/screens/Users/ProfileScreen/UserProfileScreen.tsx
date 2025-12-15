@@ -42,7 +42,8 @@ import ThemedInput from '../../../components/ThemedInput';
 import { moderateScale } from 'react-native-size-matters';
 import { useCommonToast } from '../../../common/CommonToast';
 import { getFcmToken } from '../../../configuration/firebaseMessaging';
-import { getCurrentLocation } from '../../../utils/locationUtils';
+import { useLocation } from '../../../context/LocationContext';
+import PermissionDeniedView from '../Panchang/components/PermissionDeniedView';
 
 type CompleteProfileScreenRouteProp = NavigationProp<
   AuthStackParamList,
@@ -107,27 +108,36 @@ const UserProfileScreen: React.FC = () => {
 
   const { showErrorToast } = useCommonToast();
 
-  console.log('formData :: ', formData);
-  console.log('profileImage :: ', profileImage);
+  console.log('latitude :: ', formData.latitude);
+  console.log('longitude :: ', formData.longitude);
+
+  const {
+    location: locationData,
+    refreshLocation,
+    permissionStatus,
+    loading: locationLoading,
+  } = useLocation();
 
   useEffect(() => {
-    handleFetchGPS();
-  }, []);
+    if (locationData) {
+      setFormData(prev => {
+        // Only update if we still have default 0 values, ensuring we don't overwrite if user somehow edited (though these are hidden fields usually)
+        if (prev.latitude === '0' && prev.longitude === '0') {
+          return {
+            ...prev,
+            latitude: locationData.latitude.toString(),
+            longitude: locationData.longitude.toString(),
+          };
+        }
+        return prev;
+      });
+    }
+  }, [locationData]);
 
   const handleFetchGPS = async () => {
+    // Manually trigger refresh if needed
     setIsLoading(true);
-    try {
-      const locationData = await getCurrentLocation();
-      if (locationData) {
-        setFormData(prev => ({
-          ...prev,
-          latitude: locationData.latitude.toString(),
-          longitude: locationData.longitude.toString(),
-        }));
-      }
-    } catch (err) {
-      showErrorToast('Location permission required');
-    }
+    await refreshLocation();
     setIsLoading(false);
   };
 
@@ -443,6 +453,30 @@ const UserProfileScreen: React.FC = () => {
     }
   };
 
+  // Show permission denied view if location is not available during signup
+  if (!locationData && !locationLoading) {
+    return (
+      <View style={[styles.container, { paddingTop: inset.top }]}>
+        <StatusBar
+          translucent
+          backgroundColor="transparent"
+          barStyle="light-content"
+        />
+        <LinearGradient
+          colors={[COLORS.gradientStart, COLORS.gradientEnd]}
+          style={[styles.headerGradient]}
+        />
+        <UserCustomHeader title={t('profile')} showBackButton={true} />
+        <PermissionDeniedView
+          onRetry={refreshLocation}
+          isPermanent={
+            permissionStatus === 'denied' || permissionStatus === 'blocked'
+          }
+        />
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={isLoading} />
@@ -611,7 +645,7 @@ const UserProfileScreen: React.FC = () => {
               onPress={handleSignUp}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}
-              disabled={isLoading || formData.latitude === '0'}
+              disabled={isLoading}
             />
           </View>
         </ScrollView>
