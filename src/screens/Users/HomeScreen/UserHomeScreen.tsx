@@ -32,11 +32,10 @@ import { useTranslation } from 'react-i18next';
 import { translateData } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
 import PrimaryButton from '../../../components/PrimaryButton';
-import {
-  getLocationForAPI,
-  LOCATION_UPDATED_EVENT,
-} from '../../../helper/helper';
+import { LOCATION_UPDATED_EVENT } from '../../../helper/helper';
 import { useWebSocket } from '../../../context/WebSocketContext';
+import { useLocation } from '../../../context/LocationContext';
+import PermissionDeniedView from '../Panchang/components/PermissionDeniedView';
 
 interface PendingPuja {
   id: number;
@@ -130,13 +129,27 @@ const UserHomeScreen: React.FC = () => {
     null,
   );
 
-  console.log('location :: ', location);
   console.log('recomendedPandits :: ', recomendedPandits);
 
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
   const inset = useSafeAreaInsets();
   const { messages } = useWebSocket();
+  const {
+    location: contextLocation,
+    refreshLocation,
+    permissionStatus,
+    loading: locationLoading,
+  } = useLocation();
+
+  useEffect(() => {
+    if (contextLocation) {
+      setLocation({
+        latitude: contextLocation.latitude,
+        longitude: contextLocation.longitude,
+      });
+    }
+  }, [contextLocation]);
 
   // 🧠 Refs for controlling repeated fetches
   const isFetchingRef = useRef(false);
@@ -273,16 +286,17 @@ const UserHomeScreen: React.FC = () => {
     [currentLanguage, location],
   );
 
-  // 🧭 Initial load
+  // 🧭 Initial load (Triggered when context updates location)
   useEffect(() => {
-    const init = async () => {
-      const loc = await getLocationForAPI();
-      if (loc) setLocation(loc);
-      await loadAllData(loc);
-      await fetchDailyMuhurat(loc);
-    };
-    init();
-  }, [loadAllData]);
+    if (contextLocation) {
+      const loc = {
+        latitude: contextLocation.latitude,
+        longitude: contextLocation.longitude,
+      };
+      loadAllData(loc);
+      fetchDailyMuhurat(loc);
+    }
+  }, [contextLocation, loadAllData, fetchDailyMuhurat]);
 
   useEffect(() => {
     const loadStreakData = async () => {
@@ -305,72 +319,31 @@ const UserHomeScreen: React.FC = () => {
     loadStreakData();
   }, []);
 
-  useEffect(() => {
-    fetchDailyMuhurat();
-  }, [fetchDailyMuhurat]);
-
   // 📱 AppState listener (only when foregrounded)
   useEffect(() => {
     const sub = AppState.addEventListener('change', async state => {
       if (state === 'active') {
-        const loc = await getLocationForAPI();
-        await loadAllData(loc);
-        await fetchDailyMuhurat(loc || location);
+        if (contextLocation) {
+          const loc = {
+            latitude: contextLocation.latitude,
+            longitude: contextLocation.longitude,
+          };
+          await loadAllData(loc);
+          await fetchDailyMuhurat(loc);
+        } else {
+          // refresh manually if missing? context usually handles init
+          await refreshLocation();
+        }
       }
     });
     return () => sub.remove();
-  }, [fetchDailyMuhurat, loadAllData, location]);
-
-  // 📍 Location update listener
-  useEffect(() => {
-    const listener = DeviceEventEmitter.addListener(
-      LOCATION_UPDATED_EVENT,
-      async newLoc => {
-        if (newLoc?.latitude && newLoc?.longitude) {
-          const loc = {
-            latitude: Number(newLoc.latitude),
-            longitude: Number(newLoc.longitude),
-          };
-          setLocation(loc);
-          await loadAllData(loc);
-          await fetchDailyMuhurat(loc);
-        }
-      },
-    );
-    return () => listener.remove();
-  }, [fetchDailyMuhurat, loadAllData]);
-
-  // 🔁 Pull to refresh
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    const loc = await getLocationForAPI();
-    await loadAllData(loc);
-    await fetchDailyMuhurat(loc || location);
-  }, [loadAllData, fetchDailyMuhurat, location]);
-
-  // ⚡ WebSocket real-time updates
-  useEffect(() => {
-    if (messages.length === 0) return;
-    const latest = messages[messages.length - 1];
-    if (!latest) return;
-
-    const uniqueKey = `${latest.type}-${latest.action}-${latest.booking_id}`;
-    if (lastHandledMessageId.current === uniqueKey) return;
-
-    lastHandledMessageId.current = uniqueKey;
-
-    const { type, action, booking_id } = latest;
-
-    if (type === 'booking_update' && ['accepted'].includes(action)) {
-      console.log(`✅ Updating puja list due to booking #${booking_id}`);
-
-      if (refreshTimeout.current) clearTimeout(refreshTimeout.current);
-
-      refreshTimeout.current = setTimeout(() => {
-        onRefresh();
-      }, 1000);
-    }
-  }, [messages, onRefresh]);
+  }, [
+    fetchDailyMuhurat,
+    loadAllData,
+    location,
+    contextLocation,
+    refreshLocation,
+  ]);
 
   // 🔗 Navigation helper
   const handleBookPandit = useCallback(
@@ -397,94 +370,75 @@ const UserHomeScreen: React.FC = () => {
     [navigation],
   );
 
-  const handleCalendarPress = useCallback(() => {
-    navigation.navigate('MuhuratCalendarScreen');
-  }, [navigation]);
-
-  const updateDailyMuhuratStreak = useCallback(async () => {
-    const todayStr = formatDateYYYYMMDD(new Date());
-    if (dailyLastViewedDate === todayStr) return;
-    let nextStreak = 1;
-    if (dailyLastViewedDate) {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      if (dailyLastViewedDate === formatDateYYYYMMDD(yesterday)) {
-        nextStreak = dailyStreak + 1;
-      }
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshLocation();
+    // Context update will trigger the data load via the useEffect above
+    if (contextLocation) {
+      const loc = {
+        latitude: contextLocation.latitude,
+        longitude: contextLocation.longitude,
+      };
+      await loadAllData(loc);
+      await fetchDailyMuhurat(loc);
+    } else {
+      // If no location after refresh?
+      setRefreshing(false);
     }
-    try {
-      setDailyStreak(nextStreak);
-      setDailyLastViewedDate(todayStr);
-      await AsyncStorage.multiSet([
-        [DAILY_STREAK_KEY, String(nextStreak)],
-        [DAILY_LAST_VIEWED_KEY, todayStr],
-      ]);
-    } catch (error) {
-      console.warn('Failed to persist muhurat streak', error);
+  }, [loadAllData, fetchDailyMuhurat, contextLocation, refreshLocation]);
+
+  // ⚡ WebSocket real-time updates
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const latest = messages[messages.length - 1];
+    if (!latest) return;
+
+    const uniqueKey = `${latest.type}-${latest.action}-${latest.booking_id}`;
+    if (lastHandledMessageId.current === uniqueKey) return;
+
+    lastHandledMessageId.current = uniqueKey;
+
+    const { type, action, booking_id } = latest;
+
+    if (type === 'booking_update' && ['accepted'].includes(action)) {
+      console.log(`✅ Updating puja list due to booking #${booking_id}`);
+
+      if (refreshTimeout.current) clearTimeout(refreshTimeout.current);
+
+      refreshTimeout.current = setTimeout(() => {
+        onRefresh();
+      }, 1000);
     }
-  }, [dailyLastViewedDate, dailyStreak]);
+  }, [messages, onRefresh]);
 
-  const handleDailyMuhuratCTA = useCallback(async () => {
-    await updateDailyMuhuratStreak();
-    navigation.navigate('MuhuratCalendarScreen');
-  }, [navigation, updateDailyMuhuratStreak]);
-
-  const renderDailyMuhuratCard = () => {
-    const hasSlot = !!dailyMuhurat;
-    const buttonDisabled = dailyMuhuratLoading || !hasSlot;
+  // Show permission denied view if location is not available and not loading
+  if (!contextLocation && !locationLoading) {
     return (
-      <View style={[styles.dailyCard, THEMESHADOW.shadow]}>
-        <View style={styles.dailyCardHeader}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.dailyCardTitle}>
-              {t('daily_muhurat_title')}
-            </Text>
-            <Text style={styles.dailyCardSubtitle}>
-              {t('daily_muhurat_subtitle')}
-            </Text>
-          </View>
-          <View style={styles.streakChip}>
-            <Text style={styles.streakChipText}>
-              {t('streak_days', { count: dailyStreak })}
-            </Text>
-          </View>
-        </View>
-        {dailyMuhuratLoading ? (
-          <Text style={styles.placeholderText}>{t('updating_location')}</Text>
-        ) : hasSlot ? (
-          <View style={styles.dailySlotRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.dailySlotType}>{dailyMuhurat?.type}</Text>
-              <Text style={styles.dailySlotTime}>
-                {dailyMuhurat?.start} - {dailyMuhurat?.end}
-              </Text>
-            </View>
-          </View>
-        ) : (
-          <Text style={styles.placeholderText}>{t('no_daily_muhurat')}</Text>
-        )}
-        <PrimaryButton
-          title={t('view_today_muhurat')}
-          onPress={handleDailyMuhuratCTA}
-          disabled={buttonDisabled}
+      <View style={[styles.container, { paddingTop: inset.top }]}>
+        <StatusBar
+          backgroundColor={COLORS.primaryBackground}
+          barStyle="light-content"
         />
-        <Text style={styles.streakHint}>{t('streak_hint')}</Text>
+        <UserCustomHeader title={t('home')} />
+        <PermissionDeniedView
+          onRetry={refreshLocation}
+          isPermanent={
+            permissionStatus === 'denied' || permissionStatus === 'blocked'
+          }
+        />
       </View>
     );
-  };
+  }
 
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
-      <CustomeLoader loading={loading} />
+      {/* Only show loader when we have location and are actually loading data */}
+      <CustomeLoader loading={loading && !!contextLocation} />
       <StatusBar
         backgroundColor={COLORS.primaryBackground}
         barStyle="light-content"
       />
-      <UserCustomHeader
-        title={t('home')}
-        showCalendarButton
-        onCalendarPress={handleCalendarPress}
-      />
+      <UserCustomHeader title={t('home')} />
 
       <ScrollView
         style={styles.content}

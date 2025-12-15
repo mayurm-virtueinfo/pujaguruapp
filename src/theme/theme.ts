@@ -28,8 +28,8 @@ export const THEMESHADOW = {
     },
     shadowOpacity: 0.2, // iOS shadow
     shadowRadius: 7, // iOS shadow
-  }
-}
+  },
+};
 // Colors
 export const COLORS = {
   primary: '#F21825', // The teal/turquoise color from your button
@@ -48,6 +48,13 @@ export const COLORS = {
   success: '#32CD32', // Green for "Completed"
   warning: '#FF4500', // Orange-Red for "Cancelled by User"
   error: '#FF0000', // Red for "Rejected"
+
+  // Choghadiya Colors
+  choghadiya: {
+    good: { bg: '#F1F8E9', text: '#7CB342' }, // Olive Green
+    bad: { bg: '#FBE9E7', text: '#D84315' }, // Burnt Orange
+    normal: { bg: '#E3F2FD', text: '#1565C0' }, // Blue
+  },
   textDark: '#1A1A1A', // Primary dark text (e.g. pooja name)
   textGray: '#7D7D7D', // Secondary gray text (e.g. date, maharaj name)
   background: '#F7F9FC', // Light background color for screens

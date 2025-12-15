@@ -397,5 +397,9 @@
   "no_available_date_for_pandit": "No available date for pandit",
   "pooja_will_be_on": "Pooja will be on",
   "invalid_address": "Invalid address",
-  "dob_required": "Date of Birth is required"
+  "dob_required": "Date of Birth is required",
+  "panchang": "Panchang",
+  "location_permission_desc": "We need your location to verify precise Panchang details, including local sunrise, sunset updates, and muhurats accurate to your city.",
+  "open_settings": "Open Settings",
+  "allow_access": "Allow Access"
 }

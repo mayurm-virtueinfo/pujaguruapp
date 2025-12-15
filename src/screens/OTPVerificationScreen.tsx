@@ -87,19 +87,71 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
   }, [timer]);
 
   const handleOtpChange = (value: string, index: number) => {
-    if (value.length <= 1) {
+    // Handle paste: if user pastes multiple digits
+    if (value.length > 1) {
+      const pastedData = value.slice(0, 6).split('');
+      const newOtp = [...otp];
+
+      // Fill from current index
+      pastedData.forEach((char, i) => {
+        if (index + i < 6 && /^\d$/.test(char)) {
+          newOtp[index + i] = char;
+        }
+      });
+
+      setOtp(newOtp);
+
+      // Focus on next empty field or last field
+      const nextEmptyIndex = newOtp.findIndex(
+        (digit, i) => i > index && !digit,
+      );
+      const focusIndex =
+        nextEmptyIndex !== -1
+          ? nextEmptyIndex
+          : Math.min(index + pastedData.length, 5);
+
+      // Use requestAnimationFrame for smoother focus transition
+      requestAnimationFrame(() => {
+        inputRefs.current[focusIndex]?.focus();
+      });
+      return;
+    }
+
+    // Handle single digit input
+    if (value.length <= 1 && /^\d*$/.test(value)) {
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);
+
+      // Auto-focus next field if digit entered
       if (value && index < 5) {
-        inputRefs.current[index + 1]?.focus();
+        requestAnimationFrame(() => {
+          inputRefs.current[index + 1]?.focus();
+        });
       }
     }
   };
 
   const handleKeyPress = (e: any, index: number) => {
-    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
+    const key = e.nativeEvent.key;
+
+    // Handle backspace - smooth single-press deletion
+    if (key === 'Backspace') {
+      e.preventDefault();
+      const newOtp = [...otp];
+
+      if (otp[index]) {
+        // Current field has value: clear it and stay
+        newOtp[index] = '';
+        setOtp(newOtp);
+      } else if (index > 0) {
+        // Current field is empty: clear previous field and move back
+        newOtp[index - 1] = '';
+        setOtp(newOtp);
+        requestAnimationFrame(() => {
+          inputRefs.current[index - 1]?.focus();
+        });
+      }
     }
   };
 

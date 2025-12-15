@@ -168,12 +168,6 @@ const BottomUserProfileScreen: React.FC = () => {
           await changeLanguage('en');
         } catch (e) {}
         signOutApp();
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [{ name: 'SignIn' }],
-          }),
-        );
       }
     } catch (error: any) {
       setLogoutModalVisible(false);
@@ -208,12 +202,6 @@ const BottomUserProfileScreen: React.FC = () => {
         setDeleteAccountModalVisible(false);
         signOutApp();
         await notifee.cancelAllNotifications();
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [{ name: 'SignIn' }],
-          }),
-        );
       }
     } catch (error) {
       console.error('Error deleting account', error);

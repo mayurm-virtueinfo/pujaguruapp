@@ -22,8 +22,6 @@ import {
   getState,
 } from '../../../api/apiService';
 import { useCommonToast } from '../../../common/CommonToast';
-import { requestLocationPermission } from '../../../utils/locationUtils';
-import Geolocation from '@react-native-community/geolocation';
 import CustomDropdown from '../../../components/CustomDropdown';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Address } from '../AddressesScreen/AddressesScreen';
