@@ -60,6 +60,7 @@ import ApiEndpoints, {
   CREATE_KUNDLI,
   GET_KUNDLI_LIST,
   GET_KUNDLI_DETAILS,
+  GET_DAILY_HOROSCOPE,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -479,6 +480,27 @@ export interface CalendarDay {
     paksha: string;
   };
   festivals?: string[];
+}
+
+export interface HoroscopeDetailedStats {
+  text: string;
+  rating: number;
+}
+
+export interface HoroscopeResponse {
+  date: string;
+  sign: string;
+  family: HoroscopeDetailedStats;
+  health: HoroscopeDetailedStats;
+  remedy: string;
+  wealth: HoroscopeDetailedStats;
+  overview: string;
+  occupation: HoroscopeDetailedStats;
+  lucky_stats: {
+    color: string;
+    number: string;
+    good_time: string;
+  };
 }
 
 export const apiService = {
@@ -1835,4 +1857,17 @@ export const getKundliDetails = async (id: number): Promise<any> => {
         reject(error);
       });
   });
+};
+
+export const getDailyHoroscope = async (
+  rashi: string,
+): Promise<HoroscopeResponse | null> => {
+  try {
+    const url = GET_DAILY_HOROSCOPE.replace('{rashi}', rashi);
+    const response = await apiDev.get(url);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching daily horoscope:', error);
+    return null;
+  }
 };

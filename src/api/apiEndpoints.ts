@@ -109,3 +109,4 @@ export const GET_DYNAMIC_HOURS = '/app/dynamic-hours/?booking_id={booking_id}';
 export const CREATE_KUNDLI = '/api/astro/kundali/create/';
 export const GET_KUNDLI_LIST = '/api/astro/kundali/list/';
 export const GET_KUNDLI_DETAILS = '/api/astro/kundali/{id}/';
+export const GET_DAILY_HOROSCOPE = '/api/astro/rashifal/today/?rashi={rashi}';

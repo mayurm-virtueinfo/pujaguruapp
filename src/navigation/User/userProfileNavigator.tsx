@@ -17,6 +17,8 @@ import PastBookingDetailsScreen from '../../screens/Users/PastBookingDetailsScre
 import KundliScreen from '../../screens/Users/KundliScreen/KundliScreen';
 import KundliInputScreen from '../../screens/Users/KundliScreen/KundliInputScreen';
 import KundliListScreen from '../../screens/Users/KundliScreen/KundliListScreen';
+import HoroscopeScreen from '../../screens/Users/Horoscope/HoroscopeScreen';
+import HoroscopeDetailsScreen from '../../screens/Users/Horoscope/HoroscopeDetailsScreen';
 
 export type UserProfileParamList = {
   goBack(): void;
@@ -45,6 +47,8 @@ export type UserProfileParamList = {
   KundliScreen: any;
   KundliInputScreen: undefined;
   KundliListScreen: undefined;
+  HoroscopeScreen: any;
+  HoroscopeDetailsScreen: { signKey: string; signName: string };
 };
 
 const Stack = createStackNavigator<UserProfileParamList>();
@@ -83,17 +87,13 @@ const UserProfileNavigator = () => {
         name="PastBookingDetailsScreen"
         component={PastBookingDetailsScreen}
       />
+      <Stack.Screen name="KundliScreen" component={KundliScreen} />
+      <Stack.Screen name="KundliInputScreen" component={KundliInputScreen} />
+      <Stack.Screen name="KundliListScreen" component={KundliListScreen} />
+      <Stack.Screen name="HoroscopeScreen" component={HoroscopeScreen} />
       <Stack.Screen
-        name="KundliScreen"
-        component={KundliScreen}
-      />
-      <Stack.Screen
-        name="KundliInputScreen"
-        component={KundliInputScreen}
-      />
-      <Stack.Screen
-        name="KundliListScreen"
-        component={KundliListScreen}
+        name="HoroscopeDetailsScreen"
+        component={HoroscopeDetailsScreen}
       />
     </Stack.Navigator>
   );

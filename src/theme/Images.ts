@@ -36,4 +36,16 @@ export const Images = {
   ic_moon_phase_28: require('../assets/images/moon-phases/moon_phase_28.png'),
   ic_moon_phase_29: require('../assets/images/moon-phases/moon_phase_29.png'),
   ic_moon_phase_30: require('../assets/images/moon-phases/moon_phase_30.png'), // Day 30 (Dark)
+  ic_aries: require('../assets/images/zodiac/aries.png'),
+  ic_taurus: require('../assets/images/zodiac/taurus.png'),
+  ic_gemini: require('../assets/images/zodiac/gemini.png'),
+  ic_cancer: require('../assets/images/zodiac/cancer.png'),
+  ic_leo: require('../assets/images/zodiac/leo.png'),
+  ic_virgo: require('../assets/images/zodiac/virgo.png'),
+  ic_libra: require('../assets/images/zodiac/libra.png'),
+  ic_scorpio: require('../assets/images/zodiac/scorpio.png'),
+  ic_sagittarius: require('../assets/images/zodiac/sagittarius.png'),
+  ic_capricorn: require('../assets/images/zodiac/capricorn.png'),
+  ic_aquarius: require('../assets/images/zodiac/aquarius.png'),
+  ic_pisces: require('../assets/images/zodiac/pisces.png'),
 };

@@ -13,15 +13,22 @@ import moment from 'moment';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { UserProfileParamList } from '../../../navigation/User/userProfileNavigator';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 const { width } = Dimensions.get('window');
 
 const KundliScreen = () => {
   const inset = useSafeAreaInsets();
   const route = useRoute<RouteProp<UserProfileParamList, 'KundliScreen'>>();
-  const { kundliData: apiData, name, birthDate, birthTime, birthPlace } = route.params || {};
+  const {
+    kundliData: apiData,
+    name,
+    birthDate,
+    birthTime,
+    birthPlace,
+  } = route.params || {};
 
-  console.log("apiData", apiData);
+  console.log('apiData', apiData);
   const [activeTab, setActiveTab] = useState<
     'Lagna' | 'Navamsa' | 'Dasha' | 'Sun' | 'Moon' | 'Dasamsa'
   >('Lagna');
@@ -91,7 +98,7 @@ const KundliScreen = () => {
     const ascendant = chartData?.ascendant;
 
     return (
-      <View style={[styles.chartCard,THEMESHADOW.shadow]}>
+      <View style={[styles.chartCard, THEMESHADOW.shadow]}>
         <View style={styles.diamondChart}>
           {/* Diagonals */}
           <View style={styles.diagonal1} />
@@ -173,7 +180,7 @@ const KundliScreen = () => {
     });
 
     return (
-      <View style={[styles.tableCard,THEMESHADOW.shadow]}>
+      <View style={[styles.tableCard, THEMESHADOW.shadow]}>
         <Text style={styles.sectionTitle}>Planetary Positions</Text>
 
         {/* Table Header */}
@@ -181,39 +188,61 @@ const KundliScreen = () => {
           <Text style={[styles.cell, styles.headerCell, { flex: 1.2 }]}>
             Planet
           </Text>
-          <Text style={[styles.cell, styles.headerCell]}>Sign</Text>
-          <Text style={[styles.cell, styles.headerCell]}>Sign Lord</Text>
-          <Text style={[styles.cell, styles.headerCell]}>Degree</Text>
-          <Text style={[styles.cell, styles.headerCell, { flex: 0.5 }]}>
+          <Text style={[styles.cell, styles.headerCell, { flex: 1.3 }]}>
+            Sign
+          </Text>
+          <Text style={[styles.cell, styles.headerCell, { flex: 1.1 }]}>
+            Sign Lord
+          </Text>
+          <Text style={[styles.cell, styles.headerCell, { flex: 0.9 }]}>
+            Degree
+          </Text>
+          <Text style={[styles.cell, styles.headerCell, { flex: 0.7 }]}>
             House
           </Text>
         </View>
 
         {/* Ascendant Row */}
         <View style={styles.row}>
-          <Text style={[styles.cell, { flex: 1.2, fontWeight: 'bold' }]}>
+          <Text style={[styles.cell, styles.planetText, { flex: 1.2 }]}>
             Ascendant
           </Text>
-          <Text style={styles.cell}>{ascendant?.sign}</Text>
-          <Text style={styles.cell}>{signLordMap[ascendant?.sign] || '-'}</Text>
-          <Text style={styles.cell}>{ascendant?.pos?.deg?.toFixed(2)}°</Text>
-          <Text style={[styles.cell, { flex: 0.5 }]}>1</Text>
+          <Text style={[styles.cell, { flex: 1.3 }]}>{ascendant?.sign}</Text>
+          <Text style={[styles.cell, { flex: 1.1 }]}>
+            {signLordMap[ascendant?.sign] || '-'}
+          </Text>
+          <Text style={[styles.cell, { flex: 0.9 }]}>
+            {ascendant?.pos?.deg?.toFixed(2)}°
+          </Text>
+          <Text style={[styles.cell, { flex: 0.7 }]}>1</Text>
         </View>
 
         {/* Planets Rows */}
-        {Object.entries(planets).map(([planet, info]: [string, any]) => (
-          <View key={planet} style={styles.row}>
-            <Text style={[styles.cell, { flex: 1.2, fontWeight: 'bold' }]}>
-              {planet}
-            </Text>
-            <Text style={styles.cell}>{info.sign}</Text>
-            <Text style={styles.cell}>{signLordMap[info.sign] || '-'}</Text>
-            <Text style={styles.cell}>{info.pos?.deg?.toFixed(2)}°</Text>
-            <Text style={[styles.cell, { flex: 0.5 }]}>
-              {info['house-num']}
-            </Text>
-          </View>
-        ))}
+        {Object.entries(planets).map(
+          ([planet, info]: [string, any], index, array) => (
+            <View
+              key={planet}
+              style={[
+                styles.row,
+                index === array.length - 1 && { borderBottomWidth: 0 },
+              ]}
+            >
+              <Text style={[styles.cell, styles.planetText, { flex: 1.2 }]}>
+                {planet}
+              </Text>
+              <Text style={[styles.cell, { flex: 1.3 }]}>{info.sign}</Text>
+              <Text style={[styles.cell, { flex: 1.1 }]}>
+                {signLordMap[info.sign] || '-'}
+              </Text>
+              <Text style={[styles.cell, { flex: 0.9 }]}>
+                {info.pos?.deg?.toFixed(2)}°
+              </Text>
+              <Text style={[styles.cell, { flex: 0.7 }]}>
+                {info['house-num']}
+              </Text>
+            </View>
+          ),
+        )}
       </View>
     );
   };
@@ -226,7 +255,7 @@ const KundliScreen = () => {
     );
 
     return (
-      <View style={[styles.tableCard,THEMESHADOW.shadow]}>
+      <View style={[styles.tableCard, THEMESHADOW.shadow]}>
         <Text style={styles.sectionTitle}>Vimshottari Dasha</Text>
         <View style={[styles.row, styles.tableHeader]}>
           <Text style={[styles.cell, styles.headerCell]}>Dasha Lord</Text>
@@ -263,7 +292,7 @@ const KundliScreen = () => {
       <View style={styles.contentContainer}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Header Card below pinned header, with radii */}
-          <View style={[styles.headerCard,THEMESHADOW.shadow]}>
+          <View style={[styles.headerCard, THEMESHADOW.shadow]}>
             <Text style={styles.name}>{name || user.name || 'User'}</Text>
             <Text style={styles.details}>
               {birthDate
@@ -499,40 +528,61 @@ const styles = StyleSheet.create({
   tableCard: {
     backgroundColor: COLORS.white,
     margin: 20,
-    padding: 15,
-    borderRadius: 15,
+    padding: 16,
+    borderRadius: 12,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    fontWeight: '700',
+    marginBottom: 16,
     color: COLORS.textPrimary,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 10,
+    alignItems: 'center',
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#E5E5E5',
   },
   tableHeader: {
-    backgroundColor: COLORS.lightGray,
-    borderBottomWidth: 0,
-    borderRadius: 8,
-    paddingVertical: 12,
-    marginBottom: 5,
+    backgroundColor: '#F8F8F8',
+    borderBottomWidth: 2,
+    borderColor: '#D0D0D0',
+    paddingVertical: 10,
+    marginBottom: 4,
+    borderRadius: 6,
   },
   cell: {
     flex: 1,
     textAlign: 'center',
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textPrimary,
   },
   headerCell: {
-    fontWeight: 'bold',
+    fontWeight: '700',
+    fontSize: 12,
     color: COLORS.textSecondary,
   },
-  planetName: { flex: 1.2, fontWeight: '600', textAlign: 'left' },
+  planetText: {
+    fontWeight: '600',
+    textAlign: 'left',
+    paddingLeft: 4,
+  },
+  planetCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  planetIcon: {
+    marginRight: 8,
+  },
+  planetName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    textAlign: 'left',
+  },
   value: { flex: 1, textAlign: 'center', color: COLORS.textSecondary },
 });
 
