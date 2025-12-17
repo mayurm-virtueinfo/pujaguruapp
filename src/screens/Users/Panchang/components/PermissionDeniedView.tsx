@@ -4,12 +4,17 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
+  Dimensions,
+  StatusBar,
   Linking,
 } from 'react-native';
 import { COLORS } from '../../../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
+import LinearGradient from 'react-native-linear-gradient';
+import Fonts from '../../../../theme/fonts';
+
+const { width } = Dimensions.get('window');
 
 interface PermissionDeniedViewProps {
   onRetry: () => void;
@@ -32,22 +37,59 @@ const PermissionDeniedView: React.FC<PermissionDeniedViewProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="location" size={48} color={COLORS.primary} />
-        </View>
-        <Text style={styles.title}>{t('location_required')}</Text>
-        <Text style={styles.subtitle}>{t('location_permission_desc')}</Text>
-
-        <TouchableOpacity
-          style={styles.primaryButton}
-          onPress={handlePrimaryAction}
-        >
-          <Text style={styles.primaryButtonText}>
-            {isPermanent ? t('open_settings') : t('allow_access')}
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="transparent"
+        translucent
+      />
+      <LinearGradient
+        colors={[COLORS.gradientStart || '#FF9933', COLORS.gradientEnd || '#FF512F']}
+        style={styles.gradientBackground}
+      >
+        <View style={styles.contentContainer}>
+          <View style={styles.iconCircle}>
+            <Ionicons name="location" size={64} color={COLORS.primary} />
+          </View>
+          
+          <Text style={styles.title}>
+            {t('location_required') || 'Location Access Required'}
           </Text>
-        </TouchableOpacity>
-      </View>
+          
+          <Text style={styles.subtitle}>
+            {t('location_permission_desc') || 
+             'To provide you with accurate Panchang, Muhurat, and nearby Panditji recommendations, we need access to your location.'}
+          </Text>
+
+          <View style={styles.actionContainer}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handlePrimaryAction}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.primaryButtonText}>
+                {isPermanent ? (t('open_settings') || 'Open Settings') : (t('allow_access') || 'Allow Access')}
+              </Text>
+              <Ionicons 
+                name={isPermanent ? "settings-outline" : "navigate-circle-outline"} 
+                size={20} 
+                color={COLORS.primary} 
+                style={styles.buttonIcon}
+              />
+            </TouchableOpacity>
+            
+            {!isPermanent && (
+              <TouchableOpacity 
+                style={styles.secondaryButton}
+                onPress={() => Linking.openSettings()}
+              >
+                 <Text style={styles.secondaryButtonText}>
+                  {t('open_settings') || 'Open Settings'}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      </LinearGradient>
     </View>
   );
 };
@@ -55,70 +97,97 @@ const PermissionDeniedView: React.FC<PermissionDeniedViewProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: width,
+  },
+  gradientBackground: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
-    backgroundColor: COLORS.white,
+    paddingHorizontal: 24,
   },
-  content: {
+  contentContainer: {
+    alignItems: 'center',
     width: '100%',
-    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 30,
+    paddingVertical: 40,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: `${COLORS.primary}15`, // 10% opacity
+  iconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
   },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    marginBottom: 12,
+    fontSize: 28,
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.white,
+    marginBottom: 16,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.2)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
   },
   subtitle: {
-    fontSize: 15,
-    color: COLORS.textSecondary,
+    fontSize: 16,
+    fontFamily: Fonts.Sen_Regular,
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 22,
+    marginBottom: 40,
+    lineHeight: 24,
+    paddingHorizontal: 10,
+  },
+  actionContainer: {
+    width: '100%',
+    gap: 16,
   },
   primaryButton: {
     width: '100%',
-    height: 50,
-    backgroundColor: COLORS.primary,
-    borderRadius: 25,
+    height: 56,
+    backgroundColor: COLORS.white,
+    borderRadius: 28,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: COLORS.primary,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 5,
   },
   primaryButtonText: {
-    color: COLORS.white,
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: COLORS.primary,
+    fontSize: 18,
+    fontFamily: Fonts.Sen_Bold,
+    marginRight: 8,
+  },
+  buttonIcon: {
+    marginLeft: 4,
   },
   secondaryButton: {
     width: '100%',
-    height: 50,
+    height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 25,
-    borderWidth: 1,
-    borderColor: COLORS.border || '#E0E0E0',
+    borderRadius: 28,
+    borderWidth: 1.5,
+    borderColor: 'rgba(255, 255, 255, 0.8)',
   },
   secondaryButtonText: {
-    color: COLORS.textPrimary,
+    color: COLORS.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: Fonts.Sen_Bold,
   },
 });
 

@@ -61,10 +61,12 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({
    * @returns Whether permission was granted.
    */
   /* Simplifies permission requests */
-  const requestLocationPermission = async (): Promise<boolean> => {
+  const requestLocationPermission = async (): Promise<
+    LocationContextType['permissionStatus']
+  > => {
     if (Platform.OS === 'ios') {
       const status = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
-      return status === RESULTS.GRANTED || status === RESULTS.LIMITED;
+      return status;
     }
     // Android
     try {
@@ -75,17 +77,25 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({
       const fine = granted[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION];
       const coarse =
         granted[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION];
+
       if (
         fine === PermissionsAndroid.RESULTS.GRANTED ||
         coarse === PermissionsAndroid.RESULTS.GRANTED
       ) {
-        return true;
+        return 'granted';
       }
-      // Permission permanently denied - PermissionDeniedView will handle UI
-      return false;
+
+      if (
+        fine === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN ||
+        coarse === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN
+      ) {
+        return 'blocked';
+      }
+
+      return 'denied';
     } catch (err) {
       console.warn(err);
-      return false;
+      return 'denied';
     }
   };
 
@@ -132,13 +142,13 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({
       setError(null);
 
       // 1. Permission
-      const hasPermission = await requestLocationPermission();
-      if (!hasPermission) {
-        setPermissionStatus('denied');
+      const status = await requestLocationPermission();
+      setPermissionStatus(status);
+
+      if (status !== 'granted' && status !== 'limited') {
         if (!backgroundUpdate) setLoading(false);
-        return null; // Permission denied
+        return null; // Permission denied or blocked
       }
-      setPermissionStatus('granted');
 
       // 2. Services (GPS)
       const gpsEnabled = await ensureLocationServicesEnabled();

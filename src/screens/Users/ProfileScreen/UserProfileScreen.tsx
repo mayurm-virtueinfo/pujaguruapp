@@ -456,22 +456,10 @@ const UserProfileScreen: React.FC = () => {
   // Show permission denied view if location is not available during signup
   if (!locationData && !locationLoading) {
     return (
-      <View style={[styles.container, { paddingTop: inset.top }]}>
-        <StatusBar
-          translucent
-          backgroundColor="transparent"
-          barStyle="light-content"
-        />
-        <LinearGradient
-          colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-          style={[styles.headerGradient]}
-        />
-        <UserCustomHeader title={t('profile')} showBackButton={true} />
+      <View style={styles.container}>
         <PermissionDeniedView
           onRetry={refreshLocation}
-          isPermanent={
-            permissionStatus === 'denied' || permissionStatus === 'blocked'
-          }
+          isPermanent={permissionStatus === 'blocked'}
         />
       </View>
     );

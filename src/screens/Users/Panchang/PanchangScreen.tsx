@@ -32,6 +32,7 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import CalendarDayCell from './components/CalendarDayCell';
 import DayDetails from './components/DayDetails';
 import PermissionDeniedView from './components/PermissionDeniedView';
+import InlineLocationRequest from '../../../components/InlineLocationRequest';
 import { getCityName } from '../../../helper/helper';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -321,12 +322,13 @@ const CalendarScreen = () => {
       <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
         <StatusBar barStyle="dark-content" />
         <UserCustomHeader title={t('panchang')} />
-        <PermissionDeniedView
-          onRetry={refreshLocation}
-          isPermanent={
-            permissionStatus === 'denied' || permissionStatus === 'blocked'
-          }
-        />
+        <View style={styles.centerContent}>
+          <InlineLocationRequest
+            onAllow={refreshLocation}
+            permissionStatus={permissionStatus}
+            message={t('enable_location_panchang_desc') || 'Enable location to see Panchang and Muhurat for your area'}
+          />
+        </View>
       </SafeAreaView>
     );
   }
@@ -438,6 +440,12 @@ const styles = StyleSheet.create({
   },
   grid: {
     paddingHorizontal: 8,
+  },
+  centerContent: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
   },
 });
 

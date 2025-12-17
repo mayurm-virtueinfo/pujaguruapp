@@ -10,6 +10,7 @@ import {
   AppState,
   RefreshControl,
   DeviceEventEmitter,
+  Linking,
 } from 'react-native';
 import { moderateScale } from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -34,11 +35,10 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import { LOCATION_UPDATED_EVENT } from '../../../helper/helper';
 import { useWebSocket } from '../../../context/WebSocketContext';
-import DailyQuoteCard from '../../../components/DailyQuoteCard';
-import UpcomingFestivalsCard from '../../../components/UpcomingFestivalsCard';
-import AuraScannerCard from '../../../components/AuraScannerCard';
+
 import { useLocation } from '../../../context/LocationContext';
 import PermissionDeniedView from '../Panchang/components/PermissionDeniedView';
+import InlineLocationRequest from '../../../components/InlineLocationRequest';
 
 interface PendingPuja {
   id: number;
@@ -414,24 +414,7 @@ const UserHomeScreen: React.FC = () => {
     }
   }, [messages, onRefresh]);
 
-  // Show permission denied view if location is not available and not loading
-  if (!contextLocation && !locationLoading) {
-    return (
-      <View style={[styles.container, { paddingTop: inset.top }]}>
-        <StatusBar
-          backgroundColor={COLORS.primaryBackground}
-          barStyle="light-content"
-        />
-        <UserCustomHeader title={t('home')} />
-        <PermissionDeniedView
-          onRetry={refreshLocation}
-          isPermanent={
-            permissionStatus === 'denied' || permissionStatus === 'blocked'
-          }
-        />
-      </View>
-    );
-  }
+
 
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
@@ -456,9 +439,8 @@ const UserHomeScreen: React.FC = () => {
         }
       >
         {/* {renderDailyMuhuratCard()} */}
-        <DailyQuoteCard />
-        <UpcomingFestivalsCard />
-        <AuraScannerCard />
+
+
         {/* Recommended Panditji */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -557,19 +539,20 @@ const UserHomeScreen: React.FC = () => {
                     justifyContent: 'center',
                     alignItems: 'center',
                     backgroundColor: COLORS.white,
-                    paddingVertical: 12,
+                    paddingVertical: 24,
+                    borderRadius: 16,
+                    marginHorizontal: 4,
                   },
                 ]}
               >
-                {loading ? (
-                  <Text style={styles.noPanditText}>
-                    {t('updating_location')}
-                  </Text>
+                {!contextLocation ? (
+                  <InlineLocationRequest
+                    onAllow={refreshLocation}
+                    permissionStatus={permissionStatus}
+                  />
                 ) : (
                   <Text style={styles.noPanditText}>
-                    {location
-                      ? t('no_panditji_found')
-                      : t('location_not_available')}
+                    {loading ? t('updating_location') : t('no_panditji_found')}
                   </Text>
                 )}
               </View>

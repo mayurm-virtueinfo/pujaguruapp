@@ -137,7 +137,7 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
 
     // Handle backspace - smooth single-press deletion
     if (key === 'Backspace') {
-      e.preventDefault();
+      // e.preventDefault(); // Removed as it's not supported in RN and can cause issues
       const newOtp = [...otp];
 
       if (otp[index]) {
@@ -364,6 +364,8 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
                     keyboardType="number-pad"
                     maxLength={1}
                     selectTextOnFocus
+                    textContentType={index === 0 ? 'oneTimeCode' : 'none'} // Only for first input to avoid iOS clearing issue
+                    autoComplete={index === 0 ? 'sms-otp' : 'off'} // Only for first input
                     testID={`otp-input-${index}`}
                   />
                 ))}

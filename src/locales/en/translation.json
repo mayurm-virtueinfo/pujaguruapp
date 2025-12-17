@@ -418,8 +418,7 @@
   "scan_now": "Scan Now",
   "your_spiritual_energy_color": "Your spiritual energy color for today is",
   "scanning_aura": "Reading your energy...",
-  "place_thumb": "Place your thumb on the scanner to reveal your aura",
-  "aura_scanned": "Aura scanned successfully",
-  "your_aura_is": "Your aura is",
-  "scan_again": "Scan Again"
+
+  "enable_location_panchang_desc": "We need your location to verify precise Panchang details, including local sunrise, sunset updates, and muhurats accurate to your city.",
+  "enable_location_pandit_desc":"Enable location to find Panditji near you"
 }
