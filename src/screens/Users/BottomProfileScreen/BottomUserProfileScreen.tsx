@@ -214,6 +214,10 @@ const BottomUserProfileScreen: React.FC = () => {
     navigation.navigate('KundliListScreen');
   };
 
+  const handleHoroscopeNavigation = () => {
+    navigation.navigate('HoroscopeScreen');
+  };
+
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={logoutLoading || loading} />
@@ -336,6 +340,19 @@ const BottomUserProfileScreen: React.FC = () => {
               activeOpacity={0.7}
             >
               <Text style={styles.editFieldLabel}>{t('rashi_ful')} </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.primaryTextDark}
+              />
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity
+              style={styles.editFieldContainer}
+              onPress={handleHoroscopeNavigation}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.editFieldLabel}>{t('daily_horoscope')} </Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}
