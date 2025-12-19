@@ -24,7 +24,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomeLoader from '../../../components/CustomeLoader';
 import { translateText } from '../../../utils/TranslateData';
 
+import { StackNavigationProp } from '@react-navigation/stack';
+
 type HoroscopeDetailsRouteProp = RouteProp<
+  UserProfileParamList,
+  'HoroscopeDetailsScreen'
+>;
+
+type HoroscopeDetailsNavigationProp = StackNavigationProp<
   UserProfileParamList,
   'HoroscopeDetailsScreen'
 >;
@@ -204,6 +211,14 @@ const HoroscopeDetailsScreen = () => {
 
   const inset = useSafeAreaInsets();
 
+  const handleBackPress = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.replace('HoroscopeScreen');
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <StatusBar
@@ -214,7 +229,7 @@ const HoroscopeDetailsScreen = () => {
       <UserCustomHeader
         title={signName}
         showBackButton
-        onBackPress={() => navigation.goBack()}
+        onBackPress={handleBackPress}
       />
       <View
         style={{

@@ -1,8 +1,8 @@
-import notifee, {EventType, AndroidImportance} from '@notifee/react-native';
-import {getMessaging} from '@react-native-firebase/messaging';
-import {getApp} from '@react-native-firebase/app';
-import {navigate, navigationRef} from '../utils/NavigationService';
-import {COLORS} from '../theme/theme';
+import notifee, { EventType, AndroidImportance } from '@notifee/react-native';
+import { getMessaging } from '@react-native-firebase/messaging';
+import { getApp } from '@react-native-firebase/app';
+import { navigate, navigationRef } from '../utils/NavigationService';
+import { COLORS } from '../theme/theme';
 
 const messaging = getMessaging(getApp());
 
@@ -29,7 +29,7 @@ export async function setupNotifications() {
   messaging.onMessage(async (remoteMessage: any) => {
     console.log('📩 Foreground FCM message:', remoteMessage);
 
-    const {title, body} = remoteMessage.notification || {};
+    const { title, body } = remoteMessage.notification || {};
     await notifee.displayNotification({
       id: remoteMessage.messageId,
       title: title || 'New Notification',
@@ -38,7 +38,7 @@ export async function setupNotifications() {
       android: {
         channelId,
         smallIcon: 'ic_notification',
-        pressAction: {id: 'default'},
+        pressAction: { id: 'default' },
         color: COLORS.primary,
         sound: 'custom_notification_sound',
       },
@@ -47,7 +47,7 @@ export async function setupNotifications() {
   });
 
   // Handle notification press in foreground
-  foregroundUnsubscribe = notifee.onForegroundEvent(({type, detail}) => {
+  foregroundUnsubscribe = notifee.onForegroundEvent(({ type, detail }) => {
     if (type === EventType.PRESS) {
       console.log('Notification pressed in foreground', detail);
       const data = detail.notification?.data || {};
@@ -116,17 +116,17 @@ export function handleNotificationNavigation(data: any) {
         screen: 'UserHomeNavigator',
         params: targetScreen
           ? {
-              screen: targetScreen,
-              params: {
-                booking_id,
-                pandit_id,
-                video_call,
-              },
-            }
-          : {
+            screen: targetScreen,
+            params: {
               booking_id,
               pandit_id,
+              video_call,
             },
+          }
+          : {
+            booking_id,
+            pandit_id,
+          },
       },
     };
 
@@ -178,6 +178,37 @@ export function handleNotificationNavigation(data: any) {
           screen: targetScreen,
           params: {
             id: booking_id,
+          },
+        },
+      },
+    };
+
+    setTimeout(() => {
+      if (navigationRef.isReady()) {
+        console.warn('Navigation is ready');
+        navigate('Main', nestedParams);
+      } else {
+        console.warn('Navigation not ready yet');
+      }
+    }, 500);
+  }
+  //HoroscopeDetailsScreen notification
+  else if (data?.screen === 'HoroscopeDetailsScreen') {
+    console.log('-------------------------------');
+    console.log('data :: ', data);
+    const targetScreen = data?.screen;
+    const signKey = data?.rashi;
+    const signName = data?.rashi;
+
+    const nestedParams = {
+      screen: 'UserAppBottomTabNavigator',
+      params: {
+        screen: 'UserProfileNavigator',
+        params: {
+          screen: targetScreen,
+          params: {
+            signKey,
+            signName,
           },
         },
       },

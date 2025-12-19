@@ -13,6 +13,7 @@ import {
   Modal,
   Pressable,
 } from 'react-native';
+import PagerView from 'react-native-pager-view';
 import { moderateScale, verticalScale } from 'react-native-size-matters';
 import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
@@ -102,7 +103,9 @@ const PanditDetailsScreen: React.FC = () => {
   const [pujaList, setPujaList] = useState<PanditList[]>([]);
   const [showAllPuja, setShowAllPuja] = useState<boolean>(false);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalImageUri, setModalImageUri] = useState<string | null>(null);
+  const [modalImages, setModalImages] = useState<string[]>([]);
+  const [initialImageIndex, setInitialImageIndex] = useState(0);
+  const [activePage, setActivePage] = useState(0);
 
   const currentLanguage = i18n.language;
   const translationCacheRef = useRef<Map<string, any>>(new Map());
@@ -226,11 +229,15 @@ const PanditDetailsScreen: React.FC = () => {
     if (!images || images.length === 0) return null;
     return (
       <View style={styles.reviewImagesRow}>
-        {images.map(imgObj => (
+        {images.map((imgObj, index) => (
           <TouchableOpacity
             key={imgObj.id}
             onPress={() => {
-              setModalImageUri(imgObj.image);
+              const allImages = images.map(img => img.image);
+              setModalImages(allImages);
+              setModalImages(allImages);
+              setInitialImageIndex(index);
+              setActivePage(index);
               setModalVisible(true);
             }}
           >
@@ -244,11 +251,15 @@ const PanditDetailsScreen: React.FC = () => {
     );
   };
 
-  const renderGalleryItem = ({ item }: { item: PanditPhotoGalleryItem }) => (
+  const renderGalleryItem = ({ item, index }: { item: PanditPhotoGalleryItem, index: number }) => (
     <TouchableOpacity
       style={[styles.galleryItemHorizontal, THEMESHADOW.shadow]}
       onPress={() => {
-        setModalImageUri(item.image);
+        const allImages = gallery.map(g => g.image);
+        setModalImages(allImages);
+        setModalImages(allImages);
+        setInitialImageIndex(index);
+        setActivePage(index);
         setModalVisible(true);
       }}
     >
@@ -350,16 +361,42 @@ const PanditDetailsScreen: React.FC = () => {
             >
               <Ionicons name="close" size={32} color="#fff" />
             </TouchableOpacity>
-            {modalImageUri && (
-              <Image
-                source={{
-                  uri:
-                    modalImageUri ||
-                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
-                }}
-                style={styles.fullImage}
-                resizeMode="contain"
-              />
+            {modalImages.length > 0 && (
+              <PagerView
+                style={styles.pagerView}
+                initialPage={initialImageIndex}
+                orientation="horizontal"
+                onPageSelected={e => setActivePage(e.nativeEvent.position)}
+              >
+                {modalImages.map((imgUri, index) => (
+                  <View key={index} style={styles.page}>
+                    <Image
+                      source={{
+                        uri:
+                          imgUri ||
+                          'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+                      }}
+                      style={styles.fullImage}
+                      resizeMode="contain"
+                    />
+                  </View>
+                ))}
+              </PagerView>
+            )}
+            {modalImages.length > 1 && (
+              <View style={styles.paginationContainer}>
+                {modalImages.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[
+                      styles.paginationDot,
+                      activePage === index
+                        ? styles.paginationDotActive
+                        : styles.paginationDotInactive,
+                    ]}
+                  />
+                ))}
+              </View>
             )}
           </View>
         </View>
@@ -412,7 +449,7 @@ const PanditDetailsScreen: React.FC = () => {
               <FlatList
                 data={gallery}
                 keyExtractor={item => item.id.toString()}
-                renderItem={renderGalleryItem}
+                renderItem={({ item, index }) => renderGalleryItem({ item, index })}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.galleryHorizontalList}
@@ -421,36 +458,6 @@ const PanditDetailsScreen: React.FC = () => {
               <View style={[THEMESHADOW.shadow, styles.forNodata]}>
                 <Text style={styles.forNoDataText}>
                   {t('no_photo_gallery_available')}
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.poojaSection}>
-            <Text style={styles.sectionTitle}>{t('puja_list')}</Text>
-            {pujaList && pujaList.length > 0 ? (
-              <View style={[styles.poojaList, THEMESHADOW.shadow]}>
-                {displayedPujaList.map((item, idx) => (
-                  <React.Fragment key={item.pooja}>
-                    {renderPujaItem({ item })}
-                    {idx < displayedPujaList.length - 1 && (
-                      <View style={styles.separator} />
-                    )}
-                  </React.Fragment>
-                ))}
-                {!showAllPuja && pujaList.length > 3 && (
-                  <TouchableOpacity
-                    style={styles.moreButton}
-                    onPress={() => setShowAllPuja(true)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.moreButtonText}>More...</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            ) : (
-              <View style={[THEMESHADOW.shadow, styles.forNodata]}>
-                <Text style={styles.forNoDataText}>
-                  {t('no_puja_performed_data_available')}
                 </Text>
               </View>
             )}
@@ -525,6 +532,36 @@ const PanditDetailsScreen: React.FC = () => {
             ) : (
               <View style={[THEMESHADOW.shadow, styles.forNodata]}>
                 <Text style={styles.forNoDataText}>{t('no_review_text')}</Text>
+              </View>
+            )}
+          </View>
+          <View style={styles.poojaSection}>
+            <Text style={styles.sectionTitle}>{t('puja_list')}</Text>
+            {pujaList && pujaList.length > 0 ? (
+              <View style={[styles.poojaList, THEMESHADOW.shadow]}>
+                {displayedPujaList.map((item, idx) => (
+                  <React.Fragment key={item.pooja}>
+                    {renderPujaItem({ item })}
+                    {idx < displayedPujaList.length - 1 && (
+                      <View style={styles.separator} />
+                    )}
+                  </React.Fragment>
+                ))}
+                {!showAllPuja && pujaList.length > 3 && (
+                  <TouchableOpacity
+                    style={styles.moreButton}
+                    onPress={() => setShowAllPuja(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.moreButtonText}>More...</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : (
+              <View style={[THEMESHADOW.shadow, styles.forNodata]}>
+                <Text style={styles.forNoDataText}>
+                  {t('no_puja_performed_data_available')}
+                </Text>
               </View>
             )}
           </View>
@@ -768,11 +805,39 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  pagerView: {
+    width: '100%',
+    height: '100%',
+  },
+  page: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+  },
   fullImage: {
     width: screenWidth * 0.9,
     height: screenHeight * 0.7,
     borderRadius: moderateScale(12),
     backgroundColor: '#fff',
+  },
+  paginationContainer: {
+    position: 'absolute',
+    bottom: 50,
+    flexDirection: 'row',
+    alignSelf: 'center',
+    zIndex: 2,
+  },
+  paginationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+  paginationDotActive: {
+    backgroundColor: '#fff',
+  },
+  paginationDotInactive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
   },
   closeButton: {
     position: 'absolute',
