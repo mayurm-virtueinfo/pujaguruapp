@@ -6,7 +6,7 @@ import {
   StatusBar,
   Image,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { UserProfileParamList } from '../../../navigation/User/userProfileNavigator';
@@ -22,6 +22,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomeLoader from '../../../components/CustomeLoader';
+import { translateText } from '../../../utils/TranslateData';
 
 type HoroscopeDetailsRouteProp = RouteProp<
   UserProfileParamList,
@@ -31,20 +32,97 @@ type HoroscopeDetailsRouteProp = RouteProp<
 const HoroscopeDetailsScreen = () => {
   const route = useRoute<HoroscopeDetailsRouteProp>();
   const navigation = useNavigation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.language;
   const { signKey, signName } = route.params;
 
   const [data, setData] = useState<HoroscopeResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const cacheRef = useRef<Map<string, HoroscopeResponse>>(new Map());
+
+  console.log('data :: ', data);
 
   useEffect(() => {
     fetchData();
-  }, [signKey]);
+  }, [signKey, currentLanguage]);
 
   const fetchData = async () => {
+    const cacheKey = `${signKey}_${currentLanguage}`;
+    if (cacheRef.current.has(cacheKey)) {
+      setData(cacheRef.current.get(cacheKey)!);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
-      const result = await getDailyHoroscope(signKey);
+      let result = await getDailyHoroscope(signKey);
+
+      if (result && currentLanguage !== 'en') {
+        try {
+          const fieldsToTranslate = [
+            result.overview,
+            result.remedy,
+            result.health?.text,
+            result.wealth?.text,
+            result.occupation?.text,
+            result.family?.text,
+            result.lucky_stats?.color,
+            result.lucky_stats?.good_time,
+            result.date,
+          ];
+
+          const translations = await Promise.all(
+            fieldsToTranslate.map(text =>
+              text ? translateText(text, currentLanguage) : null,
+            ),
+          );
+
+          result = {
+            ...result,
+            overview: translations[0] || result.overview,
+            remedy: translations[1] || result.remedy,
+            health: result.health
+              ? {
+                  ...result.health,
+                  text: translations[2] || result.health.text,
+                }
+              : result.health,
+            wealth: result.wealth
+              ? {
+                  ...result.wealth,
+                  text: translations[3] || result.wealth.text,
+                }
+              : result.wealth,
+            occupation: result.occupation
+              ? {
+                  ...result.occupation,
+                  text: translations[4] || result.occupation.text,
+                }
+              : result.occupation,
+            family: result.family
+              ? {
+                  ...result.family,
+                  text: translations[5] || result.family.text,
+                }
+              : result.family,
+            lucky_stats: result.lucky_stats
+              ? {
+                  ...result.lucky_stats,
+                  color: translations[6] || result.lucky_stats.color,
+                  good_time: translations[7] || result.lucky_stats.good_time,
+                }
+              : result.lucky_stats,
+            date: translations[8] || result.date,
+          };
+        } catch (error) {
+          console.warn('Horoscope translation failed', error);
+        }
+      }
+
+      if (result) {
+        cacheRef.current.set(cacheKey, result);
+      }
       setData(result);
     } catch (error) {
       console.error(error);
@@ -138,14 +216,27 @@ const HoroscopeDetailsScreen = () => {
         showBackButton
         onBackPress={() => navigation.goBack()}
       />
+      <View
+        style={{
+          position: 'absolute',
+          top: '50%',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: COLORS.white,
+          zIndex: -1,
+        }}
+      />
       {loading ? (
         <View style={[styles.content, { flex: 1 }]} />
       ) : (
         <ScrollView
+          style={{ flex: 1 }}
           contentContainerStyle={[
             styles.content,
-            { paddingBottom: inset.bottom + 20 },
+            { paddingBottom: inset.bottom + 20, flexGrow: 1 },
           ]}
+          showsVerticalScrollIndicator={false}
         >
           {data ? (
             <>

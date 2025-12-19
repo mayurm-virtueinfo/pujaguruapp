@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Share,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -25,12 +26,15 @@ import { Images } from '../../../theme/Images';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import { useTranslation } from 'react-i18next';
-import { getUpcomingPujaDetails, postStartChat } from '../../../api/apiService';
+import {
+  getUpcomingPujaDetails,
+  postStartChat,
+  getEditProfile,
+} from '../../../api/apiService';
 import { translateData, translateText } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
 import { useWebSocket } from '../../../context/WebSocketContext';
 
-// TYPES for safer data handling and remove linter errors
 type PanditDataType = {
   id?: string | number;
   pandit_name?: string;
@@ -76,6 +80,7 @@ const UserPujaDetailsScreen: React.FC = () => {
     value: string;
     type: 'verification' | 'completion' | null;
   }>({ value: '', type: null });
+  const [userDetails, setUserDetails] = useState<any>(null);
 
   const [initialLoaded, setInitialLoaded] = useState(false);
 
@@ -86,6 +91,29 @@ const UserPujaDetailsScreen: React.FC = () => {
   const { messages } = useWebSocket();
 
   const lastMessageIdRef = useRef<string | null>(null);
+
+  const fetchUserDetails = async () => {
+    setLoading(true);
+    try {
+      const details = await getEditProfile();
+      if (!details || typeof details !== 'object') {
+        setUserDetails(null);
+        setLoading(false);
+        return;
+      }
+      setUserDetails(details);
+    } catch (error) {
+      setUserDetails(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserDetails();
+  }, []);
+
+  console.log('pujaDetails :: ', pujaDetails);
 
   // Helper: fetch API for initial load (with loader)
   const fetchInitialPujaDetails = async () => {
@@ -558,12 +586,59 @@ const UserPujaDetailsScreen: React.FC = () => {
     navigation.navigate('PujaCancellationScreen', { id });
   };
 
+  const handleInviteGuest = async () => {
+    try {
+      if (!pujaDetails) return;
+
+      const pujaName = pujaDetails.pooja_name || t('puja');
+      const userName = userDetails?.first_name + ' ' + userDetails?.last_name;
+      const date =
+        formatDate(pujaDetails.booking_date) || t('date_not_available');
+      const time = pujaDetails.muhurat_time || t('time_not_available');
+      const location =
+        pujaDetails.location_display ||
+        pujaDetails.address ||
+        t('location_not_available');
+
+      const mapLink = `https://maps.google.com/?q=${encodeURIComponent(
+        location,
+      )}`;
+
+      const message =
+        `*🌸${t('puja_invitation')}🌸*\n\n` +
+        `${t('you_are_invited_to_join')} *${pujaName}*.\n\n` +
+        `📅 *${t('date')}:* ${date}\n` +
+        `⏰ *${t('time')}:* ${time}\n` +
+        `📍 *${t('venue')}:* ${location}\n` +
+        `🔗 *${t('google_map_link')}:* ${mapLink}\n\n` +
+        `${t('looking_forward_to_your_presence')}\n\n` +
+        `Sincerely\n` +
+        `${userName} & Family`;
+
+      await Share.share({
+        message: message,
+      });
+    } catch (error: any) {
+      Alert.alert(error.message);
+    }
+  };
+
+  const renderInviteGuestButton = () => {
+    if (pujaDetails?.booking_status !== 'accepted') return null;
+    return (
+      <PrimaryButton
+        title={t('invite_guest')}
+        onPress={handleInviteGuest}
+        disabled={isNavigating}
+        style={styles.inviteButton}
+      />
+    );
+  };
+
   const renderCancelButton = () => (
     <PrimaryButton
       title={t('cancel_booking')}
       onPress={handleCancelBooking}
-      style={styles.cancelButton}
-      textStyle={styles.cancelButtonText}
       disabled={
         pujaDetails?.booking_status === 'in_progress' ||
         pujaDetails?.booking_status === 'completed' ||
@@ -673,7 +748,12 @@ const UserPujaDetailsScreen: React.FC = () => {
             {renderTotalAmount()}
             {renderPanditDetails()}
             {renderPanditjiSection()}
-            {loading ? null : renderCancelButton()}
+            {loading ? null : (
+              <>
+                {renderInviteGuestButton()}
+                {renderCancelButton()}
+              </>
+            )}
           </ScrollView>
         </View>
 
@@ -865,7 +945,7 @@ const styles = StyleSheet.create({
     color: COLORS.pujaCardSubtext,
     flex: 1,
   },
-  cancelButton: {
+  inviteButton: {
     borderWidth: 1,
     borderColor: COLORS.primaryBackgroundButton,
     borderRadius: moderateScale(10),
@@ -873,12 +953,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: COLORS.white,
     shadowColor: COLORS.white,
-  },
-  cancelButtonText: {
-    fontSize: moderateScale(15),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.primaryTextDark,
-    textTransform: 'uppercase',
   },
 });
 

@@ -12,6 +12,9 @@ import {
   FlatList,
   Modal,
   Pressable,
+  Animated,
+  LayoutAnimation,
+  UIManager,
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -35,7 +38,9 @@ import {
   translateText,
 } from '../../../utils/TranslateData';
 
-type ArrangedItem = { name: string; quantity?: string | number } | string;
+type ArrangedItem =
+  | { name: string; quantity?: string | number; units?: string }
+  | string;
 
 interface PujaDetails {
   id: number;
@@ -92,13 +97,25 @@ interface PricingOption {
 
 function normalizeArrangedItems(
   items?: ArrangedItem[],
-): { name: string; quantity?: string | number }[] {
+): { name: string; quantity?: string | number; units?: string }[] {
   if (!items) return [];
   return items.map(item =>
     typeof item === 'string'
       ? { name: item }
-      : { name: item.name, quantity: item.quantity },
+      : {
+          name: item.name,
+          quantity: item.quantity,
+          units: item.units,
+        },
   );
+}
+
+// Enable LayoutAnimation for Android
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
 const PujaDetailsScreen: React.FC = () => {
@@ -140,6 +157,8 @@ const PujaDetailsScreen: React.FC = () => {
   const [modalImageUri, setModalImageUri] = useState<string | null>(null);
 
   const translationCacheRef = useRef<Map<string, PujaDetails>>(new Map());
+
+  console.log('data :: ', data);
 
   // `poojaId` may be number or string
   useEffect(() => {
@@ -380,18 +399,47 @@ const PujaDetailsScreen: React.FC = () => {
     testID?: string;
   }) => {
     const normalizedItems = normalizeArrangedItems(items);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    console.log('normalizedItems :: ', normalizedItems);
+
+    useEffect(() => {
+      if (expanded) {
+        // Trigger layout animation for smooth expand
+        LayoutAnimation.configureNext(
+          LayoutAnimation.create(
+            300,
+            LayoutAnimation.Types.easeInEaseOut,
+            LayoutAnimation.Properties.opacity,
+          ),
+        );
+        // Fade in animation
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      } else {
+        // Trigger layout animation for smooth collapse
+        LayoutAnimation.configureNext(
+          LayoutAnimation.create(
+            250,
+            LayoutAnimation.Types.easeInEaseOut,
+            LayoutAnimation.Properties.opacity,
+          ),
+        );
+        fadeAnim.setValue(0);
+      }
+    }, [expanded]);
+
+    const handleToggle = () => {
+      onPress();
+    };
 
     if (!normalizedItems || normalizedItems.length === 0) {
       return (
         <View style={styles.expandableSectionWrapper}>
-          <TouchableOpacity
-            style={styles.expandableHeader}
-            onPress={onPress}
-            activeOpacity={0.7}
-            testID={testID}
-          >
-            <Text style={styles.sectionTitle}>{title}</Text>
-          </TouchableOpacity>
+          <Text style={styles.sectionTitle}>{title}</Text>
           <View style={[styles.itemsContainer, THEMESHADOW.shadow]}>
             <Text style={styles.itemText}>{emptyText}</Text>
           </View>
@@ -405,80 +453,87 @@ const PujaDetailsScreen: React.FC = () => {
         <View style={[styles.itemsContainer, THEMESHADOW.shadow]}>
           {!expanded ? (
             <>
-              <TouchableOpacity
-                style={styles.itemRow}
-                onPress={onPress}
-                activeOpacity={0.7}
-                testID={testID ? `${testID}-first-row` : undefined}
-              >
-                <View style={styles.itemTextContainer}>
-                  <Text style={styles.itemNameText}>
+              {/* Collapsed state: Show only first item (non-clickable) */}
+              <View style={styles.itemRow}>
+                <View style={styles.itemMainContent}>
+                  <Octicons
+                    name="dot-fill"
+                    size={12}
+                    color={COLORS.primary}
+                    style={styles.bulletIcon}
+                  />
+                  <Text style={styles.itemNameText} numberOfLines={1}>
                     {normalizedItems[0].name}
                   </Text>
-                  <Text style={styles.itemQuantityText}>
-                    {normalizedItems[0].quantity
-                      ? `Quantity: ${normalizedItems[0].quantity}`
-                      : ''}
-                  </Text>
                 </View>
-                <Octicons
-                  name={expanded ? 'chevron-up' : 'chevron-down'}
-                  size={20}
-                  color={COLORS.primary}
-                  style={styles.chevronIcon}
-                />
-              </TouchableOpacity>
+                {normalizedItems[0].quantity ? (
+                  <Text style={styles.itemQuantityText}>
+                    {`${normalizedItems[0].quantity} ${
+                      normalizedItems[0].units ?? ''
+                    }`.trim()}
+                  </Text>
+                ) : null}
+              </View>
+              {/* Show More button - only interactive element */}
               {normalizedItems.length > 1 && (
                 <TouchableOpacity
-                  onPress={onPress}
+                  onPress={handleToggle}
                   activeOpacity={0.7}
-                  style={styles.moreTextWrapper}
+                  style={styles.showMoreButton}
                   testID={testID ? `${testID}-more` : undefined}
                 >
-                  <Text style={styles.moreText}>{t('show_more')}</Text>
+                  <Text style={styles.showMoreText}>{t('show_more')}</Text>
+                  <Octicons
+                    name="chevron-down"
+                    size={18}
+                    color={COLORS.primary}
+                  />
                 </TouchableOpacity>
               )}
             </>
           ) : (
-            normalizedItems.map((item, idx) => (
-              <React.Fragment key={idx}>
-                <View style={styles.itemRow}>
-                  <Octicons
-                    name="dot-fill"
-                    size={16}
-                    color={COLORS.primary}
-                    style={styles.itemIcon}
-                  />
-                  <View style={styles.itemTextContainer}>
-                    <Text style={styles.itemNameText}>{item.name}</Text>
-                    <Text style={styles.itemQuantityText}>
-                      {item.quantity ? `Quantity: ${item.quantity}` : ''}
-                    </Text>
+            <Animated.View style={{ opacity: fadeAnim }}>
+              {/* Expanded state: Show all items */}
+              {normalizedItems.map((item, idx) => (
+                <React.Fragment key={idx}>
+                  <View style={styles.itemRow}>
+                    <View style={styles.itemMainContent}>
+                      <Octicons
+                        name="dot-fill"
+                        size={12}
+                        color={COLORS.primary}
+                        style={styles.bulletIcon}
+                      />
+                      <Text style={styles.itemNameText}>{item.name}</Text>
+                    </View>
+                    {item.quantity ? (
+                      <Text style={styles.itemQuantityText}>
+                        {`${item.quantity} ${item.units ?? ''}`.trim()}
+                      </Text>
+                    ) : null}
                   </View>
-                </View>
-                {idx < normalizedItems.length - 1 && (
-                  <View style={styles.itemDivider} />
-                )}
-              </React.Fragment>
-            ))
-          )}
-          {expanded && normalizedItems.length > 1 && (
-            <TouchableOpacity
-              onPress={onPress}
-              activeOpacity={0.7}
-              style={styles.collapseTextWrapper}
-              testID={testID ? `${testID}-collapse` : undefined}
-            >
-              <View style={styles.collapseRow}>
-                <Octicons
-                  name="chevron-up"
-                  size={18}
-                  color={COLORS.primary}
-                  style={styles.chevronIcon}
-                />
-                <Text style={styles.collapseText}>{t('show_less')}</Text>
-              </View>
-            </TouchableOpacity>
+                  {idx < normalizedItems.length - 1 && (
+                    <View style={styles.itemDivider} />
+                  )}
+                </React.Fragment>
+              ))}
+              {/* Show Less button */}
+              {normalizedItems.length > 1 && (
+                <TouchableOpacity
+                  onPress={handleToggle}
+                  activeOpacity={0.7}
+                  style={styles.showLessButton}
+                  testID={testID ? `${testID}-collapse` : undefined}
+                >
+                  <Text style={styles.showLessText}>{t('show_less')}</Text>
+                  <Octicons
+                    name="chevron-up"
+                    size={18}
+                    color={COLORS.primary}
+                  />
+                </TouchableOpacity>
+              )}
+            </Animated.View>
           )}
         </View>
       </View>
@@ -722,9 +777,9 @@ const styles = StyleSheet.create({
   },
   itemsContainer: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
+    borderRadius: 16,
     marginTop: 12,
-    padding: 16,
+    padding: 18,
     borderWidth: 1,
     borderColor: COLORS.inputBoder,
     marginBottom: 25,
@@ -732,33 +787,39 @@ const styles = StyleSheet.create({
   },
   itemRow: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 2,
   },
-  itemIcon: {
-    marginRight: 12,
+  itemMainContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  chevronIcon: {
-    marginRight: 12,
+  bulletIcon: {
+    marginTop: 2,
   },
   itemTextContainer: {
     flex: 1,
-    gap: 3,
   },
   itemNameText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
+    lineHeight: 22,
+    flex: 1,
   },
   itemQuantityText: {
-    fontSize: 13,
-    fontFamily: Fonts.Sen_Regular,
-    color: COLORS.primaryTextDark,
-    opacity: 0.7,
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primary,
+    marginLeft: 8,
   },
   itemDivider: {
     borderColor: COLORS.inputBoder,
     borderWidth: 0.5,
-    marginVertical: 8,
+    marginVertical: 10,
+    opacity: 0.5,
   },
   itemText: {
     fontSize: 14,
@@ -871,30 +932,47 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     backgroundColor: 'transparent',
   },
-  moreTextWrapper: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-  },
-  moreText: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontFamily: Fonts.Sen_Medium,
-    textDecorationLine: 'underline',
-  },
-  collapseTextWrapper: {
-    marginTop: 8,
-    alignSelf: 'flex-start',
-  },
-  collapseRow: {
+  showMoreButton: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: COLORS.primary + '10',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '30',
+    alignSelf: 'center',
+    minWidth: 140,
   },
-  collapseText: {
+  showMoreText: {
     color: COLORS.primary,
     fontSize: 14,
-    fontFamily: Fonts.Sen_Medium,
-    marginLeft: 4,
-    textDecorationLine: 'underline',
+    fontFamily: Fonts.Sen_SemiBold,
+    letterSpacing: 0.3,
+  },
+  showLessButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: COLORS.primary + '10',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '30',
+    alignSelf: 'center',
+    minWidth: 140,
+  },
+  showLessText: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontFamily: Fonts.Sen_SemiBold,
+    letterSpacing: 0.3,
   },
   modalOverlay: {
     flex: 1,

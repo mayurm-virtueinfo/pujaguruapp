@@ -16,7 +16,7 @@ export const translateText = async (
   if (!text || typeof text !== 'string') return text;
   if (targetLang === 'en') return text;
   try {
-    const {text: translatedText} = await translate(text, {
+    const { text: translatedText } = await translate(text, {
       to: targetLang,
       ...TRANSLATE_CONFIG,
     });
@@ -33,7 +33,7 @@ export const translateOne = async (
   targetLang: string,
   fieldsToTranslate: string[],
 ): Promise<TranslatableItem> => {
-  const translated = {...item};
+  const translated = { ...item };
   for (const field of fieldsToTranslate) {
     if (translated[field]) {
       // Translate simple string fields (like title, short_description)
