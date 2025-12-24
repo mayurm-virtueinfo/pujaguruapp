@@ -67,7 +67,7 @@ export const GET_POOJA_DETAIL_FOR_PUJA_LIST = '/app/puja-detail/{id}/';
 export const POST_BOOKING = '/app/booking/';
 export const GET_AUTO_MANUAL_PANDIT_SELECTION =
   '/app/auto-assign-panditji?puja_id={puja_id}&latitude={latitude}&longitude={longitude}&mode={mode}&booking_date={booking_date}&tirth_id={tirth_id}';
-export const GET_ALL_PANDIT_LIST = '/app/panditji-list/';
+export const GET_ALL_PANDIT_LIST = '/app/panditji-list/?lat={lat}&lon={lon}';
 export const GET_PANDIT_DETAILS = '/panditji/my-details/{id}/';
 export const POST_CREATE_RAZORPAY_ORDER = '/app/booking/create-razorpay-order/';
 export const POST_VERIFY_PAYMENT =

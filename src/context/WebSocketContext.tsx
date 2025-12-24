@@ -35,7 +35,6 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const manuallyClosed = useRef(false);
 
-  /** ✅ Build WebSocket URL for PujaGuru */
   const getSocketURL = () =>
     __DEV__
       ? `wss://dev.puja-guru.com/ws/user/updates/?token=${token}`
@@ -44,28 +43,33 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   /** ✅ Connect WebSocket */
   const connect = () => {
     if (!isConnected || !token) {
-      console.log('⏸️ [Puja WS] Not connecting: missing network or token', {
-        isConnected,
-        hasToken: !!token,
-      });
+      console.log(
+        '⏸️ [PujaGuru booking status webSocket] Not connecting: missing network or token',
+        {
+          isConnected,
+          hasToken: !!token,
+        },
+      );
       return;
     }
 
     // Prevent multiple active sockets
     if (wsRef.current) {
-      console.log('⚠️ [Puja WS] Already connected, skipping...');
+      console.log(
+        '⚠️ [PujaGuru booking status webSocket] Already connected, skipping...',
+      );
       return;
     }
 
     manuallyClosed.current = false;
     try {
       const url = getSocketURL();
-      console.log('🔌 [Puja WS] Connecting to', url);
+      console.log('🔌 [PujaGuru booking status webSocket] Connecting to', url);
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('🔗 [Puja WS] Connected');
+        console.log('🔗 [PujaGuru booking status webSocket] Connected');
         setConnected(true);
         if (reconnectRef.current) {
           clearTimeout(reconnectRef.current);
@@ -76,32 +80,46 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       ws.onmessage = event => {
         try {
           const data = JSON.parse(event.data);
-          console.log('📩 [Puja WS] message:', data);
+          console.log(
+            '📩 [PujaGuru booking status webSocket] message :: ',
+            data,
+          );
           setMessages(prev => [...prev, data]);
         } catch (err) {
-          console.warn('⚠️ [Puja WS] parse error', err);
+          console.warn(
+            '⚠️ [PujaGuru booking status webSocket] parse error',
+            err,
+          );
         }
       };
 
       ws.onerror = error => {
-        console.log('⚠️ [Puja WS] error:', error);
+        console.log('⚠️ [PujaGuru booking status webSocket] error:', error);
       };
 
       ws.onclose = e => {
-        console.log('🔌 [Puja WS] closed:', e.reason || e.code);
+        console.log(
+          '🔌 [PujaGuru booking status webSocket] closed:',
+          e.reason || e.code,
+        );
         setConnected(false);
         wsRef.current = null;
 
         // Reconnect if not manually closed
         if (!manuallyClosed.current) {
           reconnectRef.current = setTimeout(() => {
-            console.log('♻️ [Puja WS] reconnecting...');
+            console.log(
+              '♻️ [PujaGuru booking status webSocket] reconnecting...',
+            );
             connect();
           }, 3000);
         }
       };
     } catch (err) {
-      console.warn('🔥 [Puja WS] connect exception:', err);
+      console.warn(
+        '🔥 [PujaGuru booking status webSocket] connect exception:',
+        err,
+      );
       // schedule reconnect if needed
       if (!manuallyClosed.current && !reconnectRef.current) {
         reconnectRef.current = setTimeout(() => {
@@ -116,7 +134,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const disconnect = () => {
     manuallyClosed.current = true;
     if (wsRef.current) {
-      console.log('🔒 [Puja WS] Manually closing socket');
+      console.log(
+        '🔒 [PujaGuru booking status webSocket] Manually closing socket',
+      );
       wsRef.current.close();
       wsRef.current = null;
     }
@@ -129,22 +149,27 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
   /** ✅ Manage connection based on internet & token */
   useEffect(() => {
-    console.log('🔍 [Puja WS] useEffect triggered:', {
+    console.log('🔍 [PujaGuru booking status webSocket] useEffect triggered:', {
       isConnected,
       hasToken: !!token,
     });
 
     if (isConnected && token) {
-      console.log('✅ [Puja WS] Conditions met — attempting to connect');
+      console.log(
+        '✅ [PujaGuru booking status webSocket] Conditions met — attempting to connect',
+      );
       connect();
     } else {
-      console.log('⏸️ [Puja WS] Skipping connection / disconnecting', {
-        reason: !isConnected
-          ? 'network disconnected'
-          : !token
-          ? 'no token'
-          : '',
-      });
+      console.log(
+        '⏸️ [PujaGuru booking status webSocket] Skipping connection / disconnecting',
+        {
+          reason: !isConnected
+            ? 'network disconnected'
+            : !token
+            ? 'no token'
+            : '',
+        },
+      );
       disconnect();
     }
 

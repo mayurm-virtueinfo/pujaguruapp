@@ -89,6 +89,7 @@ const UserPujaDetailsScreen: React.FC = () => {
   const currentLanguage = i18n.language;
 
   const { messages } = useWebSocket();
+  console.log('webSocket messages in UserPujaDetailsScreen :: ', messages);
 
   const lastMessageIdRef = useRef<string | null>(null);
 

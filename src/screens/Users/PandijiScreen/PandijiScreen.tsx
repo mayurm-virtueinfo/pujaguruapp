@@ -27,6 +27,8 @@ import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
 import { useCommonToast } from '../../../common/CommonToast';
 import { translateData } from '../../../utils/TranslateData';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import AppConstant from '../../../utils/appConstant';
 
 interface PanditjiItem {
   id: string;
@@ -72,7 +74,23 @@ const PanditjiScreen: React.FC = () => {
         return;
       }
 
-      const response = (await getAllPanditji()) as PanditjiResponse;
+      const locationStr = await AsyncStorage.getItem(AppConstant.LOCATION);
+      let latitude = '';
+      let longitude = '';
+      if (locationStr) {
+        try {
+          const locObj = JSON.parse(locationStr);
+          latitude = locObj.latitude;
+          longitude = locObj.longitude;
+        } catch (e) {
+          console.error('Error parsing location in PanditjiScreen :: ', e);
+        }
+      }
+
+      const response = (await getAllPanditji(
+        latitude,
+        longitude,
+      )) as PanditjiResponse;
 
       if (response.success) {
         const panditjiListData = response.data

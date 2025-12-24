@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,28 +12,24 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import {COLORS, THEMESHADOW, wp} from '../../../theme/theme';
+import { COLORS, THEMESHADOW, wp } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Octicons from 'react-native-vector-icons/Octicons';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPanditjiParamList} from '../../../navigation/User/UserPanditjiNavigator';
-import {moderateScale, scale, verticalScale} from 'react-native-size-matters';
-import {
-  getAllPanditji,
-  getNewPanditji,
-  postNewPanditOffer,
-} from '../../../api/apiService';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { UserPanditjiParamList } from '../../../navigation/User/UserPanditjiNavigator';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { getNewPanditji, postNewPanditOffer } from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {useCommonToast} from '../../../common/CommonToast';
+import { useCommonToast } from '../../../common/CommonToast';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
-import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
+import { UserHomeParamList } from '../../../navigation/User/UsetHomeStack';
 import PrimaryButton from '../../../components/PrimaryButton';
 
 interface PanditjiItem {
@@ -56,9 +52,9 @@ interface PanditjiResponse {
 
 const SelectNewPanditjiScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const route = useRoute();
-  const {booking_id} = route?.params as any;
+  const { booking_id } = route?.params as any;
 
   console.log('booking_id', booking_id);
   const navigation = useNavigation<StackNavigationProp<UserHomeParamList>>();
@@ -69,7 +65,7 @@ const SelectNewPanditjiScreen: React.FC = () => {
     string | number | null
   >(null);
 
-  const {showErrorToast, showSuccessToast} = useCommonToast();
+  const { showErrorToast, showSuccessToast } = useCommonToast();
 
   const handleNotificationPress = () => {
     navigation.navigate('NotificationScreen');
@@ -192,17 +188,27 @@ const SelectNewPanditjiScreen: React.FC = () => {
     </View>
   );
 
-  const renderPanditjiItem = ({item, index}: {item: any; index: number}) => {
+  const renderPanditjiItem = ({
+    item,
+    index,
+  }: {
+    item: any;
+    index: number;
+  }) => {
     const isSelected = selectedPanditId === item.pandit_id;
     return (
       <View style={styles.panditjiContainer}>
         <TouchableOpacity
           style={styles.panditjiItem}
           onPress={() => handlePanditjiSelect(item.pandit_id)}
-          activeOpacity={0.7}>
+          activeOpacity={0.7}
+        >
           <View style={styles.panditjiContent}>
             <View style={styles.imageContainer}>
-              <Image source={{uri: item.image}} style={styles.panditjiImage} />
+              <Image
+                source={{ uri: item.image }}
+                style={styles.panditjiImage}
+              />
               {item.isVerified && (
                 <View style={styles.verifiedBadge}>
                   <MaterialIcons
@@ -220,7 +226,8 @@ const SelectNewPanditjiScreen: React.FC = () => {
             </View>
             <TouchableOpacity
               style={styles.selectionButton}
-              onPress={() => handlePanditjiSelect(item.pandit_id)}>
+              onPress={() => handlePanditjiSelect(item.pandit_id)}
+            >
               {isSelected ? (
                 <Octicons
                   name={'check-circle'}
@@ -249,7 +256,7 @@ const SelectNewPanditjiScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: inset.top }]}>
       <CustomeLoader loading={isLoading} />
       <StatusBar
         barStyle="light-content"
@@ -265,7 +272,8 @@ const SelectNewPanditjiScreen: React.FC = () => {
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={verticalScale(90)}>
+        keyboardVerticalOffset={verticalScale(90)}
+      >
         <View style={styles.absoluteMainContainer}>
           <View style={[styles.container, THEMESHADOW.shadow]}>
             {renderSearchInput()}
@@ -283,12 +291,13 @@ const SelectNewPanditjiScreen: React.FC = () => {
             style={{
               flex: 1,
               justifyContent: 'flex-end',
-            }}>
+            }}
+          >
             <PrimaryButton
               title={t('select_panditji')}
               onPress={handlePostPanditOffer}
               disabled={!selectedPanditId || isLoading}
-              style={{marginHorizontal: 16, marginBottom: 16, marginTop: 10}}
+              style={{ marginHorizontal: 16, marginBottom: 16, marginTop: 10 }}
             />
           </View>
         </View>
