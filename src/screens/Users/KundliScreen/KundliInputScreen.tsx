@@ -22,6 +22,7 @@ import { postCreateKundli, searchCity } from '../../../api/apiService';
 import { FlatList } from 'react-native';
 import CustomTextInput from '../../../components/CustomTextInput';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import CustomeLoader from '../../../components/CustomeLoader';
 
 // ... existing imports
 
@@ -154,6 +155,7 @@ const KundliInputScreen = () => {
 
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
+      <CustomeLoader loading={loading} />
       <UserCustomHeader title={t('rashi_ful')} showBackButton={true} />
       <ScrollView
         contentContainerStyle={styles.contentContainer}
@@ -166,6 +168,7 @@ const KundliInputScreen = () => {
               placeholder={t('enter_your_name')}
               value={name}
               onChangeText={setName}
+              required={true}
             />
           </View>
 
@@ -184,6 +187,7 @@ const KundliInputScreen = () => {
                       color={COLORS.textGray}
                     />
                   }
+                  required={true}
                 />
               </View>
             </TouchableOpacity>
@@ -214,6 +218,7 @@ const KundliInputScreen = () => {
                       color={COLORS.textGray}
                     />
                   }
+                  required={true}
                 />
               </View>
             </TouchableOpacity>
@@ -242,6 +247,7 @@ const KundliInputScreen = () => {
                   color={COLORS.textGray}
                 />
               }
+              required={true}
             />
             {showSuggestions && suggestions.length > 0 && (
               <View style={[styles.suggestionsContainer,THEMESHADOW.shadow]}>

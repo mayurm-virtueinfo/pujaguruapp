@@ -125,6 +125,34 @@ PODS:
   - hermes-engine (0.82.1):
     - hermes-engine/Pre-built (= 0.82.1)
   - hermes-engine/Pre-built (0.82.1)
+  - HtmlToPdf (1.3.0):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - jitsi-meet-rnsdk (11.6.3):
     - ObjectiveDropboxOfficial (= 6.2.3)
     - React-Core
@@ -2321,6 +2349,34 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-view-shot (4.0.3):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - react-native-webrtc (124.0.7):
     - JitsiWebRTC (~> 124.0.0)
     - React-Core
@@ -3050,6 +3106,8 @@ PODS:
     - FirebaseCoreExtension
     - React-Core
     - RNFBApp
+  - RNFS (2.20.0):
+    - React-Core
   - RNGestureHandler (2.29.1):
     - boost
     - DoubleConversion
@@ -3327,6 +3385,34 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - RNShare (12.2.1):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - RNSound (0.11.2):
     - React-Core
     - RNSound/Core (= 0.11.2)
@@ -3551,6 +3637,7 @@ DEPENDENCIES:
   - "giphy-react-native-sdk (from `../node_modules/@giphy/react-native-sdk`)"
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
+  - HtmlToPdf (from `../node_modules/react-native-html-to-pdf`)
   - "jitsi-meet-rnsdk (from `../node_modules/@jitsi/react-native-sdk`)"
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -3601,6 +3688,7 @@ DEPENDENCIES:
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-video (from `../node_modules/react-native-video`)
+  - react-native-view-shot (from `../node_modules/react-native-view-shot`)
   - react-native-webrtc (from `../node_modules/react-native-webrtc`)
   - react-native-webview (from `../node_modules/react-native-webview`)
   - react-native-worklets-core (from `../node_modules/react-native-worklets-core`)
@@ -3646,6 +3734,7 @@ DEPENDENCIES:
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAuth (from `../node_modules/@react-native-firebase/auth`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
+  - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - RNImageCropPicker (from `../node_modules/react-native-image-crop-picker`)
@@ -3653,6 +3742,7 @@ DEPENDENCIES:
   - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNShare (from `../node_modules/react-native-share`)
   - RNSound (from `../node_modules/react-native-sound`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
@@ -3713,6 +3803,8 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-2025-09-01-RNv0.82.0-265ef62ff3eb7289d17e366664ac0da82303e101
+  HtmlToPdf:
+    :path: "../node_modules/react-native-html-to-pdf"
   jitsi-meet-rnsdk:
     :path: "../node_modules/@jitsi/react-native-sdk"
   RCT-Folly:
@@ -3811,6 +3903,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/slider"
   react-native-video:
     :path: "../node_modules/react-native-video"
+  react-native-view-shot:
+    :path: "../node_modules/react-native-view-shot"
   react-native-webrtc:
     :path: "../node_modules/react-native-webrtc"
   react-native-webview:
@@ -3901,6 +3995,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-firebase/auth"
   RNFBMessaging:
     :path: "../node_modules/@react-native-firebase/messaging"
+  RNFS:
+    :path: "../node_modules/react-native-fs"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNGoogleSignin:
@@ -3915,6 +4011,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNShare:
+    :path: "../node_modules/react-native-share"
   RNSound:
     :path: "../node_modules/react-native-sound"
   RNSVG:
@@ -3957,6 +4055,7 @@ SPEC CHECKSUMS:
   GTMAppAuth: f69bd07d68cd3b766125f7e072c45d7340dea0de
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   hermes-engine: 273e30e7fb618279934b0b95ffab60ecedb7acf5
+  HtmlToPdf: 1d349d526307fa75f2c69b7487a1bce07d56a478
   jitsi-meet-rnsdk: 1f5eebe929f7618de888934c3f4c220d4d342a74
   JitsiWebRTC: b47805ab5668be38e7ee60e2258f49badfe8e1d0
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
@@ -4013,6 +4112,7 @@ SPEC CHECKSUMS:
   react-native-safe-area-context: 0a3b034bb63a5b684dd2f5fffd3c90ef6ed41ee8
   react-native-slider: 0f7a5cb61157140d48bb138691f4261d38970dc2
   react-native-video: d9d12aa2325ae06222e97e8bd801bbc31df2675d
+  react-native-view-shot: aab9ffbcc2f01035ee8ffd9a00c773e215b35c8b
   react-native-webrtc: e8f0ce746353adc2744a2b933645e1aeb41eaa74
   react-native-webview: cdce419e8022d0ef6f07db21890631258e7a9e6e
   react-native-worklets-core: 2b8f8cd5c1fe549ae658a757e3d7b84eab21a6fb
@@ -4059,6 +4159,7 @@ SPEC CHECKSUMS:
   RNFBApp: 78d866e12b98c79b7cb141fcdcdf9813eae09b15
   RNFBAuth: a05c02d5b47251b04a6c74b686053e81e2ba783a
   RNFBMessaging: e16ebeae1f64f57603a193f1be6f3be7ab55c5e4
+  RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNGestureHandler: 67501c6d447027581aa1d8e5a7a3ea5a7f0a89ff
   RNGoogleSignin: 30e1aee80140dc0706cd78a4951c411376c88329
   RNImageCropPicker: 5432d75a3bc7209dc8b6ab189fcfe19bd6339fb9
@@ -4066,6 +4167,7 @@ SPEC CHECKSUMS:
   RNPermissions: 54bd9599e0d2f29dabc6069adc7f97f7e94606a5
   RNReanimated: 8f0185df21f0dea34ee8c9611ba88c17a290ed9a
   RNScreens: 98771ad898d1c0528fc8139606bbacf5a2e9d237
+  RNShare: 13d33f3c13a812f928186aecf8a2a29dcd36aa51
   RNSound: 314cc5226453ef4a3314a196c65e8a65e5106a7b
   RNSVG: 82979f324e1cbf99f558a04e66f574a568ed54c0
   RNVectorIcons: b822419238727deba7f1e9a2695b5b62007aca6d

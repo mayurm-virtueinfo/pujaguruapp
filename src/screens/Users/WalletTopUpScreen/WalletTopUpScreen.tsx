@@ -86,6 +86,7 @@ const WalletTopUpScreen: React.FC = () => {
               textContentType="telephoneNumber"
               maxLength={15}
               labelStyle={themedInputLabelStyle}
+              required={true}
             />
           </View>
           <View style={[styles.paymentMethodsCard, THEMESHADOW.shadow]}>

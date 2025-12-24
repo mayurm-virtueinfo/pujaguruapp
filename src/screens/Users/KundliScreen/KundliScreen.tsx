@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,9 @@ import {
   ScrollView,
   Dimensions,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
+// import { Toast } from 'react-native-toast-notifications';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import moment from 'moment';
@@ -14,11 +16,29 @@ import { RouteProp, useRoute } from '@react-navigation/native';
 import { UserProfileParamList } from '../../../navigation/User/userProfileNavigator';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+// @ts-ignore
+import { generatePDF as htmlToPdfConvert } from 'react-native-html-to-pdf';
+import RNFS from 'react-native-fs';
+import Share from 'react-native-share';
+import ViewShot from 'react-native-view-shot';
+import { useCommonToast } from '../../../common/CommonToast';
+import CustomeLoader from '../../../components/CustomeLoader';
+import { useTranslation } from 'react-i18next';
 
 const { width } = Dimensions.get('window');
 
 const KundliScreen = () => {
   const inset = useSafeAreaInsets();
+  const {t} = useTranslation();
+  const viewShotRefLagna = useRef<ViewShot>(null);
+  const viewShotRefNavamsa = useRef<ViewShot>(null);
+  const viewShotRefSun = useRef<ViewShot>(null);
+  const viewShotRefMoon = useRef<ViewShot>(null);
+  const viewShotRefDasamsa = useRef<ViewShot>(null);
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const { showSuccessToast, showErrorToast } = useCommonToast();
+
   const route = useRoute<RouteProp<UserProfileParamList, 'KundliScreen'>>();
   const {
     kundliData: apiData,
@@ -181,24 +201,24 @@ const KundliScreen = () => {
 
     return (
       <View style={[styles.tableCard, THEMESHADOW.shadow]}>
-        <Text style={styles.sectionTitle}>Planetary Positions</Text>
+        <Text style={styles.sectionTitle}>{t('planetary_positions')}</Text>
 
         {/* Table Header */}
         <View style={[styles.row, styles.tableHeader]}>
           <Text style={[styles.cell, styles.headerCell, { flex: 1.2 }]}>
-            Planet
+            {t('planet')}
           </Text>
           <Text style={[styles.cell, styles.headerCell, { flex: 1.3 }]}>
-            Sign
+            {t('sign')}
           </Text>
           <Text style={[styles.cell, styles.headerCell, { flex: 1.1 }]}>
-            Sign Lord
+            {t('sign_lord')}
           </Text>
           <Text style={[styles.cell, styles.headerCell, { flex: 0.9 }]}>
-            Degree
+            {t('degree')}
           </Text>
           <Text style={[styles.cell, styles.headerCell, { flex: 0.7 }]}>
-            House
+            {t('house')}
           </Text>
         </View>
 
@@ -256,16 +276,16 @@ const KundliScreen = () => {
 
     return (
       <View style={[styles.tableCard, THEMESHADOW.shadow]}>
-        <Text style={styles.sectionTitle}>Vimshottari Dasha</Text>
+        <Text style={styles.sectionTitle}>{t('vimshottari_dasha')}</Text>
         <View style={[styles.row, styles.tableHeader]}>
-          <Text style={[styles.cell, styles.headerCell]}>Dasha Lord</Text>
+          <Text style={[styles.cell, styles.headerCell]}>{t('lord')}</Text>
           <Text style={[styles.cell, styles.headerCell, { flex: 1.5 }]}>
-            Start Date
+            {t('start_date')}
           </Text>
           <Text style={[styles.cell, styles.headerCell, { flex: 1.5 }]}>
-            End Date
+            {t('end_date')}
           </Text>
-          <Text style={[styles.cell, styles.headerCell]}>Duration</Text>
+          <Text style={[styles.cell, styles.headerCell]}>{t('duration')}</Text>
         </View>
         {dashaList.map((dasha: any, index: number) => (
           <View key={index} style={styles.row}>
@@ -285,10 +305,314 @@ const KundliScreen = () => {
     );
   };
 
+  const generatePDF = async (chartImages: any = {}) => {
+    try {
+      const htmlContent = `
+        <html>
+          <head>
+            <style>
+              body { font-family: 'Helvetica'; padding: 20px; padding-bottom: 50px; }
+              h1 { text-align: center; color: #E7503D; }
+              .section { margin-bottom: 20px; }
+              .header-info { text-align: center; margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 10px; }
+              table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+              th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+              th { background-color: #f2f2f2; }
+              .chart-container { text-align: center; margin-bottom: 30px; page-break-inside: avoid; }
+              .chart-img { max-width: 100%; height: auto; background-color: #fff; }
+              .footer { text-align: center; color: #E7503D; font-size: 18px; padding: 20px; background: white; margin-top: 50px; }
+              .page-break { page-break-after: always; }
+              .chart-title { font-size: 20px; color: #E7503D; text-align: center; margin-bottom: 10px; margin-top: 20px; }
+            </style>
+          </head>
+          <body>
+
+            <h1>${t('kundli_report')}</h1>
+            
+            <div class="header-info">
+              <h2>${name || user.name || 'User'}</h2>
+              <p>
+                <strong>${t('birth_date')}:</strong> ${
+                  birthDate
+                    ? moment(birthDate).format('DD-MM-YYYY')
+                    : `${user.birthdetails?.DOB?.day}-${user.birthdetails?.DOB?.month}-${user.birthdetails?.DOB?.year}`
+                } &nbsp; • &nbsp;
+                <strong>${t('time_of_birth')}:</strong> ${
+                  birthTime
+                    ? moment(birthTime, 'HH:mm').format('HH:mm')
+                    : `${user.birthdetails?.TOB?.hour}:${user.birthdetails?.TOB?.min}`
+                }
+              </p>
+              <p><strong>${t('birth_place')}:</strong> ${
+                birthPlace || user.birthdetails?.POB?.name
+              }</p>
+            </div>
+
+            <!-- Lagna Chart -->
+            ${
+                chartImages.lagna 
+                ? `
+                <div class="section chart-container">
+                  <div class="chart-title">${t('lagna_chart')}</div>
+                  <img src="data:image/jpeg;base64,${chartImages.lagna}" class="chart-img" />
+                </div>
+                ` 
+                : ''
+            }
+            
+            <div class="section" style="margin-top: 20px;">
+              <h3>${t('planetary_positions')}</h3>
+              <table>
+                <tr>
+                  <th>${t('planet')}</th>
+                  <th>${t('sign')}</th>
+                  <th>${t('degree')}</th>
+                  <th>${t('house')}</th>
+                </tr>
+                <tr>
+                  <td>Ascendant</td>
+                  <td>${data.D1?.ascendant?.sign}</td>
+                  <td>${data.D1?.ascendant?.pos?.deg?.toFixed(2)}°</td>
+                  <td>1</td>
+                </tr>
+                ${Object.entries(data.D1?.planets || {})
+                  .map(
+                    ([planet, info]: any) => `
+                  <tr>
+                    <td>${planet}</td>
+                    <td>${info.sign}</td>
+                    <td>${info.pos?.deg?.toFixed(2)}°</td>
+                    <td>${info['house-num']}</td>
+                  </tr>
+                `,
+                  )
+                  .join('')}
+              </table>
+            </div>
+
+            <div class="footer">
+              <p>${t('app_tagline')}</p>
+            </div>
+
+            <div class="page-break"></div>
+
+            <!-- Navamsa Chart -->
+            ${
+                chartImages.navamsa 
+                ? `
+                <div class="section chart-container">
+                  <div class="chart-title">${t('navamsa_chart')}</div>
+                  <img src="data:image/jpeg;base64,${chartImages.navamsa}" class="chart-img" style="max-height: 500px;" />
+                   <div class="footer">
+                    <p>${t('app_tagline')}</p>
+                   </div>
+                </div>
+                <div class="page-break"></div>
+                ` 
+                : ''
+            }
+
+            <!-- Sun Chart -->
+            ${
+                chartImages.sun 
+                ? `
+                <div class="section chart-container">
+                  <div class="chart-title">${t('sun_chart')}</div>
+                  <img src="data:image/jpeg;base64,${chartImages.sun}" class="chart-img" style="max-height: 500px;" />
+                   <div class="footer">
+                    <p>${t('app_tagline')}</p>
+                   </div>
+                </div>
+                <div class="page-break"></div>
+                ` 
+                : ''
+            }
+
+             <!-- Moon Chart -->
+            ${
+                chartImages.moon 
+                ? `
+                <div class="section chart-container">
+                  <div class="chart-title">${t('moon_chart')}</div>
+                  <img src="data:image/jpeg;base64,${chartImages.moon}" class="chart-img" style="max-height: 500px;" />
+                   <div class="footer">
+                    <p>${t('app_tagline')}</p>
+                   </div>
+                </div>
+                <div class="page-break"></div>
+                ` 
+                : ''
+            }
+
+             <!-- Dasamsa Chart -->
+            ${
+                chartImages.dasamsa 
+                ? `
+                <div class="section chart-container">
+                  <div class="chart-title">${t('dasamsa_chart')}</div>
+                  <img src="data:image/jpeg;base64,${chartImages.dasamsa}" class="chart-img" style="max-height: 500px;" />
+                   <div class="footer">
+                    <p>${t('app_tagline')}</p>
+                   </div>
+                </div>
+                <div class="page-break"></div>
+                ` 
+                : ''
+            }
+
+            <div class="section">
+              <h3>${t('vimshottari_dasha')}</h3>
+               <table>
+                <tr>
+                  <th>${t('lord')}</th>
+                  <th>${t('start_date')}</th>
+                  <th>${t('end_date')}</th>
+                </tr>
+                 ${Object.values(
+                   // @ts-ignore
+                   data.Dashas?.Vimshottari?.mahadashas ||
+                     data.D1?.Dashas?.Vimshottari?.mahadashas ||
+                     {},
+                 )
+                   .sort((a: any, b: any) => a.dashaNum - b.dashaNum)
+                   .map(
+                     (dasha: any) => `
+                  <tr>
+                    <td>${dasha.lord}</td>
+                    <td>${dasha.startDate?.split(' ')[0]}</td>
+                    <td>${dasha.endDate?.split(' ')[0]}</td>
+                  </tr>
+                `,
+                   )
+                   .join('')}
+              </table>
+            </div>
+
+            <div class="footer">
+              <p>${t('app_tagline')}</p>
+            </div>
+          </body>
+        </html>
+      `;
+
+      const options = {
+        html: htmlContent,
+        fileName: `Kundli_${name || 'User'}`,
+        base64: false,
+      };
+
+      // @ts-ignore
+      const file = await htmlToPdfConvert(options);
+      console.log('PDF Generated:', file.filePath);
+      return file.filePath;
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      return null;
+    }
+  };
+
+  const captureAllCharts = async () => {
+    const charts: any = {};
+    try {
+        if(viewShotRefLagna.current?.capture) charts.lagna = await viewShotRefLagna.current.capture();
+        if(viewShotRefNavamsa.current?.capture) charts.navamsa = await viewShotRefNavamsa.current.capture();
+        if(viewShotRefSun.current?.capture) charts.sun = await viewShotRefSun.current.capture();
+        if(viewShotRefMoon.current?.capture) charts.moon = await viewShotRefMoon.current.capture();
+        if(viewShotRefDasamsa.current?.capture) charts.dasamsa = await viewShotRefDasamsa.current.capture();
+    } catch(e) {
+        console.log("Error capturing charts", e);
+    }
+    return charts;
+  };
+
+  const handleShare = async () => {
+    setIsLoading(true);
+    try {
+      const chartImages = await captureAllCharts();
+      const filePath = await generatePDF(chartImages);
+      if (filePath) {
+        const shareOptions = {
+          title: t('share_kundli'),
+          message: `${t('kundli_for')} ${name || 'User'}`,
+          url: `file://${filePath}`,
+          type: 'application/pdf',
+        };
+        await Share.open(shareOptions);
+      }
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownload = async () => {
+    setIsLoading(true);
+    try {
+      const chartImages = await captureAllCharts();
+      const filePath = await generatePDF(chartImages);
+      if (filePath) {
+        if (Platform.OS === 'android') {
+          const fileName = `Kundli_${name || 'User'}_${Date.now()}.pdf`;
+          const downloadDest = `${RNFS.DownloadDirectoryPath}/${fileName}`;
+          
+          try {
+            await RNFS.copyFile(filePath, downloadDest);
+            await RNFS.scanFile(downloadDest); 
+            
+            showSuccessToast(`${t('saved_to_downloads')}: ${fileName}`);
+          } catch (err) {
+            console.error('Download Error:', err);
+            showErrorToast(t('failed_to_save_pdf'));
+          }
+        } else {
+          const fileName = `Kundli_${name || 'User'}_${Date.now()}.pdf`;
+          const destPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+          try {
+             await RNFS.copyFile(filePath, destPath);
+             showSuccessToast(t('pdf_saved'));
+             setTimeout(() => {
+                  Share.open({ url: `file://${destPath}`, saveToFiles: true }).catch(() => {});
+             }, 1000);
+          } catch (e) {
+              console.error(e);
+              showErrorToast(t('failed_to_save_pdf'));
+          }
+        }
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
+      <CustomeLoader loading={isLoading} />
       {/* Header pinned, not inside ScrollView */}
-      <UserCustomHeader title="Kundli" showBackButton={true} />
+      <UserCustomHeader
+        title={t('kundli_report')}
+        showBackButton={true}
+      />
+      
+      {/* Hidden ViewShots for all charts */}
+      <View style={{ position: 'absolute', left: -10000, top: 0 }}>
+        <ViewShot ref={viewShotRefLagna} options={{ format: 'jpg', quality: 0.8, result: 'base64' }}>
+             {data && data.D1 ? renderChart(data.D1) : null}
+        </ViewShot>
+        <ViewShot ref={viewShotRefNavamsa} options={{ format: 'jpg', quality: 0.8, result: 'base64' }}>
+             {data && data.D9 ? renderChart(data.D9) : null}
+        </ViewShot>
+        <ViewShot ref={viewShotRefSun} options={{ format: 'jpg', quality: 0.8, result: 'base64' }}>
+             {data && data.D1 ? renderChart(getDerivedChart(data.D1, 'Sun')) : null}
+        </ViewShot>
+        <ViewShot ref={viewShotRefMoon} options={{ format: 'jpg', quality: 0.8, result: 'base64' }}>
+             {data && data.D1 ? renderChart(getDerivedChart(data.D1, 'Moon')) : null}
+        </ViewShot>
+        <ViewShot ref={viewShotRefDasamsa} options={{ format: 'jpg', quality: 0.8, result: 'base64' }}>
+             {data && data.D10 ? renderChart(data.D10) : null}
+        </ViewShot>
+      </View>
+
       <View style={styles.contentContainer}>
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Header Card below pinned header, with radii */}
@@ -306,38 +630,50 @@ const KundliScreen = () => {
             </Text>
             {currentDasha && (
               <Text style={styles.dasha}>
-                Current Dasha: {currentDasha.dasha} - {currentDasha.bhukti} -{' '}
+                {t('current_dasha')}: {currentDasha.dasha} - {currentDasha.bhukti} -{' '}
                 {currentDasha.paryantardasha}
               </Text>
             )}
+
+            <View style={styles.actionButtonsContainer}>
+                <TouchableOpacity style={styles.actionButton} onPress={handleDownload}>
+                   <Ionicons name="download-outline" size={20} color={COLORS.white} style={{marginRight: 8}}/>
+                   <Text style={styles.actionButtonText}>{t('download')}</Text>
+                </TouchableOpacity>
+
+                 <TouchableOpacity style={[styles.actionButton, {backgroundColor: COLORS.white, borderWidth: 1, borderColor: COLORS.primary}]} onPress={handleShare}>
+                   <Ionicons name="share-social-outline" size={20} color={COLORS.primary} style={{marginRight: 8}}/>
+                   <Text style={[styles.actionButtonText, {color: COLORS.primary}]}>{t('share')}</Text>
+                </TouchableOpacity>
+            </View>
           </View>
 
           {/* Tabs */}
           <View style={styles.tabContainer}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               {[
-                'Lagna',
-                'Navamsa',
-                'Sun',
-                'Moon',
-                'Dasamsa',
-                ...(hasDashas ? ['Dasha'] : []),
+                { key: 'Lagna', label: t('lagna_chart') },
+                { key: 'Navamsa', label: t('navamsa_chart') },
+                { key: 'Sun', label: t('sun_chart') },
+                { key: 'Moon', label: t('moon_chart') },
+                { key: 'Dasamsa', label: t('dasamsa_chart') },
+                ...(hasDashas ? [{ key: 'Dasha', label: t('vimshottari_dasha') }] : []),
               ].map(tab => (
                 <TouchableOpacity
-                  key={tab}
+                  key={tab.key}
                   style={[
                     styles.tabButton,
-                    activeTab === tab && styles.activeTabButton,
+                    activeTab === tab.key && styles.activeTabButton,
                   ]}
-                  onPress={() => setActiveTab(tab as any)}
+                  onPress={() => setActiveTab(tab.key as any)}
                 >
                   <Text
                     style={[
                       styles.tabText,
-                      activeTab === tab && styles.activeTabText,
+                      activeTab === tab.key && styles.activeTabText,
                     ]}
                   >
-                    {tab}
+                    {tab.label}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -584,6 +920,27 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   value: { flex: 1, textAlign: 'center', color: COLORS.textSecondary },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 20,
+    gap: 15,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: COLORS.primary,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...THEMESHADOW.shadow,
+  },
+  actionButtonText: {
+    color: COLORS.white,
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
 });
 
 export default KundliScreen;

@@ -211,7 +211,7 @@ const CompleteProfileScreen: React.FC<Props> = ({ navigation }) => {
           maxLength={30}
           labelStyle={themedInputLabelStyle}
           error={formErrors.firstName}
-          required
+          required={true}
         />
       </View>
 
@@ -226,7 +226,7 @@ const CompleteProfileScreen: React.FC<Props> = ({ navigation }) => {
           maxLength={30}
           labelStyle={themedInputLabelStyle}
           error={formErrors.lastName}
-          required
+          required={true}
         />
       </View>
       <View style={styles.inputField}>
@@ -241,7 +241,7 @@ const CompleteProfileScreen: React.FC<Props> = ({ navigation }) => {
           maxLength={15}
           labelStyle={themedInputLabelStyle}
           error={formErrors.phoneNumber}
-          required
+          required={true}
           editable={false}
           style={styles.disabledInput}
         />
@@ -258,7 +258,7 @@ const CompleteProfileScreen: React.FC<Props> = ({ navigation }) => {
           // maxLength={100}
           // labelStyle={themedInputLabelStyle}
           error={formErrors.address}
-          required
+          required={true}
           multiline
         />
       </View>

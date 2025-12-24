@@ -588,6 +588,7 @@ const AddAddressScreen = () => {
               label={t('type_of_address')}
               placeholder={t('select_type_of_address')}
               error={formErrors.addressType}
+              required={true}
             />
           </View>
           <PrimaryButton

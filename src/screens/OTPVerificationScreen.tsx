@@ -15,7 +15,7 @@ import {
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { AuthStackParamList } from '../navigation/AuthNavigator';
-import { getAuth, signInWithPhoneNumber } from '@react-native-firebase/auth';
+import auth, { getAuth } from '@react-native-firebase/auth';
 import { useCommonToast } from '../common/CommonToast';
 import { COLORS } from '../theme/theme';
 import { Images } from '../theme/Images';
@@ -240,12 +240,7 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
   const handleResendOTP = async () => {
     try {
       setLoading(true);
-      const auth = getAuth();
-      if (auth.currentUser) {
-        await auth.signOut();
-      }
-
-      const confirmation = await signInWithPhoneNumber(getAuth(), phoneNumber);
+      const confirmation = await auth().signInWithPhoneNumber(phoneNumber, true);
       setOtpConfirmation(confirmation);
       setOtp(['', '', '', '', '', '']);
       showSuccessToast(t('otp_resent'));
