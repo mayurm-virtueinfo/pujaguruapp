@@ -31,9 +31,9 @@ import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
 import CalendarDayCell from './components/CalendarDayCell';
 import DayDetails from './components/DayDetails';
-import PermissionDeniedView from './components/PermissionDeniedView';
 import InlineLocationRequest from '../../../components/InlineLocationRequest';
 import { getCityName } from '../../../helper/helper';
+import { translateText, translateData } from '../../../utils/TranslateData';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CELL_MARGIN = 4;
@@ -42,12 +42,24 @@ const CELL_WIDTH = (SCREEN_WIDTH - CELL_MARGIN * 14 - 16) / 7;
 const CalendarScreen = () => {
   const [loading, setLoading] = useState(true);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [originalCalendarData, setOriginalCalendarData] = useState<
+    (CalendarDay | null)[]
+  >([]);
   const [calendarData, setCalendarData] = useState<(CalendarDay | null)[]>([]);
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1); // 1-12
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState<CalendarDay | null>(null);
+  const [originalChoghadiyaData, setOriginalChoghadiyaData] = useState<any[]>(
+    [],
+  );
   const [choghadiyaData, setChoghadiyaData] = useState<any[]>([]);
   const [cityName, setCityName] = useState<string | null>(null);
+
+  const detailsCacheRef = React.useRef<
+    Map<string, { details: CalendarDay; choghadiya: any[] }>
+  >(new Map());
+
+  console.log('choghadiyaData :: ', choghadiyaData);
 
   const {
     location: locationData,
@@ -56,7 +68,9 @@ const CalendarScreen = () => {
   } = useLocation();
 
   const inset = useSafeAreaInsets();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  const currentLanguage = i18n.language;
 
   const location = useMemo(() => {
     if (locationData) {
@@ -107,7 +121,7 @@ const CalendarScreen = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentMonth, currentYear, location]);
+  }, [currentMonth, currentYear, location, currentLanguage]);
 
   const handleDateSelect = useCallback(
     async (item: CalendarDay) => {
@@ -117,31 +131,135 @@ const CalendarScreen = () => {
       setSelectedDate(item);
 
       try {
-        const [details, muhratResponse] = await Promise.all([
-          getPanchangDayDetails(item.date, location.lat, location.lon),
-          getMuhrat(
-            item.date,
-            location.lat.toString(),
-            location.lon.toString(),
-          ),
-        ]);
+        const cacheKey = `${item.date}-${currentLanguage}`;
+        let details: CalendarDay | null = null;
+        let muhratResponse: any = null;
+
+        if (detailsCacheRef.current.has(cacheKey)) {
+          const cached = detailsCacheRef.current.get(cacheKey)!;
+          details = cached.details;
+          // Use cached choghadiya directly
+          setChoghadiyaData(cached.choghadiya);
+        } else {
+          [details, muhratResponse] = await Promise.all([
+            getPanchangDayDetails(item.date, location.lat, location.lon),
+            getMuhrat(
+              item.date,
+              location.lat.toString(),
+              location.lon.toString(),
+            ),
+          ]);
+
+          let finalChoghadiya: any[] = [];
+          if (muhratResponse && Array.isArray(muhratResponse.choghadiya)) {
+            finalChoghadiya = muhratResponse.choghadiya;
+          } else if (
+            muhratResponse &&
+            Array.isArray(muhratResponse.data?.choghadiya)
+          ) {
+            finalChoghadiya = muhratResponse.data.choghadiya;
+          } else if (Array.isArray(muhratResponse)) {
+            finalChoghadiya = muhratResponse;
+          }
+
+          // Translate Choghadiya type
+          if (currentLanguage !== 'en' && finalChoghadiya.length > 0) {
+            try {
+              // We only translate 'type'. 'period' and 'quality' are used for logic (filtering/colors) so must remain in English.
+              // Note: translateData returns the modified array structure.
+              // Since translateData handles array of objects, this should work.
+              // However, translateData is async.
+              // Also ensure we import translateData (it is imported).
+              const translatedChoghadiya = await translateData(
+                finalChoghadiya,
+                currentLanguage,
+                ['type'],
+              );
+              finalChoghadiya = translatedChoghadiya as any[];
+            } catch (e) {
+              console.warn('Choghadiya translation failed', e);
+            }
+          }
+          setChoghadiyaData(finalChoghadiya);
+
+          if (details) {
+            let translatedDetails = details;
+            if (currentLanguage !== 'en') {
+              const g = details.gujarati;
+              const p = details.panchang;
+
+              const [
+                transMonth,
+                transPaksha,
+                transDisplay,
+                transTithiName,
+                transNakshatra,
+                transYoga,
+                transKarana,
+                transPakshaPanchang,
+              ] = await Promise.all([
+                translateText(g.month_name, currentLanguage),
+                translateText(g.paksha, currentLanguage),
+                translateText(g.display_text, currentLanguage),
+                p?.tithi
+                  ? translateText(p.tithi.name, currentLanguage)
+                  : Promise.resolve(p?.tithi?.name),
+                p?.nakshatra
+                  ? translateText(p.nakshatra.name, currentLanguage)
+                  : Promise.resolve(p?.nakshatra),
+                p?.yoga
+                  ? translateText(p.yoga.name, currentLanguage)
+                  : Promise.resolve(p?.yoga),
+                p?.karana
+                  ? translateText(p.karana.name, currentLanguage)
+                  : Promise.resolve(p?.karana),
+                p?.paksha
+                  ? translateText(p.paksha, currentLanguage)
+                  : Promise.resolve(p?.paksha),
+              ]);
+
+              translatedDetails = {
+                ...details,
+                gujarati: {
+                  ...g,
+                  month_name: transMonth,
+                  paksha: transPaksha,
+                  display_text: transDisplay,
+                  original_display_text: g.display_text, // Preserve for logic
+                  original_paksha: g.paksha, // Preserve for logic
+                },
+                panchang: p
+                  ? {
+                      ...p,
+                      paksha: transPakshaPanchang,
+                      tithi: p.tithi
+                        ? { ...p.tithi, name: transTithiName }
+                        : p.tithi,
+                      nakshatra: p.nakshatra
+                        ? { ...p.nakshatra, name: transNakshatra }
+                        : p.nakshatra,
+                      yoga: p.yoga ? { ...p.yoga, name: transYoga } : p.yoga,
+                      karana: p.karana
+                        ? { ...p.karana, name: transKarana }
+                        : p.karana,
+                    }
+                  : p,
+              } as CalendarDay;
+            }
+            details = translatedDetails;
+          }
+
+          if (details) {
+            // Cache both details and choghadiya
+            detailsCacheRef.current.set(cacheKey, {
+              details,
+              choghadiya: finalChoghadiya,
+            });
+          }
+        }
 
         if (details) {
           setSelectedDate(details);
-        }
-
-        if (muhratResponse && Array.isArray(muhratResponse.choghadiya)) {
-          setChoghadiyaData(muhratResponse.choghadiya);
-        } else if (
-          muhratResponse &&
-          Array.isArray(muhratResponse.data?.choghadiya)
-        ) {
-          setChoghadiyaData(muhratResponse.data.choghadiya);
-        } else if (Array.isArray(muhratResponse)) {
-          setChoghadiyaData(muhratResponse);
-        } else {
-          console.log('Unexpected Choghadiya response:', muhratResponse);
-          setChoghadiyaData([]);
         }
       } catch (error) {
         console.error('Error fetching day details:', error);
@@ -149,8 +267,17 @@ const CalendarScreen = () => {
         setDetailsLoading(false);
       }
     },
-    [location],
+    [location, currentLanguage],
   );
+
+  // Reload data when language changes
+  useEffect(() => {
+    fetchCalendar();
+    if (selectedDate) {
+      handleDateSelect(selectedDate);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLanguage]);
 
   const changeMonth = useCallback(
     (increment: number) => {
@@ -227,7 +354,7 @@ const CalendarScreen = () => {
               {displayMonthName} {displayYear}
             </Text>
             <Text style={styles.headerSubtitle}>
-              {displayGujMonth} - Vikram Samvat {displayVikramSamvat}
+              {displayGujMonth} - {t('vikram_samvat')} {displayVikramSamvat}
             </Text>
           </View>
 
@@ -306,16 +433,24 @@ const CalendarScreen = () => {
     }
   }, [currentMonth, currentYear, location, fetchCalendar]);
 
-  // Fetch city name when location changes
+  // Fetch city name when location changes or language changes
   useEffect(() => {
     const fetchCity = async () => {
       if (location) {
-        const city = await getCityName(location.lat, location.lon);
+        let city = await getCityName(location.lat, location.lon);
+        if (city && currentLanguage !== 'en') {
+          try {
+            const translatedCity = await translateText(city, currentLanguage);
+            city = translatedCity;
+          } catch (error) {
+            console.warn('City translation failed', error);
+          }
+        }
         setCityName(city);
       }
     };
     fetchCity();
-  }, [location]);
+  }, [location, currentLanguage]);
 
   if (!locationData && !loading) {
     return (
@@ -326,7 +461,10 @@ const CalendarScreen = () => {
           <InlineLocationRequest
             onAllow={refreshLocation}
             permissionStatus={permissionStatus}
-            message={t('enable_location_panchang_desc') || 'Enable location to see Panchang and Muhurat for your area'}
+            message={
+              t('enable_location_panchang_desc') ||
+              'Enable location to see Panchang and Muhurat for your area'
+            }
           />
         </View>
       </SafeAreaView>

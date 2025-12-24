@@ -10,7 +10,11 @@ import {
   Platform,
   Keyboard,
   Alert,
+  Modal,
+  Text,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import moment from 'moment';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Fonts from '../../../theme/fonts';
@@ -52,6 +56,7 @@ interface FormData {
   address: string;
   latitude?: string;
   longitude?: string;
+  dob: string;
 }
 
 const UserEditProfileScreen: React.FC = () => {
@@ -70,6 +75,7 @@ const UserEditProfileScreen: React.FC = () => {
     address: '',
     latitude: '',
     longitude: '',
+    dob: '',
   });
   console.log('formData', formData);
   const [city, setCity] = useState<{ label: string; value: string }[]>([]);
@@ -81,7 +87,35 @@ const UserEditProfileScreen: React.FC = () => {
     type: string;
   } | null>(null);
 
-  console.log(' profileImage :: ', profileImage);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+
+  const onDateChange = (event: any, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+      if (event.type === 'set' && selectedDate) {
+        handleInputChange(
+          'dob',
+          moment(selectedDate).format('YYYY-MM-DD'),
+          formData.latitude,
+          formData.longitude,
+        );
+      }
+    } else {
+      // iOS - update immediately as spinner moves
+      if (selectedDate) {
+        handleInputChange(
+          'dob',
+          moment(selectedDate).format('YYYY-MM-DD'),
+          formData.latitude,
+          formData.longitude,
+        );
+      }
+    }
+  };
+
+  const confirmIOSDate = () => {
+    setShowDatePicker(false);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -136,6 +170,7 @@ const UserEditProfileScreen: React.FC = () => {
             longitude: profileResponse?.address?.longitude
               ? String(profileResponse.address.longitude)
               : '',
+            dob: profileResponse?.dob || '',
           });
 
           if (profileResponse?.profile_img) {
@@ -207,6 +242,11 @@ const UserEditProfileScreen: React.FC = () => {
     }));
   };
 
+  // Helper to open date picker
+  const openDatePicker = () => {
+    setShowDatePicker(true);
+  };
+
   const handleSaveProfile = async () => {
     if (!validateForm()) {
       return;
@@ -219,6 +259,7 @@ const UserEditProfileScreen: React.FC = () => {
       params.append('last_name', formData.lastName);
       params.append('address.city', formData.location);
       params.append('address.address_line1', formData.address);
+      params.append('dob', formData.dob);
 
       if (formData.latitude) {
         params.append('address.latitude', formData.latitude);
@@ -412,6 +453,75 @@ const UserEditProfileScreen: React.FC = () => {
               style={styles.disabledInput}
               // textColor={COLORS.gray}
             />
+
+            <TouchableOpacity onPress={openDatePicker}>
+              <View pointerEvents="none">
+                <ThemedInput
+                  label={t('date_of_birth')}
+                  placeholder={t('select_date_of_birth')}
+                  value={
+                    formData.dob
+                      ? moment(formData.dob).format('DD MMM YYYY')
+                      : ''
+                  }
+                  onChangeText={() => {}}
+                  editable={false}
+                  // rightIcon logic is not directly supported in ThemedInput as per previous read, but we can just use it as a trigger
+                />
+              </View>
+            </TouchableOpacity>
+            {Platform.OS === 'ios' ? (
+              <Modal
+                transparent={true}
+                animationType="slide"
+                visible={showDatePicker}
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                      <TouchableOpacity
+                        onPress={() => setShowDatePicker(false)}
+                      >
+                        <Text style={styles.modalButtonText}>
+                          {t('cancel')}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={confirmIOSDate}>
+                        <Text
+                          style={[styles.modalButtonText, styles.doneButton]}
+                        >
+                          {t('done')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    <DateTimePicker
+                      testID="dateTimePicker"
+                      value={formData.dob ? new Date(formData.dob) : new Date()}
+                      mode="date"
+                      is24Hour={true}
+                      display="spinner"
+                      onChange={onDateChange}
+                      maximumDate={new Date()}
+                      themeVariant="light"
+                      style={styles.iosDatePicker}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            ) : (
+              showDatePicker && (
+                <DateTimePicker
+                  testID="dateTimePicker"
+                  value={formData.dob ? new Date(formData.dob) : new Date()}
+                  mode="date"
+                  is24Hour={true}
+                  display="default"
+                  onChange={onDateChange}
+                  maximumDate={new Date()}
+                />
+              )
+            )}
             <ThemedInput
               label={t('phone')}
               placeholder={t('enter_your_phone')}
@@ -540,6 +650,38 @@ const styles = StyleSheet.create({
   },
   disabledInput: {
     backgroundColor: COLORS.lightGray,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    color: COLORS.primary,
+    fontFamily: Fonts.Sen_Bold,
+  },
+  doneButton: {
+    fontWeight: 'bold',
+  },
+  iosDatePicker: {
+    height: 200, // Ensure spinner has enough height
   },
 });
 

@@ -4989,7 +4989,7 @@ html-escaper@^2.0.0:
 
 html-parse-stringify2@2.0.1:
   version "2.0.1"
-  resolved "https://registry.npmjs.org/html-parse-stringify2/-/html-parse-stringify2-2.0.1.tgz"
+  resolved "https://registry.yarnpkg.com/html-parse-stringify2/-/html-parse-stringify2-2.0.1.tgz#dc5670b7292ca158b7bc916c9a6735ac8872834a"
   integrity sha512-wMKQ3aJ/dwXzDHPpA7XgsRXXCkEhHkAF6Ioh7D51lgZO7Qy0LmcFddC9TI/qNQJvSM1KL8KbcR3FtuybsrzFlQ==
   dependencies:
     void-elements "^2.0.1"

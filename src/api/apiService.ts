@@ -1218,8 +1218,12 @@ export const getPanditji = (
   });
 };
 
-export const getAllPanditji = () => {
-  let apiUrl = GET_ALL_PANDIT_LIST;
+export const getAllPanditji = (lat?: string, lon?: string) => {
+  let apiUrl = GET_ALL_PANDIT_LIST.replace('{lat}', lat ?? '').replace(
+    '{lon}',
+    lon ?? '',
+  );
+  console.log('apiUrl :: ', apiUrl);
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)

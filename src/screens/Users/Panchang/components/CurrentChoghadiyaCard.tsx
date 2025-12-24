@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { COLORS } from '../../../../theme/theme';
+import { useTranslation } from 'react-i18next';
 
 interface CurrentChoghadiyaProps {
   choghadiyaData: any[]; // Replace 'any' with proper type if available
@@ -27,6 +28,8 @@ const CurrentChoghadiyaCard: React.FC<CurrentChoghadiyaProps> = ({
   const [currentChoghadiya, setCurrentChoghadiya] = useState<any>(null);
   const [nextChoghadiya, setNextChoghadiya] = useState<any>(null);
   const [timeLeft, setTimeLeft] = useState<string>('');
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!choghadiyaData || choghadiyaData.length === 0) {
@@ -155,7 +158,7 @@ const CurrentChoghadiyaCard: React.FC<CurrentChoghadiyaProps> = ({
             numberOfLines={1}
             adjustsFontSizeToFit
           >
-            Current Choghadiya
+            {t('currentChoghadiya')}
           </Text>
         </View>
 
@@ -175,7 +178,7 @@ const CurrentChoghadiyaCard: React.FC<CurrentChoghadiyaProps> = ({
         </Text>
 
         <View style={styles.footerRow}>
-          <Text style={styles.timeLabel}>Remaining</Text>
+          <Text style={styles.timeLabel}>{t('remaining')}</Text>
           <Text style={styles.timerText}>{timeLeft}</Text>
         </View>
       </View>
@@ -190,7 +193,7 @@ const CurrentChoghadiyaCard: React.FC<CurrentChoghadiyaProps> = ({
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
-                Next Choghadiya
+                {t('nextChoghadiya')}
               </Text>
             </View>
 
@@ -211,7 +214,7 @@ const CurrentChoghadiyaCard: React.FC<CurrentChoghadiyaProps> = ({
           </>
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No Next Choghadiya</Text>
+            <Text style={styles.emptyText}>{t('noNextChoghadiya')}</Text>
           </View>
         )}
       </View>

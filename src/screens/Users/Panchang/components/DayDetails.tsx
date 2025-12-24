@@ -6,6 +6,7 @@ import { CalendarDay } from '../../../../api/apiService';
 import { PanchangIcon, AstronomyIcon } from './PanchangIcons';
 import CurrentChoghadiyaCard from './CurrentChoghadiyaCard';
 import RealisticMoon from './RealisticMoon';
+import { useTranslation } from 'react-i18next';
 
 interface DayDetailsProps {
   selectedDate: CalendarDay | null;
@@ -44,11 +45,13 @@ const DayDetails: React.FC<DayDetailsProps> = ({
     item => item.period === 'Night',
   );
 
+  const { t } = useTranslation();
+
   const renderChoghadiyaLegend = () => {
     const items = [
-      { label: 'Good', color: COLORS.choghadiya.good.text },
-      { label: 'Bad', color: COLORS.choghadiya.bad.text },
-      { label: 'Normal', color: COLORS.choghadiya.normal.text },
+      { label: t('Good'), color: COLORS.choghadiya.good.text },
+      { label: t('Bad'), color: COLORS.choghadiya.bad.text },
+      { label: t('Normal'), color: COLORS.choghadiya.normal.text },
     ];
 
     return (
@@ -79,12 +82,14 @@ const DayDetails: React.FC<DayDetailsProps> = ({
         {/* Table Header */}
         <View style={styles.chogadiaTableHeader}>
           <Text style={[styles.chogadiaHeaderText, { flex: 1.2 }]}>
-            Choghadiya
+            {t('Choghadiya')}
           </Text>
           <Text style={[styles.chogadiaHeaderText, { flex: 1 }]}>
-            Start Time
+            {t('StartTime')}
           </Text>
-          <Text style={[styles.chogadiaHeaderText, { flex: 1 }]}>End Time</Text>
+          <Text style={[styles.chogadiaHeaderText, { flex: 1 }]}>
+            {t('EndTime')}
+          </Text>
         </View>
 
         {/* Table Rows */}
@@ -148,7 +153,7 @@ const DayDetails: React.FC<DayDetailsProps> = ({
             </Text>
             <View style={styles.pakshaBadge}>
               <Text style={styles.pakshaText}>
-                {selectedDate.panchang.paksha} Paksha
+                {selectedDate.panchang.paksha} {t('Paksha')}
               </Text>
             </View>
           </View>
@@ -158,7 +163,10 @@ const DayDetails: React.FC<DayDetailsProps> = ({
             <RealisticMoon
               phase={selectedDate.astronomy.moon_phase}
               size={56}
-              displayText={selectedDate.gujarati.display_text}
+              displayText={
+                (selectedDate.gujarati as any).original_display_text ||
+                selectedDate.gujarati.display_text
+              }
             />
           </View>
         </View>
@@ -173,14 +181,14 @@ const DayDetails: React.FC<DayDetailsProps> = ({
                 <View style={styles.iconContainer}>
                   <PanchangIcon name="tithi" size={20} color={COLORS.primary} />
                 </View>
-                <Text style={styles.gridLabel}>Tithi</Text>
+                <Text style={styles.gridLabel}>{t('Tithi')}</Text>
               </View>
               <Text style={styles.gridValue}>
                 {selectedDate.panchang.tithi?.name}
               </Text>
               {selectedDate.panchang.tithi?.end_time && (
                 <Text style={styles.gridTime}>
-                  Ends: {selectedDate.panchang.tithi.end_time}
+                  {t('Ends')}: {selectedDate.panchang.tithi.end_time}
                 </Text>
               )}
             </View>
@@ -194,14 +202,14 @@ const DayDetails: React.FC<DayDetailsProps> = ({
                     color={COLORS.primary}
                   />
                 </View>
-                <Text style={styles.gridLabel}>Nakshatra</Text>
+                <Text style={styles.gridLabel}>{t('Nakshatra')}</Text>
               </View>
               <Text style={styles.gridValue}>
                 {selectedDate.panchang.nakshatra?.name}
               </Text>
               {selectedDate.panchang.nakshatra?.end_time && (
                 <Text style={styles.gridTime}>
-                  Ends: {selectedDate.panchang.nakshatra.end_time}
+                  {t('Ends')}: {selectedDate.panchang.nakshatra.end_time}
                 </Text>
               )}
             </View>
@@ -214,14 +222,14 @@ const DayDetails: React.FC<DayDetailsProps> = ({
                 <View style={styles.iconContainer}>
                   <PanchangIcon name="yoga" size={20} color={COLORS.primary} />
                 </View>
-                <Text style={styles.gridLabel}>Yoga</Text>
+                <Text style={styles.gridLabel}>{t('Yoga')}</Text>
               </View>
               <Text style={styles.gridValue}>
                 {selectedDate.panchang.yoga?.name}
               </Text>
               {selectedDate.panchang.yoga?.end_time && (
                 <Text style={styles.gridTime}>
-                  Ends: {selectedDate.panchang.yoga.end_time}
+                  {t('Ends')}: {selectedDate.panchang.yoga.end_time}
                 </Text>
               )}
             </View>
@@ -235,14 +243,14 @@ const DayDetails: React.FC<DayDetailsProps> = ({
                     color={COLORS.primary}
                   />
                 </View>
-                <Text style={styles.gridLabel}>Karana</Text>
+                <Text style={styles.gridLabel}>{t('Karana')}</Text>
               </View>
               <Text style={styles.gridValue}>
                 {selectedDate.panchang.karana?.name}
               </Text>
               {selectedDate.panchang.karana?.end_time && (
                 <Text style={styles.gridTime}>
-                  Ends: {selectedDate.panchang.karana.end_time}
+                  {t('Ends')}: {selectedDate.panchang.karana.end_time}
                 </Text>
               )}
             </View>
@@ -256,7 +264,7 @@ const DayDetails: React.FC<DayDetailsProps> = ({
       <View style={[styles.panchangCard, { backgroundColor: COLORS.white }]}>
         <View style={styles.cardHeader}>
           <Text style={[styles.cardDate, { color: COLORS.primary, flex: 1 }]}>
-            Sun & Moon
+            {t('Sun_Moon')}
           </Text>
           {cityName && (
             <View style={styles.locationBadge}>
@@ -295,7 +303,7 @@ const DayDetails: React.FC<DayDetailsProps> = ({
                     color={COLORS.primary}
                   />
                 </View>
-                <Text style={styles.gridLabel}>Sunrise</Text>
+                <Text style={styles.gridLabel}>{t('Sunrise')}</Text>
               </View>
               <Text style={styles.gridValue}>
                 {selectedDate.astronomy.sunrise}
@@ -324,7 +332,7 @@ const DayDetails: React.FC<DayDetailsProps> = ({
                     color={COLORS.primary}
                   />
                 </View>
-                <Text style={styles.gridLabel}>Sunset</Text>
+                <Text style={styles.gridLabel}>{t('Sunset')}</Text>
               </View>
               <Text style={styles.gridValue}>
                 {selectedDate.astronomy.sunset}
@@ -356,7 +364,7 @@ const DayDetails: React.FC<DayDetailsProps> = ({
                     color={COLORS.primary}
                   />
                 </View>
-                <Text style={styles.gridLabel}>Moonrise</Text>
+                <Text style={styles.gridLabel}>{t('Moonrise')}</Text>
               </View>
               <Text style={styles.gridValue}>
                 {selectedDate.astronomy.moonrise || '--:--'}
@@ -385,7 +393,7 @@ const DayDetails: React.FC<DayDetailsProps> = ({
                     color={COLORS.primary}
                   />
                 </View>
-                <Text style={styles.gridLabel}>Moonset</Text>
+                <Text style={styles.gridLabel}>{t('Moonset')}</Text>
               </View>
               <Text style={styles.gridValue}>
                 {selectedDate.astronomy.moonset || '--:--'}
@@ -409,8 +417,8 @@ const DayDetails: React.FC<DayDetailsProps> = ({
       {choghadiyaData.length > 0 && renderChoghadiyaLegend()}
 
       {/* Chogadia Tables */}
-      {renderChoghadiyaTable('Day Choghadiya', dayChoghadiya)}
-      {renderChoghadiyaTable('Night Choghadiya', nightChoghadiya)}
+      {renderChoghadiyaTable(t('Day_Choghadiya'), dayChoghadiya)}
+      {renderChoghadiyaTable(t('Night_Choghadiya'), nightChoghadiya)}
     </View>
   );
 };

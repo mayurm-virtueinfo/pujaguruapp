@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   StyleSheet,
   View,
@@ -6,24 +6,19 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
-import {
-  CommonActions,
-  useFocusEffect,
-  useNavigation,
-} from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Fonts from '../../../theme/fonts';
 import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { changeLanguage } from '../../../i18n';
 import { UserProfileParamList } from '../../../navigation/User/userProfileNavigator';
 import { useAuth } from '../../../provider/AuthProvider';
-import LanguageSwitcher from '../../../components/LanguageSwitcher';
 import {
   deleteAccount,
   getEditProfile,
@@ -69,6 +64,7 @@ const BottomUserProfileScreen: React.FC = () => {
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [deleteAccountModalVisible, setDeleteAccountModalVisible] =
     useState(false);
+  const [languageModalVisible, setLanguageModalVisible] = useState(false);
   interface Address {
     address_line1: string;
     address_line2: string;
@@ -96,6 +92,8 @@ const BottomUserProfileScreen: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
 
   const translationCacheRef = useRef<Map<string, any>>(new Map());
+
+  console.log('currentUser :: ', currentUser);
 
   const fetchCurrentUser = useCallback(async () => {
     try {
@@ -161,18 +159,31 @@ const BottomUserProfileScreen: React.FC = () => {
         refresh_token: refreshToken,
         device_token: fcmToken,
       };
-      const response: any = await postLogout(params);
-      if (response.data.success) {
-        setLogoutModalVisible(false);
-        try {
-          await changeLanguage('en');
-        } catch (e) {}
-        signOutApp();
+
+      // Attempt server-side logout, but don't block local logout on failure
+      try {
+        await postLogout(params);
+      } catch (apiError) {
+        console.warn(
+          'Server logout failed, proceeding with local logout',
+          apiError,
+        );
       }
+
+      try {
+        await changeLanguage('en');
+      } catch (e) {
+        console.warn('Language reset failed', e);
+      }
+
+      // Always perform local sign out
+      signOutApp();
     } catch (error: any) {
-      setLogoutModalVisible(false);
       console.error('Logout error:', error);
+      // Ensure we still try to sign out locally if major errors occur
+      signOutApp();
     } finally {
+      setLogoutModalVisible(false);
       setLogoutLoading(false);
     }
   };
@@ -218,15 +229,34 @@ const BottomUserProfileScreen: React.FC = () => {
     navigation.navigate('HoroscopeScreen');
   };
 
+  const getLanguageLabel = (langCode: string) => {
+    switch (langCode) {
+      case 'en':
+        return 'English';
+      case 'hi':
+        return 'हिन्दी';
+      case 'gu':
+        return 'ગુજરાતી';
+      case 'mr':
+        return 'मराठी';
+      default:
+        return 'English';
+    }
+  };
+
+  const changeAppLanguage = async (lang: string) => {
+    try {
+      await changeLanguage(lang);
+      setLanguageModalVisible(false);
+    } catch (error) {
+      console.error('Error changing language', error);
+    }
+  };
+
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={logoutLoading || loading} />
-      {/* <LinearGradient
-        colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-        style={[styles.headerGradient]}
-      /> */}
       <UserCustomHeader title={t('profile')} />
-
       {currentUser && (
         <View style={styles.profileImageContainer}>
           <Image
@@ -361,7 +391,31 @@ const BottomUserProfileScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          <LanguageSwitcher />
+          <TouchableOpacity
+            style={[styles.editSection, THEMESHADOW.shadow]}
+            onPress={() => setLanguageModalVisible(true)}
+          >
+            <View style={styles.editFieldContainer}>
+              <Text style={styles.editFieldLabel}>{t('language')}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  style={{
+                    marginRight: 10,
+                    color: COLORS.textSecondary,
+                    fontFamily: Fonts.Sen_Regular,
+                    fontSize: 14,
+                  }}
+                >
+                  {getLanguageLabel(currentLanguage)}
+                </Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={COLORS.primaryTextDark}
+                />
+              </View>
+            </View>
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.editSection, THEMESHADOW.shadow]}
             onPress={() => setLogoutModalVisible(true)}
@@ -409,6 +463,57 @@ const BottomUserProfileScreen: React.FC = () => {
         onConfirm={handleDeleteAccount}
         onCancel={() => setDeleteAccountModalVisible(false)}
       />
+
+      {/* Language Selection Modal */}
+      <Modal
+        visible={languageModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setLanguageModalVisible(false)}
+        >
+          <View style={styles.languageModalContent}>
+            <Text style={styles.modalTitle}>{t('select_language')}</Text>
+            {[
+              { code: 'en', label: 'English' },
+              { code: 'hi', label: 'हिन्दी' },
+              { code: 'gu', label: 'ગુજરાતી' },
+              { code: 'mr', label: 'मराठी' },
+            ].map(item => (
+              <TouchableOpacity
+                key={item.code}
+                style={[
+                  styles.languageOption,
+                  currentLanguage === item.code &&
+                    styles.selectedLanguageOption,
+                ]}
+                onPress={() => changeAppLanguage(item.code)}
+              >
+                <Text
+                  style={[
+                    styles.languageOptionText,
+                    currentLanguage === item.code &&
+                      styles.selectedLanguageText,
+                  ]}
+                >
+                  {item.label}
+                </Text>
+                {currentLanguage === item.code && (
+                  <Ionicons
+                    name="checkmark-circle"
+                    size={24}
+                    color={COLORS.primary}
+                  />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -521,6 +626,58 @@ const styles = StyleSheet.create({
     color: COLORS.inputLabelText,
     fontSize: 14,
     fontFamily: Fonts.Sen_Medium,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  languageModalContent: {
+    width: '80%',
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontFamily: Fonts.Sen_Bold,
+    marginBottom: 20,
+    color: COLORS.textPrimary,
+  },
+  languageOption: {
+    width: '100%',
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    backgroundColor: '#F7F7F7',
+  },
+  selectedLanguageOption: {
+    backgroundColor: '#FFF5F5', // Light tint of red/primary
+    borderColor: COLORS.primary,
+    borderWidth: 1,
+  },
+  languageOptionText: {
+    fontSize: 16,
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.textPrimary,
+  },
+  selectedLanguageText: {
+    color: COLORS.primary,
+    fontFamily: Fonts.Sen_Bold,
   },
 });
 

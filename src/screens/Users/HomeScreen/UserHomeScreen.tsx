@@ -132,12 +132,12 @@ const UserHomeScreen: React.FC = () => {
     null,
   );
 
-  console.log('recomendedPandits :: ', recomendedPandits);
-
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
   const inset = useSafeAreaInsets();
   const { messages } = useWebSocket();
+  console.log('webSocket messages in UserHomeScreen :: ', messages);
+
   const {
     location: contextLocation,
     refreshLocation,
@@ -391,30 +391,48 @@ const UserHomeScreen: React.FC = () => {
   }, [loadAllData, fetchDailyMuhurat, contextLocation, refreshLocation]);
 
   // ⚡ WebSocket real-time updates
+
+  const processedMessageCount = useRef(0);
+
   useEffect(() => {
-    if (messages.length === 0) return;
-    const latest = messages[messages.length - 1];
-    if (!latest) return;
+    // If no new messages, do nothing
+    if (messages.length <= processedMessageCount.current) return;
 
-    const uniqueKey = `${latest.type}-${latest.action}-${latest.booking_id}`;
-    if (lastHandledMessageId.current === uniqueKey) return;
+    // Get only the new messages
+    const newMessages = messages.slice(processedMessageCount.current);
+    let shouldRefresh = false;
 
-    lastHandledMessageId.current = uniqueKey;
+    newMessages.forEach(msg => {
+      if (!msg) return;
 
-    const { type, action, booking_id } = latest;
+      const { type, action, booking_id } = msg;
 
-    if (type === 'booking_update' && ['accepted'].includes(action)) {
-      console.log(`✅ Updating puja list due to booking #${booking_id}`);
+      // Check for specific update criteria
+      if (
+        type === 'booking_update' &&
+        (action === 'accepted' ||
+          action === 'in_progress' ||
+          action === 'completed')
+      ) {
+        console.log(
+          `✅ [WebSocket] Triggering refresh due to booking #${booking_id} update`,
+        );
+        shouldRefresh = true;
+      }
+    });
 
+    // Update the tracker so we don't process these again
+    processedMessageCount.current = messages.length;
+
+    // Trigger refresh if needed (debounced)
+    if (shouldRefresh) {
       if (refreshTimeout.current) clearTimeout(refreshTimeout.current);
-
       refreshTimeout.current = setTimeout(() => {
+        console.log('🔄 Executing debounced refresh from WebSocket trigger');
         onRefresh();
       }, 1000);
     }
   }, [messages, onRefresh]);
-
-
 
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
@@ -439,7 +457,6 @@ const UserHomeScreen: React.FC = () => {
         }
       >
         {/* {renderDailyMuhuratCard()} */}
-
 
         {/* Recommended Panditji */}
         <View style={styles.section}>

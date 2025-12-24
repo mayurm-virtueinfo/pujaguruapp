@@ -3,11 +3,12 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   Platform,
+  Modal,
 } from 'react-native';
+import Fonts from '../../../theme/fonts';
 import { useNavigation } from '@react-navigation/native';
 import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import UserCustomHeader from '../../../components/UserCustomHeader';
@@ -24,8 +25,6 @@ import CustomTextInput from '../../../components/CustomTextInput';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import CustomeLoader from '../../../components/CustomeLoader';
 
-// ... existing imports
-
 const KundliInputScreen = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<StackNavigationProp<UserProfileParamList>>();
@@ -38,29 +37,43 @@ const KundliInputScreen = () => {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState<{lat: string, lon: string} | null>(null);
-  
+  const [selectedLocation, setSelectedLocation] = useState<{
+    lat: string;
+    lon: string;
+  } | null>(null);
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
   const onDateChange = (event: any, selectedDate?: Date) => {
-    const currentDate = selectedDate || birthDate;
-    setShowDatePicker(Platform.OS === 'ios');
-    setBirthDate(currentDate);
-    if (event.type === 'set' || event.type === 'dismissed') {
-        setShowDatePicker(false);
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+      if (event.type === 'set' && selectedDate) {
+        setBirthDate(selectedDate);
+      }
+    } else {
+      if (selectedDate) setBirthDate(selectedDate);
     }
   };
 
   const onTimeChange = (event: any, selectedDate?: Date) => {
-    const currentDate = selectedDate || birthTime;
-    setShowTimePicker(Platform.OS === 'ios');
-    setBirthTime(currentDate);
-    if (event.type === 'set' || event.type === 'dismissed') {
-        setShowTimePicker(false);
+    if (Platform.OS === 'android') {
+      setShowTimePicker(false);
+      if (event.type === 'set' && selectedDate) {
+        setBirthTime(selectedDate);
+      }
+    } else {
+      if (selectedDate) setBirthTime(selectedDate);
     }
   };
 
+  const confirmIOSDate = () => {
+    setShowDatePicker(false);
+  };
+
+  const confirmIOSTime = () => {
+    setShowTimePicker(false);
+  };
 
   const lastQuery = React.useRef('');
 
@@ -92,66 +105,65 @@ const KundliInputScreen = () => {
     }
 
     if (!selectedLocation) {
-        // Fallback to geocoding if user didn't select from dropdown
-        // Or force selection. For now, let's try to geocode if not selected
-        // But since we removed getCityCoordinates, we should rely on selection or re-implement it using searchCity
-        const results = await searchCity(birthPlace);
-        if (results.length > 0) {
-            setSelectedLocation({ lat: results[0].lat, lon: results[0].lon });
-        } else {
-            console.warn('City not found');
-            return;
-        }
+      // Fallback to geocoding if user didn't select from dropdown
+      // Or force selection. For now, let's try to geocode if not selected
+      // But since we removed getCityCoordinates, we should rely on selection or re-implement it using searchCity
+      const results = await searchCity(birthPlace);
+      if (results.length > 0) {
+        setSelectedLocation({ lat: results[0].lat, lon: results[0].lon });
+      } else {
+        console.warn('City not found');
+        return;
+      }
     }
 
     setLoading(true);
-    
+
     // Use selectedLocation or fetch if needed (logic above handles it partially, but let's be safe)
     // Actually, state updates are async, so better to use local variable if we just fetched
     let lat = selectedLocation?.lat;
     let lon = selectedLocation?.lon;
 
     if (!lat || !lon) {
-         const results = await searchCity(birthPlace);
-        if (results.length > 0) {
-            lat = results[0].lat;
-            lon = results[0].lon;
-        } else {
-            setLoading(false);
-            console.warn('City not found');
-            return;
-        }
+      const results = await searchCity(birthPlace);
+      if (results.length > 0) {
+        lat = results[0].lat;
+        lon = results[0].lon;
+      } else {
+        setLoading(false);
+        console.warn('City not found');
+        return;
+      }
     }
 
     const payload = {
-        name,
-        date_of_birth: moment(birthDate).format('YYYY-MM-DD'),
-        time_of_birth: moment(birthTime).format('HH:mm:ss'),
-        birth_place: birthPlace,
-        latitude: parseFloat(lat || '0'),
-        longitude: parseFloat(lon || '0'),
+      name,
+      date_of_birth: moment(birthDate).format('YYYY-MM-DD'),
+      time_of_birth: moment(birthTime).format('HH:mm:ss'),
+      birth_place: birthPlace,
+      latitude: parseFloat(lat || '0'),
+      longitude: parseFloat(lon || '0'),
     };
 
-      try {
-        const response = await postCreateKundli(payload);
-        setLoading(false);
-        console.log('Kundli created successfully:', response);
-        
-        navigation.replace('KundliScreen', {
-          kundliData: response,
-          name,
-          birthDate: moment(birthDate).format('YYYY-MM-DD'),
-          birthTime: moment(birthTime).format('HH:mm'),
-          birthPlace,
-          latitude: parseFloat(lat || '0'),
-          longitude: parseFloat(lon || '0'),
-        });
-      } catch (error) {
-        setLoading(false);
-        console.error('Failed to create kundli:', error);
-      }
-  };
+    try {
+      const response = await postCreateKundli(payload);
+      setLoading(false);
+      console.log('Kundli created successfully:', response);
 
+      navigation.replace('KundliScreen', {
+        kundliData: response,
+        name,
+        birthDate: moment(birthDate).format('YYYY-MM-DD'),
+        birthTime: moment(birthTime).format('HH:mm'),
+        birthPlace,
+        latitude: parseFloat(lat || '0'),
+        longitude: parseFloat(lon || '0'),
+      });
+    } catch (error) {
+      setLoading(false);
+      console.error('Failed to create kundli:', error);
+    }
+  };
 
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
@@ -161,7 +173,7 @@ const KundliInputScreen = () => {
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.card,THEMESHADOW.shadow]}>
+        <View style={[styles.card, THEMESHADOW.shadow]}>
           <View style={styles.inputContainer}>
             <CustomTextInput
               label={t('name')}
@@ -191,15 +203,55 @@ const KundliInputScreen = () => {
                 />
               </View>
             </TouchableOpacity>
-            {showDatePicker && (
-              <DateTimePicker
-                testID="dateTimePicker"
-                value={birthDate}
-                mode="date"
-                is24Hour={true}
-                display="default"
-                onChange={onDateChange}
-              />
+            {Platform.OS === 'ios' ? (
+              <Modal
+                transparent={true}
+                animationType="slide"
+                visible={showDatePicker}
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                      <TouchableOpacity
+                        onPress={() => setShowDatePicker(false)}
+                      >
+                        <Text style={styles.modalButtonText}>
+                          {t('cancel')}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={confirmIOSDate}>
+                        <Text
+                          style={[styles.modalButtonText, styles.doneButton]}
+                        >
+                          {t('done')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    <DateTimePicker
+                      testID="dateTimePicker"
+                      value={birthDate}
+                      mode="date"
+                      is24Hour={true}
+                      display="spinner"
+                      onChange={onDateChange}
+                      themeVariant="light"
+                      style={styles.iosDatePicker}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            ) : (
+              showDatePicker && (
+                <DateTimePicker
+                  testID="dateTimePicker"
+                  value={birthDate}
+                  mode="date"
+                  is24Hour={true}
+                  display="default"
+                  onChange={onDateChange}
+                />
+              )
             )}
           </View>
 
@@ -222,15 +274,55 @@ const KundliInputScreen = () => {
                 />
               </View>
             </TouchableOpacity>
-            {showTimePicker && (
-              <DateTimePicker
-                testID="timePicker"
-                value={birthTime}
-                mode="time"
-                is24Hour={false}
-                display="default"
-                onChange={onTimeChange}
-              />
+            {Platform.OS === 'ios' ? (
+              <Modal
+                transparent={true}
+                animationType="slide"
+                visible={showTimePicker}
+                onRequestClose={() => setShowTimePicker(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                      <TouchableOpacity
+                        onPress={() => setShowTimePicker(false)}
+                      >
+                        <Text style={styles.modalButtonText}>
+                          {t('cancel')}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={confirmIOSTime}>
+                        <Text
+                          style={[styles.modalButtonText, styles.doneButton]}
+                        >
+                          {t('done')}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    <DateTimePicker
+                      testID="timePicker"
+                      value={birthTime}
+                      mode="time"
+                      is24Hour={false}
+                      display="spinner"
+                      onChange={onTimeChange}
+                      themeVariant="light"
+                      style={styles.iosDatePicker}
+                    />
+                  </View>
+                </View>
+              </Modal>
+            ) : (
+              showTimePicker && (
+                <DateTimePicker
+                  testID="timePicker"
+                  value={birthTime}
+                  mode="time"
+                  is24Hour={false}
+                  display="default"
+                  onChange={onTimeChange}
+                />
+              )
             )}
           </View>
 
@@ -250,7 +342,7 @@ const KundliInputScreen = () => {
               required={true}
             />
             {showSuggestions && suggestions.length > 0 && (
-              <View style={[styles.suggestionsContainer,THEMESHADOW.shadow]}>
+              <View style={[styles.suggestionsContainer, THEMESHADOW.shadow]}>
                 {suggestions.map((item, index) => (
                   <TouchableOpacity
                     key={index}
@@ -329,6 +421,38 @@ const styles = StyleSheet.create({
   suggestionText: {
     fontSize: 14,
     color: COLORS.textPrimary,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    color: COLORS.primary,
+    fontFamily: Fonts.Sen_Bold,
+  },
+  doneButton: {
+    fontWeight: 'bold',
+  },
+  iosDatePicker: {
+    height: 200,
   },
 });
 
