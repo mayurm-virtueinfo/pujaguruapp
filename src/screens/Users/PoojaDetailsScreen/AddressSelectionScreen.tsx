@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,7 +11,7 @@ import {
   Platform,
   Modal,
 } from 'react-native';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
@@ -25,14 +25,14 @@ import {
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
-import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
-import {translateData} from '../../../utils/TranslateData';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
+import { UserHomeParamList } from '../../../navigation/User/UsetHomeStack';
+import { translateData } from '../../../utils/TranslateData';
 
 const AddressSelectionScreen: React.FC = () => {
   type BookingAddress = PoojaBookingAddress & {
@@ -48,13 +48,11 @@ const AddressSelectionScreen: React.FC = () => {
     'AddressSelectionScreen',
     'AddAddressScreen'
   >;
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
 
   const currentLanguage = i18n.language;
-
-  const translationCacheRef = useRef<Map<string, any>>(new Map());
 
   const route = useRoute();
 
@@ -96,14 +94,6 @@ const AddressSelectionScreen: React.FC = () => {
     try {
       setIsLoading(true);
 
-      const cachedData = translationCacheRef.current.get(currentLanguage);
-
-      if (cachedData) {
-        setPoojaPlaces(cachedData);
-        setIsLoading(false);
-        return;
-      }
-
       const response: any = await getAddressTypeForBooking();
 
       if (response.success) {
@@ -114,7 +104,6 @@ const AddressSelectionScreen: React.FC = () => {
           ['address_type', 'full_address'],
         );
 
-        translationCacheRef.current.set(currentLanguage, translated);
         setPoojaPlaces(translated);
       } else {
         setPoojaPlaces([]);
@@ -188,7 +177,7 @@ const AddressSelectionScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: inset.top }]}>
       <CustomeLoader loading={isLoading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader
@@ -198,15 +187,17 @@ const AddressSelectionScreen: React.FC = () => {
         onPlusPress={onPlusPress}
       />
       <KeyboardAvoidingView
-        style={{flex: 1}}
+        style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
         <View style={styles.flexGrow}>
           <Modal
             visible={mismatchModalVisible}
             transparent
             animationType="fade"
-            onRequestClose={() => setMismatchModalVisible(false)}>
+            onRequestClose={() => setMismatchModalVisible(false)}
+          >
             <View style={styles.mismatchModalOverlay}>
               <View style={styles.mismatchModalContainer}>
                 <Text style={styles.mismatchModalTitle}>
@@ -227,7 +218,7 @@ const AddressSelectionScreen: React.FC = () => {
                       screen: 'UserHomeScreen',
                     });
                   }}
-                  style={{width: '100%'}}
+                  style={{ width: '100%' }}
                 />
                 <PrimaryButtonOutlined
                   title={
@@ -236,7 +227,7 @@ const AddressSelectionScreen: React.FC = () => {
                   onPress={() => {
                     setMismatchModalVisible(false);
                   }}
-                  style={{width: '100%'}}
+                  style={{ width: '100%' }}
                 />
               </View>
             </View>
@@ -246,7 +237,8 @@ const AddressSelectionScreen: React.FC = () => {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             bounces={false}
-            keyboardShouldPersistTaps="handled">
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.contentWrapper}>
               <View style={styles.detailsContainer}>
                 <Text style={styles.sectionTitle}>{t('select_address')}</Text>
@@ -256,13 +248,16 @@ const AddressSelectionScreen: React.FC = () => {
                 {!isLoading && (
                   <View style={[styles.pricingContainer, THEMESHADOW.shadow]}>
                     {poojaPlaces.length === 0 ? (
-                      <View style={{alignItems: 'center', paddingVertical: 24}}>
+                      <View
+                        style={{ alignItems: 'center', paddingVertical: 24 }}
+                      >
                         <Text
                           style={{
                             fontSize: 16,
                             color: COLORS.primaryTextDark,
                             fontFamily: Fonts.Sen_Medium,
-                          }}>
+                          }}
+                        >
                           {t('add_your_address')}
                         </Text>
                       </View>
@@ -272,7 +267,8 @@ const AddressSelectionScreen: React.FC = () => {
                           <TouchableOpacity
                             style={styles.pricingOption}
                             activeOpacity={0.7}
-                            onPress={() => handleSelectAddress(place.id)}>
+                            onPress={() => handleSelectAddress(place.id)}
+                          >
                             <View style={styles.textContainer}>
                               <Text style={styles.pricingText}>
                                 {place.address_type}
@@ -309,8 +305,9 @@ const AddressSelectionScreen: React.FC = () => {
           <View
             style={[
               styles.buttonWrapper,
-              {paddingBottom: inset.bottom > 0 ? inset.bottom : 16},
-            ]}>
+              { paddingBottom: inset.bottom > 0 ? inset.bottom : 16 },
+            ]}
+          >
             <PrimaryButton
               title={t('next')}
               onPress={handleNextPress}

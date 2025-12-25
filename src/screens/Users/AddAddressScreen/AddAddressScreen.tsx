@@ -379,24 +379,6 @@ const AddAddressScreen = () => {
     didSetEditData.current = false;
   }, [addressToEdit]);
 
-  // const handleFetchGPS = async () => {
-  //   setIsLoading(true);
-  //   const hasPermission = await requestLocationPermission();
-  //   if (hasPermission) {
-  //     Geolocation.getCurrentPosition(
-  //       position => {
-  //         const {latitude, longitude} = position.coords;
-  //         setLocation({latitude, longitude});
-  //         setIsLoading(false);
-  //       },
-  //       () => setIsLoading(false),
-  //       {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-  //     );
-  //   } else {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   const handleSaveAddress = async () => {
     if (!validateForm()) {
       showErrorToast(t('please_fill_all_required_fields'));

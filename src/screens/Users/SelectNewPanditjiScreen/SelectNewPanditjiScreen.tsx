@@ -11,17 +11,26 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  Modal,
 } from 'react-native';
 import { COLORS, THEMESHADOW, wp } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import Octicons from 'react-native-vector-icons/Octicons';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  CommonActions,
+} from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { UserPanditjiParamList } from '../../../navigation/User/UserPanditjiNavigator';
 import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
-import { getNewPanditji, postNewPanditOffer } from '../../../api/apiService';
+import {
+  getNewPanditji,
+  postNewPanditOffer,
+  updateWaitingUser,
+} from '../../../api/apiService';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -64,12 +73,9 @@ const SelectNewPanditjiScreen: React.FC = () => {
   const [selectedPanditId, setSelectedPanditId] = useState<
     string | number | null
   >(null);
+  const [noPanditModalVisible, setNoPanditModalVisible] = useState(false);
 
   const { showErrorToast, showSuccessToast } = useCommonToast();
-
-  const handleNotificationPress = () => {
-    navigation.navigate('NotificationScreen');
-  };
 
   const fetchAllPanditji = useCallback(async () => {
     try {
@@ -83,7 +89,10 @@ const SelectNewPanditjiScreen: React.FC = () => {
           latitude = locObj.latitude;
           longitude = locObj.longitude;
         } catch (e) {
-          // fallback: keep empty
+          console.log(
+            'Error parsing location in SelectNewPanditjiScreen ::',
+            e,
+          );
         }
       }
       const response = (await getNewPanditji(
@@ -93,7 +102,14 @@ const SelectNewPanditjiScreen: React.FC = () => {
       )) as PanditjiResponse;
       if (response.success) {
         // Filter and map the data according to the actual API response
-        console.log('response', response);
+        console.log('response of getNewPanditji :: ', response);
+
+        // Check if pandits array is empty
+        if (!response.pandits || response.pandits.length === 0) {
+          setNoPanditModalVisible(true);
+          return;
+        }
+
         setPanditjiData(
           response.pandits
             .filter(item =>
@@ -102,7 +118,7 @@ const SelectNewPanditjiScreen: React.FC = () => {
                 .includes(searchText.toLowerCase()),
             )
             .map((item: PanditjiItem) => ({
-              id: item.pandit_id, // Use pandit_id as unique id
+              id: item.pandit_id,
               pandit_id: item.pandit_id,
               name: item.name,
               image: item.profile_image,
@@ -166,6 +182,58 @@ const SelectNewPanditjiScreen: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleNavigateToHome = async () => {
+    try {
+      setIsLoading(true);
+      setNoPanditModalVisible(false);
+      const response = await updateWaitingUser(booking_id);
+      if (response.success) {
+        showSuccessToast(response.message || 'Request submitted successfully');
+      }
+    } catch (error: any) {
+      console.error('Error invoking updateWaitingUser:', error);
+    } finally {
+      setIsLoading(false);
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'UserHomeScreen' }],
+        }),
+      );
+    }
+  };
+
+  const renderNoPanditModal = () => {
+    return (
+      <Modal
+        visible={noPanditModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {}} // Modal cannot be closed by back button
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>
+                {t('request_received') || 'Request Received!'}
+              </Text>
+              <Text style={styles.modalMessage}>
+                {t('admin_assign_msg') ||
+                  "We couldn't match a Panditji instantly, but don't worry! Our admin team will review your request and assign the best Panditji for you very soon."}
+              </Text>
+
+              <PrimaryButton
+                title={t('ok') || 'OK'}
+                onPress={handleNavigateToHome}
+                style={styles.modalButton}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+    );
   };
 
   const renderSearchInput = () => (
@@ -264,10 +332,8 @@ const SelectNewPanditjiScreen: React.FC = () => {
       />
       <UserCustomHeader
         title={t('select_panditji')}
-        // showBellButton={true}
         showBackButton={true}
         onBackPress={() => navigation.replace('UserHomeScreen')}
-        // onNotificationPress={handleNotificationPress}
       />
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
@@ -302,6 +368,7 @@ const SelectNewPanditjiScreen: React.FC = () => {
           </View>
         </View>
       </KeyboardAvoidingView>
+      {renderNoPanditModal()}
     </SafeAreaView>
   );
 };
@@ -420,9 +487,43 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: moderateScale(18),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.pujaTextSecondary,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: scale(20),
+  },
+  modalContainer: {
+    width: '100%',
+    backgroundColor: COLORS.white,
+    padding: scale(20),
+    ...THEMESHADOW.shadow,
+    borderRadius: moderateScale(20),
+  },
+  modalContent: {
+    alignItems: 'center',
+  },
+
+  modalTitle: {
+    fontSize: moderateScale(20),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+    textAlign: 'center',
+    marginBottom: verticalScale(10),
+  },
+  modalMessage: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.pujaCardSubtext,
+    textAlign: 'center',
+    marginBottom: verticalScale(24),
+    lineHeight: verticalScale(22),
+  },
+  modalButton: {
+    width: '100%',
   },
 });
 

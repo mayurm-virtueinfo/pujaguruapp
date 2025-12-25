@@ -412,7 +412,8 @@ const UserHomeScreen: React.FC = () => {
         type === 'booking_update' &&
         (action === 'accepted' ||
           action === 'in_progress' ||
-          action === 'completed')
+          action === 'completed' ||
+          action === 'cancelled')
       ) {
         console.log(
           `✅ [WebSocket] Triggering refresh due to booking #${booking_id} update`,
@@ -626,7 +627,7 @@ const UserHomeScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* Pending Approval */}
+        {/* Waiting for Approval */}
         <View style={styles.pujaSection}>
           <Text style={styles.sectionTitle}>{t('waiting_for_approval')}</Text>
           <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
