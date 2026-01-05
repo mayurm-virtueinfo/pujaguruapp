@@ -129,7 +129,7 @@ const PujaDetailsScreen: React.FC = () => {
 
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
-  const route = useRoute() as any; // accept any, maybe route?.params?.params
+  const route = useRoute() as any;
   const { showErrorToast } = useCommonToast();
 
   const resolvedParams = (() => {
@@ -158,8 +158,6 @@ const PujaDetailsScreen: React.FC = () => {
 
   const translationCacheRef = useRef<Map<string, PujaDetails>>(new Map());
 
-  console.log('data :: ', data);
-
   // `poojaId` may be number or string
   useEffect(() => {
     if (poojaId) {
@@ -184,6 +182,7 @@ const PujaDetailsScreen: React.FC = () => {
         const translated = await translateData(originalData, currentLanguage, [
           'title',
           'short_description',
+          'description',
           'user_arranged_items',
           'pandit_arranged_items',
           'user_reviews',
@@ -215,11 +214,13 @@ const PujaDetailsScreen: React.FC = () => {
       let response: any;
       // We must supply both panditId & poojaId if panditId is present (number or string)
       if (panditId !== undefined && panditId !== null && panditId !== '') {
+        console.log('this if block :: ', id);
         response = await getPoojaDetails(panditId, id);
       } else {
+        console.log('this else block :: ', id);
         response = await getPoojaDetailsForPujaList(id);
       }
-      console.log('response.data :: ', response.data);
+      console.log('Response of getPoojaDetails :: ', response.data);
       if (response && response.success) {
         setOriginalData(response.data);
         setData(response.data);
@@ -578,10 +579,22 @@ const PujaDetailsScreen: React.FC = () => {
             <Text style={styles.titelText}>{data?.title ?? ''}</Text>
             <View style={styles.detailsContainer}>
               <Text style={styles.descriptionText}>
-                {data?.description ||
-                  data?.short_description ||
-                  'No description available'}
+                {data?.short_description || ''}
               </Text>
+
+              <Text style={styles.sectionTitle}>
+                {t('benefits') || 'Benefits'}
+              </Text>
+              <View style={[styles.pricingContainer, THEMESHADOW.shadow]}>
+                <Text
+                  style={[
+                    styles.descriptionText,
+                    { marginTop: 0, marginBottom: 0 },
+                  ]}
+                >
+                  {data?.description || 'No description available'}
+                </Text>
+              </View>
               <Text style={styles.sectionTitle}>{t('pricing_options')}</Text>
               <View style={[styles.pricingContainer, THEMESHADOW.shadow]}>
                 {data ? (
@@ -749,7 +762,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    marginBottom: 4,
   },
   pricingContainer: {
     backgroundColor: COLORS.white,

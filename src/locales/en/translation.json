@@ -506,5 +506,6 @@
   "select_date_of_birth": "Select Date of Birth",
   "done": "Done",
   "request_received": "We'll Assign a Panditji",
-  "admin_assign_msg": "No Panditji is currently available to select. Don't worry, our team will manually assign the best Panditji for your Puja shortly."
+  "admin_assign_msg": "No Panditji is currently available to select. Don't worry, our team will manually assign the best Panditji for your Puja shortly.",
+  "benefits": "Benefits"
 }
