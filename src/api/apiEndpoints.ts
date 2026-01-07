@@ -55,7 +55,7 @@ export const GET_ADDRESS_TYPE_FOR_BOOKING = '/app/address-types-for-booking/';
 export const GET_ADDRESS_TYPE = '/app/address-types/';
 export const GET_TIRTH_PLACE = '/app/tirth-places/';
 export const GET_MUHRAT =
-  '/app/choghadiya?date={date}&latitude={latitude}&longitude={longitude}';
+  '/app/muhurat/?date={date}&latitude={latitude}&longitude={longitude}';
 export const GET_PANCHANG =
   '/app/panchang/?date={date}&latitude={latitude}&longitude={longitude}';
 export const GET_CALENDAR_GRID =
@@ -110,3 +110,7 @@ export const CREATE_KUNDLI = '/api/astro/kundali/create/';
 export const GET_KUNDLI_LIST = '/api/astro/kundali/list/';
 export const GET_KUNDLI_DETAILS = '/api/astro/kundali/{id}/';
 export const GET_DAILY_HOROSCOPE = '/api/astro/rashifal/today/?rashi={rashi}';
+// MCP AI API Endpoints
+export const GET_AI_HEALTH = '/api/ai/health/';
+export const POST_AI_STREAM = '/api/ai/stream/';
+export const GET_AI_HISTORY = '/api/ai/history/';

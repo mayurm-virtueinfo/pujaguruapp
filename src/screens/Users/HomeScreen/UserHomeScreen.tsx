@@ -9,18 +9,14 @@ import {
   TouchableOpacity,
   AppState,
   RefreshControl,
-  DeviceEventEmitter,
-  Linking,
 } from 'react-native';
 import { moderateScale } from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   getRecommendedPandit,
   getUpcomingPujas,
   getInProgress,
   getActivePuja,
-  getMuhrat,
   PujaItem,
   RecommendedPandit,
 } from '../../../api/apiService';
@@ -33,11 +29,8 @@ import { useTranslation } from 'react-i18next';
 import { translateData } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
 import PrimaryButton from '../../../components/PrimaryButton';
-import { LOCATION_UPDATED_EVENT } from '../../../helper/helper';
 import { useWebSocket } from '../../../context/WebSocketContext';
-
 import { useLocation } from '../../../context/LocationContext';
-import PermissionDeniedView from '../Panchang/components/PermissionDeniedView';
 import InlineLocationRequest from '../../../components/InlineLocationRequest';
 
 interface PendingPuja {
@@ -51,61 +44,6 @@ interface PendingPuja {
   booking_date?: string;
   when_is_pooja?: string;
 }
-
-const DAILY_STREAK_KEY = '@daily_muhurat_streak';
-const DAILY_LAST_VIEWED_KEY = '@daily_muhurat_last_viewed';
-
-const formatDateYYYYMMDD = (date: Date | string) => {
-  if (typeof date === 'string') {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-      return date;
-    }
-    const parsed = new Date(date);
-    if (!Number.isNaN(parsed.getTime())) {
-      return formatDateYYYYMMDD(parsed);
-    }
-    return formatDateYYYYMMDD(new Date());
-  }
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
-    return formatDateYYYYMMDD(new Date());
-  }
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const parseTimeToMinutes = (timeStr: string): number | null => {
-  if (!timeStr || typeof timeStr !== 'string') return null;
-  const match = timeStr
-    .trim()
-    .match(/^\s*(\d{1,2}):(\d{2})\s*([AaPp][Mm])?\s*$/);
-  if (!match) return null;
-  let hours = parseInt(match[1], 10);
-  const minutes = parseInt(match[2], 10);
-  const meridian = match[3]?.toLowerCase();
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
-  if (meridian === 'pm' && hours !== 12) hours += 12;
-  if (meridian === 'am' && hours === 12) hours = 0;
-  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
-  return hours * 60 + minutes;
-};
-
-const selectPreferredMuhuratSlot = (slots: any[]) => {
-  if (!Array.isArray(slots) || slots.length === 0) return null;
-  const now = new Date();
-  const nowMinutes = now.getHours() * 60 + now.getMinutes();
-  const futureSlots = slots.filter(slot => {
-    const startMinutes = parseTimeToMinutes(slot?.start);
-    return startMinutes !== null && startMinutes > nowMinutes;
-  });
-  const prioritized = futureSlots.length > 0 ? futureSlots : slots;
-  const auspiciousSlot = prioritized.find(
-    slot =>
-      typeof slot?.type === 'string' && /shubh|labh|amrit/i.test(slot.type),
-  );
-  return auspiciousSlot || prioritized[0];
-};
 
 const UserHomeScreen: React.FC = () => {
   const navigation: any = useNavigation();
@@ -124,13 +62,6 @@ const UserHomeScreen: React.FC = () => {
     RecommendedPandit[]
   >([]);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [dailyMuhurat, setDailyMuhurat] = useState<any | null>(null);
-  const [dailyMuhuratLoading, setDailyMuhuratLoading] =
-    useState<boolean>(false);
-  const [dailyStreak, setDailyStreak] = useState<number>(0);
-  const [dailyLastViewedDate, setDailyLastViewedDate] = useState<string | null>(
-    null,
-  );
 
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
@@ -157,8 +88,8 @@ const UserHomeScreen: React.FC = () => {
   // 🧠 Refs for controlling repeated fetches
   const isFetchingRef = useRef(false);
   const lastFetched = useRef<number>(0);
-  const lastHandledMessageId = useRef<string | null>(null);
   const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const processedMessageCount = useRef(0);
 
   // 🔄 Unified API loader
   const loadAllData = useCallback(
@@ -249,46 +180,6 @@ const UserHomeScreen: React.FC = () => {
     [currentLanguage, refreshing],
   );
 
-  const fetchDailyMuhurat = useCallback(
-    async (
-      overrideLocation?: { latitude: number; longitude: number } | null,
-    ) => {
-      const targetLocation = overrideLocation || location;
-      if (!targetLocation?.latitude || !targetLocation?.longitude) {
-        setDailyMuhurat(null);
-        return;
-      }
-      try {
-        setDailyMuhuratLoading(true);
-        const todayStr = formatDateYYYYMMDD(new Date());
-        const response = await getMuhrat(
-          todayStr,
-          String(targetLocation.latitude),
-          String(targetLocation.longitude),
-        );
-        const slots = Array.isArray(response?.choghadiya)
-          ? response.choghadiya
-          : [];
-        if (!slots.length) {
-          setDailyMuhurat(null);
-          return;
-        }
-        const translated = await translateData(slots, currentLanguage, [
-          'type',
-        ]);
-        const translatedSlots = Array.isArray(translated) ? translated : slots;
-        const bestSlot = selectPreferredMuhuratSlot(translatedSlots);
-        setDailyMuhurat(bestSlot || null);
-      } catch (error) {
-        console.warn('Failed to fetch daily muhurat', error);
-        setDailyMuhurat(null);
-      } finally {
-        setDailyMuhuratLoading(false);
-      }
-    },
-    [currentLanguage, location],
-  );
-
   // 🧭 Initial load (Triggered when context updates location)
   useEffect(() => {
     if (contextLocation) {
@@ -297,30 +188,8 @@ const UserHomeScreen: React.FC = () => {
         longitude: contextLocation.longitude,
       };
       loadAllData(loc);
-      fetchDailyMuhurat(loc);
     }
-  }, [contextLocation, loadAllData, fetchDailyMuhurat]);
-
-  useEffect(() => {
-    const loadStreakData = async () => {
-      try {
-        const [storedStreak, storedLastViewed] = await Promise.all([
-          AsyncStorage.getItem(DAILY_STREAK_KEY),
-          AsyncStorage.getItem(DAILY_LAST_VIEWED_KEY),
-        ]);
-        if (storedStreak) {
-          const parsedStreak = Number(storedStreak);
-          setDailyStreak(Number.isNaN(parsedStreak) ? 0 : parsedStreak);
-        }
-        if (storedLastViewed) {
-          setDailyLastViewedDate(storedLastViewed);
-        }
-      } catch (error) {
-        console.warn('Failed to load muhurat streak', error);
-      }
-    };
-    loadStreakData();
-  }, []);
+  }, [contextLocation, loadAllData]);
 
   // 📱 AppState listener (only when foregrounded)
   useEffect(() => {
@@ -332,7 +201,6 @@ const UserHomeScreen: React.FC = () => {
             longitude: contextLocation.longitude,
           };
           await loadAllData(loc);
-          await fetchDailyMuhurat(loc);
         } else {
           // refresh manually if missing? context usually handles init
           await refreshLocation();
@@ -340,13 +208,7 @@ const UserHomeScreen: React.FC = () => {
       }
     });
     return () => sub.remove();
-  }, [
-    fetchDailyMuhurat,
-    loadAllData,
-    location,
-    contextLocation,
-    refreshLocation,
-  ]);
+  }, [loadAllData, location, contextLocation, refreshLocation]);
 
   // 🔗 Navigation helper
   const handleBookPandit = useCallback(
@@ -383,16 +245,11 @@ const UserHomeScreen: React.FC = () => {
         longitude: contextLocation.longitude,
       };
       await loadAllData(loc);
-      await fetchDailyMuhurat(loc);
     } else {
       // If no location after refresh?
       setRefreshing(false);
     }
-  }, [loadAllData, fetchDailyMuhurat, contextLocation, refreshLocation]);
-
-  // ⚡ WebSocket real-time updates
-
-  const processedMessageCount = useRef(0);
+  }, [loadAllData, contextLocation, refreshLocation]);
 
   useEffect(() => {
     // If no new messages, do nothing
@@ -437,7 +294,6 @@ const UserHomeScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
-      {/* Only show loader when we have location and are actually loading data */}
       <CustomeLoader loading={loading && !!contextLocation} />
       <StatusBar
         backgroundColor={COLORS.primaryBackground}
@@ -457,8 +313,6 @@ const UserHomeScreen: React.FC = () => {
           />
         }
       >
-        {/* {renderDailyMuhuratCard()} */}
-
         {/* Recommended Panditji */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -743,73 +597,7 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: moderateScale(24),
   },
-  dailyCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: moderateScale(16),
-    padding: moderateScale(16),
-    marginBottom: moderateScale(24),
-  },
-  dailyCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: moderateScale(12),
-  },
-  dailyCardTitle: {
-    fontSize: moderateScale(18),
-    fontFamily: Fonts.Sen_SemiBold,
-    color: COLORS.primaryTextDark,
-  },
-  dailyCardSubtitle: {
-    fontSize: moderateScale(13),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.pujaCardSubtext,
-    marginTop: moderateScale(4),
-  },
-  streakChip: {
-    backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: moderateScale(999),
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: moderateScale(6),
-    marginLeft: moderateScale(12),
-  },
-  streakChipText: {
-    fontSize: moderateScale(12),
-    fontFamily: Fonts.Sen_SemiBold,
-    color: COLORS.primaryTextDark,
-  },
-  dailySlotRow: {
-    paddingVertical: moderateScale(12),
-    paddingHorizontal: moderateScale(10),
-    borderRadius: moderateScale(12),
-    backgroundColor: COLORS.lightGray,
-    marginBottom: moderateScale(12),
-  },
-  dailySlotType: {
-    fontSize: moderateScale(16),
-    fontFamily: Fonts.Sen_SemiBold,
-    color: COLORS.primary,
-    marginBottom: moderateScale(4),
-  },
-  dailySlotTime: {
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.primaryTextDark,
-  },
-  placeholderText: {
-    fontSize: moderateScale(13),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.pujaCardSubtext,
-    marginBottom: moderateScale(12),
-  },
-  dailyCtaButton: {
-    marginTop: moderateScale(4),
-  },
-  streakHint: {
-    fontSize: moderateScale(12),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.pujaCardSubtext,
-    marginTop: moderateScale(10),
-  },
+
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

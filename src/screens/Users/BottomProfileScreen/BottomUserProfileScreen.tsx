@@ -229,6 +229,10 @@ const BottomUserProfileScreen: React.FC = () => {
     navigation.navigate('HoroscopeScreen');
   };
 
+  const handleMcpServerNavigation = () => {
+    navigation.navigate('McpServer');
+  };
+
   const getLanguageLabel = (langCode: string) => {
     switch (langCode) {
       case 'en':
@@ -383,6 +387,19 @@ const BottomUserProfileScreen: React.FC = () => {
               activeOpacity={0.7}
             >
               <Text style={styles.editFieldLabel}>{t('daily_horoscope')} </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={COLORS.primaryTextDark}
+              />
+            </TouchableOpacity>
+            <View style={styles.divider} />
+            <TouchableOpacity
+              style={styles.editFieldContainer}
+              onPress={handleMcpServerNavigation}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.editFieldLabel}>MCP Server</Text>
               <Ionicons
                 name="chevron-forward"
                 size={20}

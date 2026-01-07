@@ -1,7 +1,10 @@
 // import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiDev from './apiDev';
+import EventSource from 'react-native-sse';
 import ApiEndpoints, {
+  APP_URL,
+  GET_AI_HISTORY,
   GET_ADDRESS_TYPE,
   GET_CITY,
   GET_MUHRAT,
@@ -61,6 +64,8 @@ import ApiEndpoints, {
   GET_KUNDLI_LIST,
   GET_KUNDLI_DETAILS,
   GET_DAILY_HOROSCOPE,
+  POST_AI_STREAM,
+  GET_AI_HEALTH,
 } from './apiEndpoints';
 import AppConstant from '../utils/appConstant';
 
@@ -501,6 +506,17 @@ export interface HoroscopeResponse {
     number: string;
     good_time: string;
   };
+}
+
+export interface AiResponse {
+  success: boolean;
+  transcribed_text?: string;
+  ai_response?: string;
+  error?: string;
+  tools_used?: {
+    tool: string;
+    timestamp: string;
+  }[];
 }
 
 export const apiService = {
@@ -1872,6 +1888,216 @@ export const getDailyHoroscope = async (
     return response.data;
   } catch (error) {
     console.error('Error fetching daily horoscope:', error);
+    return null;
+  }
+};
+
+export const getAiHealth = async (): Promise<any> => {
+  try {
+    const response = await apiDev.get(GET_AI_HEALTH);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error in AI health check:', error);
+    return null;
+  }
+};
+
+export const getAiHistory = async (page: number = 1) => {
+  try {
+    const response = await apiDev.get(`${GET_AI_HISTORY}?page=${page}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching chat history:', error);
+    throw error;
+  }
+};
+
+// Text Chat: Standard SSE streaming
+export const getAiTextStream = async (
+  text: string,
+): Promise<EventSource | null> => {
+  try {
+    const token = await AsyncStorage.getItem(AppConstant.ACCESS_TOKEN);
+    if (!token) {
+      console.error('Authentication token not found for stream.');
+      return null;
+    }
+
+    const fullUrl = `${APP_URL}${POST_AI_STREAM}`;
+
+    const headers: any = {
+      Authorization: `Bearer ${token}`,
+      Accept: '*/*',
+      'Content-Type': 'application/json',
+    };
+
+    const body = JSON.stringify({ text });
+
+    console.log('------------------------------------------------');
+    console.log('------------getAiTextStream-config-------------');
+    console.log('------------------------------------------------');
+    console.log('FullUrl : ', fullUrl);
+    console.log('Body : ', body);
+    console.log('------------------------------------------------');
+
+    const eventSource = new EventSource(fullUrl, {
+      method: 'POST',
+      headers: headers,
+      body: body,
+    });
+
+    return eventSource;
+  } catch (error) {
+    console.error('Error creating text stream:', error);
+    return null;
+  }
+};
+
+export const getAiVoiceStream = async (
+  audioPath: string,
+): Promise<EventSource | null> => {
+  try {
+    const token = await AsyncStorage.getItem(AppConstant.ACCESS_TOKEN);
+    if (!token) {
+      console.error('Authentication token not found for stream.');
+      return null;
+    }
+
+    const fullUrl = `${APP_URL}${POST_AI_STREAM}`;
+    console.log('Voice Payload (Upload → Replay SSE):', audioPath);
+
+    // --------------------------------------------------
+    // Proxy EventSource (to replay backend SSE)
+    // --------------------------------------------------
+    const proxyEventSource: any = {
+      _listeners: {} as Record<string, Function[]>,
+      _realEventSource: null as EventSource | null,
+      readyState: 0,
+      url: fullUrl,
+      CONNECTING: 0,
+      OPEN: 1,
+      CLOSED: 2,
+
+      addEventListener(event: string, callback: Function) {
+        if (!this._listeners[event]) {
+          this._listeners[event] = [];
+        }
+        this._listeners[event].push(callback);
+      },
+
+      removeAllListeners() {
+        this._listeners = {};
+      },
+
+      close() {
+        console.log('Proxy EventSource closed');
+        this.readyState = this.CLOSED;
+        if (this._realEventSource) {
+          this._realEventSource.close();
+        }
+      },
+
+      emit(event: string, data: any) {
+        if (event === 'open') this.readyState = this.OPEN;
+        const listeners = this._listeners[event] || [];
+        listeners.forEach((cb: any) =>
+          cb({
+            type: event,
+            data: data ? JSON.stringify(data) : undefined,
+          }),
+        );
+      },
+    };
+
+    // --------------------------------------------------
+    // Async upload + SSE replay
+    // --------------------------------------------------
+    (async () => {
+      try {
+        // Emit open immediately (UI responsiveness)
+        await new Promise((r: any) => setTimeout(r, 50));
+        proxyEventSource.emit('open', {});
+
+        // Build FormData
+        const formData = new FormData();
+        const uri = audioPath.startsWith('file://')
+          ? audioPath
+          : `file://${audioPath}`;
+
+        formData.append('audio', {
+          uri,
+          type: 'audio/wav',
+          name: 'voice.wav',
+        } as any);
+
+        console.log('Uploading voice file...');
+
+        // ⚠️ FETCH (DO NOT SET Content-Type)
+        const response = await fetch(fullUrl, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'text/event-stream',
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(errText);
+        }
+
+        const responseText = await response.text();
+
+        // --------------------------------------------------
+        // Parse SSE-style response
+        // --------------------------------------------------
+        const events = responseText.split('\n\n');
+
+        for (const eventBlock of events) {
+          if (!eventBlock.trim()) continue;
+
+          const lines = eventBlock.split('\n');
+          let eventName = '';
+          let dataStr = '';
+
+          for (const line of lines) {
+            if (line.startsWith('event:')) {
+              eventName = line.replace('event:', '').trim();
+            } else if (line.startsWith('data:')) {
+              dataStr += line.replace('data:', '').trim();
+            }
+          }
+
+          if (!eventName || !dataStr) continue;
+
+          try {
+            const parsed = JSON.parse(dataStr);
+
+            if (eventName === 'transcription') {
+              proxyEventSource.emit('transcription', {
+                text: parsed.content || parsed.text,
+              });
+            } else if (eventName === 'text') {
+              proxyEventSource.emit('text', parsed);
+            } else {
+              proxyEventSource.emit(eventName, parsed);
+            }
+          } catch (e) {
+            console.error('Failed to parse SSE chunk:', e);
+          }
+        }
+
+        proxyEventSource.emit('done', {});
+      } catch (err: any) {
+        console.error('Upload-Replay chain failed:', err?.message || err);
+        proxyEventSource.emit('error', err);
+      }
+    })();
+
+    return proxyEventSource as EventSource;
+  } catch (error) {
+    console.error('Error creating voice stream:', error);
     return null;
   }
 };
