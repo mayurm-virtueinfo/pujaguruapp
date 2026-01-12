@@ -37,7 +37,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
   const getSocketURL = () =>
     __DEV__
-      ? `ws://192.168.1.7:9000/ws/user/updates/?token=${token}`
+      ? `ws://192.168.1.3:9000/ws/user/updates/?token=${token}`
       : `wss://puja-guru.com/ws/user/updates/?token=${token}`;
 
   /** ✅ Connect WebSocket */

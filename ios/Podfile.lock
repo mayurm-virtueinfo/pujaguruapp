@@ -175,7 +175,7 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
-  - NitroModules (0.32.0):
+  - NitroModules (0.32.1):
     - boost
     - DoubleConversion
     - fast_float
@@ -4125,7 +4125,7 @@ SPEC CHECKSUMS:
   JitsiWebRTC: b47805ab5668be38e7ee60e2258f49badfe8e1d0
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
-  NitroModules: 5ab248c0c4bc0a440414c0a8509dbad55cc7da6c
+  NitroModules: c4b71399033859a3bc4b09767cf299132f7e2bb1
   NitroSound: 8b451145fa5939d49bce46c60f811dd631db9b9a
   ObjectiveDropboxOfficial: fe206ce8c0bc49976c249d472db7fdbc53ebbd53
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47

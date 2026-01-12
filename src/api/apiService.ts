@@ -2057,6 +2057,9 @@ export const getAiVoiceStream = async (
         for (const eventBlock of events) {
           if (!eventBlock.trim()) continue;
 
+          // Artificial delay for typewriter effect (Simulated Streaming)
+          await new Promise(r => setTimeout(() => r(true), 30));
+
           const lines = eventBlock.split('\n');
           let eventName = '';
           let dataStr = '';
