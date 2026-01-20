@@ -4,26 +4,15 @@ import {
   Text,
   View,
   TouchableOpacity,
-  PermissionsAndroid,
   Platform,
   Alert,
   FlatList,
-  Animated,
-  Easing,
   TextInput,
   StatusBar,
   KeyboardAvoidingView,
   Keyboard,
   ListRenderItem,
 } from 'react-native';
-import {
-  useAudioRecorder,
-  AudioSourceAndroidType,
-  AudioEncoderAndroidType,
-  OutputFormatAndroidType,
-} from 'react-native-nitro-sound';
-import RNFS from 'react-native-fs';
-import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
@@ -32,13 +21,8 @@ import Fonts from '../../../theme/fonts';
 import * as Animatable from 'react-native-animatable';
 import LinearGradient from 'react-native-linear-gradient';
 import ThinkingDots from './components/ThinkingDots';
-import Waveform from './components/Waveform';
 import EventSource, { EventSourceListener } from 'react-native-sse';
-import {
-  getAiVoiceStream,
-  getAiTextStream,
-  getAiHistory,
-} from '../../../api/apiService';
+import { getAiTextStream, getAiHistory } from '../../../api/apiService';
 
 interface ToolUsed {
   tool: string;
@@ -51,27 +35,22 @@ interface ChatMessage {
   id: string;
   type: 'user' | 'ai';
   text: string;
-  inputType?: 'voice' | 'text';
+  inputType?: 'text';
   tools?: ToolUsed[];
   isStreaming?: boolean;
 }
 
 const McpServer = () => {
-  const [recording, setRecording] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [permissionGranted, setPermissionGranted] = useState(false);
-
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [page, setPage] = useState(1);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [hasNextPage, setHasNextPage] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
   const [inputText, setInputText] = useState('');
   const [streaming, setStreaming] = useState(false);
 
   const flatListRef = useRef<FlatList>(null);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
   const eventSourceRef = useRef<EventSource | null>(null);
 
   useEffect(() => {
@@ -123,113 +102,13 @@ const McpServer = () => {
     }
   };
 
-  const { startRecorder, stopRecorder } = useAudioRecorder();
-
   useEffect(() => {
-    checkPermission();
     return () => {
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
       }
     };
   }, []);
-
-  useEffect(() => {
-    let animationLoop: Animated.CompositeAnimation;
-    if (recording) {
-      animationLoop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.2,
-            duration: 800,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 800,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-        ]),
-      );
-      animationLoop.start();
-    } else {
-      pulseAnim.setValue(1);
-    }
-    return () => {
-      if (animationLoop) animationLoop.stop();
-    };
-  }, [recording]);
-
-  const checkPermission = async () => {
-    if (Platform.OS === 'android') {
-      try {
-        const grants = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
-        ]);
-        if (
-          grants['android.permission.RECORD_AUDIO'] ===
-          PermissionsAndroid.RESULTS.GRANTED
-        ) {
-          setPermissionGranted(true);
-        }
-      } catch (err) {
-        console.warn(err);
-      }
-    } else {
-      const result = await check(PERMISSIONS.IOS.MICROPHONE);
-      if (result === RESULTS.GRANTED) setPermissionGranted(true);
-      else {
-        const requestResult = await request(PERMISSIONS.IOS.MICROPHONE);
-        if (requestResult === RESULTS.GRANTED) setPermissionGranted(true);
-      }
-    }
-  };
-
-  const startRecording = async () => {
-    if (!permissionGranted) {
-      await checkPermission();
-      if (!permissionGranted) {
-        Alert.alert('Permission Required', 'Microphone access is needed.');
-        return;
-      }
-    }
-
-    try {
-      setInputText('');
-      setRecording(true);
-
-      const filePath = RNFS.CachesDirectoryPath + '/test.wav';
-
-      await startRecorder(filePath, {
-        AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
-        AudioSamplingRate: 16000,
-        AudioChannels: 1,
-        OutputFormatAndroid: OutputFormatAndroidType.DEFAULT,
-        AudioEncoderAndroid: AudioEncoderAndroidType.DEFAULT,
-      });
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      setRecording(false);
-      Alert.alert('Error', 'Could not start recording.');
-    }
-  };
-
-  const stopRecording = async () => {
-    if (!recording) return;
-    try {
-      setRecording(false);
-      const audioFile = await stopRecorder();
-      if (audioFile) {
-        streamChat(audioFile, true);
-      }
-    } catch (error) {
-      console.error('Failed to stop recording:', error);
-    }
-  };
 
   const stopGeneration = () => {
     if (eventSourceRef.current) {
@@ -240,14 +119,12 @@ const McpServer = () => {
     setStreaming(false);
   };
 
-  const streamChat = async (payload: string, isVoice: boolean) => {
+  const streamChat = async (payload: string) => {
     try {
       setUploading(true);
       setStreaming(true);
 
-      const eventSource = isVoice
-        ? await getAiVoiceStream(payload)
-        : await getAiTextStream(payload);
+      const eventSource = await getAiTextStream(payload);
 
       eventSourceRef.current = eventSource;
 
@@ -262,27 +139,15 @@ const McpServer = () => {
       eventSourceRef.current = eventSource;
 
       // Add optimistic user message
-      if (isVoice) {
-        setMessages(prev => [
-          {
-            id: Date.now().toString() + Math.random().toString(),
-            type: 'user',
-            text: 'Thinking...',
-            inputType: 'voice',
-          },
-          ...prev,
-        ]);
-      } else {
-        setMessages(prev => [
-          {
-            id: Date.now().toString() + Math.random().toString(),
-            type: 'user',
-            text: payload,
-            inputType: 'text',
-          },
-          ...prev,
-        ]);
-      }
+      setMessages(prev => [
+        {
+          id: Date.now().toString() + Math.random().toString(),
+          type: 'user',
+          text: payload,
+          inputType: 'text',
+        },
+        ...prev,
+      ]);
 
       let currentAiMessageId: string | null = null;
       let aiMessageText = '';
@@ -297,7 +162,14 @@ const McpServer = () => {
           setUploading(false);
           setStreaming(false);
           eventSource.close();
-          if (currentAiMessageId == null) {
+
+          const errorEvent = event as any;
+          if (errorEvent.xhrStatus === 429) {
+            Alert.alert(
+              'Daily Limit Reached',
+              'You have used all your daily tokens. Please try again tomorrow.',
+            );
+          } else if (currentAiMessageId == null) {
             Alert.alert('Error', 'Connection failed');
           }
         }
@@ -305,34 +177,6 @@ const McpServer = () => {
 
       eventSource.addEventListener('open', listener);
       eventSource.addEventListener('error', listener);
-
-      // Handle 'transcription'
-      eventSource.addEventListener('transcription' as any, (event: any) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data && data.text) {
-            setMessages(prev => {
-              const newMsgs = [...prev];
-              const placeholderIndex = newMsgs.findIndex(
-                m =>
-                  m.type === 'user' &&
-                  m.text === 'Thinking...' &&
-                  m.inputType === 'voice',
-              );
-
-              if (placeholderIndex !== -1) {
-                newMsgs[placeholderIndex] = {
-                  ...newMsgs[placeholderIndex],
-                  text: data.text,
-                };
-              }
-              return newMsgs;
-            });
-          }
-        } catch (e) {
-          console.error('Error parsing transcription:', e);
-        }
-      });
 
       // Handle 'text' (Streaming content)
       eventSource.addEventListener('text' as any, (event: any) => {
@@ -372,6 +216,7 @@ const McpServer = () => {
 
       // Handle 'tool_start'
       eventSource.addEventListener('tool_start' as any, (event: any) => {
+        console.log('SSE Event [tool_start]:', event.data);
         try {
           const data = JSON.parse(event.data);
           if (!currentAiMessageId) {
@@ -405,10 +250,13 @@ const McpServer = () => {
       });
 
       // Handle 'tool_end'
-      eventSource.addEventListener('tool_end' as any, (event: any) => {});
+      eventSource.addEventListener('tool_end' as any, (event: any) => {
+        console.log('SSE Event [tool_end]:', event.data);
+      });
 
       // Handle 'usage'
       eventSource.addEventListener('usage' as any, (event: any) => {
+        console.log('SSE Event [usage]:', event.data);
         console.log('Usage stats:', event.data);
       });
 
@@ -431,7 +279,7 @@ const McpServer = () => {
     const textToSend = inputText;
     setInputText('');
     Keyboard.dismiss();
-    streamChat(textToSend, false);
+    streamChat(textToSend);
   };
 
   const renderItem: ListRenderItem<ChatMessage> = ({ item }) => {
@@ -439,29 +287,16 @@ const McpServer = () => {
 
     if (isUser) {
       return (
-        <Animatable.View
-          animation="fadeInRight"
-          duration={500}
-          style={styles.userMessageContainer}
-        >
-          <LinearGradient
-            colors={[COLORS.primary, COLORS.gradientEnd]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.userMessageBubble}
+        <View style={styles.userMessageContainer}>
+          <View
+            style={[
+              styles.userMessageBubble,
+              { backgroundColor: COLORS.primary },
+            ]}
           >
             <Text style={styles.userMessageText}>{item.text}</Text>
-            <View style={styles.messageMetadata}>
-              {item.inputType && (
-                <Ionicons
-                  name={item.inputType === 'voice' ? 'mic' : 'text-outline'}
-                  size={12}
-                  color="rgba(255,255,255,0.7)"
-                />
-              )}
-            </View>
-          </LinearGradient>
-        </Animatable.View>
+          </View>
+        </View>
       );
     }
 
@@ -476,7 +311,7 @@ const McpServer = () => {
             <Text style={styles.aiMessageText}>{item.text}</Text>
           </View>
         </Animatable.View>
-        {item.tools && item.tools.length > 0 && (
+        {__DEV__ && item.tools && item.tools.length > 0 && (
           <Animatable.View animation="fadeInUp" style={styles.toolsContainer}>
             <Text style={styles.toolsLabel}>ACTIONS TAKEN</Text>
             <View style={styles.toolsList}>
@@ -504,7 +339,7 @@ const McpServer = () => {
       <UserCustomHeader title="MCP Assistant" showBackButton={true} />
 
       <View style={styles.contentContainer}>
-        {messages.length === 0 && !uploading && !recording && !streaming ? (
+        {messages.length === 0 && !uploading && !streaming ? (
           <View style={styles.welcomeContainer}>
             <View style={styles.iconCircle}>
               <Ionicons
@@ -558,47 +393,36 @@ const McpServer = () => {
         >
           <View style={styles.inputWrapper}>
             <View style={styles.textInputContainer}>
-              {recording ? (
-                <View style={styles.embeddedRecordingView}>
-                  <Waveform />
-                  <Text style={styles.recordingText}>Recording...</Text>
-                </View>
-              ) : (
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="Message..."
-                  placeholderTextColor="#999"
-                  value={inputText}
-                  onChangeText={setInputText}
-                  multiline
-                  maxLength={500}
-                />
-              )}
+              <TextInput
+                style={styles.textInput}
+                placeholder="Message..."
+                placeholderTextColor="#999"
+                value={inputText}
+                onChangeText={setInputText}
+                multiline
+                maxLength={300}
+              />
             </View>
 
-            {inputText.trim().length > 0 ? (
+            {uploading || streaming ? (
               <TouchableOpacity
-                onPress={sendText}
+                onPress={stopGeneration}
                 activeOpacity={0.8}
                 style={styles.micButton}
-                disabled={uploading || streaming}
               >
-                <Ionicons name="send" size={24} color="white" />
+                <Ionicons name="square" size={24} color="white" />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                onPressIn={uploading || streaming ? undefined : startRecording}
-                onPressOut={uploading || streaming ? undefined : stopRecording}
-                onPress={uploading || streaming ? stopGeneration : undefined}
+                onPress={sendText}
                 activeOpacity={0.8}
-                style={[styles.micButton, recording && styles.micButtonActive]}
-                // disabled={uploading || streaming} // Removed disabled to allow stop action
+                style={[
+                  styles.micButton,
+                  { opacity: inputText.trim().length > 0 ? 1 : 0.5 },
+                ]}
+                disabled={inputText.trim().length === 0}
               >
-                {uploading || streaming ? (
-                  <Ionicons name="square" size={24} color="white" />
-                ) : (
-                  <Ionicons name="mic" size={24} color="white" />
-                )}
+                <Ionicons name="send" size={24} color="white" />
               </TouchableOpacity>
             )}
           </View>
@@ -666,21 +490,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 12,
     borderBottomRightRadius: 2,
-    minWidth: 80,
-    flexShrink: 1, // Allow shrinking to force wrap
+    minWidth: 50,
   },
   userMessageText: {
     color: COLORS.white,
     fontFamily: Fonts.Sen_Regular,
     fontSize: 15,
-    marginBottom: 4,
   },
-  messageMetadata: {
-    alignSelf: 'flex-end',
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: -4,
-  },
+
   aiMessageContainer: {
     alignSelf: 'flex-start',
     maxWidth: '90%',
@@ -782,18 +599,7 @@ const styles = StyleSheet.create({
     maxHeight: 120,
     paddingVertical: 8,
   },
-  embeddedRecordingView: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-  },
-  recordingText: {
-    marginLeft: 10,
-    color: COLORS.primary,
-    fontFamily: Fonts.Sen_Medium,
-    fontSize: 16,
-  },
+
   inlineSendButton: {
     padding: 8,
     marginLeft: 4,
@@ -806,9 +612,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
-  },
-  micButtonActive: {
-    transform: [{ scale: 1.1 }],
-    backgroundColor: 'red',
   },
 });

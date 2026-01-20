@@ -1927,7 +1927,7 @@ export const getAiTextStream = async (
 
     const headers: any = {
       Authorization: `Bearer ${token}`,
-      Accept: '*/*',
+      Accept: 'text/event-stream',
       'Content-Type': 'application/json',
     };
 
@@ -1937,6 +1937,7 @@ export const getAiTextStream = async (
     console.log('------------getAiTextStream-config-------------');
     console.log('------------------------------------------------');
     console.log('FullUrl : ', fullUrl);
+    console.log('Headers : ', headers);
     console.log('Body : ', body);
     console.log('------------------------------------------------');
 
