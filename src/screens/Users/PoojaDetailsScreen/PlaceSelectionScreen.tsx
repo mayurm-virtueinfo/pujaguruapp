@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,32 +8,31 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
-import CustomHeader from '../../../components/CustomHeader';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { COLORS, COMMON_RADIO_CONTAINER_STYLE } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Octicons from 'react-native-vector-icons/Octicons';
-import {apiService, PoojaBookingPlace} from '../../../api/apiService';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {StackNavigationProp} from '@react-navigation/stack';
-import {UserPoojaListParamList} from '../../../navigation/User/UserPoojaListNavigator';
+import { PoojaBookingPlace } from '../../../api/apiService';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useTranslation} from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {UserHomeParamList} from '../../../navigation/User/UsetHomeStack';
-import {useCommonToast} from '../../../common/CommonToast';
+import { useCommonToast } from '../../../common/CommonToast';
+import { moderateScale } from 'react-native-size-matters';
 
 const PlaceSelectionScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
     UserPoojaListParamList,
     'PlaceSelectionScreen'
   >;
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute();
-  const {showErrorToast} = useCommonToast();
+  const { showErrorToast } = useCommonToast();
 
   const [poojaPlaces, setPoojaPlaces] = useState<PoojaBookingPlace[]>([
     {
@@ -100,22 +99,33 @@ const PlaceSelectionScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.safeArea, { paddingTop: inset.top }]}>
       <CustomeLoader loading={isLoading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
-      <ScrollView
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-        bounces={false}>
-        <View style={styles.contentWrapper}>
-          <View style={styles.detailsContainer}>
-            <Text style={styles.sectionTitle}>
-              {t('select_your_preference')}
-            </Text>
-            <Text style={styles.descriptionText}>{t('choose_puja')}</Text>
+      <View style={styles.flexGrow}>
+        <ScrollView
+          style={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+          contentContainerStyle={{
+            paddingBottom: 60 + (inset.bottom || 20),
+          }}
+        >
+          <View style={styles.contentWrapper}>
+            {/* Title and Description Group */}
+            <View style={styles.headerGroup}>
+              <Text style={styles.sectionTitle}>
+                {t('select_your_preference')}
+              </Text>
+              <Text style={styles.descriptionText}>{t('choose_puja')}</Text>
+            </View>
+
+            {/* Radio Options Group */}
             {!isLoading && (
-              <View style={[styles.pricingContainer, THEMESHADOW.shadow]}>
+              <View
+                style={[COMMON_RADIO_CONTAINER_STYLE, styles.radioContainer]}
+              >
                 {poojaPlaces.map((place, index) => (
                   <React.Fragment key={place.id}>
                     <TouchableOpacity
@@ -125,7 +135,8 @@ const PlaceSelectionScreen: React.FC = () => {
                         setSelectedPlaceId(prev =>
                           prev === place.id ? null : place.id,
                         );
-                      }}>
+                      }}
+                    >
                       <Text style={styles.pricingText}>{place.name}</Text>
                       <Octicons
                         name={
@@ -148,17 +159,24 @@ const PlaceSelectionScreen: React.FC = () => {
                 ))}
               </View>
             )}
-
-            <PrimaryButton
-              title={t('next')}
-              onPress={handleNextPress}
-              style={styles.buttonContainer}
-              textStyle={styles.buttonText}
-              disabled={!selectedPlaceId}
-            />
           </View>
+        </ScrollView>
+
+        <View
+          style={[
+            styles.bottomButtonContainer,
+            {
+              paddingBottom: moderateScale(16),
+            },
+          ]}
+        >
+          <PrimaryButton
+            title={t('next')}
+            onPress={handleNextPress}
+            disabled={!selectedPlaceId}
+          />
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -169,62 +187,61 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryBackground,
   },
   scrollContainer: {
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    backgroundColor: COLORS.white,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    backgroundColor: COLORS.pujaBackground,
   },
   contentWrapper: {
     width: '100%',
     overflow: 'hidden',
+    paddingHorizontal: moderateScale(24),
+    paddingVertical: moderateScale(12),
+    gap: moderateScale(24),
   },
-  detailsContainer: {
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 24,
+  headerGroup: {
+    marginTop: moderateScale(10),
   },
   sectionTitle: {
     fontSize: 18,
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    marginTop: 20,
+    marginBottom: moderateScale(12),
   },
-  pricingContainer: {
+  radioContainer: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    marginTop: 12,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: COLORS.inputBoder,
-    marginBottom: 25,
+    borderRadius: moderateScale(12),
   },
   pricingOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 44,
-    paddingVertical: 8,
+    paddingVertical: moderateScale(10),
   },
   pricingText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
-  },
-  buttonContainer: {
-    height: 46,
-  },
-  buttonText: {
-    fontSize: 15,
-    fontFamily: Fonts.Sen_Medium,
-  },
-  divider: {
-    borderColor: COLORS.inputBoder,
-    borderWidth: 1,
-    marginVertical: 10,
+    paddingVertical: moderateScale(10),
   },
   descriptionText: {
     fontSize: 14,
     fontFamily: Fonts.Sen_Medium,
-    marginTop: 10,
     textAlign: 'justify',
     color: '#6c7278',
+  },
+  divider: {
+    borderColor: COLORS.border,
+    borderWidth: 1,
+  },
+  flexGrow: {
+    flex: 1,
+  },
+  bottomButtonContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: COLORS.pujaBackground,
+    paddingHorizontal: moderateScale(24),
   },
 });
 

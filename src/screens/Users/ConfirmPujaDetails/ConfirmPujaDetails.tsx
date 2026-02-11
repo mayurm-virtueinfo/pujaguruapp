@@ -304,10 +304,7 @@ const ConfirmPujaDetails: React.FC = () => {
                 </Text>
               </View>
             </View>
-
-            <View style={styles.separator} />
-
-            {/* Location Section */}
+            <View style={styles.separator} />7{/* Location Section */}
             <View style={styles.detailRow}>
               <MaterialIcons
                 name="location-on"
@@ -319,9 +316,7 @@ const ConfirmPujaDetails: React.FC = () => {
                 {pujaDetails.location_display || t('location_not_available')}
               </Text>
             </View>
-
             <View style={styles.separator} />
-
             {/* Date Section */}
             <View style={styles.detailRow}>
               <MaterialIcons
@@ -334,9 +329,7 @@ const ConfirmPujaDetails: React.FC = () => {
                 {formatDate(pujaDetails.booking_date)}
               </Text>
             </View>
-
             <View style={styles.separator} />
-
             {/* Time Section */}
             <View style={styles.detailRow}>
               <MaterialIcons

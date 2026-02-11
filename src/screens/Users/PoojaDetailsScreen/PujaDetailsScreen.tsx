@@ -25,7 +25,12 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import CustomeLoader from '../../../components/CustomeLoader';
 import { useCommonToast } from '../../../common/CommonToast';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import {
+  COLORS,
+  THEMESHADOW,
+  COMMON_LIST_STYLE,
+  COMMON_RADIO_CONTAINER_STYLE,
+} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import {
@@ -37,6 +42,7 @@ import {
   translateOne,
   translateText,
 } from '../../../utils/TranslateData';
+import { moderateScale } from 'react-native-size-matters';
 
 type ArrangedItem =
   | { name: string; quantity?: string | number; units?: string }
@@ -110,13 +116,80 @@ function normalizeArrangedItems(
   );
 }
 
-// Enable LayoutAnimation for Android
 if (
   Platform.OS === 'android' &&
   UIManager.setLayoutAnimationEnabledExperimental
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
+
+const ExpandableSection = ({
+  title,
+  expanded,
+  onPress,
+  items,
+  emptyText,
+  testID,
+}: {
+  title: string;
+  expanded: boolean;
+  onPress: () => void;
+  items: ArrangedItem[] | undefined;
+  emptyText: string;
+  testID?: string;
+}) => {
+  const normalizedItems = normalizeArrangedItems(items);
+
+  useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, [expanded]);
+
+  return (
+    <View style={[styles.expandableCard, COMMON_LIST_STYLE]}>
+      <TouchableOpacity
+        style={styles.expandableHeader}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.headerCardTitle}>{title}</Text>
+        <Octicons
+          name={expanded ? 'chevron-up' : 'chevron-down'}
+          size={20}
+          color={COLORS.black}
+        />
+      </TouchableOpacity>
+
+      {expanded && (
+        <View style={styles.expandableContent}>
+          {!normalizedItems || normalizedItems.length === 0 ? (
+            <Text style={styles.itemText}>{emptyText}</Text>
+          ) : (
+            normalizedItems.map((item, idx) => (
+              <React.Fragment key={idx}>
+                <View style={styles.itemRow}>
+                  <View style={styles.itemMainContent}>
+                    <Octicons
+                      name="dot-fill"
+                      size={12}
+                      color={COLORS.black}
+                      style={styles.bulletIcon}
+                    />
+                    <Text style={styles.itemNameText}>{item.name}</Text>
+                  </View>
+                  {item.quantity ? (
+                    <Text style={styles.itemQuantityText}>
+                      {`${item.quantity} ${item.units ?? ''}`.trim()}
+                    </Text>
+                  ) : null}
+                </View>
+              </React.Fragment>
+            ))
+          )}
+        </View>
+      )}
+    </View>
+  );
+};
 
 const PujaDetailsScreen: React.FC = () => {
   type ScreenNavigationProp = StackNavigationProp<
@@ -139,7 +212,6 @@ const PujaDetailsScreen: React.FC = () => {
     return {};
   })();
 
-  // Extract these fields safely from resolvedParams
   const { poojaId, panditId, panditName, panditImage, panditCity } =
     resolvedParams;
 
@@ -384,163 +456,6 @@ const PujaDetailsScreen: React.FC = () => {
     );
   };
 
-  const ExpandableSection = ({
-    title,
-    expanded,
-    onPress,
-    items,
-    emptyText,
-    testID,
-  }: {
-    title: string;
-    expanded: boolean;
-    onPress: () => void;
-    items: ArrangedItem[] | undefined;
-    emptyText: string;
-    testID?: string;
-  }) => {
-    const normalizedItems = normalizeArrangedItems(items);
-    const fadeAnim = useRef(new Animated.Value(0)).current;
-
-    console.log('normalizedItems :: ', normalizedItems);
-
-    useEffect(() => {
-      if (expanded) {
-        // Trigger layout animation for smooth expand
-        LayoutAnimation.configureNext(
-          LayoutAnimation.create(
-            300,
-            LayoutAnimation.Types.easeInEaseOut,
-            LayoutAnimation.Properties.opacity,
-          ),
-        );
-        // Fade in animation
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }).start();
-      } else {
-        // Trigger layout animation for smooth collapse
-        LayoutAnimation.configureNext(
-          LayoutAnimation.create(
-            250,
-            LayoutAnimation.Types.easeInEaseOut,
-            LayoutAnimation.Properties.opacity,
-          ),
-        );
-        fadeAnim.setValue(0);
-      }
-    }, [expanded]);
-
-    const handleToggle = () => {
-      onPress();
-    };
-
-    if (!normalizedItems || normalizedItems.length === 0) {
-      return (
-        <View style={styles.expandableSectionWrapper}>
-          <Text style={styles.sectionTitle}>{title}</Text>
-          <View style={[styles.itemsContainer, THEMESHADOW.shadow]}>
-            <Text style={styles.itemText}>{emptyText}</Text>
-          </View>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.expandableSectionWrapper}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        <View style={[styles.itemsContainer, THEMESHADOW.shadow]}>
-          {!expanded ? (
-            <>
-              {/* Collapsed state: Show only first item (non-clickable) */}
-              <View style={styles.itemRow}>
-                <View style={styles.itemMainContent}>
-                  <Octicons
-                    name="dot-fill"
-                    size={12}
-                    color={COLORS.primary}
-                    style={styles.bulletIcon}
-                  />
-                  <Text style={styles.itemNameText} numberOfLines={1}>
-                    {normalizedItems[0].name}
-                  </Text>
-                </View>
-                {normalizedItems[0].quantity ? (
-                  <Text style={styles.itemQuantityText}>
-                    {`${normalizedItems[0].quantity} ${
-                      normalizedItems[0].units ?? ''
-                    }`.trim()}
-                  </Text>
-                ) : null}
-              </View>
-              {/* Show More button - only interactive element */}
-              {normalizedItems.length > 1 && (
-                <TouchableOpacity
-                  onPress={handleToggle}
-                  activeOpacity={0.7}
-                  style={styles.showMoreButton}
-                  testID={testID ? `${testID}-more` : undefined}
-                >
-                  <Text style={styles.showMoreText}>{t('show_more')}</Text>
-                  <Octicons
-                    name="chevron-down"
-                    size={18}
-                    color={COLORS.primary}
-                  />
-                </TouchableOpacity>
-              )}
-            </>
-          ) : (
-            <Animated.View style={{ opacity: fadeAnim }}>
-              {/* Expanded state: Show all items */}
-              {normalizedItems.map((item, idx) => (
-                <React.Fragment key={idx}>
-                  <View style={styles.itemRow}>
-                    <View style={styles.itemMainContent}>
-                      <Octicons
-                        name="dot-fill"
-                        size={12}
-                        color={COLORS.primary}
-                        style={styles.bulletIcon}
-                      />
-                      <Text style={styles.itemNameText}>{item.name}</Text>
-                    </View>
-                    {item.quantity ? (
-                      <Text style={styles.itemQuantityText}>
-                        {`${item.quantity} ${item.units ?? ''}`.trim()}
-                      </Text>
-                    ) : null}
-                  </View>
-                  {idx < normalizedItems.length - 1 && (
-                    <View style={styles.itemDivider} />
-                  )}
-                </React.Fragment>
-              ))}
-              {/* Show Less button */}
-              {normalizedItems.length > 1 && (
-                <TouchableOpacity
-                  onPress={handleToggle}
-                  activeOpacity={0.7}
-                  style={styles.showLessButton}
-                  testID={testID ? `${testID}-collapse` : undefined}
-                >
-                  <Text style={styles.showLessText}>{t('show_less')}</Text>
-                  <Octicons
-                    name="chevron-up"
-                    size={18}
-                    color={COLORS.primary}
-                  />
-                </TouchableOpacity>
-              )}
-            </Animated.View>
-          )}
-        </View>
-      </View>
-    );
-  };
-
   const handleMainImagePress = () => {
     if (data?.image_url) {
       setModalImageUri(data.image_url);
@@ -558,9 +473,12 @@ const PujaDetailsScreen: React.FC = () => {
           style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           bounces={false}
-          contentContainerStyle={{ paddingBottom: 30 }}
+          contentContainerStyle={{
+            paddingBottom: moderateScale(60) + (inset.bottom || 20),
+          }}
         >
           <View style={styles.contentWrapper}>
+            {/* image container */}
             <View style={styles.imageContainer}>
               <TouchableOpacity
                 activeOpacity={0.8}
@@ -572,31 +490,35 @@ const PujaDetailsScreen: React.FC = () => {
                     uri: data?.image_url,
                   }}
                   style={styles.heroImage}
-                  resizeMode="contain"
+                  resizeMode="cover"
                 />
               </TouchableOpacity>
             </View>
-            <Text style={styles.titelText}>{data?.title ?? ''}</Text>
+
+            {/* 1. Title and description container */}
             <View style={styles.detailsContainer}>
+              <Text style={styles.titelText}>{data?.title ?? ''}</Text>
               <Text style={styles.descriptionText}>
                 {data?.short_description || ''}
               </Text>
+            </View>
 
+            {/* 2. Benefits container */}
+            <View style={styles.detailsContainer}>
               <Text style={styles.sectionTitle}>
                 {t('benefits') || 'Benefits'}
               </Text>
-              <View style={[styles.pricingContainer, THEMESHADOW.shadow]}>
-                <Text
-                  style={[
-                    styles.descriptionText,
-                    { marginTop: 0, marginBottom: 0 },
-                  ]}
-                >
+              <View style={[styles.pricingContainer, COMMON_LIST_STYLE]}>
+                <Text style={[styles.descriptionText]}>
                   {data?.description || 'No description available'}
                 </Text>
               </View>
+            </View>
+
+            {/* 3. Pricing Container */}
+            <View style={styles.detailsContainer}>
               <Text style={styles.sectionTitle}>{t('pricing_options')}</Text>
-              <View style={[styles.pricingContainer, THEMESHADOW.shadow]}>
+              <View style={COMMON_RADIO_CONTAINER_STYLE}>
                 {data ? (
                   getPricingOptions(data).map((option, idx) => (
                     <React.Fragment key={option.id}>
@@ -633,8 +555,10 @@ const PujaDetailsScreen: React.FC = () => {
                   <Text style={styles.pricingText}>No pricing available</Text>
                 )}
               </View>
+            </View>
 
-              {/* User Arranged Items Expandable */}
+            {/* 4. User Arranged Items Container */}
+            <View style={styles.detailsContainer}>
               <ExpandableSection
                 title={t('user_arranged_items')}
                 expanded={userItemsExpanded}
@@ -643,8 +567,10 @@ const PujaDetailsScreen: React.FC = () => {
                 emptyText="No items required"
                 testID="user-arranged-items-section"
               />
+            </View>
 
-              {/* Pandit Arranged Items Expandable */}
+            {/* 5. Pandit Arranged Items Container */}
+            <View style={styles.detailsContainer}>
               <ExpandableSection
                 title={t('pandit_arranged_items')}
                 expanded={panditItemsExpanded}
@@ -653,26 +579,24 @@ const PujaDetailsScreen: React.FC = () => {
                 emptyText="No items provided"
                 testID="pandit-arranged-items-section"
               />
+            </View>
 
-              {/* User Reviews Section */}
+            {/* 6. User Reviews Container */}
+            <View style={styles.detailsContainer}>
               {renderReviewsSection()}
             </View>
           </View>
         </ScrollView>
+
         <View
           style={[
             styles.bottomButtonContainer,
             {
-              paddingBottom: inset.bottom || (Platform.OS === 'ios' ? 16 : 12),
+              paddingBottom: moderateScale(16),
             },
           ]}
         >
-          <PrimaryButton
-            title={t('next')}
-            onPress={handleBookNowPress}
-            style={styles.buttonContainer}
-            textStyle={styles.buttonText}
-          />
+          <PrimaryButton title={t('next')} onPress={handleBookNowPress} />
         </View>
       </View>
       {/* Image Modal for full screen preview */}
@@ -718,19 +642,20 @@ const styles = StyleSheet.create({
   },
   flexGrow: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.pujaBackground,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
   },
   scrollContainer: {
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.pujaBackground,
     flexGrow: 1,
   },
   contentWrapper: {
     width: '100%',
     overflow: 'hidden',
+    gap: 24,
   },
   imageContainer: {
     width: '100%',
@@ -741,66 +666,72 @@ const styles = StyleSheet.create({
     height: 200,
   },
   detailsContainer: {
-    backgroundColor: COLORS.white,
     paddingHorizontal: 24,
   },
   descriptionText: {
     fontSize: 14,
     fontFamily: Fonts.Sen_Regular,
-    marginBottom: 20,
-    marginTop: 10,
     textAlign: 'justify',
   },
   titelText: {
     fontSize: 18,
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    marginHorizontal: 24,
-    marginTop: 24,
+    marginBottom: 12,
   },
   sectionTitle: {
     fontSize: 18,
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
+    marginBottom: 12,
   },
   pricingContainer: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    marginTop: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.inputBoder,
-    marginBottom: 25,
+    paddingVertical: moderateScale(12),
   },
   pricingOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 44,
+    paddingVertical: moderateScale(14),
   },
   pricingText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
   },
   divider: {
-    borderColor: COLORS.inputBoder,
+    borderColor: COLORS.border,
     borderBottomWidth: 1,
-    marginVertical: 10,
   },
   itemsContainer: {
     backgroundColor: COLORS.white,
-    borderRadius: 16,
-    marginTop: 12,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: COLORS.inputBoder,
-    marginBottom: 25,
-    justifyContent: 'center',
+    borderRadius: moderateScale(12),
+    padding: moderateScale(14),
+  },
+  expandableCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(12),
+    paddingHorizontal: moderateScale(14),
+    marginBottom: 0,
+  },
+  expandableHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: moderateScale(14),
+  },
+  headerCardTitle: {
+    fontSize: 16,
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+  },
+  expandableContent: {
+    paddingBottom: moderateScale(14),
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 2,
+    paddingVertical: 5,
   },
   itemMainContent: {
     flex: 1,
@@ -854,9 +785,12 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
   },
   bottomButtonContainer: {
-    backgroundColor: COLORS.white,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: COLORS.pujaBackground,
     paddingHorizontal: 24,
-    paddingTop: 8,
   },
   reviewsContainer: {},
   noReviewsText: {
@@ -933,17 +867,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
     marginTop: 2,
   },
-  expandableSectionWrapper: {
-    marginBottom: 10,
-  },
-  expandableHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    paddingHorizontal: 0,
-    backgroundColor: 'transparent',
-  },
+
   showMoreButton: {
     flexDirection: 'row',
     alignItems: 'center',

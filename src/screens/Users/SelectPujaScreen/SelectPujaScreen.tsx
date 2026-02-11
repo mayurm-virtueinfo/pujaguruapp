@@ -8,14 +8,21 @@ import {
   StatusBar,
   TouchableOpacity,
   Image,
+  ViewStyle,
+  Platform,
 } from 'react-native';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import {
+  COLORS,
+  THEMESHADOW,
+  COMMON_LIST_STYLE,
+  COMMON_CARD_STYLE,
+} from '../../../theme/theme';
 import { getPanditPujaList } from '../../../api/apiService';
 import Fonts from '../../../theme/fonts';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import { moderateScale } from 'react-native-size-matters';
+import { moderateScale, verticalScale } from 'react-native-size-matters';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
@@ -140,7 +147,7 @@ const SelectPujaScreen: React.FC = () => {
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollViewContent,
-            { paddingBottom: 100 + inset.bottom },
+            { paddingBottom: moderateScale(65) + inset.bottom },
           ]}
           showsVerticalScrollIndicator={false}
         >
@@ -149,7 +156,7 @@ const SelectPujaScreen: React.FC = () => {
             <Text style={styles.sectionSubtitle}>
               {t('choose_the_puja_you_wish_to_book_from_the_list_below')}
             </Text>
-            <View style={[styles.pujaListContainer, THEMESHADOW.shadow]}>
+            <View style={[styles.pujaListContainer, COMMON_LIST_STYLE]}>
               {pujaList.length === 0 ? (
                 <View style={{ padding: 24, alignItems: 'center' }}>
                   <Text
@@ -226,7 +233,7 @@ const SelectPujaScreen: React.FC = () => {
                       </View>
                     </TouchableOpacity>
                     {idx < pujaList.length - 1 && (
-                      <View style={{ marginHorizontal: 12 }}>
+                      <View>
                         <View style={styles.separator} />
                       </View>
                     )}
@@ -237,7 +244,14 @@ const SelectPujaScreen: React.FC = () => {
           </View>
         </ScrollView>
         {/* Fixed Next Button */}
-        <View style={[styles.fixedButtonContainer, { paddingBottom: 16 }]}>
+        <View
+          style={[
+            styles.bottomButtonContainerFixed,
+            {
+              paddingBottom: moderateScale(16),
+            },
+          ]}
+        >
           <PrimaryButton
             title={t('next')}
             onPress={handleNext}
@@ -266,9 +280,7 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  scrollViewContent: {
-    paddingBottom: 32,
-  },
+  scrollViewContent: {},
   recommendedSection: {},
   sectionTitle: {
     color: COLORS.primaryTextDark,
@@ -281,14 +293,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Regular,
     fontSize: 15,
     marginBottom: 5,
-  },
-  horizontalScroll: {},
-  horizontalScrollContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  horizontalCardSpacer: {
-    width: 16,
   },
   pujaListSection: {
     paddingHorizontal: 24,
@@ -304,8 +308,8 @@ const styles = StyleSheet.create({
   item: {
     width: '100%',
     flexDirection: 'row',
-    padding: 14,
     alignItems: 'center',
+    ...(COMMON_CARD_STYLE as ViewStyle),
   },
   imageContainer: {
     width: 80,
@@ -324,7 +328,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     flexDirection: 'row',
-    marginTop: 8,
   },
   title: {
     color: COLORS.primaryTextDark,
@@ -373,29 +376,27 @@ const styles = StyleSheet.create({
   separator: {
     width: '100%',
     height: 1,
-    backgroundColor: COLORS.separatorColor,
+    backgroundColor: COLORS.border,
   },
-  fixedButtonContainer: {
+  bottomButtonContainerFixed: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'transparent',
-    paddingHorizontal: 24,
-    paddingTop: 4,
-    zIndex: 10,
+    backgroundColor: COLORS.pujaBackground,
+    paddingHorizontal: moderateScale(24),
   },
   nextButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-    paddingVertical: 14,
+    backgroundColor: COLORS.primaryBackgroundButton,
+    borderRadius: moderateScale(10),
+    paddingVertical: verticalScale(16),
     alignItems: 'center',
     justifyContent: 'center',
   },
   nextButtonText: {
-    color: COLORS.white,
-    fontFamily: Fonts.Sen_Bold,
-    fontSize: 17,
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primaryTextDark,
     textTransform: 'uppercase',
   },
 });

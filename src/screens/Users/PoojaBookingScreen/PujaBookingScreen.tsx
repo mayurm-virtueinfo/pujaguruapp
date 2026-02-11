@@ -17,7 +17,12 @@ import {
 } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import {
+  COLORS,
+  THEMESHADOW,
+  COMMON_LIST_STYLE,
+  COMMON_RADIO_CONTAINER_STYLE,
+} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import { moderateScale, verticalScale } from 'react-native-size-matters';
 import Calendar from '../../../components/Calendar';
@@ -684,76 +689,73 @@ const PujaBookingScreen: React.FC = () => {
           <Text>Muhurat Loading...</Text>
         </View>
       ) : (
-        <View style={[styles.slotsListContainer, THEMESHADOW.shadow]}>
-          {muhurats.map((slot, index) => {
-            const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
-            const isSelected = selectedSlot === slotKey;
-            // is_next_day presentation
-            const isNextDay = shouldSlotSetIsNextDay(slot);
+        <View style={[styles.slotsListContainer, COMMON_RADIO_CONTAINER_STYLE]}>
+          <View style={styles.slotsListInner}>
+            {muhurats.map((slot, index) => {
+              const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
+              const isSelected = selectedSlot === slotKey;
+              // is_next_day presentation
+              const isNextDay = shouldSlotSetIsNextDay(slot);
 
-            // Calculate which date the booking would be
-            const shownBookingDate = isNextDay
-              ? addDaysToDate(selectedDateString, 1)
-              : formatDateYYYYMMDD(selectedDateString);
+              // Calculate which date the booking would be
+              const shownBookingDate = isNextDay
+                ? addDaysToDate(selectedDateString, 1)
+                : formatDateYYYYMMDD(selectedDateString);
 
-            return (
-              <View key={slotKey}>
-                <TouchableOpacity
-                  style={styles.slotItem}
-                  onPress={() => handleSlotSelect(slot)}
-                  disabled={
-                    panditId &&
-                    availableDates &&
-                    !availableDates.includes(selectedDateString)
-                  }
-                >
-                  <View style={styles.slotContent}>
-                    <View style={styles.slotTextContainer}>
-                      <Text style={styles.slotName}>{slot.type}</Text>
-                      <Text style={styles.slotTime}>
-                        {slot.start} - {slot.end}{' '}
-                        <Text
-                          style={{
-                            color: COLORS.primaryTextDark,
-                            fontSize: moderateScale(12),
-                          }}
-                        >
-                          {isNextDay && (
-                            <>
-                              {'\n'}
-                              {t('pooja_will_be_on') || 'Pooja on'}{' '}
-                              {new Date(shownBookingDate).toLocaleDateString(
-                                'en-IN',
-                                {
-                                  day: '2-digit',
-                                  month: '2-digit',
-                                  year: 'numeric',
-                                },
-                              )}
-                            </>
-                          )}
+              return (
+                <View key={slotKey}>
+                  <TouchableOpacity
+                    style={styles.slotItem}
+                    onPress={() => handleSlotSelect(slot)}
+                    disabled={
+                      panditId &&
+                      availableDates &&
+                      !availableDates.includes(selectedDateString)
+                    }
+                  >
+                    <View style={styles.slotContent}>
+                      <View style={styles.slotTextContainer}>
+                        <Text style={styles.slotName}>{slot.type}</Text>
+                        <Text style={styles.slotTime}>
+                          {slot.start} - {slot.end}{' '}
+                          <Text style={styles.slotNextDayText}>
+                            {isNextDay && (
+                              <>
+                                {'\n'}
+                                {t('pooja_will_be_on') || 'Pooja on'}{' '}
+                                {new Date(shownBookingDate).toLocaleDateString(
+                                  'en-IN',
+                                  {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                  },
+                                )}
+                              </>
+                            )}
+                          </Text>
                         </Text>
-                      </Text>
+                      </View>
+                      <View style={styles.slotSelection}>
+                        <Ionicons
+                          name={
+                            isSelected
+                              ? 'checkmark-circle-outline'
+                              : 'ellipse-outline'
+                          }
+                          size={24}
+                          color={isSelected ? COLORS.gradientEnd : '#E4E8E9'}
+                        />
+                      </View>
                     </View>
-                    <View style={styles.slotSelection}>
-                      <Ionicons
-                        name={
-                          isSelected
-                            ? 'checkmark-circle-outline'
-                            : 'ellipse-outline'
-                        }
-                        size={24}
-                        color={isSelected ? COLORS.gradientEnd : '#E4E8E9'}
-                      />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-                {index < muhurats.length - 1 && (
-                  <View style={styles.slotDivider} />
-                )}
-              </View>
-            );
-          })}
+                  </TouchableOpacity>
+                  {index < muhurats.length - 1 && (
+                    <View style={styles.slotDivider} />
+                  )}
+                </View>
+              );
+            })}
+          </View>
         </View>
       )}
     </View>
@@ -863,104 +865,92 @@ const PujaBookingScreen: React.FC = () => {
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <View style={styles.flex1}>
           <ScrollView
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[
+              styles.scrollContentContainer,
+              { paddingBottom: 80 + (insets.bottom || 20) },
+            ]}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <Text style={styles.description}>{translatedDescription}</Text>
-            <View style={[styles.pujaPlaceContainer, THEMESHADOW.shadow]}>
-              <View style={styles.pujaPlaceContent}>
-                <View style={styles.pujaPlaceTextContainer}>
-                  <Text style={styles.pujaPlaceLabel}>{t('puja_place')}</Text>
-                  <Text style={styles.pujaPlaceValue}>
-                    {translatedPoojaName}: {translatedPoojaDescription}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.editButton}
-                  onPress={() => navigation.goBack()}
-                >
-                  <Ionicons
-                    name="create-outline"
-                    size={20}
-                    color={COLORS.gradientEnd}
-                  />
-                </TouchableOpacity>
+            <View style={styles.contentWrapper}>
+              {/* Header Group */}
+              <View style={styles.headerGroup}>
+                <Text style={styles.description}>{translatedDescription}</Text>
               </View>
-            </View>
 
-            <Calendar {...calendarProps} />
+              {/* Puja Place Group */}
+              <View style={styles.pujaPlaceGroup}>
+                <View style={[styles.pujaPlaceContainer, COMMON_LIST_STYLE]}>
+                  <View style={styles.pujaPlaceContent}>
+                    <View style={styles.pujaPlaceTextContainer}>
+                      <Text style={styles.pujaPlaceLabel}>
+                        {t('puja_place')}
+                      </Text>
+                      <Text style={styles.pujaPlaceValue}>
+                        {translatedPoojaName}: {translatedPoojaDescription}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.editButton}
+                      onPress={() => navigation.goBack()}
+                    >
+                      <Ionicons
+                        name="create-outline"
+                        size={20}
+                        color={COLORS.gradientEnd}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
 
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginBottom: verticalScale(12),
-              }}
-            >
-              {/* Current date legend */}
-              <View
-                style={{
-                  width: 18,
-                  height: 18,
-                  borderRadius: 9,
-                  backgroundColor: COLORS.primaryBackgroundButton,
-                  marginRight: 6,
-                  borderWidth: 1,
-                  borderColor: COLORS.primaryBackgroundButton,
-                }}
-              />
-              <Text
-                style={{
-                  fontSize: moderateScale(12),
-                  color: COLORS.primaryTextDark,
-                  marginRight: 16,
-                }}
-              >
-                {t('current_date')}
-              </Text>
-              {panditId && (
-                <>
-                  <View
-                    style={{
-                      width: 18,
-                      height: 18,
-                      borderRadius: 9,
-                      borderWidth: 1,
-                      borderColor: COLORS.gradientEnd,
-                      marginRight: 6,
-                      backgroundColor: '#fff',
-                    }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: moderateScale(12),
-                      color: COLORS.primaryTextDark,
-                    }}
-                  >
-                    {t('available_date')}
+              {/* Calendar Group */}
+              <View style={styles.calendarGroup}>
+                <Calendar {...calendarProps} />
+
+                <View style={styles.legendContainer}>
+                  {/* Current date legend */}
+                  <View style={styles.currentDateIndicator} />
+                  <Text style={styles.legendTextWithMargin}>
+                    {t('current_date')}
                   </Text>
-                </>
-              )}
-            </View>
-            {renderMuhuratSlots()}
-            <View style={styles.notesContainer}>
-              <Text style={styles.notesLabel}>{t('additional_notes')}</Text>
-              <TextInput
-                style={styles.notesInput}
-                value={additionalNotes}
-                onChangeText={setAdditionalNotes}
-                placeholder={t('please_arrange_for_flowers')}
-                placeholderTextColor={COLORS.inputLabelText}
-                multiline
-                textAlignVertical="top"
-              />
+                  {panditId && (
+                    <>
+                      <View style={styles.availableDateIndicator} />
+                      <Text style={styles.legendText}>
+                        {t('available_date')}
+                      </Text>
+                    </>
+                  )}
+                </View>
+              </View>
+
+              {/* Muhurat Slots Group */}
+              <View style={styles.muhuratSlotsGroup}>
+                {renderMuhuratSlots()}
+              </View>
+
+              {/* Notes Group */}
+              <View style={styles.notesGroup}>
+                <View style={styles.notesContainer}>
+                  <Text style={styles.notesLabel}>{t('additional_notes')}</Text>
+                  <TextInput
+                    style={styles.notesInput}
+                    value={additionalNotes}
+                    onChangeText={setAdditionalNotes}
+                    placeholder={t('please_arrange_for_flowers')}
+                    placeholderTextColor={COLORS.inputLabelText}
+                    multiline
+                    textAlignVertical="top"
+                  />
+                </View>
+              </View>
             </View>
           </ScrollView>
           <View style={styles.bottomButtonContainerFixed}>
@@ -993,34 +983,81 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContentContainer: {},
   flex1: {
     flex: 1,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
     backgroundColor: COLORS.pujaBackground,
   },
   scrollContent: {
     padding: moderateScale(24),
     paddingBottom: verticalScale(50),
   },
+  contentWrapper: {
+    width: '100%',
+    paddingHorizontal: moderateScale(24),
+    gap: moderateScale(24),
+  },
+  headerGroup: {
+    marginTop: verticalScale(14),
+  },
+  pujaPlaceGroup: {},
+  calendarGroup: {},
+  legendContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: verticalScale(12),
+  },
+  currentDateIndicator: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: COLORS.primaryBackgroundButton,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: COLORS.primaryBackgroundButton,
+  },
+  availableDateIndicator: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 1,
+    borderColor: COLORS.gradientEnd,
+    marginRight: 6,
+    backgroundColor: COLORS.white,
+  },
+  legendText: {
+    fontSize: moderateScale(12),
+    color: COLORS.primaryTextDark,
+  },
+  legendTextWithMargin: {
+    fontSize: moderateScale(12),
+    color: COLORS.primaryTextDark,
+    marginRight: moderateScale(16),
+  },
+  muhuratSlotsGroup: {},
+  notesGroup: {},
   content: {
     flex: 1,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
-    marginBottom: 0,
+    marginBottom: moderateScale(0),
     padding: moderateScale(24),
   },
   description: {
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
     color: COLORS.primaryTextDark,
-    marginBottom: verticalScale(24),
   },
   pujaPlaceContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
     padding: moderateScale(14),
-    marginBottom: verticalScale(24),
   },
   pujaPlaceContent: {
     flexDirection: 'row',
@@ -1033,7 +1070,7 @@ const styles = StyleSheet.create({
   pujaPlaceLabel: {
     fontSize: moderateScale(13),
     fontFamily: Fonts.Sen_Medium,
-    color: '#8A8A8A',
+    color: COLORS.pujaCardSubtext,
     marginBottom: verticalScale(4),
   },
   pujaPlaceValue: {
@@ -1044,23 +1081,22 @@ const styles = StyleSheet.create({
   editButton: {
     padding: moderateScale(8),
   },
-
-  slotsContainer: {
-    marginBottom: verticalScale(24),
-  },
+  slotsContainer: {},
   slotsTitle: {
     fontSize: moderateScale(18),
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    marginBottom: verticalScale(16),
+    marginBottom: moderateScale(12),
   },
   slotsListContainer: {
-    backgroundColor: '#fff',
     borderRadius: moderateScale(10),
-    padding: moderateScale(14),
+    overflow: Platform.OS === 'android' ? 'hidden' : undefined,
+  },
+  slotsListInner: {
+    overflow: 'hidden',
   },
   slotItem: {
-    paddingVertical: verticalScale(12),
+    paddingVertical: verticalScale(14),
   },
   slotContent: {
     flexDirection: 'row',
@@ -1079,27 +1115,26 @@ const styles = StyleSheet.create({
   slotTime: {
     fontSize: moderateScale(13),
     fontFamily: Fonts.Sen_Medium,
-    color: '#8A8A8A',
+    color: COLORS.pujaCardSubtext,
   },
-  slotSelection: {
-    padding: moderateScale(4),
+  slotNextDayText: {
+    color: COLORS.primaryTextDark,
+    fontSize: moderateScale(12),
   },
+  slotSelection: {},
   slotDivider: {
     height: 1,
-    backgroundColor: '#EBEBEB',
-    marginVertical: verticalScale(4),
+    backgroundColor: COLORS.border,
   },
-  notesContainer: {
-    marginBottom: verticalScale(24),
-  },
+  notesContainer: {},
   notesLabel: {
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Medium,
     color: '#6C7278',
-    marginBottom: verticalScale(8),
+    marginBottom: moderateScale(12),
   },
   notesInput: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
     borderWidth: 1,
     borderColor: '#E4E8E9',
@@ -1116,8 +1151,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingHorizontal: moderateScale(24),
-    paddingBottom:
-      Platform.OS === 'ios' ? verticalScale(24) : verticalScale(16),
+    paddingBottom: moderateScale(16),
     backgroundColor: COLORS.pujaBackground,
     zIndex: 10,
   },

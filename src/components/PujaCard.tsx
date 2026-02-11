@@ -7,9 +7,9 @@ import {
   Image,
   Platform,
 } from 'react-native';
-import {COLORS} from '../theme/theme';
+import { COLORS, THEMESHADOW } from '../theme/theme';
 import Fonts from '../theme/fonts';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 interface PujaCardProps {
   image: string;
@@ -17,14 +17,14 @@ interface PujaCardProps {
   onPress?: () => void;
 }
 
-const PujaCard: React.FC<PujaCardProps> = ({image, title, onPress}) => {
-  const {t} = useTranslation();
+const PujaCard: React.FC<PujaCardProps> = ({ image, title, onPress }) => {
+  const { t } = useTranslation();
 
   return (
     <View style={styles.shadowWrapper}>
       <View style={styles.card}>
         <Image
-          source={image ? {uri: image} : undefined}
+          source={image ? { uri: image } : undefined}
           style={styles.image}
           resizeMode="cover"
         />
@@ -34,7 +34,8 @@ const PujaCard: React.FC<PujaCardProps> = ({image, title, onPress}) => {
         <TouchableOpacity
           style={styles.button}
           onPress={onPress}
-          activeOpacity={0.8}>
+          activeOpacity={0.8}
+        >
           <Text style={styles.buttonText}>{t('book')}</Text>
         </TouchableOpacity>
       </View>
@@ -45,12 +46,10 @@ const PujaCard: React.FC<PujaCardProps> = ({image, title, onPress}) => {
 const styles = StyleSheet.create({
   shadowWrapper: {
     flex: 1,
-    marginBottom: 24,
-    marginTop: 12,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: {width: 0, height: 6},
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 10,
       },
@@ -59,12 +58,12 @@ const styles = StyleSheet.create({
       },
     }),
     borderRadius: 14,
-    backgroundColor: 'transparent',
+    backgroundColor: COLORS.black,
   },
   card: {
     width: 144,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     alignItems: 'center',
     paddingTop: 18,
     paddingBottom: 16,
@@ -90,24 +89,13 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: 10,
     width: 90,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
     marginTop: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: COLORS.primaryBackground,
-        shadowOffset: {width: 0, height: 2},
-        shadowOpacity: 0.12,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    ...THEMESHADOW.shadow,
   },
   buttonText: {
     color: COLORS.primaryTextDark,

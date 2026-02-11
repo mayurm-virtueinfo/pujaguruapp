@@ -9,6 +9,8 @@ import {
   TouchableOpacity,
   AppState,
   RefreshControl,
+  ViewStyle,
+  Platform,
 } from 'react-native';
 import { moderateScale } from 'react-native-size-matters';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -20,7 +22,12 @@ import {
   PujaItem,
   RecommendedPandit,
 } from '../../../api/apiService';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import {
+  COLORS,
+  THEMESHADOW,
+  COMMON_LIST_STYLE,
+  COMMON_CARD_STYLE,
+} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -32,6 +39,7 @@ import PrimaryButton from '../../../components/PrimaryButton';
 import { useWebSocket } from '../../../context/WebSocketContext';
 import { useLocation } from '../../../context/LocationContext';
 import InlineLocationRequest from '../../../components/InlineLocationRequest';
+import RecommendedPanditCard from '../../../components/RecommendedPanditCard';
 
 interface PendingPuja {
   id: number;
@@ -312,73 +320,50 @@ const UserHomeScreen: React.FC = () => {
             tintColor={COLORS.primaryBackground}
           />
         }
+        contentContainerStyle={{
+          paddingBottom:
+            inset.bottom +
+            (Platform.OS === 'android' ? moderateScale(60) : moderateScale(20)),
+        }}
       >
-        {/* Recommended Panditji */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t('recomended_panditji')}</Text>
-            <TouchableOpacity
-              style={styles.seeAllContainer}
-              onPress={() => handleNavigation('UserPanditjiNavigator')}
+        <View style={{ flex: 1, gap: 24 }}>
+          {/* Recommended Panditji */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {t('recomended_panditji')}
+              </Text>
+              <TouchableOpacity
+                style={styles.seeAllContainer}
+                onPress={() => handleNavigation('UserPanditjiNavigator')}
+              >
+                <Text style={styles.seeAllText}>{t('see_all')}</Text>
+                <Ionicons
+                  name="chevron-forward-outline"
+                  size={20}
+                  color={COLORS.primaryBackground}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.panditCardsContainer}
+              contentContainerStyle={styles.panditCardsContentContainer}
             >
-              <Text style={styles.seeAllText}>{t('see_all')}</Text>
-              <Ionicons
-                name="chevron-forward-outline"
-                size={20}
-                color={COLORS.primaryBackground}
-              />
-            </TouchableOpacity>
-          </View>
+              {recomendedPandits.length > 0 ? (
+                recomendedPandits.map((pandit: any, idx) => {
+                  const panditImage =
+                    pandit.profile_img ||
+                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU';
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.panditCardsContainer}
-            contentContainerStyle={styles.panditCardsContentContainer}
-          >
-            {recomendedPandits.length > 0 ? (
-              recomendedPandits.map((pandit: any) => {
-                const panditImage =
-                  pandit.profile_img ||
-                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU';
-
-                return (
-                  <View
-                    style={[styles.panditCard, THEMESHADOW.shadow]}
-                    key={pandit.id}
-                  >
-                    <View style={styles.panditImageWrapper}>
-                      <Image
-                        source={{ uri: panditImage }}
-                        style={styles.panditImage}
-                      />
-                      <View
-                        style={[
-                          styles.ratingContainerAbsolute,
-                          THEMESHADOW.shadow,
-                        ]}
-                      >
-                        <Ionicons
-                          name="star"
-                          size={16}
-                          color={COLORS.primaryBackgroundButton}
-                          style={{ marginRight: 5 }}
-                        />
-                        <Text style={styles.ratingText}>
-                          {pandit?.average_rating}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text
-                      style={styles.panditName}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {pandit.full_name}
-                    </Text>
-                    <View style={{ alignSelf: 'center', marginTop: 8 }}>
-                      <PrimaryButton
-                        title={t('book')}
+                  return (
+                    <React.Fragment key={pandit.id}>
+                      <RecommendedPanditCard
+                        image={panditImage}
+                        title={pandit.full_name}
+                        rating={pandit.average_rating}
                         onPress={() => {
                           const original = originalRecomendedPandits.find(
                             p => p.id === pandit.id,
@@ -390,188 +375,186 @@ const UserHomeScreen: React.FC = () => {
                             original?.city ?? pandit.city,
                           );
                         }}
-                        style={{ maxWidth: 90, maxHeight: 40 }}
-                        textStyle={{
-                          paddingHorizontal: 12,
-                          textAlign: 'center',
-                          fontSize: 15,
-                          fontFamily: Fonts.Sen_Medium,
-                        }}
                       />
-                    </View>
-                  </View>
-                );
-              })
-            ) : (
-              <View
-                style={[
-                  THEMESHADOW.shadow,
-                  {
-                    flex: 1,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    backgroundColor: COLORS.white,
-                    paddingVertical: 24,
-                    borderRadius: 16,
-                    marginHorizontal: 4,
-                  },
-                ]}
-              >
-                {!contextLocation ? (
-                  <InlineLocationRequest
-                    onAllow={refreshLocation}
-                    permissionStatus={permissionStatus}
-                  />
-                ) : (
-                  <Text style={styles.noPanditText}>
-                    {loading ? t('updating_location') : t('no_panditji_found')}
-                  </Text>
-                )}
-              </View>
-            )}
-          </ScrollView>
-        </View>
-
-        {/* In-progress Puja */}
-        <View style={styles.pujaSection}>
-          <Text style={styles.sectionTitle}>{t('in_progress_pujas')}</Text>
-          <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
-            {inProgressPujas.length > 0 ? (
-              inProgressPujas.map((puja, idx) => (
-                <View key={puja.id}>
-                  <TouchableOpacity
-                    style={styles.pujaCard}
-                    onPress={() =>
-                      navigation.navigate('UserPujaDetailsScreen', {
-                        id: puja.id,
-                      })
-                    }
-                  >
-                    <Image
-                      source={{ uri: puja.pooja_image_url }}
-                      style={styles.pujaImage}
+                      {idx !== recomendedPandits.length - 1 && (
+                        <View style={{ width: 16 }} />
+                      )}
+                    </React.Fragment>
+                  );
+                })
+              ) : (
+                <View
+                  style={[
+                    THEMESHADOW.shadow,
+                    {
+                      flex: 1,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: COLORS.white,
+                      paddingVertical: 24,
+                      borderRadius: 16,
+                      marginHorizontal: 4,
+                    },
+                  ]}
+                >
+                  {!contextLocation ? (
+                    <InlineLocationRequest
+                      onAllow={refreshLocation}
+                      permissionStatus={permissionStatus}
                     />
-                    <View style={styles.pujaTextContainer}>
-                      <Text style={styles.pujaName}>{puja.pooja_name}</Text>
-                      <Text style={styles.pujaDate}>
-                        {puja.booking_date
-                          ? (() => {
-                              const dateParts = puja.booking_date.split('-');
-                              // booking_date is assumed to be in YYYY-MM-DD
-                              if (dateParts.length === 3) {
-                                const [yyyy, mm, dd] = dateParts;
-                                return `${dd}-${mm}-${yyyy}`;
-                              }
-                              return puja.booking_date;
-                            })()
-                          : ''}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                  {idx !== inProgressPujas.length - 1 && (
-                    <View style={styles.divider} />
+                  ) : (
+                    <Text style={styles.noPanditText}>
+                      {loading
+                        ? t('updating_location')
+                        : t('no_panditji_found')}
+                    </Text>
                   )}
                 </View>
-              ))
-            ) : (
-              <Text style={{ color: '#888', textAlign: 'center' }}>
-                {t('no_in_progress_pujas')}
-              </Text>
-            )}
+              )}
+            </ScrollView>
           </View>
-        </View>
 
-        {/* Waiting for Approval */}
-        <View style={styles.pujaSection}>
-          <Text style={styles.sectionTitle}>{t('waiting_for_approval')}</Text>
-          <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
-            {pendingPujas.length > 0 ? (
-              pendingPujas.map((puja, idx) => {
-                const pooja = puja.pooja || {};
-                const imageUrl =
-                  pooja.image_url ||
-                  'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg';
-                const poojaName =
-                  pooja.title || pooja.pooja_name || 'Unknown Puja';
-                // Set date in format DDMMYYYY (without dashes or spaces)
-                let poojaDateRaw =
-                  puja.when_is_pooja || puja.booking_date || 'No Date';
-                let poojaDate = poojaDateRaw;
-                if (
-                  poojaDateRaw &&
-                  poojaDateRaw !== 'No Date' &&
-                  typeof poojaDateRaw === 'string' &&
-                  poojaDateRaw.split('-').length === 3
-                ) {
-                  const [yyyy, mm, dd] = poojaDateRaw.split('-');
-                  poojaDate = `${dd}-${mm}-${yyyy}`;
-                }
-
-                return (
-                  <View key={puja.id || idx}>
+          {/* In-progress Puja */}
+          <View style={styles.pujaSection}>
+            <Text style={styles.sectionTitle}>{t('in_progress_pujas')}</Text>
+            <View style={[styles.pujaCardsContainer, COMMON_LIST_STYLE]}>
+              {inProgressPujas.length > 0 ? (
+                inProgressPujas.map((puja, idx) => (
+                  <View key={puja.id}>
                     <TouchableOpacity
                       style={styles.pujaCard}
                       onPress={() =>
-                        navigation.navigate('ConfirmPujaDetails', {
-                          bookingId: puja.id,
+                        navigation.navigate('UserPujaDetailsScreen', {
+                          id: puja.id,
                         })
                       }
                     >
                       <Image
-                        source={{ uri: imageUrl }}
+                        source={{ uri: puja.pooja_image_url }}
                         style={styles.pujaImage}
                       />
                       <View style={styles.pujaTextContainer}>
-                        <Text style={styles.pujaName}>{poojaName}</Text>
-                        <Text style={styles.pujaDate}>{poojaDate}</Text>
+                        <Text style={styles.pujaName}>{puja.pooja_name}</Text>
+                        <Text style={styles.pujaDate}>
+                          {puja.booking_date
+                            ? (() => {
+                                const dateParts = puja.booking_date.split('-');
+                                // booking_date is assumed to be in YYYY-MM-DD
+                                if (dateParts.length === 3) {
+                                  const [yyyy, mm, dd] = dateParts;
+                                  return `${dd}-${mm}-${yyyy}`;
+                                }
+                                return puja.booking_date;
+                              })()
+                            : ''}
+                        </Text>
                       </View>
                     </TouchableOpacity>
-                    {idx !== pendingPujas.length - 1 && (
+                    {idx !== inProgressPujas.length - 1 && (
                       <View style={styles.divider} />
                     )}
                   </View>
-                );
-              })
-            ) : (
-              <Text style={{ color: '#888', textAlign: 'center' }}>
-                {t('no_pending_pujas')}
-              </Text>
-            )}
+                ))
+              ) : (
+                <Text style={styles.noItemText}>
+                  {t('no_in_progress_pujas')}
+                </Text>
+              )}
+            </View>
           </View>
-        </View>
 
-        {/* Upcoming Puja */}
-        <View style={styles.pujaSection}>
-          <Text style={styles.sectionTitle}>{t('upcoming_pujas')}</Text>
-          <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
-            {pujas.length > 0 ? (
-              pujas.map((puja, idx) => (
-                <View key={puja.id}>
-                  <TouchableOpacity
-                    style={styles.pujaCard}
-                    onPress={() =>
-                      navigation.navigate('UserPujaDetailsScreen', {
-                        id: puja.id,
-                      })
-                    }
-                  >
-                    <Image
-                      source={{ uri: puja.pooja_image_url }}
-                      style={styles.pujaImage}
-                    />
-                    <View style={styles.pujaTextContainer}>
-                      <Text style={styles.pujaName}>{puja.pooja_name}</Text>
-                      <Text style={styles.pujaDate}>{puja.when_is_pooja}</Text>
+          {/* Waiting for Approval */}
+          <View style={styles.pujaSection}>
+            <Text style={styles.sectionTitle}>{t('waiting_for_approval')}</Text>
+            <View style={[styles.pujaCardsContainer, COMMON_LIST_STYLE]}>
+              {pendingPujas.length > 0 ? (
+                pendingPujas.map((puja, idx) => {
+                  const pooja = puja.pooja || {};
+                  const imageUrl =
+                    pooja.image_url ||
+                    'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg';
+                  const poojaName =
+                    pooja.title || pooja.pooja_name || 'Unknown Puja';
+                  // Set date in format DDMMYYYY (without dashes or spaces)
+                  let poojaDateRaw =
+                    puja.when_is_pooja || puja.booking_date || 'No Date';
+                  let poojaDate = poojaDateRaw;
+                  if (
+                    poojaDateRaw &&
+                    poojaDateRaw !== 'No Date' &&
+                    typeof poojaDateRaw === 'string' &&
+                    poojaDateRaw.split('-').length === 3
+                  ) {
+                    const [yyyy, mm, dd] = poojaDateRaw.split('-');
+                    poojaDate = `${dd}-${mm}-${yyyy}`;
+                  }
+
+                  return (
+                    <View key={puja.id || idx}>
+                      <TouchableOpacity
+                        style={styles.pujaCard}
+                        onPress={() =>
+                          navigation.navigate('ConfirmPujaDetails', {
+                            bookingId: puja.id,
+                          })
+                        }
+                      >
+                        <Image
+                          source={{ uri: imageUrl }}
+                          style={styles.pujaImage}
+                        />
+                        <View style={styles.pujaTextContainer}>
+                          <Text style={styles.pujaName}>{poojaName}</Text>
+                          <Text style={styles.pujaDate}>{poojaDate}</Text>
+                        </View>
+                      </TouchableOpacity>
+                      {idx !== pendingPujas.length - 1 && (
+                        <View style={styles.divider} />
+                      )}
                     </View>
-                  </TouchableOpacity>
-                  {idx !== pujas.length - 1 && <View style={styles.divider} />}
-                </View>
-              ))
-            ) : (
-              <Text style={{ color: '#888', textAlign: 'center' }}>
-                {t('no_upcoming_pujas')}
-              </Text>
-            )}
+                  );
+                })
+              ) : (
+                <Text style={styles.noItemText}>{t('no_pending_pujas')}</Text>
+              )}
+            </View>
+          </View>
+
+          {/* Upcoming Puja */}
+          <View style={styles.pujaSection}>
+            <Text style={styles.sectionTitle}>{t('upcoming_pujas')}</Text>
+            <View style={[styles.pujaCardsContainer, COMMON_LIST_STYLE]}>
+              {pujas.length > 0 ? (
+                pujas.map((puja, idx) => (
+                  <View key={puja.id}>
+                    <TouchableOpacity
+                      style={styles.pujaCard}
+                      onPress={() =>
+                        navigation.navigate('UserPujaDetailsScreen', {
+                          id: puja.id,
+                        })
+                      }
+                    >
+                      <Image
+                        source={{ uri: puja.pooja_image_url }}
+                        style={styles.pujaImage}
+                      />
+                      <View style={styles.pujaTextContainer}>
+                        <Text style={styles.pujaName}>{puja.pooja_name}</Text>
+                        <Text style={styles.pujaDate}>
+                          {puja.when_is_pooja}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                    {idx !== pujas.length - 1 && (
+                      <View style={styles.divider} />
+                    )}
+                  </View>
+                ))
+              ) : (
+                <Text style={styles.noItemText}>{t('no_upcoming_pujas')}</Text>
+              )}
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -579,7 +562,6 @@ const UserHomeScreen: React.FC = () => {
   );
 };
 
-// Styles (unchanged)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -587,32 +569,29 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.pujaBackground,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
-    zIndex: 10,
-    paddingHorizontal: moderateScale(24),
     paddingTop: moderateScale(24),
   },
-  section: {
-    marginBottom: moderateScale(24),
-  },
-
+  section: {},
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: moderateScale(6),
+    paddingHorizontal: moderateScale(24),
   },
   sectionTitle: {
     fontSize: moderateScale(18),
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
     fontWeight: '600',
+    marginBottom: moderateScale(12),
   },
   seeAllContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: moderateScale(12),
   },
   seeAllText: {
     fontSize: moderateScale(16),
@@ -620,55 +599,11 @@ const styles = StyleSheet.create({
     color: COLORS.primaryBackground,
     fontWeight: '500',
   },
-  panditCardsContainer: {
-    flexGrow: 0,
-    paddingTop: moderateScale(12),
-    paddingHorizontal: 10,
-  },
+  panditCardsContainer: {},
   panditCardsContentContainer: {
     flexDirection: 'row',
+    paddingHorizontal: moderateScale(24),
     paddingBottom: moderateScale(10),
-  },
-  panditCard: {
-    width: moderateScale(160),
-    borderRadius: moderateScale(12),
-    backgroundColor: COLORS.white,
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: moderateScale(12),
-    marginRight: moderateScale(12),
-  },
-  panditImageWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: moderateScale(8),
-  },
-  panditImage: {
-    width: moderateScale(86),
-    height: moderateScale(86),
-    borderRadius: moderateScale(50),
-    borderWidth: 1,
-  },
-  ratingContainerAbsolute: {
-    position: 'absolute',
-    bottom: moderateScale(-10),
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderRadius: moderateScale(12),
-    paddingHorizontal: moderateScale(8),
-    paddingVertical: moderateScale(3),
-  },
-  panditName: {
-    fontSize: 15,
-    fontFamily: Fonts.Sen_SemiBold,
-    color: COLORS.primaryTextDark,
-    textAlign: 'center',
-    marginTop: moderateScale(10),
-  },
-  ratingText: {
-    fontSize: moderateScale(12),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.primaryTextDark,
   },
   noPanditText: {
     fontSize: moderateScale(14),
@@ -677,19 +612,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: moderateScale(10),
   },
   pujaSection: {
-    marginBottom: moderateScale(24),
+    paddingHorizontal: moderateScale(24),
   },
   pujaCardsContainer: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(10),
-    paddingHorizontal: moderateScale(14),
-    paddingVertical: moderateScale(14),
-    marginVertical: moderateScale(12),
   },
   pujaCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: moderateScale(8),
+    ...(COMMON_CARD_STYLE as ViewStyle),
   },
   pujaImage: {
     width: moderateScale(52),
@@ -714,8 +644,12 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#EBEBEB',
-    marginVertical: moderateScale(8),
+    backgroundColor: COLORS.border,
+  },
+  noItemText: {
+    color: '#888',
+    textAlign: 'center',
+    ...(COMMON_CARD_STYLE as ViewStyle),
   },
 });
 

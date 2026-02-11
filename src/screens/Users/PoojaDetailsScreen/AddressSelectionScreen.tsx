@@ -11,7 +11,7 @@ import {
   Platform,
   Modal,
 } from 'react-native';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import { COLORS, COMMON_RADIO_CONTAINER_STYLE } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import PrimaryButtonOutlined from '../../../components/PrimaryButtonOutlined';
@@ -33,6 +33,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { UserHomeParamList } from '../../../navigation/User/UsetHomeStack';
 import { translateData } from '../../../utils/TranslateData';
+import { moderateScale } from 'react-native-size-matters';
 
 const AddressSelectionScreen: React.FC = () => {
   type BookingAddress = PoojaBookingAddress & {
@@ -234,85 +235,90 @@ const AddressSelectionScreen: React.FC = () => {
           </Modal>
           <ScrollView
             style={styles.scrollContainer}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={{
+              paddingBottom: 60 + (inset.bottom || 20),
+            }}
             showsVerticalScrollIndicator={false}
             bounces={false}
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.contentWrapper}>
-              <View style={styles.detailsContainer}>
+              {/* Title and Description Group */}
+              <View style={styles.headerGroup}>
                 <Text style={styles.sectionTitle}>{t('select_address')}</Text>
                 <Text style={styles.descriptionText}>
                   {t('choose_puja_place')}
                 </Text>
-                {!isLoading && (
-                  <View style={[styles.pricingContainer, THEMESHADOW.shadow]}>
-                    {poojaPlaces.length === 0 ? (
-                      <View
-                        style={{ alignItems: 'center', paddingVertical: 24 }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 16,
-                            color: COLORS.primaryTextDark,
-                            fontFamily: Fonts.Sen_Medium,
-                          }}
-                        >
-                          {t('add_your_address')}
-                        </Text>
-                      </View>
-                    ) : (
-                      poojaPlaces.map((place, index) => (
-                        <React.Fragment key={place.id}>
-                          <TouchableOpacity
-                            style={styles.pricingOption}
-                            activeOpacity={0.7}
-                            onPress={() => handleSelectAddress(place.id)}
-                          >
-                            <View style={styles.textContainer}>
-                              <Text style={styles.pricingText}>
-                                {place.address_type}
-                              </Text>
-                              <Text style={styles.subtitleText}>
-                                {place.full_address}
-                              </Text>
-                            </View>
-                            <Octicons
-                              name={
-                                selectedAddressId === place.id
-                                  ? 'check-circle'
-                                  : 'circle'
-                              }
-                              size={24}
-                              color={
-                                selectedAddressId === place.id
-                                  ? COLORS.primary
-                                  : COLORS.inputBoder
-                              }
-                            />
-                          </TouchableOpacity>
-                          {index !== poojaPlaces.length - 1 && (
-                            <View style={styles.divider} />
-                          )}
-                        </React.Fragment>
-                      ))
-                    )}
-                  </View>
-                )}
               </View>
+
+              {/* Address Options Group */}
+              {!isLoading && (
+                <View
+                  style={[COMMON_RADIO_CONTAINER_STYLE, styles.radioContainer]}
+                >
+                  {poojaPlaces.length === 0 ? (
+                    <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                      <Text
+                        style={{
+                          fontSize: 16,
+                          color: COLORS.primaryTextDark,
+                          fontFamily: Fonts.Sen_Medium,
+                        }}
+                      >
+                        {t('add_your_address')}
+                      </Text>
+                    </View>
+                  ) : (
+                    poojaPlaces.map((place, index) => (
+                      <React.Fragment key={place.id}>
+                        <TouchableOpacity
+                          style={styles.pricingOption}
+                          activeOpacity={0.7}
+                          onPress={() => handleSelectAddress(place.id)}
+                        >
+                          <View style={styles.textContainer}>
+                            <Text style={styles.pricingText}>
+                              {place.address_type}
+                            </Text>
+                            <Text style={styles.subtitleText}>
+                              {place.full_address}
+                            </Text>
+                          </View>
+                          <Octicons
+                            name={
+                              selectedAddressId === place.id
+                                ? 'check-circle'
+                                : 'circle'
+                            }
+                            size={24}
+                            color={
+                              selectedAddressId === place.id
+                                ? COLORS.primary
+                                : COLORS.inputBoder
+                            }
+                          />
+                        </TouchableOpacity>
+                        {index !== poojaPlaces.length - 1 && (
+                          <View style={styles.divider} />
+                        )}
+                      </React.Fragment>
+                    ))
+                  )}
+                </View>
+              )}
             </View>
           </ScrollView>
           <View
             style={[
-              styles.buttonWrapper,
-              { paddingBottom: inset.bottom > 0 ? inset.bottom : 16 },
+              styles.bottomButtonContainer,
+              {
+                paddingBottom: moderateScale(16),
+              },
             ]}
           >
             <PrimaryButton
               title={t('next')}
               onPress={handleNextPress}
-              style={styles.buttonContainer}
-              textStyle={styles.buttonText}
               disabled={!selectedUserAddressId}
             />
           </View>
@@ -331,69 +337,57 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContainer: {
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    backgroundColor: COLORS.white,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    backgroundColor: COLORS.pujaBackground,
     flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 16,
   },
   contentWrapper: {
     width: '100%',
     overflow: 'hidden',
+    paddingHorizontal: moderateScale(24),
+    paddingVertical: moderateScale(14),
+    gap: moderateScale(24),
   },
-  detailsContainer: {
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 24,
+  headerGroup: {
+    marginTop: moderateScale(10),
   },
   sectionTitle: {
     fontSize: 18,
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    marginTop: 20,
+    marginBottom: moderateScale(10),
   },
-  pricingContainer: {
+  radioContainer: {
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    marginTop: 12,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: COLORS.inputBoder,
-    marginBottom: 25,
+    borderRadius: moderateScale(12),
   },
   pricingOption: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 44,
-    paddingVertical: 8,
+    paddingVertical: moderateScale(14),
   },
   textContainer: {
     flex: 1,
-    paddingRight: 12,
   },
   pricingText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
+    marginBottom: moderateScale(5),
   },
   subtitleText: {
     fontSize: 13,
     fontFamily: Fonts.Sen_Medium,
     color: '#8A8A8A',
   },
-  buttonContainer: {
-    height: 46,
-  },
-  buttonText: {
-    fontSize: 15,
-    fontFamily: Fonts.Sen_Medium,
-  },
-  buttonWrapper: {
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 24,
-    paddingTop: 6,
+  bottomButtonContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: COLORS.pujaBackground,
+    paddingHorizontal: moderateScale(24),
   },
   mismatchModalOverlay: {
     flex: 1,
@@ -404,8 +398,8 @@ const styles = StyleSheet.create({
   mismatchModalContainer: {
     width: '85%',
     backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: moderateScale(12),
+    padding: moderateScale(20),
   },
   mismatchModalTitle: {
     fontSize: 18,
@@ -418,18 +412,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: Fonts.Sen_Medium,
     color: '#6c7278',
-    marginBottom: 16,
+    marginBottom: moderateScale(16),
     textAlign: 'center',
   },
   divider: {
-    borderColor: COLORS.inputBoder,
+    borderColor: COLORS.border,
     borderWidth: 1,
-    marginVertical: 10,
   },
   descriptionText: {
     fontSize: 14,
     fontFamily: Fonts.Sen_Medium,
-    marginTop: 10,
     textAlign: 'justify',
     color: '#6c7278',
   },

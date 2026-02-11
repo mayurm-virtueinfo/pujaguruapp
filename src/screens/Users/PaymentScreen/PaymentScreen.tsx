@@ -16,15 +16,16 @@ import {
 } from 'react-native';
 import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
 import PrimaryButton from '../../../components/PrimaryButton';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import {
+  COLORS,
+  COMMON_LIST_STYLE,
+  COMMON_RADIO_CONTAINER_STYLE,
+} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { Images } from '../../../theme/Images';
 import Octicons from 'react-native-vector-icons/Octicons';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCommonToast } from '../../../common/CommonToast';
 import UserCustomHeader from '../../../components/UserCustomHeader';
@@ -143,10 +144,8 @@ const PaymentScreen: React.FC = () => {
   useEffect(() => {
     if (usePoints) {
       if (walletBalanceForCalc >= grossAmount) {
-        // Full payment via wallet
-        setSelectedPaymentMethod('online'); // Default to online, but UI will disable selection
+        setSelectedPaymentMethod('online');
       } else {
-        // Partial payment via wallet -> Force Online
         setSelectedPaymentMethod('online');
       }
     }
@@ -227,7 +226,6 @@ const PaymentScreen: React.FC = () => {
     fetchWallet();
   }, []);
 
-  // Prevent navigating back while payment is in progress
   useEffect(() => {
     const beforeRemove = navigation.addListener(
       'beforeRemove',
@@ -684,13 +682,11 @@ const PaymentScreen: React.FC = () => {
     }
   };
 
-  // Open refund policy modal and fetch content
   const handleOpenRefundPolicy = async () => {
     setRefundPolicyVisible(true);
     await fetchRefundPolicy();
   };
 
-  // Close refund policy modal
   const handleCloseRefundPolicy = () => {
     setRefundPolicyVisible(false);
     setRefundPolicyContent('');
@@ -699,20 +695,12 @@ const PaymentScreen: React.FC = () => {
   const renderBookingData = () => (
     <View style={styles.bookingDataItem}>
       <View style={styles.textContainer}>
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: scale(14),
-          }}
-        >
+        <View style={styles.iconContainer}>
           <Octicons name="location" size={20} color={COLORS.pujaCardSubtext} />
         </View>
-        <View style={{ flex: 1 }}>
+        <View style={styles.flexOne}>
           <Text
-            style={[styles.bookingDataText, { flexWrap: 'wrap' }]}
+            style={[styles.bookingDataText, styles.flexWrapText]}
             numberOfLines={0}
           >
             {translatedPoojaDescription}
@@ -720,15 +708,7 @@ const PaymentScreen: React.FC = () => {
         </View>
       </View>
       <View style={styles.textContainer}>
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: scale(14),
-          }}
-        >
+        <View style={styles.iconContainer}>
           <Octicons name="calendar" size={20} color={COLORS.pujaCardSubtext} />
         </View>
         <View>
@@ -756,15 +736,7 @@ const PaymentScreen: React.FC = () => {
           },
         ]}
       >
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginRight: scale(14),
-          }}
-        >
+        <View style={styles.iconContainer}>
           <Octicons name="clock" size={20} color={COLORS.pujaCardSubtext} />
         </View>
         <View>
@@ -794,20 +766,14 @@ const PaymentScreen: React.FC = () => {
     </View>
   );
 
-  // Payment method selection UI
   const renderPaymentMethods = () => {
     const walletCoversBooking =
       usePoints && walletBalanceForCalc >= grossAmount;
     return (
-      <View style={[styles.paymentMethodsSection, THEMESHADOW.shadow]}>
-        <Text
-          style={{
-            fontSize: 16,
-            fontFamily: Fonts.Sen_SemiBold,
-            color: COLORS.primaryTextDark,
-            marginBottom: 8,
-          }}
-        >
+      <View
+        style={[styles.paymentMethodsSection, COMMON_RADIO_CONTAINER_STYLE]}
+      >
+        <Text style={styles.paymentMethodLabel}>
           {t('select_payment_method') || 'Select Payment Method'}
         </Text>
         <TouchableOpacity
@@ -821,7 +787,7 @@ const PaymentScreen: React.FC = () => {
           }}
           disabled={walletCoversBooking}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={styles.paymentMethodInner}>
             <View style={styles.radioButton}>
               <MaterialIcons
                 name={
@@ -854,7 +820,7 @@ const PaymentScreen: React.FC = () => {
           }}
           disabled={walletCoversBooking}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={styles.paymentMethodInner}>
             <View style={styles.radioButton}>
               <MaterialIcons
                 name={
@@ -876,13 +842,7 @@ const PaymentScreen: React.FC = () => {
           </View>
         </TouchableOpacity>
         {walletCoversBooking && (
-          <Text
-            style={{
-              color: COLORS.pujaCardSubtext,
-              fontSize: 13,
-              marginTop: 8,
-            }}
-          >
+          <Text style={styles.walletCoverageMessage}>
             {t('payment_method_disabled_wallet_full') ||
               'Payment method selection is disabled because your wallet fully covers the booking amount.'}
           </Text>
@@ -904,7 +864,7 @@ const PaymentScreen: React.FC = () => {
             style={styles.scrollView}
             contentContainerStyle={[
               styles.scrollContentContainer,
-              { paddingBottom: verticalScale(32) },
+              { paddingBottom: moderateScale(24) },
             ]}
             showsVerticalScrollIndicator={false}
             bounces={true}
@@ -912,159 +872,153 @@ const PaymentScreen: React.FC = () => {
             removeClippedSubviews={false}
             scrollEventThrottle={16}
           >
-            {/* Total Amount Section */}
-            <View style={[styles.totalSection, THEMESHADOW.shadow]}>
-              <View style={styles.totalRow}>
-                <Text
-                  style={[
-                    styles.totalAmountLabel,
-                    { fontFamily: Fonts.Sen_SemiBold },
-                  ]}
-                >
-                  {t('total_payable')}
-                </Text>
-                <Text
-                  style={[
-                    styles.totalAmount,
-                    { fontFamily: Fonts.Sen_SemiBold },
-                  ]}
-                >
-                  ₹ {grossAmount.toFixed(2)}
-                </Text>
+            <View style={styles.contentWrapper}>
+              {/* Total Amount Group */}
+              <View style={styles.totalAmountGroup}>
+                <View style={[styles.totalSection, COMMON_LIST_STYLE]}>
+                  <View style={styles.totalRow}>
+                    <Text style={styles.totalAmountLabelBold}>
+                      {t('total_payable')}
+                    </Text>
+                    <Text style={styles.totalAmountBold}>
+                      ₹ {grossAmount.toFixed(2)}
+                    </Text>
+                  </View>
+
+                  {usePoints ? (
+                    <>
+                      <View style={styles.totalRow}>
+                        <Text style={styles.totalAmountLabel}>
+                          Wallet applied
+                        </Text>
+                        <Text style={styles.totalAmount}>
+                          - ₹ {walletUseAmountCalc.toFixed(2)}
+                        </Text>
+                      </View>
+                      <View style={styles.totalRow}>
+                        <Text style={styles.totalAmountLabelBold}>To pay</Text>
+                        <Text style={styles.totalAmountBold}>
+                          ₹ {payableAmount.toFixed(2)}
+                        </Text>
+                      </View>
+                    </>
+                  ) : null}
+                </View>
               </View>
 
-              {usePoints ? (
-                <>
-                  <View style={styles.totalRow}>
-                    <Text style={styles.totalAmountLabel}>Wallet applied</Text>
-                    <Text style={styles.totalAmount}>
-                      - ₹ {walletUseAmountCalc.toFixed(2)}
-                    </Text>
+              {/* Use Points Group */}
+              <View style={styles.usePointsGroup}>
+                <View style={[styles.pointsSection, COMMON_LIST_STYLE]}>
+                  <View style={styles.pointsRow}>
+                    <View style={styles.pointsLeft}>
+                      <View style={styles.checkboxContainer}>
+                        <TouchableOpacity
+                          onPress={() => setUsePoints(!usePoints)}
+                          style={styles.customCheckbox}
+                        >
+                          <MaterialCommunityIcons
+                            name={
+                              usePoints
+                                ? 'checkbox-outline'
+                                : 'checkbox-blank-outline'
+                            }
+                            size={24}
+                            color={
+                              usePoints ? COLORS.primary : COLORS.inputBoder
+                            }
+                          />
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={styles.pointsLabel}>
+                        {t('use_available_points')}
+                      </Text>
+                    </View>
+                    <View style={styles.pointsRight}>
+                      <Image
+                        source={Images.ic_coin}
+                        style={styles.pointsIcon}
+                      />
+                      <Text style={styles.pointsValue}>
+                        {walletData.balance}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.totalRow}>
-                    <Text
-                      style={[
-                        styles.totalAmountLabel,
-                        { fontFamily: Fonts.Sen_SemiBold },
-                      ]}
-                    >
-                      To pay
-                    </Text>
-                    <Text
-                      style={[
-                        styles.totalAmount,
-                        { fontFamily: Fonts.Sen_SemiBold },
-                      ]}
-                    >
-                      ₹ {payableAmount.toFixed(2)}
-                    </Text>
-                  </View>
-                </>
-              ) : null}
-            </View>
+                </View>
+              </View>
 
-            {/* Use Points Section */}
-            <View style={[styles.pointsSection, THEMESHADOW.shadow]}>
-              <View style={styles.pointsRow}>
-                <View style={styles.pointsLeft}>
-                  <View style={styles.checkboxContainer}>
+              {/* Payment Methods Group */}
+              <View style={styles.paymentMethodsGroup}>
+                {renderPaymentMethods()}
+              </View>
+
+              {/* Booking Data Group */}
+              <View style={styles.bookingDataGroup}>
+                <View style={[styles.suggestedSection, COMMON_LIST_STYLE]}>
+                  <TouchableOpacity
+                    style={styles.suggestedPujaRow}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.suggestedLeft}>
+                      <View style={styles.pujaImageContainer}>
+                        <Image
+                          source={{ uri: puja_image }}
+                          style={styles.pujaImage}
+                        />
+                      </View>
+                      <Text style={styles.suggestedPujaName}>
+                        {translatedPoojaName}
+                      </Text>
+                    </View>
+                    <View style={styles.emptyIconSpacer}></View>
+                  </TouchableOpacity>
+                  <View style={styles.bookingDataContainer}>
+                    {renderBookingData()}
+                  </View>
+                </View>
+              </View>
+
+              {/* Terms Group */}
+              <View style={styles.termsGroup}>
+                <View style={[styles.termsSection, COMMON_LIST_STYLE]}>
+                  <View style={styles.termsRow}>
                     <TouchableOpacity
-                      onPress={() => setUsePoints(!usePoints)}
-                      style={styles.customCheckbox}
+                      onPress={() => setAcceptTerms(!acceptTerms)}
+                      activeOpacity={0.7}
+                      style={styles.checkboxTouchable}
                     >
                       <MaterialCommunityIcons
                         name={
-                          usePoints
+                          acceptTerms
                             ? 'checkbox-outline'
                             : 'checkbox-blank-outline'
                         }
                         size={24}
-                        color={usePoints ? COLORS.primary : COLORS.inputBoder}
+                        color={
+                          acceptTerms ? COLORS.primary : COLORS.borderColor
+                        }
                       />
                     </TouchableOpacity>
+                    <Text style={styles.termsText} numberOfLines={1}>
+                      {t('accept_refund_policy')}{' '}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        handleOpenRefundPolicy();
+                      }}
+                    >
+                      <Text style={styles.viewDetailsText}>
+                        {t('view_details') || 'View Details'}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
-                  <Text style={styles.pointsLabel}>
-                    {t('use_available_points')}
-                  </Text>
                 </View>
-                <View style={styles.pointsRight}>
-                  <Image source={Images.ic_coin} style={styles.pointsIcon} />
-                  <Text style={styles.pointsValue}>{walletData.balance}</Text>
-                </View>
-              </View>
-            </View>
-
-            {/* Payment Methods Section */}
-            {renderPaymentMethods()}
-
-            {/* Booking Data Section (was Suggested Puja Section) */}
-            <View style={[styles.suggestedSection, THEMESHADOW.shadow]}>
-              <TouchableOpacity
-                style={styles.suggestedPujaRow}
-                activeOpacity={0.7}
-              >
-                <View style={styles.suggestedLeft}>
-                  <View style={styles.pujaImageContainer}>
-                    <Image
-                      source={{ uri: puja_image }}
-                      style={styles.pujaImage}
-                    />
-                  </View>
-                  <Text style={styles.suggestedPujaName}>
-                    {translatedPoojaName}
-                  </Text>
-                </View>
-                <View
-                  style={{
-                    height: 24,
-                    width: 24,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  }}
-                ></View>
-              </TouchableOpacity>
-              <View style={styles.bookingDataContainer}>
-                {renderBookingData()}
-              </View>
-            </View>
-
-            {/* Terms and Conditions */}
-            <View style={[styles.termsSection, THEMESHADOW.shadow]}>
-              <View style={styles.termsRow}>
-                <TouchableOpacity
-                  onPress={() => setAcceptTerms(!acceptTerms)}
-                  activeOpacity={0.7}
-                  style={styles.checkboxTouchable}
-                >
-                  <MaterialCommunityIcons
-                    name={
-                      acceptTerms
-                        ? 'checkbox-outline'
-                        : 'checkbox-blank-outline'
-                    }
-                    size={24}
-                    color={acceptTerms ? COLORS.primary : COLORS.borderColor}
-                  />
-                </TouchableOpacity>
-                <Text style={styles.termsText} numberOfLines={1}>
-                  {t('accept_refund_policy')}{' '}
-                </Text>
-                <TouchableOpacity
-                  onPress={() => {
-                    handleOpenRefundPolicy();
-                  }}
-                >
-                  <Text style={styles.viewDetailsText}>
-                    {t('view_details') || 'View Details'}
-                  </Text>
-                </TouchableOpacity>
               </View>
             </View>
           </ScrollView>
           <View
             style={[
               styles.fixedButtonContainer,
-              { paddingBottom: Platform.OS === 'ios' ? 16 : 16 },
+              { paddingBottom: moderateScale(16) },
             ]}
           >
             <PrimaryButton
@@ -1089,12 +1043,8 @@ const PaymentScreen: React.FC = () => {
           <View
             style={[
               styles.modalContent,
-              {
-                // width: modalWidth,
-                maxHeight: modalHeight,
-                marginBottom: 0,
-                marginTop: 'auto',
-              },
+              styles.modalPositioning,
+              { maxHeight: modalHeight },
             ]}
           >
             <View style={styles.modalHeader}>
@@ -1117,12 +1067,8 @@ const PaymentScreen: React.FC = () => {
                 <WebView
                   originWhitelist={['*']}
                   source={{ html: refundPolicyContent }}
-                  style={{
-                    flex: 1,
-                    minHeight: 200,
-                    backgroundColor: 'transparent',
-                  }}
-                  containerStyle={{ flex: 1, backgroundColor: 'transparent' }}
+                  style={styles.webViewStyle}
+                  containerStyle={styles.webViewContainerStyle}
                   showsVerticalScrollIndicator={true}
                   bounces={true}
                 />
@@ -1146,7 +1092,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    // backgroundColor: COLORS.primary,
   },
   flex1: {
     flex: 1,
@@ -1156,18 +1101,84 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
     backgroundColor: COLORS.pujaBackground,
-    padding: 18,
   },
   scrollContentContainer: {
     flexGrow: 1,
-    paddingBottom: verticalScale(20),
+    // paddingBottom: verticalScale(24),
+  },
+  contentWrapper: {
+    width: '100%',
+    paddingHorizontal: moderateScale(24),
+    gap: moderateScale(24),
+  },
+  totalAmountGroup: {
+    marginTop: moderateScale(24),
+  },
+  usePointsGroup: {},
+  paymentMethodsGroup: {},
+  bookingDataGroup: {},
+  termsGroup: {},
+  iconContainer: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: scale(14),
+  },
+  flexOne: {
+    flex: 1,
+  },
+  flexWrapText: {
+    flexWrap: 'wrap',
+  },
+  paymentMethodLabel: {
+    fontSize: 16,
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+    marginBottom: moderateScale(12),
+  },
+  paymentMethodInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletCoverageMessage: {
+    color: COLORS.pujaCardSubtext,
+    fontSize: 13,
+    marginTop: 8,
+  },
+  emptyIconSpacer: {
+    height: 24,
+    width: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  totalAmountLabelBold: {
+    fontSize: 15,
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+  },
+  totalAmountBold: {
+    fontSize: 15,
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primaryTextDark,
+  },
+  webViewStyle: {
+    flex: 1,
+    minHeight: 200,
+    backgroundColor: 'transparent',
+  },
+  webViewContainerStyle: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  modalPositioning: {
+    marginBottom: 0,
+    marginTop: 'auto' as const,
   },
   totalSection: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
-    padding: 14,
-    marginBottom: verticalScale(20),
-    marginHorizontal: scale(4),
+    padding: moderateScale(14),
     justifyContent: 'center',
   },
   totalRow: {
@@ -1211,9 +1222,7 @@ const styles = StyleSheet.create({
   pointsSection: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
-    padding: 14,
-    marginBottom: verticalScale(20),
-    marginHorizontal: scale(4),
+    paddingVertical: moderateScale(14),
   },
   pointsRow: {
     flexDirection: 'row',
@@ -1227,7 +1236,6 @@ const styles = StyleSheet.create({
   },
   checkboxContainer: {
     marginRight: scale(5),
-    padding: scale(4),
   },
   customCheckbox: {
     width: 24,
@@ -1257,9 +1265,7 @@ const styles = StyleSheet.create({
   paymentMethodsSection: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
-    padding: 14,
-    marginBottom: verticalScale(20),
-    marginHorizontal: scale(4),
+    paddingVertical: moderateScale(14),
   },
   paymentMethodRow: {
     flexDirection: 'row',
@@ -1272,22 +1278,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
-    marginLeft: 4,
+    marginLeft: moderateScale(8),
   },
-  radioButton: {
-    padding: scale(4),
-  },
+  radioButton: {},
   divider: {
     height: 1,
-    backgroundColor: COLORS.separatorColor,
-    marginVertical: verticalScale(8),
+    backgroundColor: COLORS.border,
+    marginVertical: moderateScale(8),
   },
   suggestedSection: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
-    marginBottom: verticalScale(20),
-    marginHorizontal: scale(4),
-    padding: 12,
+    paddingVertical: moderateScale(14),
   },
   suggestedPujaRow: {
     flexDirection: 'row',
@@ -1314,7 +1316,7 @@ const styles = StyleSheet.create({
   },
   bookingDataContainer: {
     borderTopWidth: 1,
-    borderTopColor: COLORS.separatorColor,
+    borderTopColor: COLORS.border,
     marginTop: 12,
   },
   bookingDataItem: {
@@ -1323,9 +1325,9 @@ const styles = StyleSheet.create({
   textContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomColor: COLORS.separatorColor,
+    borderBottomColor: COLORS.border,
     borderBottomWidth: 1,
-    paddingVertical: 6,
+    paddingVertical: moderateScale(6),
   },
   bookingDataText: {
     fontSize: 15,
@@ -1343,8 +1345,7 @@ const styles = StyleSheet.create({
   termsSection: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
-    padding: 14,
-    marginHorizontal: scale(4),
+    paddingVertical: moderateScale(14),
   },
   termsRow: {
     flexDirection: 'row',
@@ -1353,7 +1354,6 @@ const styles = StyleSheet.create({
   },
   checkboxTouchable: {
     marginRight: 0,
-    padding: scale(4),
   },
   termsText: {
     fontSize: moderateScale(15),
@@ -1381,10 +1381,8 @@ const styles = StyleSheet.create({
   },
   fixedButtonContainer: {
     backgroundColor: COLORS.pujaBackground,
-    paddingHorizontal: 18,
-    paddingTop: 6,
+    paddingHorizontal: moderateScale(18),
   },
-  // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.35)',
@@ -1394,19 +1392,19 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    borderTopLeftRadius: moderateScale(12),
+    borderTopRightRadius: moderateScale(12),
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 8,
+    paddingHorizontal: moderateScale(18),
+    paddingTop: moderateScale(18),
+    paddingBottom: moderateScale(8),
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    borderTopLeftRadius: moderateScale(12),
+    borderTopRightRadius: moderateScale(12),
     zIndex: 2,
   },
   modalTitle: {
@@ -1418,10 +1416,10 @@ const styles = StyleSheet.create({
     // flex: 1,
     minHeight: '80%',
     backgroundColor: COLORS.white,
-    paddingHorizontal: 18,
-    paddingBottom: 18,
-    paddingTop: 0,
-    marginBottom: 20,
+    paddingHorizontal: moderateScale(18),
+    paddingBottom: moderateScale(18),
+    paddingTop: moderateScale(0),
+    marginBottom: moderateScale(20),
   },
   modalText: {
     fontSize: 15,

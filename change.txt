@@ -1,0 +1,19 @@
+-all card degine common
+-Header boder radius same
+-toast message
+-same book button design
+-in payment screen add space in top
+-in payment screen remove space in payment method
+-in muhrat sereen date is try to center
+-in home screen all 4 section in one view and give flex and gap style
+-in puja details screen user arranged items and pandit arranged items style change
+-full puja booking flow next button to bottom and check style of next button in payment screen becasue payment screen degine is perfect
+-try to add animation in success screen
+-in mobile wise button navigation then extra space remove
+-in home screen langugae change then not direct change but refresh the screen then change
+
+
+-------------------------
+
+-full card list horizontalpadding 14
+-in card list specific card top and bottom padding 14

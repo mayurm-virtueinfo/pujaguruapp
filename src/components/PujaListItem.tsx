@@ -1,8 +1,15 @@
 import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
-import {COLORS} from '../theme/theme';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ViewStyle,
+} from 'react-native';
+import { COLORS, COMMON_CARD_STYLE, THEMESHADOW } from '../theme/theme';
 import Fonts from '../theme/fonts';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 interface PujaListItemProps {
   image: string;
@@ -21,21 +28,22 @@ const PujaListItem: React.FC<PujaListItemProps> = ({
   onPress,
   showSeparator = true,
 }) => {
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
 
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.item} onPress={onPress}>
         <View style={styles.imageContainer}>
-          <Image source={{uri: image}} style={styles.image} />
+          <Image source={{ uri: image }} style={styles.image} />
         </View>
-        <View style={{flex: 1, marginLeft: 14}}>
+        <View style={{ flex: 1, marginLeft: 14 }}>
           <View style={styles.content}>
             <Text style={styles.title}>{title}</Text>
             <Text
               style={styles.description}
               numberOfLines={2}
-              ellipsizeMode="tail">
+              ellipsizeMode="tail"
+            >
               {description}
             </Text>
           </View>
@@ -47,9 +55,7 @@ const PujaListItem: React.FC<PujaListItemProps> = ({
           </View>
         </View>
       </TouchableOpacity>
-      <View style={{marginHorizontal: 12}}>
-        {showSeparator && <View style={styles.separator} />}
-      </View>
+      <View>{showSeparator && <View style={styles.separator} />}</View>
     </View>
   );
 };
@@ -57,11 +63,10 @@ const PujaListItem: React.FC<PujaListItemProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: '100%',
+    backgroundColor: COLORS.pujaBackground,
   },
   item: {
-    width: '100%',
-    flexDirection: 'row',
-    padding: 14,
+    ...(COMMON_CARD_STYLE as ViewStyle),
   },
   imageContainer: {
     width: 80,
@@ -100,24 +105,24 @@ const styles = StyleSheet.create({
   },
   button: {
     backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 24,
+    width: 90,
+    height: 30,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
+    ...THEMESHADOW.shadow,
   },
   buttonText: {
     color: COLORS.primaryTextDark,
     textAlign: 'center',
-    fontFamily: Fonts.Sen_Regular,
+    fontFamily: Fonts.Sen_Medium,
     fontSize: 15,
     textTransform: 'uppercase',
   },
   separator: {
     width: '100%',
     height: 1,
-    backgroundColor: COLORS.separatorColor,
+    backgroundColor: COLORS.border,
   },
 });
 
