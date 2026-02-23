@@ -11,8 +11,15 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
+  ViewStyle,
 } from 'react-native';
-import { COLORS, THEMESHADOW, wp } from '../../../theme/theme';
+import {
+  COLORS,
+  THEMESHADOW,
+  wp,
+  COMMON_LIST_STYLE,
+  COMMON_CARD_STYLE,
+} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
@@ -138,22 +145,20 @@ const PanditjiScreen: React.FC = () => {
   };
 
   const renderSearchInput = () => (
-    <View style={styles.searchContainer}>
-      <View style={styles.searchInputContainer}>
-        <Ionicons
-          name="search"
-          size={18}
-          color={COLORS.pujaTextSecondary}
-          style={styles.searchIcon}
-        />
-        <TextInput
-          style={styles.searchInput}
-          placeholder={t('search_panditji')}
-          placeholderTextColor={COLORS.pujaTextSecondary}
-          value={searchText}
-          onChangeText={setSearchText}
-        />
-      </View>
+    <View style={styles.searchInputContainer}>
+      <Ionicons
+        name="search"
+        size={18}
+        color={COLORS.pujaTextSecondary}
+        style={styles.searchIcon}
+      />
+      <TextInput
+        style={styles.searchInput}
+        placeholder={t('search_panditji')}
+        placeholderTextColor={COLORS.pujaTextSecondary}
+        value={searchText}
+        onChangeText={setSearchText}
+      />
     </View>
   );
 
@@ -232,17 +237,21 @@ const PanditjiScreen: React.FC = () => {
         keyboardVerticalOffset={verticalScale(90)}
       >
         <View style={styles.absoluteMainContainer}>
-          <View style={[styles.container, THEMESHADOW.shadow]}>
-            {renderSearchInput()}
-            <FlatList
-              data={panditjiData}
-              renderItem={renderPanditjiItem}
-              keyExtractor={item => item.id}
-              showsVerticalScrollIndicator={true}
-              contentContainerStyle={styles.listContent}
-              keyboardShouldPersistTaps="handled"
-              ListEmptyComponent={renderEmptyComponent}
-            />
+          <View style={styles.contentWrapper}>
+            <View style={styles.shadowWrapper}>
+              <View style={styles.mainGroup}>
+                {renderSearchInput()}
+                <FlatList
+                  data={panditjiData}
+                  renderItem={renderPanditjiItem}
+                  keyExtractor={item => item.id}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                  ListEmptyComponent={renderEmptyComponent}
+                  scrollEnabled={true}
+                />
+              </View>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
@@ -260,10 +269,8 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: COLORS.white,
-    margin: 24,
-    borderRadius: 10,
+    borderRadius: moderateScale(10),
     overflow: 'hidden',
-    marginBottom: 60,
   },
   absoluteMainContainer: {
     flex: 1,
@@ -271,34 +278,43 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
   },
-  searchContainer: {},
+  contentWrapper: {
+    padding: moderateScale(24),
+  },
+  shadowWrapper: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(10),
+    ...(COMMON_LIST_STYLE as ViewStyle),
+    paddingHorizontal: moderateScale(0),
+    paddingVertical: moderateScale(0),
+  },
+  mainGroup: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(10),
+    overflow: 'hidden',
+  },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.white,
+    paddingHorizontal: moderateScale(14),
+    height: moderateScale(48),
     borderBottomWidth: 1,
     borderColor: COLORS.inputBoder,
-    paddingHorizontal: 14,
-    height: 48,
   },
   searchIcon: {
-    marginRight: scale(12),
+    marginRight: moderateScale(12),
   },
   searchInput: {
+    flex: 1,
     fontSize: moderateScale(16),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
   },
-  listContent: {},
-  panditjiContainer: {
-    borderRadius: moderateScale(10),
-    overflow: 'hidden',
-  },
+  panditjiContainer: {},
   panditjiItem: {
-    borderRadius: moderateScale(10),
-    padding: scale(14),
-    minHeight: verticalScale(66),
-    flexDirection: 'row',
+    ...(COMMON_CARD_STYLE as ViewStyle),
+    paddingHorizontal: moderateScale(14),
     alignItems: 'center',
   },
   panditjiContent: {
@@ -308,7 +324,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     position: 'relative',
-    marginRight: scale(14),
+    marginRight: moderateScale(14),
   },
   panditjiImage: {
     width: moderateScale(52),
@@ -318,11 +334,11 @@ const styles = StyleSheet.create({
   },
   verifiedBadge: {
     position: 'absolute',
-    right: scale(-2),
+    right: moderateScale(-2),
     top: verticalScale(1),
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(8),
-    padding: scale(1),
+    padding: moderateScale(1),
   },
   panditjiDetails: {
     flex: 1,
@@ -350,21 +366,20 @@ const styles = StyleSheet.create({
     width: wp(50),
   },
   selectionButton: {
-    padding: scale(4),
+    padding: moderateScale(4),
   },
   separator: {
     height: 1,
-    backgroundColor: COLORS.separatorColor,
-    marginHorizontal: scale(14),
+    backgroundColor: COLORS.border,
+    marginHorizontal: moderateScale(14),
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    paddingVertical: verticalScale(40),
     alignItems: 'center',
-    paddingVertical: verticalScale(100),
+    justifyContent: 'center',
   },
   emptyText: {
-    fontSize: moderateScale(18),
+    fontSize: moderateScale(16),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.pujaTextSecondary,
     textAlign: 'center',

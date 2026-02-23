@@ -9,17 +9,12 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
-  Alert,
 } from 'react-native';
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   COLORS,
-  THEMESHADOW,
   COMMON_LIST_STYLE,
   COMMON_RADIO_CONTAINER_STYLE,
 } from '../../../theme/theme';
@@ -35,7 +30,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import {
   getMuhrat,
-  getPanditji,
   getPanditAvailability,
   postAutoBooking,
 } from '../../../api/apiService';
@@ -44,6 +38,7 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import { translateData } from '../../../utils/TranslateData';
 import CustomModal from '../../../components/CustomModal';
+import EditIcon from '../../../assets/svg/edit.svg';
 
 const formatDateYYYYMMDD = (date: Date | string) => {
   if (typeof date === 'string') {
@@ -900,11 +895,7 @@ const PujaBookingScreen: React.FC = () => {
                       style={styles.editButton}
                       onPress={() => navigation.goBack()}
                     >
-                      <Ionicons
-                        name="create-outline"
-                        size={20}
-                        color={COLORS.gradientEnd}
-                      />
+                      <EditIcon />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -1078,9 +1069,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
   },
-  editButton: {
-    padding: moderateScale(8),
-  },
+  editButton: {},
   slotsContainer: {},
   slotsTitle: {
     fontSize: moderateScale(18),

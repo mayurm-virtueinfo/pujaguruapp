@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     borderColor: COLORS.border,
-    borderWidth: 1,
+    borderWidth: 0.8,
   },
   descriptionText: {
     fontSize: 14,

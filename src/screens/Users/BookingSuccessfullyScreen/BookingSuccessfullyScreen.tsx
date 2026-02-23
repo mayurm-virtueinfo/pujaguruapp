@@ -5,31 +5,24 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
-  TouchableOpacity,
   Image,
 } from 'react-native';
 import React from 'react';
-import CustomHeader from '../../../components/CustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Fonts from '../../../theme/fonts';
 import { COLORS } from '../../../theme/theme';
 import { Images } from '../../../theme/Images';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import { moderateScale } from 'react-native-size-matters';
+import ConfettiCannon from 'react-native-confetti-cannon';
 
 const BookingSuccessfullyScreen: React.FC = () => {
-  type ScreenNavigationProps = StackNavigationProp<
-    UserPoojaListParamList,
-    'BookingSuccessfullyScreen'
-  >;
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   const inset = useSafeAreaInsets();
-
   const navigation: any = useNavigation();
   const route = useRoute();
 
@@ -70,6 +63,12 @@ const BookingSuccessfullyScreen: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+      <ConfettiCannon
+        count={150}
+        origin={{ x: -10, y: 0 }}
+        autoStart={true}
+        fadeOut={true}
+      />
     </SafeAreaView>
   );
 };
@@ -83,9 +82,9 @@ const styles = StyleSheet.create({
   },
   scrollContainer: {
     flexGrow: 1,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    backgroundColor: COLORS.white,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    backgroundColor: COLORS.pujaBackground,
   },
   scrollContent: {
     flexGrow: 1,

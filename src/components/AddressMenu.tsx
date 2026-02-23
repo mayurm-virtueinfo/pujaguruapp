@@ -7,16 +7,16 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
-import {COLORS} from '../theme/theme';
+import { COLORS } from '../theme/theme';
 import Fonts from '../theme/fonts';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 interface AddressMenuProps {
   visible: boolean;
   onClose: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  position: {x: number; y: number};
+  position: { x: number; y: number };
 }
 
 const AddressMenu: React.FC<AddressMenuProps> = ({
@@ -26,11 +26,11 @@ const AddressMenu: React.FC<AddressMenuProps> = ({
   onDelete,
   position,
 }) => {
-  const {width: screenWidth, height: screenHeight} = Dimensions.get('window');
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
   const menuWidth = 76;
   const menuHeight = 72;
 
-  const {t} = useTranslation();
+  const { t } = useTranslation();
 
   const adjustedLeft = Math.min(position.x, screenWidth - menuWidth - 40);
   const adjustedTop = Math.min(position.y, screenHeight - menuHeight - 0);
@@ -45,7 +45,8 @@ const AddressMenu: React.FC<AddressMenuProps> = ({
               top: adjustedTop,
               left: adjustedLeft,
             },
-          ]}>
+          ]}
+        >
           <TouchableOpacity style={styles.menuItem} onPress={onEdit}>
             <Text style={styles.menuText}>{t('edit')}</Text>
           </TouchableOpacity>
@@ -72,7 +73,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     elevation: 5,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     marginTop: -15,

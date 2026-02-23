@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,7 +8,11 @@ import {
   StatusBar,
   TouchableOpacity,
 } from 'react-native';
-import { COLORS, COMMON_RADIO_CONTAINER_STYLE } from '../../../theme/theme';
+import {
+  COLORS,
+  COMMON_CARD_STYLE,
+  COMMON_RADIO_CONTAINER_STYLE,
+} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Octicons from 'react-native-vector-icons/Octicons';
@@ -108,9 +112,6 @@ const PlaceSelectionScreen: React.FC = () => {
           style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
           bounces={false}
-          contentContainerStyle={{
-            paddingBottom: 60 + (inset.bottom || 20),
-          }}
         >
           <View style={styles.contentWrapper}>
             {/* Title and Description Group */}
@@ -195,12 +196,10 @@ const styles = StyleSheet.create({
     width: '100%',
     overflow: 'hidden',
     paddingHorizontal: moderateScale(24),
-    paddingVertical: moderateScale(12),
+    paddingVertical: moderateScale(24),
     gap: moderateScale(24),
   },
-  headerGroup: {
-    marginTop: moderateScale(10),
-  },
+  headerGroup: {},
   sectionTitle: {
     fontSize: 18,
     fontFamily: Fonts.Sen_SemiBold,
@@ -212,15 +211,14 @@ const styles = StyleSheet.create({
     borderRadius: moderateScale(12),
   },
   pricingOption: {
+    ...COMMON_CARD_STYLE,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: moderateScale(10),
   },
   pricingText: {
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
-    paddingVertical: moderateScale(10),
   },
   descriptionText: {
     fontSize: 14,
@@ -230,7 +228,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     borderColor: COLORS.border,
-    borderWidth: 1,
+    borderWidth: 0.8,
   },
   flexGrow: {
     flex: 1,

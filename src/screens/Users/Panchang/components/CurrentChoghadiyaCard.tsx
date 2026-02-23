@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
     gap: 12,
-    marginBottom: 16,
+    // marginBottom: 16, // Removed as gap handles spacing
     minHeight: 150,
   },
   card: {

@@ -35,7 +35,6 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import { useTranslation } from 'react-i18next';
 import { translateData } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
-import PrimaryButton from '../../../components/PrimaryButton';
 import { useWebSocket } from '../../../context/WebSocketContext';
 import { useLocation } from '../../../context/LocationContext';
 import InlineLocationRequest from '../../../components/InlineLocationRequest';
@@ -74,8 +73,16 @@ const UserHomeScreen: React.FC = () => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
   const inset = useSafeAreaInsets();
+
   const { messages } = useWebSocket();
   console.log('webSocket messages in UserHomeScreen :: ', messages);
+
+  // 🧠 Refs for controlling repeated fetches
+  const isFetchingRef = useRef(false);
+  const lastFetched = useRef<number>(0);
+  const lastFetchedLanguage = useRef<string>(currentLanguage);
+  const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const processedMessageCount = useRef(0);
 
   const {
     location: contextLocation,
@@ -93,22 +100,24 @@ const UserHomeScreen: React.FC = () => {
     }
   }, [contextLocation]);
 
-  // 🧠 Refs for controlling repeated fetches
-  const isFetchingRef = useRef(false);
-  const lastFetched = useRef<number>(0);
-  const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const processedMessageCount = useRef(0);
-
   // 🔄 Unified API loader
   const loadAllData = useCallback(
-    async (loc?: { latitude: number; longitude: number } | null) => {
+    async (
+      loc?: { latitude: number; longitude: number } | null,
+      forceRefresh: boolean = false,
+    ) => {
       if (isFetchingRef.current) {
         console.log('⏳ Skipping duplicate loadAllData call...');
         return;
       }
 
-      // Skip if last fetch was <30 seconds ago
-      if (Date.now() - lastFetched.current < 30000 && !refreshing) {
+      // Skip if last fetch was <30 seconds ago AND language hasn't changed AND forced refresh is false
+      if (
+        Date.now() - lastFetched.current < 30000 &&
+        !refreshing &&
+        !forceRefresh &&
+        lastFetchedLanguage.current === currentLanguage
+      ) {
         console.log('⏳ Skipping refresh: data is recent');
         return;
       }
@@ -177,6 +186,7 @@ const UserHomeScreen: React.FC = () => {
         setRecomendedPandits(tRecommended || []);
         setOriginalRecomendedPandits(recommendedArr || []);
         lastFetched.current = Date.now();
+        lastFetchedLanguage.current = currentLanguage; // Update language tracker
       } catch (err) {
         console.error('❌ Error loading home data:', err);
       } finally {
@@ -252,7 +262,7 @@ const UserHomeScreen: React.FC = () => {
         latitude: contextLocation.latitude,
         longitude: contextLocation.longitude,
       };
-      await loadAllData(loc);
+      await loadAllData(loc, true);
     } else {
       // If no location after refresh?
       setRefreshing(false);
@@ -323,10 +333,10 @@ const UserHomeScreen: React.FC = () => {
         contentContainerStyle={{
           paddingBottom:
             inset.bottom +
-            (Platform.OS === 'android' ? moderateScale(60) : moderateScale(20)),
+            (Platform.OS === 'android' ? moderateScale(50) : moderateScale(20)),
         }}
       >
-        <View style={{ flex: 1, gap: 24 }}>
+        <View style={styles.mainContainer}>
           {/* Recommended Panditji */}
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -377,26 +387,13 @@ const UserHomeScreen: React.FC = () => {
                         }}
                       />
                       {idx !== recomendedPandits.length - 1 && (
-                        <View style={{ width: 16 }} />
+                        <View style={styles.spacer16} />
                       )}
                     </React.Fragment>
                   );
                 })
               ) : (
-                <View
-                  style={[
-                    THEMESHADOW.shadow,
-                    {
-                      flex: 1,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      backgroundColor: COLORS.white,
-                      paddingVertical: 24,
-                      borderRadius: 16,
-                      marginHorizontal: 4,
-                    },
-                  ]}
-                >
+                <View style={[THEMESHADOW.shadow, styles.noPanditContainer]}>
                   {!contextLocation ? (
                     <InlineLocationRequest
                       onAllow={refreshLocation}
@@ -572,9 +569,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.pujaBackground,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
-    paddingTop: moderateScale(24),
+    paddingVertical: moderateScale(24),
   },
-  section: {},
+  section: {
+    marginBottom: moderateScale(14),
+  },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -608,11 +607,12 @@ const styles = StyleSheet.create({
   noPanditText: {
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Medium,
-    color: '#888',
+    color: COLORS.textSecondary,
     paddingHorizontal: moderateScale(10),
   },
   pujaSection: {
     paddingHorizontal: moderateScale(24),
+    marginBottom: moderateScale(24),
   },
   pujaCardsContainer: {
     backgroundColor: COLORS.white,
@@ -640,16 +640,31 @@ const styles = StyleSheet.create({
   pujaDate: {
     fontSize: moderateScale(13),
     fontFamily: Fonts.Sen_Medium,
-    color: '#8A8A8A',
+    color: COLORS.pujaCardSubtext,
   },
   divider: {
     height: 1,
     backgroundColor: COLORS.border,
   },
   noItemText: {
-    color: '#888',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     ...(COMMON_CARD_STYLE as ViewStyle),
+  },
+  mainContainer: {
+    flex: 1,
+  },
+  spacer16: {
+    width: moderateScale(16),
+  },
+  noPanditContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    paddingVertical: moderateScale(24),
+    borderRadius: moderateScale(16),
+    marginHorizontal: moderateScale(4),
   },
 });
 

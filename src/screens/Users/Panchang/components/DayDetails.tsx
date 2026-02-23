@@ -1,12 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { COLORS } from '../../../../theme/theme';
+import { COLORS, COMMON_LIST_STYLE } from '../../../../theme/theme';
 import { CalendarDay } from '../../../../api/apiService';
 import { PanchangIcon, AstronomyIcon } from './PanchangIcons';
 import CurrentChoghadiyaCard from './CurrentChoghadiyaCard';
 import RealisticMoon from './RealisticMoon';
 import { useTranslation } from 'react-i18next';
+import { moderateScale } from 'react-native-size-matters';
 
 interface DayDetailsProps {
   selectedDate: CalendarDay | null;
@@ -72,22 +73,17 @@ const DayDetails: React.FC<DayDetailsProps> = ({
     if (!data || data.length === 0) return null;
 
     return (
-      <View
-        style={[
-          styles.panchangCard,
-          { marginBottom: 16, backgroundColor: COLORS.white },
-        ]}
-      >
+      <View style={styles.panchangCard}>
         <Text style={styles.chogadiaSectionTitle}>{title}</Text>
         {/* Table Header */}
         <View style={styles.chogadiaTableHeader}>
-          <Text style={[styles.chogadiaHeaderText, { flex: 1.2 }]}>
+          <Text style={[styles.chogadiaHeaderText, styles.tableColName]}>
             {t('Choghadiya')}
           </Text>
-          <Text style={[styles.chogadiaHeaderText, { flex: 1 }]}>
+          <Text style={[styles.chogadiaHeaderText, styles.tableColTime]}>
             {t('StartTime')}
           </Text>
-          <Text style={[styles.chogadiaHeaderText, { flex: 1 }]}>
+          <Text style={[styles.chogadiaHeaderText, styles.tableColTime]}>
             {t('EndTime')}
           </Text>
         </View>
@@ -105,29 +101,34 @@ const DayDetails: React.FC<DayDetailsProps> = ({
                 {
                   backgroundColor: colors.bg,
                 },
-                index === data.length - 1 && {
-                  borderBottomWidth: 0,
-                  borderBottomLeftRadius: 12,
-                  borderBottomRightRadius: 12,
-                },
+                index === data.length - 1 && styles.lastTableRow,
               ]}
             >
               <Text
                 style={[
                   styles.chogadiaName,
-                  { flex: 1.2, color: colors.text, fontWeight: '700' },
+                  styles.tableColName,
+                  { color: colors.text, fontWeight: '700' },
                 ]}
               >
                 {chogadiaName}
               </Text>
 
               <Text
-                style={[styles.chogadiaTime, { flex: 1, color: colors.text }]}
+                style={[
+                  styles.chogadiaTime,
+                  styles.tableColTime,
+                  { color: colors.text },
+                ]}
               >
                 {item.start}
               </Text>
               <Text
-                style={[styles.chogadiaTime, { flex: 1, color: colors.text }]}
+                style={[
+                  styles.chogadiaTime,
+                  styles.tableColTime,
+                  { color: colors.text },
+                ]}
               >
                 {item.end}
               </Text>
@@ -140,10 +141,12 @@ const DayDetails: React.FC<DayDetailsProps> = ({
 
   return (
     <View style={styles.detailsContainer}>
-      <View style={[styles.panchangCard, { backgroundColor: COLORS.white }]}>
+      {/* GROUP 1 & 2: HEADER + PANCHANG ELEMENTS */}
+      {/* This card contains both the header (Date, Paksha, Moon) and Panchang grid (Tithi, Nakshatra, Yoga, Karana) */}
+      <View style={styles.panchangCard}>
         <View style={styles.cardHeader}>
           {/* Left Side: Date and Paksha */}
-          <View style={{ flex: 1, marginRight: 12 }}>
+          <View style={styles.headerLeftContainer}>
             <Text style={styles.cardDate}>
               {new Date(selectedDate.date).toLocaleDateString('default', {
                 day: 'numeric',
@@ -173,6 +176,7 @@ const DayDetails: React.FC<DayDetailsProps> = ({
 
         <View style={styles.cardDivider} />
 
+        {/* Group 2: Panchang Elements Grid */}
         <View style={styles.gridContainer}>
           {/* Row 1 */}
           <View style={styles.gridRow}>
@@ -258,12 +262,10 @@ const DayDetails: React.FC<DayDetailsProps> = ({
         </View>
       </View>
 
-      <View style={{ height: 16 }} />
-
-      {/* Astronomy Section */}
-      <View style={[styles.panchangCard, { backgroundColor: COLORS.white }]}>
+      {/* GROUP 3: ASTRONOMY (SUN & MOON TIMES) */}
+      <View style={styles.panchangCard}>
         <View style={styles.cardHeader}>
-          <Text style={[styles.cardDate, { color: COLORS.primary, flex: 1 }]}>
+          <Text style={[styles.cardDate, styles.headerTitle]}>
             {t('Sun_Moon')}
           </Text>
           {cityName && (
@@ -274,29 +276,14 @@ const DayDetails: React.FC<DayDetailsProps> = ({
           )}
         </View>
 
-        <View
-          style={[styles.cardDivider, { backgroundColor: COLORS.border }]}
-        />
+        <View style={styles.cardDivider} />
 
         <View style={styles.gridContainer}>
           {/* Row 1 */}
           <View style={styles.gridRow}>
-            <View
-              style={[
-                styles.gridItem,
-                {
-                  borderColor: COLORS.border,
-                  shadowColor: COLORS.primary,
-                },
-              ]}
-            >
+            <View style={[styles.gridItem, styles.astroItemOverride]}>
               <View style={styles.gridHeader}>
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: COLORS.white },
-                  ]}
-                >
+                <View style={styles.iconContainer}>
                   <AstronomyIcon
                     name="sunrise"
                     size={20}
@@ -310,22 +297,9 @@ const DayDetails: React.FC<DayDetailsProps> = ({
               </Text>
             </View>
 
-            <View
-              style={[
-                styles.gridItem,
-                {
-                  borderColor: COLORS.border,
-                  shadowColor: COLORS.primary,
-                },
-              ]}
-            >
+            <View style={[styles.gridItem, styles.astroItemOverride]}>
               <View style={styles.gridHeader}>
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: COLORS.white },
-                  ]}
-                >
+                <View style={styles.iconContainer}>
                   <AstronomyIcon
                     name="sunset"
                     size={20}
@@ -342,22 +316,9 @@ const DayDetails: React.FC<DayDetailsProps> = ({
 
           {/* Row 2 */}
           <View style={styles.gridRow}>
-            <View
-              style={[
-                styles.gridItem,
-                {
-                  borderColor: COLORS.border,
-                  shadowColor: COLORS.primary,
-                },
-              ]}
-            >
+            <View style={[styles.gridItem, styles.astroItemOverride]}>
               <View style={styles.gridHeader}>
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: COLORS.white },
-                  ]}
-                >
+                <View style={styles.iconContainer}>
                   <AstronomyIcon
                     name="moonrise"
                     size={20}
@@ -371,22 +332,9 @@ const DayDetails: React.FC<DayDetailsProps> = ({
               </Text>
             </View>
 
-            <View
-              style={[
-                styles.gridItem,
-                {
-                  borderColor: COLORS.border,
-                  shadowColor: COLORS.primary,
-                },
-              ]}
-            >
+            <View style={[styles.gridItem, styles.astroItemOverride]}>
               <View style={styles.gridHeader}>
-                <View
-                  style={[
-                    styles.iconContainer,
-                    { backgroundColor: COLORS.white },
-                  ]}
-                >
+                <View style={styles.iconContainer}>
                   <AstronomyIcon
                     name="moonset"
                     size={20}
@@ -403,21 +351,18 @@ const DayDetails: React.FC<DayDetailsProps> = ({
         </View>
       </View>
 
-      <View style={{ height: 16 }} />
-
-      {/* Current Choghadiya Section */}
-      {/* Current Choghadiya Section - Only show for today */}
+      {/* GROUP 4: CURRENT CHOGHADIYA (Today Only) */}
       {selectedDate.date === new Date().toISOString().split('T')[0] && (
         <CurrentChoghadiyaCard choghadiyaData={choghadiyaData} />
       )}
 
-      <View style={{ height: 16 }} />
-
-      {/* Legend */}
+      {/* GROUP 5: CHOGHADIYA LEGEND */}
       {choghadiyaData.length > 0 && renderChoghadiyaLegend()}
 
-      {/* Chogadia Tables */}
+      {/* GROUP 6: DAY CHOGHADIYA TABLE */}
       {renderChoghadiyaTable(t('Day_Choghadiya'), dayChoghadiya)}
+
+      {/* GROUP 7: NIGHT CHOGHADIYA TABLE */}
       {renderChoghadiyaTable(t('Night_Choghadiya'), nightChoghadiya)}
     </View>
   );
@@ -426,39 +371,37 @@ const DayDetails: React.FC<DayDetailsProps> = ({
 const styles = StyleSheet.create({
   detailsContainer: {
     width: '100%',
-    padding: 12,
-    marginVertical: 20,
+    paddingHorizontal: moderateScale(14),
+    gap: moderateScale(24),
+    marginVertical: moderateScale(24),
   },
   panchangCard: {
+    ...COMMON_LIST_STYLE,
     width: '100%',
-    borderRadius: 20,
-    padding: 16,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
-    borderWidth: 1,
+    borderRadius: moderateScale(20),
+    padding: moderateScale(14),
+    borderWidth: moderateScale(1),
     borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: moderateScale(12),
   },
   cardDate: {
     fontSize: 18,
     fontWeight: '700',
     color: COLORS.textPrimary,
-    marginBottom: 8,
+    marginBottom: moderateScale(8),
   },
   pakshaBadge: {
     backgroundColor: COLORS.white,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
+    paddingHorizontal: moderateScale(10),
+    paddingVertical: moderateScale(4),
+    borderRadius: moderateScale(8),
+    borderWidth: moderateScale(1),
     borderColor: COLORS.primary,
     alignSelf: 'flex-start',
   },
@@ -470,29 +413,24 @@ const styles = StyleSheet.create({
   cardDivider: {
     height: 1,
     backgroundColor: COLORS.border,
-    marginBottom: 20,
+    marginBottom: moderateScale(12),
   },
   gridContainer: {
-    gap: 12,
+    gap: moderateScale(12),
   },
   gridRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: moderateScale(12),
   },
   gridItem: {
     flex: 1,
     backgroundColor: COLORS.white,
-    padding: 10,
-    borderRadius: 16,
-    borderWidth: 1,
+    padding: moderateScale(10),
+    borderRadius: moderateScale(16),
+    borderWidth: moderateScale(1),
     borderColor: COLORS.border,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    alignItems: 'flex-start', // Ensure left alignment
+    alignItems: 'flex-start',
   },
   gridHeader: {
     flexDirection: 'row',
@@ -501,10 +439,10 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   iconContainer: {
-    marginRight: 8,
+    marginRight: moderateScale(8),
     backgroundColor: COLORS.white,
-    padding: 6,
-    borderRadius: 8,
+    padding: moderateScale(6),
+    borderRadius: moderateScale(8),
   },
   gridLabel: {
     fontSize: 12,
@@ -529,19 +467,18 @@ const styles = StyleSheet.create({
   legendContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 12,
     flexWrap: 'wrap',
-    gap: 16,
+    gap: moderateScale(16),
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   legendIndicator: {
-    width: 12,
-    height: 12,
-    marginRight: 6,
-    borderRadius: 2,
+    width: moderateScale(12),
+    height: moderateScale(12),
+    marginRight: moderateScale(6),
+    borderRadius: moderateScale(2),
   },
   legendText: {
     fontSize: 12,
@@ -552,16 +489,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.primary,
-    marginBottom: 12,
+    marginBottom: moderateScale(12),
     textAlign: 'center',
   },
   chogadiaTableHeader: {
     flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: moderateScale(12),
+    paddingHorizontal: moderateScale(8),
     backgroundColor: COLORS.white,
-    borderRadius: 8,
-    marginBottom: 8,
+    borderRadius: moderateScale(8),
+    marginBottom: moderateScale(8),
   },
   chogadiaHeaderText: {
     fontSize: 14,
@@ -571,8 +508,8 @@ const styles = StyleSheet.create({
   },
   chogadiaRow: {
     flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: moderateScale(12),
+    paddingHorizontal: moderateScale(8),
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
@@ -590,22 +527,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.white,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: moderateScale(12),
+    paddingVertical: moderateScale(6),
+    borderRadius: moderateScale(20),
     borderWidth: 1,
     borderColor: COLORS.primary,
-    gap: 4,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    gap: moderateScale(4),
   },
   locationText: {
     fontSize: 12,
     color: COLORS.primary,
     fontWeight: '600',
+  },
+  headerLeftContainer: {
+    flex: 1,
+    marginRight: moderateScale(12),
+  },
+  headerTitle: {
+    color: COLORS.primary,
+    flex: 1,
+  },
+  tableColName: {
+    flex: 1.2,
+  },
+  tableColTime: {
+    flex: 1,
+  },
+  lastTableRow: {
+    borderBottomWidth: 0,
+    borderBottomLeftRadius: moderateScale(12),
+    borderBottomRightRadius: moderateScale(12),
+  },
+  astroItemOverride: {},
+  whiteBg: {
+    backgroundColor: COLORS.white,
   },
 });
 

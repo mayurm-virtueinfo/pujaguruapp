@@ -1,4 +1,3 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -7,20 +6,25 @@ import {
   StatusBar,
   Image,
   TouchableOpacity,
-  Platform,
   SafeAreaView,
+  ViewStyle,
 } from 'react-native';
-import {moderateScale} from 'react-native-size-matters';
-import {getUpcomingPujas, PujaItem} from '../../../api/apiService';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { moderateScale } from 'react-native-size-matters';
+import { getUpcomingPujas, PujaItem } from '../../../api/apiService';
+import {
+  COLORS,
+  COMMON_LIST_STYLE,
+  COMMON_CARD_STYLE,
+} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useFocusEffect, useNavigation} from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
-import {translateData} from '../../../utils/TranslateData';
+import { UserProfileParamList } from '../../../navigation/User/userProfileNavigator';
+import { translateData } from '../../../utils/TranslateData';
 
 const UpcomingPuja: React.FC = () => {
   const navigation = useNavigation<UserProfileParamList>();
@@ -28,7 +32,7 @@ const UpcomingPuja: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
 
   const inset = useSafeAreaInsets();
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const currentLanguage = i18n.language;
   const translationCacheRef = useRef<Map<string, any>>(new Map());
@@ -65,7 +69,7 @@ const UpcomingPuja: React.FC = () => {
   }, [fetchUpcomingPujas]);
 
   return (
-    <SafeAreaView style={[styles.container, {paddingTop: inset.top}]}>
+    <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={loading} />
       <StatusBar
         backgroundColor={COLORS.primaryBackground}
@@ -74,7 +78,7 @@ const UpcomingPuja: React.FC = () => {
       <UserCustomHeader title={t('upcoming_puja')} showBackButton={true} />
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.pujaSection}>
-          <View style={[styles.pujaCardsContainer, THEMESHADOW.shadow]}>
+          <View style={styles.pujaCardsContainer}>
             {pujas && pujas.length > 0 ? (
               pujas.map((puja, idx) => (
                 <View key={puja.id}>
@@ -84,9 +88,10 @@ const UpcomingPuja: React.FC = () => {
                       navigation.navigate('UserPujaDetailsScreen', {
                         id: puja.id,
                       })
-                    }>
+                    }
+                  >
                     <Image
-                      source={{uri: puja.pooja_image_url}}
+                      source={{ uri: puja.pooja_image_url }}
                       style={styles.pujaImage}
                     />
                     <View style={styles.pujaTextContainer}>
@@ -102,7 +107,9 @@ const UpcomingPuja: React.FC = () => {
                 style={{
                   color: '#888',
                   textAlign: 'center',
-                }}>
+                  padding: moderateScale(14),
+                }}
+              >
                 {t('no_upcoming_pujas')}
               </Text>
             )}
@@ -128,19 +135,14 @@ const styles = StyleSheet.create({
     paddingTop: moderateScale(24),
   },
   pujaSection: {
-    marginBottom: moderateScale(24),
+    // marginBottom: moderateScale(24),
   },
   pujaCardsContainer: {
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(10),
-    paddingHorizontal: moderateScale(14),
-    paddingVertical: moderateScale(14),
-    marginTop: moderateScale(12),
+    ...(COMMON_LIST_STYLE as ViewStyle),
   },
   pujaCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: moderateScale(8),
+    ...(COMMON_CARD_STYLE as ViewStyle),
   },
   pujaImage: {
     width: moderateScale(52),
@@ -150,7 +152,6 @@ const styles = StyleSheet.create({
   },
   pujaTextContainer: {
     flex: 1,
-    justifyContent: 'center',
   },
   pujaName: {
     fontSize: moderateScale(15),
@@ -161,12 +162,11 @@ const styles = StyleSheet.create({
   pujaDate: {
     fontSize: moderateScale(13),
     fontFamily: Fonts.Sen_Medium,
-    color: '#8A8A8A',
+    color: COLORS.pujaCardSubtext,
   },
   divider: {
     height: 1,
-    backgroundColor: '#EBEBEB',
-    marginVertical: moderateScale(8),
+    backgroundColor: COLORS.border,
   },
 });
 

@@ -10,7 +10,12 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { UserProfileParamList } from '../../../navigation/User/userProfileNavigator';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import {
+  COLORS,
+  COMMON_CARD_STYLE,
+  COMMON_LIST_STYLE,
+  THEMESHADOW,
+} from '../../../theme/theme';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import {
   HoroscopeResponse,
@@ -25,6 +30,7 @@ import CustomeLoader from '../../../components/CustomeLoader';
 import { translateText } from '../../../utils/TranslateData';
 
 import { StackNavigationProp } from '@react-navigation/stack';
+import { moderateScale } from 'react-native-size-matters';
 
 type HoroscopeDetailsRouteProp = RouteProp<
   UserProfileParamList,
@@ -38,7 +44,7 @@ type HoroscopeDetailsNavigationProp = StackNavigationProp<
 
 const HoroscopeDetailsScreen = () => {
   const route = useRoute<HoroscopeDetailsRouteProp>();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
   const { signKey, signName } = route.params;
@@ -46,8 +52,6 @@ const HoroscopeDetailsScreen = () => {
   const [data, setData] = useState<HoroscopeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const cacheRef = useRef<Map<string, HoroscopeResponse>>(new Map());
-
-  console.log('data :: ', data);
 
   useEffect(() => {
     fetchData();
@@ -191,7 +195,7 @@ const HoroscopeDetailsScreen = () => {
   ) => {
     if (!details) return null;
     return (
-      <View style={[styles.card, THEMESHADOW.shadow]}>
+      <View style={[styles.card]}>
         <View style={styles.cardHeader}>
           <View style={styles.cardHeaderLeft}>
             <Ionicons
@@ -231,30 +235,21 @@ const HoroscopeDetailsScreen = () => {
         showBackButton
         onBackPress={handleBackPress}
       />
-      <View
-        style={{
-          position: 'absolute',
-          top: '50%',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          backgroundColor: COLORS.white,
-          zIndex: -1,
-        }}
-      />
+      <View style={styles.backgroundOverlay} />
       {loading ? (
-        <View style={[styles.content, { flex: 1 }]} />
+        <View style={styles.loadingContainer} />
       ) : (
         <ScrollView
-          style={{ flex: 1 }}
+          style={styles.flex1}
           contentContainerStyle={[
             styles.content,
-            { paddingBottom: inset.bottom + 20, flexGrow: 1 },
+            styles.scrollContentContainer,
           ]}
           showsVerticalScrollIndicator={false}
         >
           {data ? (
-            <>
+            <View style={styles.mainContent}>
+              {/* Top Section */}
               <View style={styles.topSection}>
                 <View style={styles.iconWrapper}>
                   <Image
@@ -266,19 +261,16 @@ const HoroscopeDetailsScreen = () => {
                 <Text style={styles.dateText}>{data.date}</Text>
               </View>
 
-              <View style={[styles.overviewCard, THEMESHADOW.shadow]}>
+              {/* Overview Section */}
+              <View style={styles.overviewCard}>
                 <Text style={styles.sectionTitle}>{t('Overview')}</Text>
                 <Text style={styles.overviewText}>{data.overview}</Text>
               </View>
 
+              {/* Lucky Stats Section */}
               {data.lucky_stats && (
-                <View style={[styles.statsTable, THEMESHADOW.shadow]}>
-                  <View
-                    style={[
-                      styles.tableRow,
-                      { borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
-                    ]}
-                  >
+                <View style={styles.statsTable}>
+                  <View style={[styles.tableRow, styles.tableRowDivider]}>
                     <View style={styles.tableLeft}>
                       <Ionicons
                         name="color-palette-outline"
@@ -292,12 +284,7 @@ const HoroscopeDetailsScreen = () => {
                       {data.lucky_stats.color}
                     </Text>
                   </View>
-                  <View
-                    style={[
-                      styles.tableRow,
-                      { borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
-                    ]}
-                  >
+                  <View style={[styles.tableRow, styles.tableRowDivider]}>
                     <View style={styles.tableLeft}>
                       <Ionicons
                         name="dice-outline"
@@ -327,6 +314,7 @@ const HoroscopeDetailsScreen = () => {
                   </View>
                 </View>
               )}
+              {/* Health, Wealth, Occupation, Family Sections */}
               {renderSection(t('Health'), data.health, 'fitness-outline')}
               {renderSection(t('Wealth'), data.wealth, 'wallet-outline')}
               {renderSection(
@@ -336,15 +324,10 @@ const HoroscopeDetailsScreen = () => {
               )}
               {renderSection(t('Family'), data.family, 'home-outline')}
 
+              {/* Remedy Section */}
               {data.remedy && (
-                <View style={[styles.remedyCard, THEMESHADOW.shadow]}>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      marginBottom: 8,
-                    }}
-                  >
+                <View style={styles.remedyCard}>
+                  <View style={styles.remedyHeader}>
                     <Ionicons
                       name="leaf-outline"
                       size={20}
@@ -356,7 +339,7 @@ const HoroscopeDetailsScreen = () => {
                   <Text style={styles.remedyText}>{data.remedy}</Text>
                 </View>
               )}
-            </>
+            </View>
           ) : (
             !loading && (
               <View style={styles.errorContainer}>
@@ -364,7 +347,6 @@ const HoroscopeDetailsScreen = () => {
               </View>
             )
           )}
-          <View style={{ height: 40 }} />
         </ScrollView>
       )}
     </SafeAreaView>
@@ -379,20 +361,18 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryBackground,
   },
   content: {
-    padding: 20,
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    padding: moderateScale(24),
+    backgroundColor: COLORS.pujaBackground,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
     overflow: 'hidden',
   },
   topSection: {
     alignItems: 'center',
-    marginBottom: 20,
   },
   iconWrapper: {
-    width: 80,
-    height: 80,
-    marginBottom: 10,
+    width: moderateScale(80),
+    height: moderateScale(80),
   },
   zodiacImage: {
     width: '100%',
@@ -401,13 +381,12 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 14,
     color: COLORS.textSecondary,
-    marginTop: 5,
   },
   overviewCard: {
+    ...COMMON_LIST_STYLE,
     backgroundColor: COLORS.white,
-    borderRadius: 15,
-    padding: 15,
-    marginBottom: 20,
+    borderRadius: moderateScale(15),
+    paddingVertical: moderateScale(14),
     borderLeftWidth: 5,
     borderLeftColor: COLORS.primary,
   },
@@ -415,7 +394,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
-    marginBottom: 8,
+    marginBottom: moderateScale(12),
   },
   overviewText: {
     fontSize: 14,
@@ -423,23 +402,23 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   card: {
+    ...COMMON_LIST_STYLE,
     backgroundColor: COLORS.white,
-    borderRadius: 15,
-    padding: 15,
-    marginBottom: 15,
+    borderRadius: moderateScale(15),
+    paddingVertical: moderateScale(14),
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: moderateScale(12),
   },
   cardHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   cardIcon: {
-    marginRight: 8,
+    marginRight: moderateScale(8),
   },
   cardTitle: {
     fontSize: 16,
@@ -455,24 +434,21 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   statsTable: {
+    ...COMMON_LIST_STYLE,
     backgroundColor: COLORS.white,
     borderRadius: 15,
-    marginBottom: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 5,
   },
   tableRow: {
-    flexDirection: 'row',
+    ...COMMON_CARD_STYLE,
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 15,
   },
   tableLeft: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   tableIcon: {
-    marginRight: 10,
+    marginRight: moderateScale(10),
   },
   tableLabel: {
     fontSize: 14,
@@ -485,13 +461,12 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     textAlign: 'right',
     flex: 1,
-    marginLeft: 20,
   },
   remedyCard: {
+    ...COMMON_LIST_STYLE,
+    paddingVertical: moderateScale(14),
     backgroundColor: COLORS.primary,
-    borderRadius: 15,
-    padding: 15,
-    marginTop: 10,
+    borderRadius: moderateScale(15),
   },
   remedyTitle: {
     fontSize: 16,
@@ -507,5 +482,40 @@ const styles = StyleSheet.create({
   errorContainer: {
     alignItems: 'center',
     marginTop: 50,
+  },
+  backgroundOverlay: {
+    position: 'absolute',
+    top: '50%',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.white,
+    zIndex: -1,
+  },
+  loadingContainer: {
+    padding: 20,
+    backgroundColor: COLORS.pujaBackground,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    overflow: 'hidden',
+    flex: 1,
+  },
+  flex1: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    flexGrow: 1,
+  },
+  mainContent: {
+    gap: 24,
+  },
+  tableRowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  remedyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
 });

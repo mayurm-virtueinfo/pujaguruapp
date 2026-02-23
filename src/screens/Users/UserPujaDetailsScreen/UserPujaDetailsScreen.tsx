@@ -16,8 +16,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import { moderateScale, scale } from 'react-native-size-matters';
+import {
+  COLORS,
+  COMMON_CARD_STYLE,
+  COMMON_LIST_STYLE,
+} from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
 import PujaItemsModal from '../../../components/PujaItemsModal';
 import Fonts from '../../../theme/fonts';
@@ -34,6 +38,7 @@ import {
 import { translateData, translateText } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
 import { useWebSocket } from '../../../context/WebSocketContext';
+import ChatIcon from '../../../assets/svg/chat.svg';
 
 type PanditDataType = {
   id?: string | number;
@@ -114,9 +119,6 @@ const UserPujaDetailsScreen: React.FC = () => {
     fetchUserDetails();
   }, []);
 
-  console.log('pujaDetails :: ', pujaDetails);
-
-  // Helper: fetch API for initial load (with loader)
   const fetchInitialPujaDetails = async () => {
     setLoading(true);
     try {
@@ -185,7 +187,6 @@ const UserPujaDetailsScreen: React.FC = () => {
     }
   }, [messages, id, fetchInitialPujaDetails]);
 
-  // Initial load: loader, then polling begins
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -305,7 +306,7 @@ const UserPujaDetailsScreen: React.FC = () => {
 
     return (
       <View style={styles.detailsContainer}>
-        <View style={[styles.detailsCard, THEMESHADOW.shadow]}>
+        <View style={styles.detailsCard}>
           <View style={styles.detailsContent}>
             <View style={styles.detailRow}>
               <View style={styles.detailRowContent}>
@@ -407,7 +408,7 @@ const UserPujaDetailsScreen: React.FC = () => {
                   source={Images.ic_pin}
                   style={[
                     styles.detailIcon,
-                    { width: scale(20), height: scale(16) },
+                    { width: moderateScale(20), height: moderateScale(16) },
                   ]}
                   resizeMode="contain"
                 />
@@ -441,7 +442,7 @@ const UserPujaDetailsScreen: React.FC = () => {
     if (!pujaDetails) return null;
     return (
       <View style={styles.totalContainer}>
-        <View style={[styles.totalCard, THEMESHADOW.shadow]}>
+        <View style={styles.totalCard}>
           <View style={styles.totalContent}>
             <View style={{ gap: 6 }}>
               <Text style={styles.totalLabel}>{t('total_amount')}</Text>
@@ -474,7 +475,7 @@ const UserPujaDetailsScreen: React.FC = () => {
 
     return (
       <View style={styles.totalContainer}>
-        <View style={[styles.totalCard, THEMESHADOW.shadow]}>
+        <View style={styles.totalCard}>
           <View style={styles.totalContent}>
             {/* Left section: pandit info */}
             <View
@@ -533,11 +534,7 @@ const UserPujaDetailsScreen: React.FC = () => {
                   color={COLORS.primaryBackgroundButton}
                 />
               ) : (
-                <Image
-                  source={Images.ic_message}
-                  style={{ width: scale(20), height: scale(20) }}
-                  resizeMode="contain"
-                />
+                <ChatIcon />
               )}
             </TouchableOpacity>
           </View>
@@ -551,7 +548,7 @@ const UserPujaDetailsScreen: React.FC = () => {
     if (pujaDetails.assigned_pandit) return null;
     return (
       <View style={styles.panditjiContainer}>
-        <View style={[styles.panditjiCard, THEMESHADOW.shadow]}>
+        <View style={styles.panditjiCard}>
           <View style={styles.panditjiContent}>
             <View style={styles.panditjiAvatarContainer}>
               <View style={styles.panditjiAvatar}>
@@ -671,12 +668,10 @@ const UserPujaDetailsScreen: React.FC = () => {
             console.log('Returned from RateYourExperienceScreen');
           },
         });
-      }, 100); // Slight delay to let loader display
+      }, 100);
     }
-    // eslint-disable-next-line
   }, [isNavigating, pujaDetails?.booking_status, pujaDetails?.assigned_pandit]);
 
-  // If returning from RateYourExperienceScreen, refresh data
   useEffect(() => {
     if (wasNavigatedToReview) {
       console.log(
@@ -686,17 +681,6 @@ const UserPujaDetailsScreen: React.FC = () => {
       setWasNavigatedToReview(false);
     }
   }, [wasNavigatedToReview]);
-
-  // Show loader only during first screen load; after that, even background polling doesn't show loader unless user pulls to refresh.
-  // if (!initialLoaded || loading) {
-  //   return (
-  //     <>
-  //       <View style={styles.loaderContainer}>
-  //         <CustomeLoader loading={true} />
-  //       </View>
-  //     </>
-  //   );
-  // }
 
   if (
     pujaDetails?.booking_status === 'completed' &&
@@ -745,10 +729,12 @@ const UserPujaDetailsScreen: React.FC = () => {
             }
             keyboardShouldPersistTaps="handled"
           >
-            {renderPujaDetails()}
-            {renderTotalAmount()}
-            {renderPanditDetails()}
-            {renderPanditjiSection()}
+            <View style={styles.groupsContainer}>
+              {renderPujaDetails()}
+              {renderTotalAmount()}
+              {renderPanditDetails()}
+              {renderPanditjiSection()}
+            </View>
             {loading ? null : (
               <>
                 {renderInviteGuestButton()}
@@ -799,7 +785,7 @@ const styles = StyleSheet.create({
     padding: moderateScale(20),
   },
   loadingText: {
-    marginTop: verticalScale(16),
+    marginTop: moderateScale(16),
     fontSize: moderateScale(16),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.white,
@@ -813,7 +799,7 @@ const styles = StyleSheet.create({
   },
   flexGrow: {
     flexGrow: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.pujaBackground,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
   },
@@ -821,37 +807,19 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: moderateScale(24),
   },
-  detailsContainer: {
-    marginBottom: verticalScale(24),
+  groupsContainer: {
+    gap: moderateScale(24),
   },
+  detailsContainer: {},
   detailsCard: {
+    ...COMMON_LIST_STYLE,
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(10),
   },
   detailsContent: {},
   detailRow: {
+    ...COMMON_CARD_STYLE,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: verticalScale(14),
-    minHeight: verticalScale(48),
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: verticalScale(14),
-    minHeight: verticalScale(48),
-  },
-  statusIndicator: {
-    width: scale(8),
-    height: scale(8),
-    borderRadius: scale(4),
-    marginRight: scale(12),
-  },
-  statusText: {
-    fontSize: moderateScale(13),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.pujaCardSubtext,
-    flex: 1,
   },
   detailRowContent: {
     flexDirection: 'row',
@@ -859,10 +827,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pujaIcon: {
-    width: scale(40),
-    height: scale(40),
-    borderRadius: scale(20),
-    marginRight: scale(14),
+    width: moderateScale(40),
+    height: moderateScale(40),
+    borderRadius: moderateScale(20),
+    marginRight: moderateScale(14),
   },
   pujaTitle: {
     fontSize: moderateScale(15),
@@ -870,8 +838,8 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
   },
   detailIcon: {
-    marginRight: scale(14),
-    width: scale(24),
+    marginRight: moderateScale(14),
+    width: moderateScale(24),
   },
   detailText: {
     fontSize: moderateScale(15),
@@ -879,24 +847,18 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
     flex: 1,
   },
-  viewButton: {
-    padding: scale(8),
-  },
+  viewButton: {},
   separator: {
     height: 1,
-    backgroundColor: COLORS.separatorColor,
-    marginVertical: verticalScale(2),
-    marginHorizontal: 14,
+    backgroundColor: COLORS.border,
   },
-  totalContainer: {
-    marginBottom: verticalScale(24),
-  },
+  totalContainer: {},
   totalCard: {
+    ...COMMON_LIST_STYLE,
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(10),
   },
   totalContent: {
-    padding: moderateScale(14),
+    ...COMMON_CARD_STYLE,
     justifyContent: 'space-between',
     flexDirection: 'row',
     alignItems: 'center',
@@ -916,26 +878,23 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.pujaCardSubtext,
   },
-  panditjiContainer: {
-    marginBottom: verticalScale(24),
-  },
+  panditjiContainer: {},
   panditjiCard: {
+    ...COMMON_LIST_STYLE,
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(10),
   },
   panditjiContent: {
-    padding: moderateScale(14),
+    ...COMMON_CARD_STYLE,
     flexDirection: 'row',
     alignItems: 'center',
-    height: verticalScale(68),
   },
   panditjiAvatarContainer: {
-    marginRight: scale(14),
+    marginRight: moderateScale(14),
   },
   panditjiAvatar: {
-    width: scale(40),
-    height: scale(40),
-    borderRadius: scale(20),
+    width: moderateScale(40),
+    height: moderateScale(40),
+    borderRadius: moderateScale(20),
     backgroundColor: COLORS.pujaCardSubtext,
     justifyContent: 'center',
     alignItems: 'center',
@@ -953,7 +912,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.white,
-    shadowColor: COLORS.white,
+    marginTop: moderateScale(24),
   },
 });
 

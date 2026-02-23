@@ -23,7 +23,7 @@ import {
   CalendarDay,
 } from '../../../api/apiService';
 import { useLocation } from '../../../context/LocationContext';
-import { COLORS } from '../../../theme/theme';
+import { COLORS, COMMON_LIST_STYLE } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,6 +34,7 @@ import DayDetails from './components/DayDetails';
 import InlineLocationRequest from '../../../components/InlineLocationRequest';
 import { getCityName } from '../../../helper/helper';
 import { translateText, translateData } from '../../../utils/TranslateData';
+import { moderateScale } from 'react-native-size-matters';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const CELL_MARGIN = 4;
@@ -46,7 +47,7 @@ const CalendarScreen = () => {
     (CalendarDay | null)[]
   >([]);
   const [calendarData, setCalendarData] = useState<(CalendarDay | null)[]>([]);
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1); // 1-12
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState<CalendarDay | null>(null);
   const [originalChoghadiyaData, setOriginalChoghadiyaData] = useState<any[]>(
@@ -489,8 +490,8 @@ const CalendarScreen = () => {
               numColumns={7}
               contentContainerStyle={styles.grid}
               ListFooterComponent={renderDetails}
-              removeClippedSubviews={true} // Performance optimization
-              initialNumToRender={42} // Render full month at once usually
+              removeClippedSubviews={true}
+              initialNumToRender={42}
               maxToRenderPerBatch={42}
             />
           </GestureDetector>
@@ -507,41 +508,34 @@ const styles = StyleSheet.create({
   },
   flexGrow: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    backgroundColor: COLORS.pujaBackground,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
     overflow: 'hidden',
   },
   header: {
-    paddingTop: 20,
-    paddingBottom: 20,
+    paddingTop: moderateScale(20),
+    paddingBottom: moderateScale(20),
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: moderateScale(24),
   },
   titleContainer: {
     alignItems: 'center',
   },
   navButton: {
-    padding: 8,
+    ...COMMON_LIST_STYLE,
+    padding: moderateScale(8),
     backgroundColor: COLORS.white,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    borderRadius: moderateScale(20),
     alignItems: 'center',
     justifyContent: 'center',
   },
   navButtonText: {
-    display: 'none', // Removed, keeping for safety if referenced elsewhere or just delete
+    display: 'none',
   },
   headerTitle: {
     fontSize: 28,
@@ -551,14 +545,14 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 14,
     color: COLORS.textSecondary,
-    marginTop: 4,
+    marginTop: moderateScale(4),
     fontFamily: Fonts.Sen_Medium,
   },
   weekRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 10,
-    paddingHorizontal: 8,
+    marginBottom: moderateScale(10),
+    paddingHorizontal: moderateScale(8),
   },
   weekDayContainer: {
     alignItems: 'center',
@@ -568,7 +562,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
-    marginBottom: 4,
+    marginBottom: moderateScale(4),
   },
   weekDayUnderline: {
     width: '80%',
@@ -577,7 +571,7 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   grid: {
-    paddingHorizontal: 8,
+    paddingHorizontal: moderateScale(8),
   },
   centerContent: {
     flex: 1,

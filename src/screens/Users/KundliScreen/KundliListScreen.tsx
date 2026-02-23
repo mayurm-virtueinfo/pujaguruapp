@@ -9,15 +9,20 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { UserProfileParamList } from '../../../navigation/User/userProfileNavigator';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import { COLORS, COMMON_LIST_STYLE, THEMESHADOW } from '../../../theme/theme';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { apiService, getKundliDetails, getKundliList } from '../../../api/apiService';
+import {
+  apiService,
+  getKundliDetails,
+  getKundliList,
+} from '../../../api/apiService';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import moment from 'moment';
 import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
+import { moderateScale } from 'react-native-size-matters';
 
 const KundliListScreen = () => {
   const inset = useSafeAreaInsets();
@@ -42,25 +47,24 @@ const KundliListScreen = () => {
   useFocusEffect(
     useCallback(() => {
       fetchKundliList();
-    }, [])
+    }, []),
   );
 
   const handleKundliPress = async (item: any) => {
     setLoading(true);
     try {
-        const details = await getKundliDetails(item.id);
-        console.log('Details:', details);
-        navigation.navigate('KundliScreen', {
-            kundliData: { kundli: { result_json: details?.result_json } },
-            name: item.name,
-            birthDate: item.date_of_birth,
-            birthTime: item.time_of_birth,
-            birthPlace: item.birth_place,
-        });
+      const details = await getKundliDetails(item.id);
+      navigation.navigate('KundliScreen', {
+        kundliData: { kundli: { result_json: details?.result_json } },
+        name: item.name,
+        birthDate: item.date_of_birth,
+        birthTime: item.time_of_birth,
+        birthPlace: item.birth_place,
+      });
     } catch (error) {
-        console.error("Failed to fetch details", error);
+      console.error('Failed to fetch details', error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -71,12 +75,17 @@ const KundliListScreen = () => {
     >
       <View style={styles.cardContent}>
         <View style={styles.iconContainer}>
-          <Ionicons name="person-circle-outline" size={40} color={COLORS.primary} />
+          <Ionicons
+            name="person-circle-outline"
+            size={40}
+            color={COLORS.primary}
+          />
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.name}>{item.name}</Text>
           <Text style={styles.details}>
-            {moment(item.date_of_birth).format('DD MMM YYYY')} • {item.birth_place}
+            {moment(item.date_of_birth).format('DD MMM YYYY')} •{' '}
+            {item.birth_place}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={24} color={COLORS.textGray} />
@@ -92,18 +101,20 @@ const KundliListScreen = () => {
         <FlatList
           data={kundliList}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
-            !loading ? <Text style={styles.emptyText}>{t('no_kundli_found')}</Text> : null
+            !loading ? (
+              <Text style={styles.emptyText}>{t('no_kundli_found')}</Text>
+            ) : null
           }
         />
-        
+
         <View style={styles.buttonContainer}>
-            <PrimaryButton
+          <PrimaryButton
             title="Create New Kundli"
             onPress={() => navigation.navigate('KundliInputScreen')}
-            />
+          />
         </View>
       </View>
     </View>
@@ -117,27 +128,27 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    backgroundColor: COLORS.pujaBackground,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
     overflow: 'hidden',
   },
   listContent: {
-    padding: 20,
-    paddingBottom: 100, // Space for button
+    padding: moderateScale(20),
+    gap: moderateScale(12),
   },
   card: {
+    ...COMMON_LIST_STYLE,
     backgroundColor: COLORS.white,
-    borderRadius: 15,
-    marginBottom: 15,
-    padding: 15,
+    borderRadius: moderateScale(15),
+    paddingVertical: moderateScale(14),
   },
   cardContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconContainer: {
-    marginRight: 15,
+    marginRight: moderateScale(15),
   },
   textContainer: {
     flex: 1,
@@ -150,19 +161,19 @@ const styles = StyleSheet.create({
   details: {
     fontSize: 14,
     color: COLORS.textSecondary,
-    marginTop: 4,
+    marginTop: moderateScale(4),
   },
   emptyText: {
     textAlign: 'center',
-    marginTop: 50,
+    marginTop: moderateScale(50),
     fontSize: 16,
     color: COLORS.textSecondary,
   },
   buttonContainer: {
     position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
+    bottom: moderateScale(20),
+    left: moderateScale(20),
+    right: moderateScale(20),
   },
   createButton: {
     backgroundColor: COLORS.primary,

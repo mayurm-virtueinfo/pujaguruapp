@@ -7,11 +7,17 @@ import {
   Text,
   TouchableOpacity,
   Modal,
+  ViewStyle,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Fonts from '../../../theme/fonts';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import {
+  COLORS,
+  THEMESHADOW,
+  COMMON_LIST_STYLE,
+  COMMON_CARD_STYLE,
+} from '../../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,6 +39,7 @@ import { translateData, translateText } from '../../../utils/TranslateData';
 import notifee from '@notifee/react-native';
 import messaging from '@react-native-firebase/messaging';
 import { AuthStackParamList } from '../../../navigation/AuthNavigator';
+import { moderateScale } from 'react-native-size-matters';
 
 interface ProfileFieldProps {
   label: string;
@@ -277,189 +284,202 @@ const BottomUserProfileScreen: React.FC = () => {
         <ScrollView
           showsVerticalScrollIndicator={false}
           style={styles.scrollView}
+          contentContainerStyle={{ paddingBottom: inset.bottom + 20 }}
         >
-          {!loading && currentUser && (
-            <View style={[styles.infoSection, THEMESHADOW.shadow]}>
-              <ProfileField
-                label={t('name')}
-                value={
-                  `${currentUser?.first_name} ${currentUser?.last_name}` || ''
-                }
-              />
-              <View style={styles.divider} />
-              <ProfileField
-                label={t('email')}
-                value={currentUser?.email || ''}
-              />
-              <View style={styles.divider} />
-              <ProfileField
-                label={t('phone')}
-                value={currentUser?.mobile || ''}
-              />
-              <View style={styles.divider} />
-              <ProfileField
-                label={t('location')}
-                value={currentUser?.address?.city_name || ''}
-              />
-            </View>
-          )}
+          <View style={styles.groupsContainer}>
+            {/* Group 1: Profile Information */}
+            {!loading && currentUser && (
+              <View style={styles.infoSection}>
+                <ProfileField
+                  label={t('name')}
+                  value={
+                    `${currentUser?.first_name} ${currentUser?.last_name}` || ''
+                  }
+                />
+                <View style={styles.divider} />
+                <ProfileField
+                  label={t('email')}
+                  value={currentUser?.email || ''}
+                />
+                <View style={styles.divider} />
+                <ProfileField
+                  label={t('phone')}
+                  value={currentUser?.mobile || ''}
+                />
+                <View style={styles.divider} />
+                <ProfileField
+                  label={t('location')}
+                  value={currentUser?.address?.city_name || ''}
+                />
+              </View>
+            )}
 
-          <View style={[styles.editSection, THEMESHADOW.shadow]}>
-            <TouchableOpacity
-              style={styles.editFieldContainer}
-              onPress={handleEditNavigation}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.editFieldLabel}>{t('edit_profile')} </Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.primaryTextDark}
-              />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity
-              onPress={handleUpcomingPuja}
-              style={styles.editFieldContainer}
-            >
-              <Text style={styles.editFieldLabel}>{t('upcoming_puja')} </Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.primaryTextDark}
-              />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity
-              onPress={handlePastPuja}
-              style={styles.editFieldContainer}
-            >
-              <Text style={styles.editFieldLabel}>{t('past_puja')} </Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.primaryTextDark}
-              />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity
-              style={styles.editFieldContainer}
-              onPress={handleWalletNavigation}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.editFieldLabel}>{t('wallet')}</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.primaryTextDark}
-              />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity
-              style={styles.editFieldContainer}
-              onPress={handleSavedAddressNavigation}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.editFieldLabel}>{t('saved_addresses')}</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.primaryTextDark}
-              />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity
-              style={styles.editFieldContainer}
-              onPress={handleDailyHoroscopeNavigation}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.editFieldLabel}>{t('rashi_ful')} </Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.primaryTextDark}
-              />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity
-              style={styles.editFieldContainer}
-              onPress={handleHoroscopeNavigation}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.editFieldLabel}>{t('daily_horoscope')} </Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.primaryTextDark}
-              />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity
-              style={styles.editFieldContainer}
-              onPress={handleMcpServerNavigation}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.editFieldLabel}>MCP Server</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.primaryTextDark}
-              />
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.editSection, THEMESHADOW.shadow]}
-            onPress={() => setLanguageModalVisible(true)}
-          >
-            <View style={styles.editFieldContainer}>
-              <Text style={styles.editFieldLabel}>{t('language')}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text
-                  style={{
-                    marginRight: 10,
-                    color: COLORS.textSecondary,
-                    fontFamily: Fonts.Sen_Regular,
-                    fontSize: 14,
-                  }}
-                >
-                  {getLanguageLabel(currentLanguage)}
+            {/* Group 2: Menu Actions */}
+            <View style={styles.editSection}>
+              <TouchableOpacity
+                style={styles.editFieldContainer}
+                onPress={handleEditNavigation}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.editFieldLabel}>{t('edit_profile')} </Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={COLORS.primaryTextDark}
+                />
+              </TouchableOpacity>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                onPress={handleUpcomingPuja}
+                style={styles.editFieldContainer}
+              >
+                <Text style={styles.editFieldLabel}>{t('upcoming_puja')} </Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={COLORS.primaryTextDark}
+                />
+              </TouchableOpacity>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                onPress={handlePastPuja}
+                style={styles.editFieldContainer}
+              >
+                <Text style={styles.editFieldLabel}>{t('past_puja')} </Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={COLORS.primaryTextDark}
+                />
+              </TouchableOpacity>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={styles.editFieldContainer}
+                onPress={handleWalletNavigation}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.editFieldLabel}>{t('wallet')}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={COLORS.primaryTextDark}
+                />
+              </TouchableOpacity>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={styles.editFieldContainer}
+                onPress={handleSavedAddressNavigation}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.editFieldLabel}>
+                  {t('saved_addresses')}
                 </Text>
                 <Ionicons
                   name="chevron-forward"
                   size={20}
                   color={COLORS.primaryTextDark}
                 />
-              </View>
+              </TouchableOpacity>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={styles.editFieldContainer}
+                onPress={handleDailyHoroscopeNavigation}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.editFieldLabel}>{t('rashi_ful')} </Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={COLORS.primaryTextDark}
+                />
+              </TouchableOpacity>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={styles.editFieldContainer}
+                onPress={handleHoroscopeNavigation}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.editFieldLabel}>
+                  {t('daily_horoscope')}{' '}
+                </Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={COLORS.primaryTextDark}
+                />
+              </TouchableOpacity>
+              <View style={styles.divider} />
+              <TouchableOpacity
+                style={styles.editFieldContainer}
+                onPress={handleMcpServerNavigation}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.editFieldLabel}>{t('mcp_server')}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={COLORS.primaryTextDark}
+                />
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.editSection, THEMESHADOW.shadow]}
-            onPress={() => setLogoutModalVisible(true)}
-          >
-            <View style={styles.editFieldContainer}>
-              <Text style={styles.logoutLabel}>{t('logout')}</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.primaryTextDark}
-              />
-            </View>
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.editSection, THEMESHADOW.shadow]}
-            onPress={() => setDeleteAccountModalVisible(true)}
-          >
-            <View style={styles.editFieldContainer}>
-              <Text style={styles.logoutLabel}>{t('delete_account')}</Text>
-              <Ionicons
-                name="chevron-forward"
-                size={20}
-                color={COLORS.primaryTextDark}
-              />
-            </View>
-          </TouchableOpacity>
+            {/* Group 3: Language */}
+            <TouchableOpacity
+              style={styles.editSection}
+              onPress={() => setLanguageModalVisible(true)}
+            >
+              <View style={styles.editFieldContainer}>
+                <Text style={styles.editFieldLabel}>{t('language')}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text
+                    style={{
+                      marginRight: 10,
+                      color: COLORS.textSecondary,
+                      fontFamily: Fonts.Sen_Regular,
+                      fontSize: 14,
+                    }}
+                  >
+                    {getLanguageLabel(currentLanguage)}
+                  </Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={20}
+                    color={COLORS.primaryTextDark}
+                  />
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Group 4: Logout */}
+            <TouchableOpacity
+              style={styles.editSection}
+              onPress={() => setLogoutModalVisible(true)}
+            >
+              <View style={styles.editFieldContainer}>
+                <Text style={styles.logoutLabel}>{t('logout')}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={COLORS.primaryTextDark}
+                />
+              </View>
+            </TouchableOpacity>
+
+            {/* Group 5: Delete Account */}
+            <TouchableOpacity
+              style={styles.editSection}
+              onPress={() => setDeleteAccountModalVisible(true)}
+            >
+              <View style={styles.editFieldContainer}>
+                <Text style={styles.logoutLabel}>{t('delete_account')}</Text>
+                <Ionicons
+                  name="chevron-forward"
+                  size={20}
+                  color={COLORS.primaryTextDark}
+                />
+              </View>
+            </TouchableOpacity>
+          </View>
         </ScrollView>
       </View>
       <CustomModal
@@ -538,7 +558,7 @@ const BottomUserProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.primaryBackground,
   },
   headerGradient: {
     position: 'absolute',
@@ -566,44 +586,38 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: COLORS.backgroundPrimary,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingTop: 64,
-    // paddingBottom: 24,
+    backgroundColor: COLORS.pujaBackground,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    paddingTop: moderateScale(64),
     zIndex: 1,
   },
   scrollView: {
     flex: 1,
   },
+  groupsContainer: {
+    gap: moderateScale(24),
+  },
   infoSection: {
-    borderRadius: 10,
-    padding: 14,
-    marginHorizontal: 24,
-    marginBottom: 24,
+    marginHorizontal: moderateScale(24),
     backgroundColor: COLORS.white,
-    marginTop: 10,
+    ...(COMMON_LIST_STYLE as ViewStyle),
   },
   editSection: {
-    borderRadius: 10,
-    padding: 14,
-    marginHorizontal: 24,
-    marginBottom: 24,
+    marginHorizontal: moderateScale(24),
     backgroundColor: COLORS.white,
+    ...(COMMON_LIST_STYLE as ViewStyle),
   },
   fieldContainer: {
-    flexDirection: 'row',
+    ...(COMMON_CARD_STYLE as ViewStyle),
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
   },
   fieldLabel: {
     color: COLORS.inputLabelText,
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
     flex: 1,
-    paddingVertical: 5,
   },
   fieldValue: {
     color: COLORS.textPrimary,
@@ -613,17 +627,13 @@ const styles = StyleSheet.create({
     flex: 2,
   },
   editFieldContainer: {
-    minHeight: 34,
+    ...(COMMON_CARD_STYLE as ViewStyle),
     justifyContent: 'space-between',
-    flexDirection: 'row',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
   },
   editFieldLabel: {
     color: COLORS.textPrimary,
     fontSize: 15,
     fontFamily: Fonts.Sen_Medium,
-    paddingVertical: 5,
   },
   logoutLabel: {
     color: COLORS.gradientEnd,
@@ -633,13 +643,10 @@ const styles = StyleSheet.create({
   divider: {
     width: '100%',
     height: 1,
-    backgroundColor: COLORS.separatorColor,
-    marginVertical: 8,
+    backgroundColor: COLORS.border,
   },
   selectedLangText: {
-    marginHorizontal: 24,
-    marginTop: 4,
-    marginBottom: 24,
+    marginHorizontal: moderateScale(24),
     color: COLORS.inputLabelText,
     fontSize: 14,
     fontFamily: Fonts.Sen_Medium,
@@ -653,17 +660,9 @@ const styles = StyleSheet.create({
   languageModalContent: {
     width: '80%',
     backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 20,
+    borderRadius: moderateScale(20),
+    padding: moderateScale(20),
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
   modalTitle: {
     fontSize: 18,
@@ -673,17 +672,16 @@ const styles = StyleSheet.create({
   },
   languageOption: {
     width: '100%',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-    borderRadius: 10,
+    paddingVertical: moderateScale(15),
+    paddingHorizontal: moderateScale(15),
+    borderRadius: moderateScale(10),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: COLORS.white,
   },
   selectedLanguageOption: {
-    backgroundColor: '#FFF5F5', // Light tint of red/primary
+    backgroundColor: COLORS.white,
     borderColor: COLORS.primary,
     borderWidth: 1,
   },

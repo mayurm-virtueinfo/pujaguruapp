@@ -19,10 +19,15 @@ import UserCustomHeader from '../../../components/UserCustomHeader';
 import { useTranslation } from 'react-i18next';
 import { Images } from '../../../theme/Images';
 import { useNavigation } from '@react-navigation/native';
+import { moderateScale } from 'react-native-size-matters';
 
 const { width } = Dimensions.get('window');
 const COLUMN_COUNT = 3;
-const ITEM_WIDTH = (width - 60) / COLUMN_COUNT;
+const CONTAINER_PADDING = moderateScale(20);
+const ITEM_SPACING = moderateScale(10);
+const ITEM_WIDTH =
+  (width - CONTAINER_PADDING * 2 - ITEM_SPACING * (COLUMN_COUNT - 1)) /
+  COLUMN_COUNT;
 
 const HoroscopeScreen = () => {
   const inset = useSafeAreaInsets();
@@ -87,10 +92,8 @@ const HoroscopeScreen = () => {
           renderItem={renderItem}
           keyExtractor={item => item.key}
           numColumns={COLUMN_COUNT}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: inset.bottom + 20 },
-          ]}
+          contentContainerStyle={styles.listContent}
+          columnWrapperStyle={{ gap: ITEM_SPACING }}
           showsVerticalScrollIndicator={false}
         />
       </View>
@@ -107,36 +110,26 @@ const styles = StyleSheet.create({
   },
   flexGrow: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    backgroundColor: COLORS.pujaBackground,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
     overflow: 'hidden',
-    paddingTop: 20,
+    paddingVertical: moderateScale(24),
   },
   listContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: CONTAINER_PADDING,
+    gap: moderateScale(20),
   },
   itemContainer: {
     width: ITEM_WIDTH,
     alignItems: 'center',
-    marginBottom: 20,
-    marginHorizontal: 5,
     backgroundColor: COLORS.white,
     borderRadius: 15,
     padding: 10,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: COLORS.lightGray,
   },
   imageContainer: {
-    width: 60,
-    height: 60,
-    marginBottom: 8,
+    width: moderateScale(60),
+    height: moderateScale(60),
     justifyContent: 'center',
     alignItems: 'center',
   },

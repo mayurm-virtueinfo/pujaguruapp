@@ -15,6 +15,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import 'react-native-gesture-handler';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider } from './src/provider/AuthProvider';
 import { ToastProvider } from 'react-native-toast-notifications';
 import { moderateScale } from 'react-native-size-matters';
@@ -133,70 +134,76 @@ const App = () => {
   };
 
   return (
-    <I18nextProvider i18n={i18n}>
-      {/* Force Update Modal */}
-      <Modal
-        visible={isUpdateRequired}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => {
-          /* Optionally, handle hardware back button or prevent closing */
-        }}
-        statusBarTranslucent
-      >
-        {/* Backdrop */}
-        <Pressable style={styles.backdrop} onPress={() => {}} />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <I18nextProvider i18n={i18n}>
+        {/* Force Update Modal */}
+        <Modal
+          visible={isUpdateRequired}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => {
+            /* Optionally, handle hardware back button or prevent closing */
+          }}
+          statusBarTranslucent
+        >
+          {/* Backdrop */}
+          <Pressable style={styles.backdrop} onPress={() => {}} />
 
-        {/* Modal Content */}
-        <View style={styles.mainModelContainer}>
-          <View style={styles.modalView}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>
-                {t('update_modal_title') || 'Update Required'}
-              </Text>
-              <Text style={styles.modalText}>
-                {t('update_modal_message') ||
-                  'A new version is available. Please update to continue.'}
-              </Text>
-              <TouchableOpacity onPress={openStore} style={styles.updateButton}>
-                <Text style={styles.updateButtonText}>
-                  {t('update_now') || 'Update Now'}
+          {/* Modal Content */}
+          <View style={styles.mainModelContainer}>
+            <View style={styles.modalView}>
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>
+                  {t('update_modal_title') || 'Update Required'}
                 </Text>
-              </TouchableOpacity>
+                <Text style={styles.modalText}>
+                  {t('update_modal_message') ||
+                    'A new version is available. Please update to continue.'}
+                </Text>
+                <TouchableOpacity
+                  onPress={openStore}
+                  style={styles.updateButton}
+                >
+                  <Text style={styles.updateButtonText}>
+                    {t('update_now') || 'Update Now'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-      {/* App content */}
-      <ToastProvider
-        style={{
-          backgroundColor: COLORS.primary,
-        }}
-        textStyle={{
-          fontSize: moderateScale(16),
-          color: COLORS.textPrimary,
-        }}
-      >
-        <NetworkProvider>
-          <LocationProvider>
-            <AuthProvider>
-              <SessionProvider>
-                <WebSocketWrapper>
-                  <NavigationContainer
-                    ref={navigationRef}
-                    onReady={() => {
-                      handleInitialNotification();
-                    }}
-                  >
-                    <RootNavigator />
-                  </NavigationContainer>
-                </WebSocketWrapper>
-              </SessionProvider>
-            </AuthProvider>
-          </LocationProvider>
-        </NetworkProvider>
-      </ToastProvider>
-    </I18nextProvider>
+        </Modal>
+        {/* App content */}
+        <ToastProvider
+          style={{
+            backgroundColor: COLORS.primary,
+          }}
+          textStyle={{
+            fontSize: moderateScale(16),
+            color: COLORS.textPrimary,
+          }}
+          offsetBottom={moderateScale(80)}
+        >
+          <NetworkProvider>
+            <LocationProvider>
+              <AuthProvider>
+                <SessionProvider>
+                  <WebSocketWrapper>
+                    <NavigationContainer
+                      ref={navigationRef}
+                      onReady={() => {
+                        handleInitialNotification();
+                      }}
+                    >
+                      <RootNavigator />
+                    </NavigationContainer>
+                  </WebSocketWrapper>
+                </SessionProvider>
+              </AuthProvider>
+            </LocationProvider>
+          </NetworkProvider>
+        </ToastProvider>
+      </I18nextProvider>
+    </GestureHandlerRootView>
   );
 };
 

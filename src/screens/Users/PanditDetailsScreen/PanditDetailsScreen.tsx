@@ -12,10 +12,16 @@ import {
   FlatList,
   Modal,
   Pressable,
+  ViewStyle,
 } from 'react-native';
 import PagerView from 'react-native-pager-view';
 import { moderateScale, verticalScale } from 'react-native-size-matters';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import {
+  COLORS,
+  THEMESHADOW,
+  COMMON_LIST_STYLE,
+  COMMON_CARD_STYLE,
+} from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import { getPanditDetails } from '../../../api/apiService';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -251,9 +257,15 @@ const PanditDetailsScreen: React.FC = () => {
     );
   };
 
-  const renderGalleryItem = ({ item, index }: { item: PanditPhotoGalleryItem, index: number }) => (
+  const renderGalleryItem = ({
+    item,
+    index,
+  }: {
+    item: PanditPhotoGalleryItem;
+    index: number;
+  }) => (
     <TouchableOpacity
-      style={[styles.galleryItemHorizontal, THEMESHADOW.shadow]}
+      style={[styles.galleryItemHorizontal]}
       onPress={() => {
         const allImages = gallery.map(g => g.image);
         setModalImages(allImages);
@@ -341,7 +353,198 @@ const PanditDetailsScreen: React.FC = () => {
       <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('panditji_details')} showBackButton={true} />
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View
+          style={[
+            styles.contentWrapper,
+            { paddingBottom: inset.bottom + moderateScale(20) },
+          ]}
+        >
+          {/* Profile Group */}
+          <View style={styles.shadowWrapper}>
+            <View style={styles.profileGroup}>
+              <Image
+                source={{
+                  uri:
+                    panditImage ||
+                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+                }}
+                style={styles.panditImage}
+                resizeMode="cover"
+              />
+              <View style={styles.panditInfo}>
+                <Text style={styles.panditName}>
+                  {panditName || 'Pandit Name'}
+                </Text>
+                <View style={styles.nameRatingRow}>
+                  {renderStars(
+                    Math.round(
+                      parseFloat(selectedPandit?.average_rating || '0'),
+                    ),
+                  )}
+                  <Text style={styles.experienceText}>
+                    {selectedPandit?.total_ratings || 0} {t('reviews')}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </View>
 
+          {/* Bio Group */}
+          <View style={styles.bioGroup}>
+            <Text style={styles.descriptionText}>
+              {panditName
+                ? `Pandit ${panditName} is highly experienced and well-versed in Hindu rituals and ceremonies. ${
+                    selectedPandit?.bio ||
+                    'Specializing in various traditional pujas.'
+                  }`
+                : 'Pandit details will appear here.'}
+            </Text>
+          </View>
+
+          {/* Gallery Group */}
+          <View style={styles.galleryGroup}>
+            <Text style={styles.sectionTitle}>{t('photo_gallery')}</Text>
+            {gallery && gallery.length > 0 ? (
+              <FlatList
+                data={gallery}
+                keyExtractor={item => item.id.toString()}
+                renderItem={({ item, index }) =>
+                  renderGalleryItem({ item, index })
+                }
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.galleryHorizontalList}
+              />
+            ) : (
+              <View style={styles.shadowWrapper}>
+                <View style={styles.forNodata}>
+                  <Text style={styles.forNoDataText}>
+                    {t('no_photo_gallery_available')}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Reviews Group */}
+          <View style={styles.reviewsGroup}>
+            <Text style={styles.sectionTitle}>{t('reviews')}</Text>
+            {Array.isArray(reviews) && reviews.length > 0 ? (
+              <View style={styles.shadowWrapper}>
+                <View style={styles.reviewsList}>
+                  {reviews.map((review, idx) => (
+                    <React.Fragment key={review.id}>
+                      <View style={styles.reviewItem}>
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            marginBottom: moderateScale(8),
+                          }}
+                        >
+                          <Image
+                            source={{
+                              uri: getReviewAvatar(review),
+                            }}
+                            style={{
+                              width: moderateScale(44),
+                              height: moderateScale(44),
+                              borderRadius: moderateScale(16),
+                              marginRight: moderateScale(14),
+                            }}
+                          />
+                          <View style={styles.reviewHeader}>
+                            <Text style={styles.reviewDate}>
+                              {formatDate(review.created_at)}
+                            </Text>
+                            <Text
+                              style={{
+                                fontFamily: Fonts.Sen_Bold,
+                                color: COLORS.textDark,
+                                fontSize: moderateScale(14),
+                                marginBottom: moderateScale(6),
+                              }}
+                            >
+                              {review.user_name}
+                            </Text>
+                            {renderStars(review.rating)}
+                          </View>
+                        </View>
+                        <Text style={styles.reviewText}>
+                          {review.review && review.review.trim().length > 0
+                            ? review.review
+                            : t('no_review_text')}
+                        </Text>
+                        {Array.isArray(review.images) &&
+                          review.images.length > 0 &&
+                          renderReviewImages(review.images)}
+                      </View>
+                      {idx < reviews.length - 1 && (
+                        <View style={styles.separator} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </View>
+              </View>
+            ) : (
+              <View style={styles.shadowWrapper}>
+                <View style={styles.forNodata}>
+                  <Text style={styles.forNoDataText}>
+                    {t('no_review_text')}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Puja List Group */}
+          <View style={styles.poojaListGroup}>
+            <Text style={styles.sectionTitle}>{t('puja_list')}</Text>
+            {pujaList && pujaList.length > 0 ? (
+              <View style={styles.shadowWrapper}>
+                <View style={styles.poojaList}>
+                  {displayedPujaList.map((item, idx) => (
+                    <React.Fragment key={item.pooja}>
+                      {renderPujaItem({ item })}
+                      {idx < displayedPujaList.length - 1 && (
+                        <View style={styles.separator} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                  {!showAllPuja && pujaList.length > 3 && (
+                    <TouchableOpacity
+                      style={styles.moreButton}
+                      onPress={() => setShowAllPuja(true)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.moreButtonText}>View more</Text>
+                      <Ionicons
+                        name="chevron-down"
+                        size={moderateScale(16)}
+                        color={COLORS.primary}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            ) : (
+              <View style={styles.shadowWrapper}>
+                <View style={styles.forNodata}>
+                  <Text style={styles.forNoDataText}>
+                    {t('no_puja_performed_data_available')}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
+      </ScrollView>
       <Modal
         visible={modalVisible}
         transparent
@@ -401,172 +604,6 @@ const PanditDetailsScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
-
-      <ScrollView
-        style={styles.scrollContainer}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <View style={styles.contentContainer}>
-          <View style={[styles.panditCard, THEMESHADOW.shadow]}>
-            <Image
-              source={{
-                uri:
-                  panditImage ||
-                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
-              }}
-              style={styles.panditImage}
-              resizeMode="cover"
-            />
-            <View style={styles.panditInfo}>
-              <Text style={styles.panditName}>
-                {panditName || 'Pandit Name'}
-              </Text>
-              <View style={styles.nameRatingRow}>
-                {renderStars(
-                  Math.round(parseFloat(selectedPandit?.average_rating || '0')),
-                )}
-                <Text style={styles.experienceText}>
-                  {selectedPandit?.total_ratings || 0} {t('reviews')}
-                </Text>
-              </View>
-            </View>
-          </View>
-          <View style={styles.recommendedSection}>
-            <Text style={styles.descriptionText}>
-              {panditName
-                ? `Pandit ${panditName} is highly experienced and well-versed in Hindu rituals and ceremonies. ${
-                    selectedPandit?.bio ||
-                    'Specializing in various traditional pujas.'
-                  }`
-                : 'Pandit details will appear here.'}
-            </Text>
-          </View>
-          <View style={styles.photoGallerySection}>
-            <Text style={styles.sectionTitle}>{t('photo_gallery')}</Text>
-            {gallery && gallery.length > 0 ? (
-              <FlatList
-                data={gallery}
-                keyExtractor={item => item.id.toString()}
-                renderItem={({ item, index }) => renderGalleryItem({ item, index })}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.galleryHorizontalList}
-              />
-            ) : (
-              <View style={[THEMESHADOW.shadow, styles.forNodata]}>
-                <Text style={styles.forNoDataText}>
-                  {t('no_photo_gallery_available')}
-                </Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.reviewsSection}>
-            <Text style={styles.sectionTitle}>{t('reviews')}</Text>
-            {Array.isArray(reviews) && reviews.length > 0 ? (
-              <View style={[styles.reviewsList, THEMESHADOW.shadow]}>
-                {reviews.map((review, idx) => (
-                  <React.Fragment key={review.id}>
-                    <View style={styles.reviewItem}>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          marginBottom: moderateScale(8),
-                        }}
-                      >
-                        <Image
-                          source={{
-                            uri: getReviewAvatar(review),
-                          }}
-                          style={{
-                            width: moderateScale(44),
-                            height: moderateScale(44),
-                            borderRadius: moderateScale(16),
-                            marginRight: moderateScale(14),
-                          }}
-                        />
-                        <View style={styles.reviewHeader}>
-                          <Text style={styles.reviewDate}>
-                            {formatDate(review.created_at)}
-                          </Text>
-                          <Text
-                            style={{
-                              fontFamily: Fonts.Sen_Bold,
-                              color: COLORS.textDark,
-                              fontSize: moderateScale(14),
-                              marginBottom: moderateScale(6),
-                            }}
-                          >
-                            {review.user_name}
-                          </Text>
-                          {renderStars(review.rating)}
-                        </View>
-                      </View>
-                      <Text style={styles.reviewText}>
-                        {review.review && review.review.trim().length > 0
-                          ? review.review
-                          : t('no_review_text')}
-                      </Text>
-                      {Array.isArray(review.images) &&
-                        review.images.length > 0 &&
-                        renderReviewImages(review.images)}
-
-                      {/* <TouchableOpacity style={styles.actionItem}>
-                        <Feather
-                          name="thumbs-down"
-                          size={moderateScale(20)}
-                          color={COLORS.bottomNavIcon}
-                          style={styles.actionIcon}
-                        />
-                        <Text style={styles.actionCount}>0</Text>
-                      </TouchableOpacity> */}
-                    </View>
-                    {idx < reviews.length - 1 && (
-                      <View style={styles.separator} />
-                    )}
-                  </React.Fragment>
-                ))}
-              </View>
-            ) : (
-              <View style={[THEMESHADOW.shadow, styles.forNodata]}>
-                <Text style={styles.forNoDataText}>{t('no_review_text')}</Text>
-              </View>
-            )}
-          </View>
-          <View style={styles.poojaSection}>
-            <Text style={styles.sectionTitle}>{t('puja_list')}</Text>
-            {pujaList && pujaList.length > 0 ? (
-              <View style={[styles.poojaList, THEMESHADOW.shadow]}>
-                {displayedPujaList.map((item, idx) => (
-                  <React.Fragment key={item.pooja}>
-                    {renderPujaItem({ item })}
-                    {idx < displayedPujaList.length - 1 && (
-                      <View style={styles.separator} />
-                    )}
-                  </React.Fragment>
-                ))}
-                {!showAllPuja && pujaList.length > 3 && (
-                  <TouchableOpacity
-                    style={styles.moreButton}
-                    onPress={() => setShowAllPuja(true)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.moreButtonText}>More...</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            ) : (
-              <View style={[THEMESHADOW.shadow, styles.forNodata]}>
-                <Text style={styles.forNoDataText}>
-                  {t('no_puja_performed_data_available')}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -579,27 +616,34 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
     backgroundColor: COLORS.pujaBackground,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
   },
   scrollContent: {
     flexGrow: 1,
   },
-  contentContainer: {
+  contentWrapper: {
     backgroundColor: COLORS.pujaBackground,
     borderTopLeftRadius: moderateScale(24),
     borderTopRightRadius: moderateScale(24),
     paddingHorizontal: moderateScale(20),
     paddingTop: moderateScale(24),
     flex: 1,
+    gap: moderateScale(24),
   },
-  panditCard: {
+  shadowWrapper: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
-    flexDirection: 'row',
+    ...(COMMON_LIST_STYLE as ViewStyle),
+    paddingHorizontal: moderateScale(0),
+  },
+  profileGroup: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(12),
+    paddingHorizontal: moderateScale(14),
+    overflow: 'hidden',
+    ...(COMMON_CARD_STYLE as ViewStyle),
     alignItems: 'center',
-    padding: moderateScale(16),
-    marginBottom: moderateScale(24),
   },
   panditImage: {
     width: moderateScale(80),
@@ -628,34 +672,33 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Medium,
     fontWeight: '500',
   },
-  recommendedSection: {
-    marginBottom: moderateScale(24),
-  },
+  bioGroup: {},
   sectionTitle: {
     color: COLORS.textDark,
     fontSize: moderateScale(18),
     fontFamily: Fonts.Sen_SemiBold,
     fontWeight: '600',
+    marginBottom: moderateScale(12),
   },
   descriptionText: {
     color: COLORS.inputLabelText,
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
+    textAlign: 'justify',
   },
-  photoGallerySection: {
-    marginBottom: moderateScale(12),
-  },
+  galleryGroup: {},
   galleryHorizontalList: {
-    padding: 12,
+    paddingVertical: moderateScale(2),
+    paddingHorizontal: moderateScale(2),
   },
   galleryItemHorizontal: {
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(12),
-    width: moderateScale(120),
     alignItems: 'center',
-    paddingVertical: moderateScale(16),
-    paddingHorizontal: moderateScale(10),
     marginRight: moderateScale(14),
+    ...(COMMON_CARD_STYLE as ViewStyle),
+    ...THEMESHADOW.shadow,
+    flexDirection: 'column',
+    width: moderateScale(120),
   },
   galleryImageHorizontal: {
     width: moderateScale(80),
@@ -671,17 +714,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  poojaSection: {
-    marginBottom: moderateScale(24),
-  },
+  reviewsGroup: {},
+  poojaListGroup: {},
   poojaList: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    marginTop: moderateScale(12),
+    paddingHorizontal: moderateScale(16),
+    paddingVertical: moderateScale(0),
+    paddingBottom: moderateScale(16),
+    overflow: 'hidden',
   },
   poojaItem: {
-    flexDirection: 'row',
+    ...(COMMON_CARD_STYLE as ViewStyle),
     alignItems: 'center',
   },
   poojaImage: {
@@ -704,7 +748,6 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: moderateScale(13),
     fontFamily: Fonts.Sen_Regular,
-    marginBottom: moderateScale(8),
   },
   poojaPrice: {
     color: COLORS.primary,
@@ -714,31 +757,29 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: 'rgba(235, 235, 235, 1)',
-    marginVertical: moderateScale(16),
-  },
-  reviewsSection: {
-    marginBottom: moderateScale(24),
+    backgroundColor: COLORS.border,
   },
   forNodata: {
     alignItems: 'center',
-    marginTop: moderateScale(16),
     backgroundColor: COLORS.white,
     paddingVertical: 12,
+    borderRadius: moderateScale(12),
+    overflow: 'hidden',
   },
-
   reviewsList: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
-    padding: moderateScale(16),
-    marginTop: moderateScale(12),
+    paddingHorizontal: moderateScale(16),
+    paddingVertical: 0,
+    overflow: 'hidden',
   },
   reviewItem: {
-    marginBottom: moderateScale(4),
+    marginBottom: moderateScale(0),
+    ...(COMMON_CARD_STYLE as ViewStyle),
+    flexDirection: 'column',
+    alignItems: 'stretch',
   },
-  reviewHeader: {
-    // marginBottom: moderateScale(8),
-  },
+  reviewHeader: {},
   reviewDate: {
     fontSize: moderateScale(12),
     color: COLORS.textSecondary,
@@ -849,16 +890,20 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   moreButton: {
-    marginTop: moderateScale(10),
+    marginTop: moderateScale(16),
     alignSelf: 'center',
-    paddingVertical: moderateScale(6),
-    paddingHorizontal: moderateScale(18),
-    backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: moderateScale(20),
+    paddingVertical: moderateScale(10),
+    paddingHorizontal: moderateScale(24),
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(6),
+    marginBottom: moderateScale(10),
+    backgroundColor: '#FEF2F2', // Soft Red background
+    borderRadius: moderateScale(30),
   },
   moreButtonText: {
-    color: COLORS.white,
-    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primary, // Primary Red text
+    fontFamily: Fonts.Sen_Bold,
     fontSize: moderateScale(14),
     fontWeight: '600',
   },

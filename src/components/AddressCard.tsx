@@ -1,41 +1,35 @@
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ViewStyle,
+} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import { COLORS } from '../theme/theme';
+import { COLORS, COMMON_CARD_STYLE } from '../theme/theme';
 import Fonts from '../theme/fonts';
 import { Address } from '../screens/Users/AddressesScreen/AddressesScreen';
+import { moderateScale } from 'react-native-size-matters';
 
 interface AddressCardProps {
   address: Address;
   onMenuPress: (address: Address, position: { x: number; y: number }) => void;
-  isLast?: boolean;
 }
 
-const AddressCard: React.FC<AddressCardProps> = ({
-  address,
-  onMenuPress,
-  isLast = false,
-}) => {
+const AddressCard: React.FC<AddressCardProps> = ({ address, onMenuPress }) => {
   const buttonRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
 
   const handleMenuPress = () => {
     if (buttonRef.current) {
-      buttonRef.current.measure(
-        (
-          fx: number,
-          fy: number,
-          width: number,
-          height: number,
-          px: number,
-          py: number,
-        ) => {
-          onMenuPress(address, { x: px, y: py });
+      buttonRef.current.measureInWindow(
+        (x: number, y: number, width: number, height: number) => {
+          onMenuPress(address, { x: x, y: y });
         },
       );
     }
   };
 
-  // Compose address lines
   const addressLines = [
     address.address_line1,
     address.address_line2,
@@ -73,7 +67,6 @@ const AddressCard: React.FC<AddressCardProps> = ({
       {address.phone_number ? (
         <Text style={styles.phoneText}>{address.phone_number}</Text>
       ) : null}
-      {!isLast && <View style={styles.cardSeparator} />}
     </View>
   );
 };
@@ -82,28 +75,27 @@ export default AddressCard;
 
 const styles = StyleSheet.create({
   addressCard: {
+    ...(COMMON_CARD_STYLE as ViewStyle),
+    flexDirection: 'column',
     backgroundColor: 'transparent',
-    marginBottom: 0,
     position: 'relative',
-    borderRadius: 0,
-    padding: 0,
   },
   addressHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: moderateScale(4),
   },
   addressName: {
     color: COLORS.textPrimary,
     fontSize: 15,
     fontFamily: Fonts.Sen_SemiBold,
-    marginRight: 5,
+    marginRight: moderateScale(5),
   },
   typeBadge: {
     backgroundColor: COLORS.badgeBackground,
     borderRadius: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 3,
+    paddingHorizontal: moderateScale(5),
+    paddingVertical: moderateScale(3),
     marginRight: 'auto',
   },
   typeText: {
@@ -112,7 +104,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_SemiBold,
   },
   menuButton: {
-    padding: 4,
     position: 'absolute',
     right: 0,
     top: -4,
@@ -121,19 +112,12 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontSize: 13,
     fontFamily: Fonts.Sen_Regular,
-    marginTop: 4,
-    marginBottom: 4,
-    paddingRight: 40,
+    marginTop: moderateScale(4),
+    marginBottom: moderateScale(4),
   },
   phoneText: {
     color: COLORS.textPrimary,
     fontSize: 13,
     fontFamily: Fonts.Sen_Regular,
-    // marginBottom: 14,
-  },
-  cardSeparator: {
-    height: 1,
-    backgroundColor: COLORS.separatorColor,
-    marginVertical: 14,
   },
 });

@@ -1,27 +1,31 @@
-import React, {useEffect, useState, useCallback, useRef} from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
+  ScrollView,
   RefreshControl,
   Image,
   TouchableOpacity,
   StatusBar,
-  ActivityIndicator,
+  ViewStyle,
 } from 'react-native';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
-import {useTranslation} from 'react-i18next';
-import {moderateScale} from 'react-native-size-matters';
-import {getPastBookings} from '../../../api/apiService';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+import { moderateScale } from 'react-native-size-matters';
+import { getPastBookings } from '../../../api/apiService';
+import {
+  COLORS,
+  COMMON_LIST_STYLE,
+  COMMON_CARD_STYLE,
+} from '../../../theme/theme';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import Fonts from '../../../theme/fonts';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {translateData} from '../../../utils/TranslateData';
-import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
-import {StackNavigationProp} from '@react-navigation/stack';
+import { translateData } from '../../../utils/TranslateData';
+import { UserProfileParamList } from '../../../navigation/User/userProfileNavigator';
+import { StackNavigationProp } from '@react-navigation/stack';
 
 type PastBookingType = {
   id: number;
@@ -36,7 +40,7 @@ const PastPujaScreen: React.FC = () => {
     UserProfileParamList,
     'PastBookingDetailsScreen'
   >;
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<ScreenNavigationProps>();
   const insets = useSafeAreaInsets();
   const [pastBookings, setPastBookings] = useState<PastBookingType[]>([]);
@@ -105,7 +109,7 @@ const PastPujaScreen: React.FC = () => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const day = date.getDate();
-    const month = date.toLocaleDateString('en-US', {month: 'long'});
+    const month = date.toLocaleDateString('en-US', { month: 'long' });
     const year = date.getFullYear();
     const suffix =
       day === 1 || day === 21 || day === 31
@@ -118,44 +122,8 @@ const PastPujaScreen: React.FC = () => {
     return `${t('scheduled_for')} ${day}${suffix} ${month} ${year}`;
   };
 
-  const renderBookingItem = ({item}: {item: PastBookingType}) => {
-    return (
-      <TouchableOpacity
-        style={styles.bookingItem}
-        activeOpacity={0.7}
-        onPress={() => {
-          navigation.navigate('PastBookingDetailsScreen', {pujaId: item.id});
-        }}>
-        <Image
-          source={{uri: item.pooja_image_url}}
-          style={styles.bookingImage}
-        />
-        <View style={styles.bookingInfo}>
-          <View style={styles.bookingHeader}>
-            <Text style={styles.bookingTitle} numberOfLines={1}>
-              {item.pooja_name}
-            </Text>
-            <Text
-              style={[
-                styles.statusText,
-                {color: getStatusColor(item.booking_status)},
-              ]}>
-              {item.booking_status.charAt(0).toUpperCase() +
-                item.booking_status.slice(1)}
-            </Text>
-          </View>
-          <Text style={styles.bookingDate}>
-            {formatDate(item.booking_date)}
-          </Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderSeparator = () => <View style={styles.separator} />;
-
   return (
-    <View style={[styles.container, {paddingTop: insets.top}]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <CustomeLoader loading={loading} />
       <StatusBar
         translucent
@@ -163,46 +131,74 @@ const PastPujaScreen: React.FC = () => {
         barStyle="light-content"
       />
       <UserCustomHeader title={t('past_bookings')} showBackButton={true} />
-      <View style={styles.contentContainer}>
-        <View style={[styles.listContainer, THEMESHADOW.shadow, {padding: loading ? 0 : 14}]}>
-          <FlatList
-            data={pastBookings}
-            renderItem={renderBookingItem}
-            keyExtractor={(item, index) => `${item.id}-${index}`}
-            ItemSeparatorComponent={renderSeparator}
-            contentContainerStyle={[
-              styles.flatListContent,
-              // If empty, center the empty text vertically
-              pastBookings.length === 0
-                ? {flex: 1, justifyContent: 'center'}
-                : {},
-            ]}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                tintColor={COLORS.primary}
-                colors={[COLORS.primary]}
-              />
-            }
-            ListEmptyComponent={
-              !loading ? (
-                <View style={{alignItems: 'center', marginVertical: 20}}>
-                  <Text
-                    style={{
-                      color: COLORS.gray,
-                      fontFamily: Fonts.Sen_Medium,
-                      fontSize: 16,
-                    }}>
-                    {t('no_item_available')}
-                  </Text>
-                </View>
-              ) : null
-            }
+      <ScrollView
+        style={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={COLORS.primary}
+            colors={[COLORS.primary]}
           />
+        }
+      >
+        <View style={styles.listContainer}>
+          {pastBookings && pastBookings.length > 0
+            ? pastBookings.map((item, index) => (
+                <View key={`${item.id}-${index}`}>
+                  <TouchableOpacity
+                    style={styles.bookingItem}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      navigation.navigate('PastBookingDetailsScreen', {
+                        pujaId: item.id,
+                      });
+                    }}
+                  >
+                    <Image
+                      source={{ uri: item.pooja_image_url }}
+                      style={styles.bookingImage}
+                    />
+                    <View style={styles.bookingInfo}>
+                      <View style={styles.bookingHeader}>
+                        <Text style={styles.bookingTitle} numberOfLines={1}>
+                          {item.pooja_name}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.statusText,
+                            { color: getStatusColor(item.booking_status) },
+                          ]}
+                        >
+                          {item.booking_status.charAt(0).toUpperCase() +
+                            item.booking_status.slice(1)}
+                        </Text>
+                      </View>
+                      <Text style={styles.bookingDate}>
+                        {formatDate(item.booking_date)}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  {index !== pastBookings.length - 1 && (
+                    <View style={styles.separator} />
+                  )}
+                </View>
+              ))
+            : !loading && (
+                <Text
+                  style={{
+                    color: COLORS.gray,
+                    fontFamily: Fonts.Sen_Medium,
+                    fontSize: 16,
+                    textAlign: 'center',
+                  }}
+                >
+                  {t('no_item_available')}
+                </Text>
+              )}
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 };
@@ -215,28 +211,26 @@ const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    zIndex: 10,
+    paddingHorizontal: moderateScale(24),
+    paddingTop: moderateScale(24),
   },
   listContainer: {
     backgroundColor: COLORS.white,
-    borderRadius: 10,
-    margin: 24,
-  },
-  flatListContent: {
-    flexGrow: 1,
+    paddingVertical: moderateScale(14),
+    ...(COMMON_LIST_STYLE as ViewStyle),
   },
   bookingItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingVertical: 0,
-    minHeight: 52,
+    ...(COMMON_CARD_STYLE as ViewStyle),
+    alignItems: 'center',
   },
   bookingImage: {
     width: moderateScale(52),
     height: moderateScale(52),
-    borderRadius: 10,
-    marginRight: 9,
+    borderRadius: moderateScale(10),
+    marginRight: moderateScale(12),
     flexShrink: 0,
   },
   bookingInfo: {
@@ -247,8 +241,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 7,
-    gap: 20,
+    marginBottom: moderateScale(4),
+    gap: moderateScale(10),
   },
   bookingTitle: {
     fontSize: moderateScale(15),
@@ -273,9 +267,8 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: COLORS.separatorColor,
-    marginVertical: 13,
-    flexShrink: 0,
+    backgroundColor: COLORS.border,
+    marginVertical: moderateScale(0),
   },
 });
 

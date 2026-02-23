@@ -6,7 +6,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { COLORS } from '../../../../theme/theme';
+import { COLORS, COMMON_LIST_STYLE } from '../../../../theme/theme';
 import RealisticMoon from './RealisticMoon';
 import { CalendarDay } from '../../../../api/apiService';
 

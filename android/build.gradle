@@ -8,6 +8,7 @@ buildscript {
         kotlinVersion = "2.1.20"
         gradlePluginVersion = "8.1.0"
         playServicesLocationVersion = "21.0.1"
+        playServicesLocationVersion = "21.0.1"
     }
     repositories {
         google()
@@ -19,6 +20,11 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
         classpath 'com.google.gms:google-services:4.4.2'
     }
+}
+
+ext {
+    REACT_NATIVE_NODE_MODULES_DIR = "${rootDir}/../node_modules/react-native"
+    REACT_NATIVE_WORKLETS_NODE_MODULES_DIR = "${rootDir}/../node_modules/react-native-worklets"
 }
 
 apply plugin: "com.facebook.react.rootproject"

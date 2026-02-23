@@ -1,24 +1,25 @@
-import React, {useState, useEffect, useCallback, useRef} from 'react';
-import {View, Text, StyleSheet, ScrollView, StatusBar} from 'react-native';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   useNavigation,
   RouteProp,
   useRoute,
   useFocusEffect,
 } from '@react-navigation/native';
-import {COLORS, THEMESHADOW} from '../../../theme/theme';
+import { COLORS, COMMON_LIST_STYLE } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import UserCustomHeader from '../../../components/UserCustomHeader';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import AddressCard from '../../../components/AddressCard';
 import AddressMenu from '../../../components/AddressMenu';
-import {getAddress, deleteAddress} from '../../../api/apiService';
+import { getAddress, deleteAddress } from '../../../api/apiService';
 import CustomeLoader from '../../../components/CustomeLoader';
-import {UserProfileParamList} from '../../../navigation/User/userProfileNavigator';
+import { UserProfileParamList } from '../../../navigation/User/userProfileNavigator';
 import CustomModal from '../../../components/CustomModal';
-import {useCommonToast} from '../../../common/CommonToast';
-import {translateData} from '../../../utils/TranslateData';
+import { useCommonToast } from '../../../common/CommonToast';
+import { translateData } from '../../../utils/TranslateData';
+import { moderateScale } from 'react-native-size-matters';
 
 export interface Address {
   id: number;
@@ -36,13 +37,13 @@ export interface Address {
 }
 
 const AddressesScreen: React.FC = () => {
-  const navigation = useNavigation<UserProfileParamList>();
-  const {t, i18n} = useTranslation();
-  const {showSuccessToast, showErrorToast} = useCommonToast();
+  const navigation = useNavigation<any>();
+  const { t, i18n } = useTranslation();
+  const { showSuccessToast, showErrorToast } = useCommonToast();
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
-  const [menuPosition, setMenuPosition] = useState({x: 0, y: 0});
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [originalAddresses, setOriginalAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,7 +110,7 @@ const AddressesScreen: React.FC = () => {
 
   const handleMenuPress = (
     address: Address,
-    position: {x: number; y: number},
+    position: { x: number; y: number },
   ) => {
     const translatedAddress: any = originalAddresses.find(
       a => a.id === address.id,
@@ -122,7 +123,9 @@ const AddressesScreen: React.FC = () => {
   const handleEdit = () => {
     setMenuVisible(false);
     if (selectedAddress) {
-      navigation.navigate('AddAddressScreen', {addressToEdit: selectedAddress});
+      navigation.navigate('AddAddressScreen', {
+        addressToEdit: selectedAddress,
+      });
     } else {
       navigation.navigate('AddAddressScreen');
     }
@@ -138,7 +141,7 @@ const AddressesScreen: React.FC = () => {
     if (!selectedAddress) return;
     setLoading(true);
     try {
-      await deleteAddress({id: selectedAddress.id});
+      await deleteAddress({ id: selectedAddress.id });
       translationCacheRef.current.delete(currentLanguage);
       await fetchAddressData();
       showSuccessToast(t('address_deleted_successfully'));
@@ -155,7 +158,7 @@ const AddressesScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, {paddingTop: inset.top}]}>
+    <View style={[styles.container, { paddingTop: inset.top }]}>
       <CustomeLoader loading={loading} />
 
       <UserCustomHeader
@@ -176,18 +179,21 @@ const AddressesScreen: React.FC = () => {
               <Text style={styles.noDataText}>{t('no_addresses_found')}</Text>
             </View>
           ) : (
-            <ScrollView
-              style={[styles.addressList, THEMESHADOW.shadow, {padding: loading ? 0 : 14}]}
-              showsVerticalScrollIndicator={false}>
-              {addresses.map((address, idx) => (
-                <AddressCard
-                  key={address.id}
-                  address={address}
-                  onMenuPress={handleMenuPress}
-                  isLast={idx === addresses.length - 1 && addresses.length > 0}
-                />
-              ))}
-            </ScrollView>
+            <View style={styles.addressList}>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {addresses.map((address, idx) => (
+                  <View key={address.id}>
+                    <AddressCard
+                      address={address}
+                      onMenuPress={handleMenuPress}
+                    />
+                    {idx < addresses.length - 1 && (
+                      <View style={styles.separator} />
+                    )}
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
           )}
         </View>
       </View>
@@ -220,31 +226,35 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    backgroundColor: COLORS.background,
+    paddingHorizontal: moderateScale(24),
+    paddingTop: moderateScale(24),
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    backgroundColor: COLORS.pujaBackground,
   },
   savedAddressesTitle: {
     color: COLORS.textPrimary,
     fontSize: 18,
     fontFamily: Fonts.Sen_SemiBold,
-    marginBottom: 11,
+    marginBottom: moderateScale(12),
   },
   addressList: {
+    ...(COMMON_LIST_STYLE as ViewStyle),
     backgroundColor: COLORS.white,
     borderRadius: 16,
   },
   noDataContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
   },
   noDataText: {
-    color: COLORS.textSecondary || '#888',
+    color: COLORS.textSecondary,
     fontSize: 16,
     fontFamily: Fonts.Sen_Regular,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: COLORS.border,
   },
 });
 
