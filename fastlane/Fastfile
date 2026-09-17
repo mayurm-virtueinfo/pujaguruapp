@@ -196,18 +196,9 @@ platform :ios do
       version_name = get_version_number(xcodeproj: "ios/PujaGuruApp.xcodeproj", target: "PujaGuruApp", configuration: "Release")
       UI.message("Defaulted version_name from project.pbxproj: #{version_name}")
     end
-
-    if version_code.to_s.strip.empty?
-      version_code = get_build_number(xcodeproj: "ios/PujaGuruApp.xcodeproj")
-      UI.message("Defaulted version_code from project.pbxproj: #{version_code}")
-    end
-
     UI.user_error!("version_name is required") if version_name.to_s.strip.empty?
-    UI.user_error!("version_code must be a positive integer") unless version_code.to_s =~ /^\d+$/ && version_code.to_i > 0
 
-    UI.header("Building iOS Development TestFlight Archive v#{version_name} (#{version_code})")
-
-    # Optional App Store Connect API Key configuration
+    # App Store Connect API Key configuration (configured early for TestFlight queries)
     api_key = nil
     if ENV["APP_STORE_CONNECT_KEY_ID"] && ENV["APP_STORE_CONNECT_ISSUER_ID"] && ENV["APP_STORE_CONNECT_API_KEY_KEY"]
       UI.message("Configuring App Store Connect API Key...")
@@ -219,6 +210,42 @@ platform :ios do
         in_house: false
       )
     end
+
+    # Auto-increment build number from TestFlight (+1) or fallback to project.pbxproj
+    if version_code.to_s.strip.empty?
+      current_project_build = get_build_number(xcodeproj: "ios/PujaGuruApp.xcodeproj").to_i
+      if api_key
+        begin
+          UI.message("Checking latest build number on TestFlight...")
+          latest_build = latest_testflight_build_number(
+            api_key: api_key,
+            app_identifier: "com.panditjiapp.pujaguru",
+            initial_build_number: [current_project_build - 1, 0].max
+          )
+          next_build = [latest_build.to_i, current_project_build - 1].max + 1
+          version_code = next_build.to_s
+          UI.success("Auto-incremented build number from TestFlight: latest was #{latest_build} -> next build is #{version_code}")
+        rescue => e
+          UI.important("Could not fetch latest build number from TestFlight (#{e.message}). Falling back to project.pbxproj.")
+          version_code = current_project_build.to_s
+        end
+      else
+        version_code = current_project_build.to_s
+        UI.message("Defaulted version_code from project.pbxproj: #{version_code}")
+      end
+    end
+
+    UI.user_error!("version_code must be a positive integer") unless version_code.to_s =~ /^\d+$/ && version_code.to_i > 0
+
+    # Export resolved values to GITHUB_ENV for CI artifact naming and logs
+    if ENV["GITHUB_ENV"] && File.exist?(ENV["GITHUB_ENV"])
+      File.open(ENV["GITHUB_ENV"], "a") do |f|
+        f.puts("RESOLVED_VERSION_NAME=#{version_name}")
+        f.puts("RESOLVED_VERSION_CODE=#{version_code}")
+      end
+    end
+
+    UI.header("Building iOS Development TestFlight Archive v#{version_name} (#{version_code})")
 
     project_root = File.expand_path("..", __dir__)
     dest_dir = File.join(project_root, "build", "outputs", "ipa")
@@ -272,18 +299,9 @@ platform :ios do
       version_name = get_version_number(xcodeproj: "ios/PujaGuruApp.xcodeproj", target: "PujaGuruApp", configuration: "Release")
       UI.message("Defaulted version_name from project.pbxproj: #{version_name}")
     end
-
-    if version_code.to_s.strip.empty?
-      version_code = get_build_number(xcodeproj: "ios/PujaGuruApp.xcodeproj")
-      UI.message("Defaulted version_code from project.pbxproj: #{version_code}")
-    end
-
     UI.user_error!("version_name is required") if version_name.to_s.strip.empty?
-    UI.user_error!("version_code must be a positive integer") unless version_code.to_s =~ /^\d+$/ && version_code.to_i > 0
 
-    UI.header("Building iOS Production TestFlight Archive v#{version_name} (#{version_code})")
-
-    # Optional App Store Connect API Key configuration
+    # App Store Connect API Key configuration (configured early for TestFlight queries)
     api_key = nil
     if ENV["APP_STORE_CONNECT_KEY_ID"] && ENV["APP_STORE_CONNECT_ISSUER_ID"] && ENV["APP_STORE_CONNECT_API_KEY_KEY"]
       UI.message("Configuring App Store Connect API Key...")
@@ -295,6 +313,42 @@ platform :ios do
         in_house: false
       )
     end
+
+    # Auto-increment build number from TestFlight (+1) or fallback to project.pbxproj
+    if version_code.to_s.strip.empty?
+      current_project_build = get_build_number(xcodeproj: "ios/PujaGuruApp.xcodeproj").to_i
+      if api_key
+        begin
+          UI.message("Checking latest build number on TestFlight...")
+          latest_build = latest_testflight_build_number(
+            api_key: api_key,
+            app_identifier: "com.panditjiapp.pujaguru",
+            initial_build_number: [current_project_build - 1, 0].max
+          )
+          next_build = [latest_build.to_i, current_project_build - 1].max + 1
+          version_code = next_build.to_s
+          UI.success("Auto-incremented build number from TestFlight: latest was #{latest_build} -> next build is #{version_code}")
+        rescue => e
+          UI.important("Could not fetch latest build number from TestFlight (#{e.message}). Falling back to project.pbxproj.")
+          version_code = current_project_build.to_s
+        end
+      else
+        version_code = current_project_build.to_s
+        UI.message("Defaulted version_code from project.pbxproj: #{version_code}")
+      end
+    end
+
+    UI.user_error!("version_code must be a positive integer") unless version_code.to_s =~ /^\d+$/ && version_code.to_i > 0
+
+    # Export resolved values to GITHUB_ENV for CI artifact naming and logs
+    if ENV["GITHUB_ENV"] && File.exist?(ENV["GITHUB_ENV"])
+      File.open(ENV["GITHUB_ENV"], "a") do |f|
+        f.puts("RESOLVED_VERSION_NAME=#{version_name}")
+        f.puts("RESOLVED_VERSION_CODE=#{version_code}")
+      end
+    end
+
+    UI.header("Building iOS Production TestFlight Archive v#{version_name} (#{version_code})")
 
     project_root = File.expand_path("..", __dir__)
     dest_dir = File.join(project_root, "build", "outputs", "ipa")

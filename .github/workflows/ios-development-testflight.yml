@@ -9,7 +9,7 @@ on:
         type: string
         default: ""
       version_code:
-        description: "Build / Project Version Number (Optional: Leave empty to use project.pbxproj default)"
+        description: "Build / Project Version Number (Optional: Leave empty to auto-increment from TestFlight +1)"
         required: false
         type: string
         default: ""
@@ -36,7 +36,7 @@ jobs:
           xcodebuild -version
           echo "TOOLCHAINS=com.apple.dt.toolchain.XcodeDefault" >> $GITHUB_ENV
 
-      - name: Validate & Resolve Version Inputs
+      - name: Validate Version Inputs
         shell: bash
         run: |
           set -e
@@ -44,31 +44,21 @@ jobs:
           VERSION_CODE="${{ inputs.version_code }}"
 
           echo "Validating iOS Development version inputs..."
-          # If version_name is empty, extract MARKETING_VERSION from project.pbxproj
-          if [ -z "$VERSION_NAME" ]; then
-            VERSION_NAME=$(sed -n 's/.*MARKETING_VERSION = \([0-9.a-zA-Z_-]*\);/\1/p' ios/PujaGuruApp.xcodeproj/project.pbxproj | head -n 1)
-            echo "version_name not provided. Defaulted to project.pbxproj MARKETING_VERSION: $VERSION_NAME"
+          if [ -n "$VERSION_NAME" ]; then
+            echo "Manual MARKETING_VERSION provided: $VERSION_NAME"
+          else
+            echo "version_name not provided. Fastlane will read MARKETING_VERSION from project.pbxproj."
           fi
 
-          # If version_code is empty, extract CURRENT_PROJECT_VERSION from project.pbxproj
-          if [ -z "$VERSION_CODE" ]; then
-            VERSION_CODE=$(sed -n 's/.*CURRENT_PROJECT_VERSION = \([0-9]*\);/\1/p' ios/PujaGuruApp.xcodeproj/project.pbxproj | head -n 1)
-            echo "version_code not provided. Defaulted to project.pbxproj CURRENT_PROJECT_VERSION: $VERSION_CODE"
+          if [ -n "$VERSION_CODE" ]; then
+            if ! [[ "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
+              echo "::error::version_code must be a positive integer greater than 0 (received: $VERSION_CODE)"
+              exit 1
+            fi
+            echo "Manual CURRENT_PROJECT_VERSION provided: $VERSION_CODE"
+          else
+            echo "version_code not provided. Fastlane will auto-increment from latest TestFlight build (+1)."
           fi
-
-          if [ -z "$VERSION_NAME" ]; then
-            echo "::error::Could not determine version_name from inputs or project.pbxproj"
-            exit 1
-          fi
-
-          if ! [[ "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
-            echo "::error::version_code must be a positive integer greater than 0 (received: $VERSION_CODE)"
-            exit 1
-          fi
-
-          echo "RESOLVED_VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
-          echo "RESOLVED_VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
-          echo "iOS Version Validation Passed: MARKETING_VERSION=$VERSION_NAME, CURRENT_PROJECT_VERSION=$VERSION_CODE"
 
       - name: Setup Node.js (22.x)
         uses: actions/setup-node@v4
@@ -160,14 +150,14 @@ jobs:
           APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         run: |
           bundle exec fastlane ios development_testflight \
-            version_name:"$RESOLVED_VERSION_NAME" \
-            version_code:"$RESOLVED_VERSION_CODE"
+            version_name:"${{ inputs.version_name }}" \
+            version_code:"${{ inputs.version_code }}"
 
       - name: Upload IPA as GitHub Actions Artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ios-development-${{ env.RESOLVED_VERSION_NAME }}-${{ env.RESOLVED_VERSION_CODE }}-ipa
+          name: ios-development-${{ env.RESOLVED_VERSION_NAME || 'build' }}-${{ env.RESOLVED_VERSION_CODE || 'latest' }}-ipa
           path: build/outputs/ipa/*.ipa
           retention-days: 14
           if-no-files-found: warn
