@@ -12,7 +12,8 @@ This document provides complete instructions for executing, maintaining, and man
 | **Android Development Release AAB** | Android | Development | `.aab` | **GitHub Actions Artifact** | **NO Google Play Console upload** |
 | **Android Production Release APK** | Android | Production | `.apk` | **Firebase App Distribution** | For QA/testing; NOT published to Play Store |
 | **Android Production Release AAB** | Android | Production | `.aab` | **GitHub Actions Artifact** | **NO Google Play Console upload** |
-| **iOS TestFlight Build & Upload** | iOS | Production | `.ipa` | **Apple TestFlight** (Internal) | **NO App Store review or release** |
+| **iOS Development TestFlight Build & Upload** | iOS | Development | `.ipa` | **Apple TestFlight** (Internal) | **NO App Store review or release** |
+| **iOS Production TestFlight Build & Upload** | iOS | Production | `.ipa` | **Apple TestFlight** (Internal) | **NO App Store review or release** |
 
 ---
 
@@ -40,7 +41,8 @@ All release workflows are manually triggered via `workflow_dispatch` and accept 
    - `Android Development Release AAB`
    - `Android Production Release APK`
    - `Android Production Release AAB`
-   - `iOS TestFlight Build & Upload`
+   - `iOS Development TestFlight Build & Upload`
+   - `iOS Production TestFlight Build & Upload`
 3. Click **Run workflow**.
 4. Enter:
    - **Release Version Name** (e.g. `1.0.8`)
@@ -74,9 +76,14 @@ bundle exec fastlane android production_apk version_name:1.0.8 version_code:17
 bundle exec fastlane android production_aab version_name:1.0.8 version_code:17
 ```
 
-#### iOS TestFlight:
+#### iOS Development TestFlight:
 ```bash
-bundle exec fastlane ios testflight version_name:1.0.8 version_code:17
+bundle exec fastlane ios development_testflight version_name:1.0.8 version_code:17
+```
+
+#### iOS Production TestFlight:
+```bash
+bundle exec fastlane ios production_testflight version_name:1.0.8 version_code:17
 ```
 
 ---

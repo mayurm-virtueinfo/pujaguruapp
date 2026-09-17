@@ -1,4 +1,4 @@
-name: iOS TestFlight Build & Upload
+name: iOS Production TestFlight Build & Upload
 
 on:
   workflow_dispatch:
@@ -15,17 +15,17 @@ on:
         default: "17"
 
 concurrency:
-  group: ios-testflight-${{ github.ref }}
+  group: ios-prod-testflight-${{ github.ref }}
   cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
-  build-and-upload-testflight:
-    name: Build & Upload to TestFlight (Internal Testing)
+  build-and-upload-production-testflight:
+    name: Build & Upload Production IPA to TestFlight
     runs-on: macos-14
-    environment: ios-testflight
+    environment: production
 
     steps:
       - name: Checkout repository
@@ -38,7 +38,7 @@ jobs:
           VERSION_NAME="${{ inputs.version_name }}"
           VERSION_CODE="${{ inputs.version_code }}"
 
-          echo "Validating iOS version inputs..."
+          echo "Validating iOS Production version inputs..."
           if [ -z "$VERSION_NAME" ]; then
             echo "::error::version_name cannot be empty"
             exit 1
@@ -130,7 +130,7 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         run: |
-          bundle exec fastlane ios testflight \
+          bundle exec fastlane ios production_testflight \
             version_name:"${{ inputs.version_name }}" \
             version_code:"${{ inputs.version_code }}"
 
