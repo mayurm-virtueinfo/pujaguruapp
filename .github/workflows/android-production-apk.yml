@@ -1,0 +1,147 @@
+name: Android Production Release APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: "Production Version Name (e.g. 1.0.8)"
+        required: true
+        type: string
+        default: "1.0.8"
+      version_code:
+        description: "Production Version Code (Integer > 0, e.g. 17)"
+        required: true
+        type: string
+        default: "17"
+
+concurrency:
+  group: android-prod-apk-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-distribute-production-apk:
+    name: Build & Distribute Production APK
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Version Inputs
+        shell: bash
+        run: |
+          set -e
+          VERSION_NAME="${{ inputs.version_name }}"
+          VERSION_CODE="${{ inputs.version_code }}"
+
+          echo "Validating production version inputs..."
+          if [ -z "$VERSION_NAME" ]; then
+            echo "::error::version_name cannot be empty"
+            exit 1
+          fi
+
+          if ! [[ "$VERSION_CODE" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::version_code must be a positive integer greater than 0 (received: $VERSION_CODE)"
+            exit 1
+          fi
+
+          echo "Version Validation Passed: versionName=$VERSION_NAME, versionCode=$VERSION_CODE"
+
+      - name: Setup Node.js (22.x)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "yarn"
+
+      - name: Setup Java (17)
+        uses: actions/setup-java@v4
+        with:
+          distribution: "zulu"
+          java-version: 17
+          cache: "gradle"
+
+      - name: Setup Ruby (3.3)
+        uses: ruby/setup-ruby@v4
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Install Node Dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Reconstruct Production Environment (.env.production)
+        shell: bash
+        env:
+          ENV_PRODUCTION: ${{ secrets.ENV_PRODUCTION }}
+        run: |
+          if [ -n "$ENV_PRODUCTION" ]; then
+            echo "$ENV_PRODUCTION" > .env.production
+            echo "Reconstructed .env.production from secret."
+          elif [ -f ".env.production" ]; then
+            echo "Using existing .env.production."
+          elif [ -f ".env.example" ]; then
+            echo "Generating fallback .env.production from .env.example..."
+            cp .env.example .env.production
+          fi
+
+      - name: Setup Android Keystore & Signing Properties
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_RELEASE_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_RELEASE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_RELEASE_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/pujaguru.keystore
+            echo "Restored android/app/pujaguru.keystore from secret."
+          fi
+
+          cat <<EOF > android/keystore.properties
+          RELEASE_STORE_FILE=app/pujaguru.keystore
+          RELEASE_STORE_PASSWORD=${KEYSTORE_PASSWORD:-android}
+          RELEASE_KEY_ALIAS=${KEY_ALIAS:-androiddebugkey}
+          RELEASE_KEY_PASSWORD=${KEY_PASSWORD:-android}
+          EOF
+
+      - name: Setup Firebase Service Account
+        shell: bash
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+        run: |
+          if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/firebase-service-account.json"
+            echo "FIREBASE_SERVICE_ACCOUNT_PATH=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
+          fi
+
+      - name: Build & Distribute Production APK via Fastlane (Firebase Only - NO Google Play)
+        env:
+          FIREBASE_APP_ID_PROD: ${{ secrets.FIREBASE_APP_ID_PROD }}
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_GROUPS: ${{ secrets.FIREBASE_TESTER_GROUPS || 'internal-testers' }}
+        run: |
+          bundle exec fastlane android production_apk \
+            version_name:"${{ inputs.version_name }}" \
+            version_code:"${{ inputs.version_code }}"
+
+      - name: Upload Production APK as GitHub Actions Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-production-${{ inputs.version_name }}-${{ inputs.version_code }}-apk
+          path: build/outputs/apk/*.apk
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Clean Up Sensitive Signing & Environment Credentials
+        if: always()
+        shell: bash
+        run: |
+          rm -f android/keystore.properties
+          rm -f android/app/pujaguru.keystore
+          rm -f "$RUNNER_TEMP/firebase-service-account.json"
+          echo "Cleaned up temporary sensitive credential files."
