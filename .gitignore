@@ -21,9 +21,27 @@ DerivedData
 *.ipa
 *.xcuserstate
 **/.xcode.env.local
-# .env
-# .env.production
-# .env.development
+.env*
+!.env.example
+
+# Apple Private Keys, Certificates, and Provisioning
+*.p8
+*.p12
+*.cer
+*.key
+*.pem
+*.mobileprovision
+
+# Crash & Debug Logs
+*-debug.log
+firebase-debug.log
+pglite-debug.log
+*.log
+
+# Scratch and internal notes
+pujaguru-app-fcm.txt
+change.txt
+ios/tmp.xcconfig
 
 # Android/IntelliJ
 #
@@ -31,10 +49,13 @@ build/
 .idea
 .gradle
 local.properties
+keystore.properties
+!keystore.properties.example
 *.iml
 *.hprof
 .cxx/
-# *.keystore
+*.keystore
+*.jks
 !debug.keystore
 .kotlin/
 
