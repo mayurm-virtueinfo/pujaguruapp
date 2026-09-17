@@ -22,13 +22,14 @@ platform :android do
       }
     )
 
-    apk_path = Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH] || "android/app/build/outputs/apk/release/app-release.apk"
+    project_root = File.expand_path("..", __dir__)
+    apk_path = Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH] || File.join(project_root, "android/app/build/outputs/apk/release/app-release.apk")
     UI.user_error!("APK not found at #{apk_path}") unless File.exist?(apk_path)
 
-    # Standardized output artifact name
-    dest_dir = "build/outputs/apk"
+    # Standardized output artifact name (absolute path)
+    dest_dir = File.join(project_root, "build", "outputs", "apk")
     FileUtils.mkdir_p(dest_dir)
-    target_apk = "#{dest_dir}/app-development-#{version_name}-#{version_code}.apk"
+    target_apk = File.join(dest_dir, "app-development-#{version_name}-#{version_code}.apk")
     FileUtils.cp(apk_path, target_apk)
     UI.success("Artifact ready at: #{target_apk}")
 
@@ -78,13 +79,14 @@ platform :android do
       }
     )
 
-    aab_path = Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] || "android/app/build/outputs/bundle/release/app-release.aab"
+    project_root = File.expand_path("..", __dir__)
+    aab_path = Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] || File.join(project_root, "android/app/build/outputs/bundle/release/app-release.aab")
     UI.user_error!("AAB not found at #{aab_path}") unless File.exist?(aab_path)
 
-    # Standardized output artifact name
-    dest_dir = "build/outputs/bundle"
+    # Standardized output artifact name (absolute path)
+    dest_dir = File.join(project_root, "build", "outputs", "bundle")
     FileUtils.mkdir_p(dest_dir)
-    target_aab = "#{dest_dir}/app-development-#{version_name}-#{version_code}.aab"
+    target_aab = File.join(dest_dir, "app-development-#{version_name}-#{version_code}.aab")
     FileUtils.cp(aab_path, target_aab)
 
     UI.success("Artifact ready at: #{target_aab}")
@@ -112,13 +114,14 @@ platform :android do
       }
     )
 
-    apk_path = Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH] || "android/app/build/outputs/apk/release/app-release.apk"
+    project_root = File.expand_path("..", __dir__)
+    apk_path = Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH] || File.join(project_root, "android/app/build/outputs/apk/release/app-release.apk")
     UI.user_error!("APK not found at #{apk_path}") unless File.exist?(apk_path)
 
-    # Standardized output artifact name
-    dest_dir = "build/outputs/apk"
+    # Standardized output artifact name (absolute path)
+    dest_dir = File.join(project_root, "build", "outputs", "apk")
     FileUtils.mkdir_p(dest_dir)
-    target_apk = "#{dest_dir}/app-production-#{version_name}-#{version_code}.apk"
+    target_apk = File.join(dest_dir, "app-production-#{version_name}-#{version_code}.apk")
     FileUtils.cp(apk_path, target_apk)
     UI.success("Artifact ready at: #{target_apk}")
 
@@ -168,13 +171,14 @@ platform :android do
       }
     )
 
-    aab_path = Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] || "android/app/build/outputs/bundle/release/app-release.aab"
+    project_root = File.expand_path("..", __dir__)
+    aab_path = Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] || File.join(project_root, "android/app/build/outputs/bundle/release/app-release.aab")
     UI.user_error!("AAB not found at #{aab_path}") unless File.exist?(aab_path)
 
-    # Standardized output artifact name
-    dest_dir = "build/outputs/bundle"
+    # Standardized output artifact name (absolute path)
+    dest_dir = File.join(project_root, "build", "outputs", "bundle")
     FileUtils.mkdir_p(dest_dir)
-    target_aab = "#{dest_dir}/app-production-#{version_name}-#{version_code}.aab"
+    target_aab = File.join(dest_dir, "app-production-#{version_name}-#{version_code}.aab")
     FileUtils.cp(aab_path, target_aab)
 
     UI.success("Artifact ready at: #{target_aab}")
@@ -206,7 +210,8 @@ platform :ios do
       )
     end
 
-    dest_dir = "build/outputs/ipa"
+    project_root = File.expand_path("..", __dir__)
+    dest_dir = File.join(project_root, "build", "outputs", "ipa")
     FileUtils.mkdir_p(dest_dir)
     ipa_filename = "ios-development-#{version_name}-#{version_code}.ipa"
 
@@ -221,7 +226,7 @@ platform :ios do
       xcargs: "MARKETING_VERSION=#{version_name} CURRENT_PROJECT_VERSION=#{version_code}"
     )
 
-    ipa_path = "#{dest_dir}/#{ipa_filename}"
+    ipa_path = File.join(dest_dir, ipa_filename)
     UI.user_error!("IPA not found at #{ipa_path}") unless File.exist?(ipa_path)
     UI.success("Development IPA generated successfully at: #{ipa_path}")
 
@@ -263,7 +268,8 @@ platform :ios do
       )
     end
 
-    dest_dir = "build/outputs/ipa"
+    project_root = File.expand_path("..", __dir__)
+    dest_dir = File.join(project_root, "build", "outputs", "ipa")
     FileUtils.mkdir_p(dest_dir)
     ipa_filename = "ios-production-#{version_name}-#{version_code}.ipa"
 
@@ -278,7 +284,7 @@ platform :ios do
       xcargs: "MARKETING_VERSION=#{version_name} CURRENT_PROJECT_VERSION=#{version_code}"
     )
 
-    ipa_path = "#{dest_dir}/#{ipa_filename}"
+    ipa_path = File.join(dest_dir, ipa_filename)
     UI.user_error!("IPA not found at #{ipa_path}") unless File.exist?(ipa_path)
     UI.success("Production IPA generated successfully at: #{ipa_path}")
 
