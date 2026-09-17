@@ -126,13 +126,23 @@ jobs:
 
             security import $RUNNER_TEMP/certificate.p12 -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
             security list-keychains -s $KEYCHAIN_PATH $(security list-keychains | tr -d '"')
+            security default-keychain -s $KEYCHAIN_PATH
             security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           fi
 
           if [ -n "$PROVISION_PROFILE_BASE64" ]; then
             echo "Installing Provisioning Profile..."
             mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-            echo "$PROVISION_PROFILE_BASE64" | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
+            echo "$PROVISION_PROFILE_BASE64" | base64 -d > "$RUNNER_TEMP/profile.mobileprovision"
+            security cms -D -i "$RUNNER_TEMP/profile.mobileprovision" > "$RUNNER_TEMP/profile.plist"
+            PROFILE_UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" "$RUNNER_TEMP/profile.plist")
+            PROFILE_NAME=$(/usr/libexec/PlistBuddy -c "Print Name" "$RUNNER_TEMP/profile.plist")
+            echo "Provisioning Profile Name: $PROFILE_NAME"
+            echo "Provisioning Profile UUID: $PROFILE_UUID"
+            cp "$RUNNER_TEMP/profile.mobileprovision" ~/Library/MobileDevice/Provisioning\ Profiles/${PROFILE_UUID}.mobileprovision
+            cp "$RUNNER_TEMP/profile.mobileprovision" ~/Library/MobileDevice/Provisioning\ Profiles/distribution.mobileprovision
+            echo "IOS_PROVISION_PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
+            echo "IOS_PROVISION_PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
           fi
 
       - name: Build & Upload to TestFlight via Fastlane
