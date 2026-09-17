@@ -24,23 +24,17 @@ permissions:
 jobs:
   build-and-upload-development-testflight:
     name: Build & Upload Development IPA to TestFlight
-    runs-on: macos-14
+    runs-on: macos-26
     environment: development
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Select Xcode 16
+      - name: Verify Xcode Version & Toolchain
         run: |
-          if [ -d "/Applications/Xcode_16.2.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_16.2.app
-          elif [ -d "/Applications/Xcode_16.1.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_16.1.app
-          elif [ -d "/Applications/Xcode_16.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_16.app
-          fi
           xcodebuild -version
+          echo "TOOLCHAINS=com.apple.dt.toolchain.XcodeDefault" >> $GITHUB_ENV
 
       - name: Validate Version Inputs
         shell: bash
