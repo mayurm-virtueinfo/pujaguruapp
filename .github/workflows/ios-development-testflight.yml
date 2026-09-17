@@ -4,15 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       version_name:
-        description: "Release Marketing Version (e.g. 1.0.8)"
-        required: true
+        description: "Release Marketing Version (Optional: Leave empty to use project.pbxproj default)"
+        required: false
         type: string
-        default: "1.0.8"
+        default: ""
       version_code:
-        description: "Build / Project Version Number (Integer > 0, e.g. 17)"
-        required: true
+        description: "Build / Project Version Number (Optional: Leave empty to use project.pbxproj default)"
+        required: false
         type: string
-        default: "17"
+        default: ""
 
 concurrency:
   group: ios-dev-testflight-${{ github.ref }}
@@ -36,7 +36,7 @@ jobs:
           xcodebuild -version
           echo "TOOLCHAINS=com.apple.dt.toolchain.XcodeDefault" >> $GITHUB_ENV
 
-      - name: Validate Version Inputs
+      - name: Validate & Resolve Version Inputs
         shell: bash
         run: |
           set -e
@@ -44,8 +44,20 @@ jobs:
           VERSION_CODE="${{ inputs.version_code }}"
 
           echo "Validating iOS Development version inputs..."
+          # If version_name is empty, extract MARKETING_VERSION from project.pbxproj
           if [ -z "$VERSION_NAME" ]; then
-            echo "::error::version_name cannot be empty"
+            VERSION_NAME=$(sed -n 's/.*MARKETING_VERSION = \([0-9.a-zA-Z_-]*\);/\1/p' ios/PujaGuruApp.xcodeproj/project.pbxproj | head -n 1)
+            echo "version_name not provided. Defaulted to project.pbxproj MARKETING_VERSION: $VERSION_NAME"
+          fi
+
+          # If version_code is empty, extract CURRENT_PROJECT_VERSION from project.pbxproj
+          if [ -z "$VERSION_CODE" ]; then
+            VERSION_CODE=$(sed -n 's/.*CURRENT_PROJECT_VERSION = \([0-9]*\);/\1/p' ios/PujaGuruApp.xcodeproj/project.pbxproj | head -n 1)
+            echo "version_code not provided. Defaulted to project.pbxproj CURRENT_PROJECT_VERSION: $VERSION_CODE"
+          fi
+
+          if [ -z "$VERSION_NAME" ]; then
+            echo "::error::Could not determine version_name from inputs or project.pbxproj"
             exit 1
           fi
 
@@ -54,6 +66,8 @@ jobs:
             exit 1
           fi
 
+          echo "RESOLVED_VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "RESOLVED_VERSION_CODE=$VERSION_CODE" >> $GITHUB_ENV
           echo "iOS Version Validation Passed: MARKETING_VERSION=$VERSION_NAME, CURRENT_PROJECT_VERSION=$VERSION_CODE"
 
       - name: Setup Node.js (22.x)
@@ -146,14 +160,14 @@ jobs:
           APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         run: |
           bundle exec fastlane ios development_testflight \
-            version_name:"${{ inputs.version_name }}" \
-            version_code:"${{ inputs.version_code }}"
+            version_name:"$RESOLVED_VERSION_NAME" \
+            version_code:"$RESOLVED_VERSION_CODE"
 
       - name: Upload IPA as GitHub Actions Artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ios-development-${{ inputs.version_name }}-${{ inputs.version_code }}-ipa
+          name: ios-development-${{ env.RESOLVED_VERSION_NAME }}-${{ env.RESOLVED_VERSION_CODE }}-ipa
           path: build/outputs/ipa/*.ipa
           retention-days: 14
           if-no-files-found: warn
