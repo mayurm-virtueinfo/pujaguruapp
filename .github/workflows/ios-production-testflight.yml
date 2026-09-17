@@ -24,7 +24,7 @@ permissions:
 jobs:
   build-and-upload-production-testflight:
     name: Build & Upload Production IPA to TestFlight
-    runs-on: macos-15
+    runs-on: macos-14
     environment: production
 
     steps:
