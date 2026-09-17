@@ -1,0 +1,242 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build Android Development/Staging Release APK and distribute via Firebase App Distribution"
+  lane :development_apk do |options|
+    version_name = options[:version_name] || ENV["VERSION_NAME"]
+    version_code = options[:version_code] || ENV["VERSION_CODE"]
+
+    UI.user_error!("version_name is required") if version_name.to_s.strip.empty?
+    UI.user_error!("version_code must be a positive integer") unless version_code.to_s =~ /^\d+$/ && version_code.to_i > 0
+
+    UI.header("Building Development Release APK v#{version_name} (#{version_code})")
+
+    gradle(
+      task: "assemble",
+      build_type: "Release",
+      project_dir: "android",
+      properties: {
+        "ENVFILE" => ".env.development",
+        "VERSION_NAME" => version_name,
+        "VERSION_CODE" => version_code
+      }
+    )
+
+    apk_path = Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH] || "android/app/build/outputs/apk/release/app-release.apk"
+    UI.user_error!("APK not found at #{apk_path}") unless File.exist?(apk_path)
+
+    # Standardized output artifact name
+    dest_dir = "build/outputs/apk"
+    FileUtils.mkdir_p(dest_dir)
+    target_apk = "#{dest_dir}/app-development-#{version_name}-#{version_code}.apk"
+    FileUtils.cp(apk_path, target_apk)
+    UI.success("Artifact ready at: #{target_apk}")
+
+    firebase_app_id = options[:firebase_app_id] || ENV["FIREBASE_APP_ID_DEV"]
+    firebase_token = options[:firebase_token] || ENV["FIREBASE_TOKEN"]
+    service_credentials_file = options[:service_credentials_file] || ENV["FIREBASE_SERVICE_ACCOUNT_PATH"]
+    groups = options[:groups] || ENV["FIREBASE_GROUPS"]
+
+    if firebase_app_id && (firebase_token || service_credentials_file)
+      UI.message("Distributing APK to Firebase App Distribution (App ID: #{firebase_app_id})...")
+      git_commit = last_git_commit rescue { short_hash: "ci-build" }
+      commit_hash = git_commit ? git_commit[:short_hash] : "ci-build"
+      release_notes = "Environment: Development/Staging\nVersion: #{version_name} (#{version_code})\nCommit: #{commit_hash}\nWorkflow: Android Development APK"
+
+      firebase_app_distribution(
+        app: firebase_app_id,
+        apk_path: target_apk,
+        firebase_cli_token: firebase_token,
+        service_credentials_file: service_credentials_file,
+        groups: groups,
+        release_notes: release_notes
+      )
+      UI.success("Successfully uploaded to Firebase App Distribution!")
+    else
+      UI.important("Notice: Firebase credentials not provided. APK was built successfully as an artifact, skipping distribution.")
+    end
+  end
+
+  desc "Build Android Development/Staging Release AAB (Artifact only - NO Google Play upload)"
+  lane :development_aab do |options|
+    version_name = options[:version_name] || ENV["VERSION_NAME"]
+    version_code = options[:version_code] || ENV["VERSION_CODE"]
+
+    UI.user_error!("version_name is required") if version_name.to_s.strip.empty?
+    UI.user_error!("version_code must be a positive integer") unless version_code.to_s =~ /^\d+$/ && version_code.to_i > 0
+
+    UI.header("Building Development Release AAB v#{version_name} (#{version_code})")
+
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: "android",
+      properties: {
+        "ENVFILE" => ".env.development",
+        "VERSION_NAME" => version_name,
+        "VERSION_CODE" => version_code
+      }
+    )
+
+    aab_path = Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] || "android/app/build/outputs/bundle/release/app-release.aab"
+    UI.user_error!("AAB not found at #{aab_path}") unless File.exist?(aab_path)
+
+    # Standardized output artifact name
+    dest_dir = "build/outputs/bundle"
+    FileUtils.mkdir_p(dest_dir)
+    target_aab = "#{dest_dir}/app-development-#{version_name}-#{version_code}.aab"
+    FileUtils.cp(aab_path, target_aab)
+
+    UI.success("Artifact ready at: #{target_aab}")
+    UI.success("SAFETY CHECK: AAB is stored as an artifact only. NOT uploaded or published to Google Play.")
+  end
+
+  desc "Build Android Production Release APK and distribute via Firebase App Distribution"
+  lane :production_apk do |options|
+    version_name = options[:version_name] || ENV["VERSION_NAME"]
+    version_code = options[:version_code] || ENV["VERSION_CODE"]
+
+    UI.user_error!("version_name is required") if version_name.to_s.strip.empty?
+    UI.user_error!("version_code must be a positive integer") unless version_code.to_s =~ /^\d+$/ && version_code.to_i > 0
+
+    UI.header("Building Production Release APK v#{version_name} (#{version_code})")
+
+    gradle(
+      task: "assemble",
+      build_type: "Release",
+      project_dir: "android",
+      properties: {
+        "ENVFILE" => ".env.production",
+        "VERSION_NAME" => version_name,
+        "VERSION_CODE" => version_code
+      }
+    )
+
+    apk_path = Actions.lane_context[SharedValues::GRADLE_APK_OUTPUT_PATH] || "android/app/build/outputs/apk/release/app-release.apk"
+    UI.user_error!("APK not found at #{apk_path}") unless File.exist?(apk_path)
+
+    # Standardized output artifact name
+    dest_dir = "build/outputs/apk"
+    FileUtils.mkdir_p(dest_dir)
+    target_apk = "#{dest_dir}/app-production-#{version_name}-#{version_code}.apk"
+    FileUtils.cp(apk_path, target_apk)
+    UI.success("Artifact ready at: #{target_apk}")
+
+    firebase_app_id = options[:firebase_app_id] || ENV["FIREBASE_APP_ID_PROD"]
+    firebase_token = options[:firebase_token] || ENV["FIREBASE_TOKEN"]
+    service_credentials_file = options[:service_credentials_file] || ENV["FIREBASE_SERVICE_ACCOUNT_PATH"]
+    groups = options[:groups] || ENV["FIREBASE_GROUPS"]
+
+    if firebase_app_id && (firebase_token || service_credentials_file)
+      UI.message("Distributing Production APK to Firebase App Distribution (App ID: #{firebase_app_id})...")
+      git_commit = last_git_commit rescue { short_hash: "ci-build" }
+      commit_hash = git_commit ? git_commit[:short_hash] : "ci-build"
+      release_notes = "Environment: Production\nVersion: #{version_name} (#{version_code})\nCommit: #{commit_hash}\nWorkflow: Android Production APK\nNote: For QA / Internal Testing only (NOT published to Google Play)"
+
+      firebase_app_distribution(
+        app: firebase_app_id,
+        apk_path: target_apk,
+        firebase_cli_token: firebase_token,
+        service_credentials_file: service_credentials_file,
+        groups: groups,
+        release_notes: release_notes
+      )
+      UI.success("Successfully uploaded Production APK to Firebase App Distribution!")
+    else
+      UI.important("Notice: Firebase credentials not provided. APK was built successfully as an artifact, skipping distribution.")
+    end
+  end
+
+  desc "Build Android Production Release AAB (Artifact only - NO Google Play upload)"
+  lane :production_aab do |options|
+    version_name = options[:version_name] || ENV["VERSION_NAME"]
+    version_code = options[:version_code] || ENV["VERSION_CODE"]
+
+    UI.user_error!("version_name is required") if version_name.to_s.strip.empty?
+    UI.user_error!("version_code must be a positive integer") unless version_code.to_s =~ /^\d+$/ && version_code.to_i > 0
+
+    UI.header("Building Production Release AAB v#{version_name} (#{version_code})")
+
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: "android",
+      properties: {
+        "ENVFILE" => ".env.production",
+        "VERSION_NAME" => version_name,
+        "VERSION_CODE" => version_code
+      }
+    )
+
+    aab_path = Actions.lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH] || "android/app/build/outputs/bundle/release/app-release.aab"
+    UI.user_error!("AAB not found at #{aab_path}") unless File.exist?(aab_path)
+
+    # Standardized output artifact name
+    dest_dir = "build/outputs/bundle"
+    FileUtils.mkdir_p(dest_dir)
+    target_aab = "#{dest_dir}/app-production-#{version_name}-#{version_code}.aab"
+    FileUtils.cp(aab_path, target_aab)
+
+    UI.success("Artifact ready at: #{target_aab}")
+    UI.success("SAFETY CHECK: Production AAB is stored as an artifact only. NOT uploaded or published to Google Play Console.")
+  end
+end
+
+platform :ios do
+  desc "Build iOS application archive and upload to TestFlight (Internal Testing only - NO App Store release)"
+  lane :testflight do |options|
+    version_name = options[:version_name] || ENV["VERSION_NAME"]
+    version_code = options[:version_code] || ENV["VERSION_CODE"]
+
+    UI.user_error!("version_name is required") if version_name.to_s.strip.empty?
+    UI.user_error!("version_code must be a positive integer") unless version_code.to_s =~ /^\d+$/ && version_code.to_i > 0
+
+    UI.header("Building iOS TestFlight Archive v#{version_name} (#{version_code})")
+
+    # Optional App Store Connect API Key configuration
+    api_key = nil
+    if ENV["APP_STORE_CONNECT_KEY_ID"] && ENV["APP_STORE_CONNECT_ISSUER_ID"] && ENV["APP_STORE_CONNECT_API_KEY_KEY"]
+      UI.message("Configuring App Store Connect API Key...")
+      api_key = app_store_connect_api_key(
+        key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+        issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+        key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"],
+        is_key_content_base64: true,
+        in_house: false
+      )
+    end
+
+    dest_dir = "build/outputs/ipa"
+    FileUtils.mkdir_p(dest_dir)
+    ipa_filename = "ios-production-#{version_name}-#{version_code}.ipa"
+
+    build_app(
+      workspace: "ios/PujaGuruApp.xcworkspace",
+      scheme: "PujaGuruApp-Production",
+      configuration: "Release",
+      clean: true,
+      export_method: "app-store",
+      output_directory: dest_dir,
+      output_name: ipa_filename,
+      xcargs: "MARKETING_VERSION=#{version_name} CURRENT_PROJECT_VERSION=#{version_code}"
+    )
+
+    ipa_path = "#{dest_dir}/#{ipa_filename}"
+    UI.user_error!("IPA not found at #{ipa_path}") unless File.exist?(ipa_path)
+    UI.success("IPA generated successfully at: #{ipa_path}")
+
+    if api_key
+      UI.message("Uploading IPA to TestFlight...")
+      upload_to_testflight(
+        api_key: api_key,
+        ipa: ipa_path,
+        skip_submission: true,                      # STRICT REQUIREMENT: Do NOT submit for App Store review
+        skip_waiting_for_build_processing: true,    # Non-blocking TestFlight upload
+        distribute_external: false                  # Internal testing only
+      )
+      UI.success("Uploaded to TestFlight successfully! (STOPPED: No App Store review or release configured)")
+    else
+      UI.important("Notice: App Store Connect API Key not provided. IPA generated as artifact, skipping TestFlight upload.")
+    end
+  end
+end

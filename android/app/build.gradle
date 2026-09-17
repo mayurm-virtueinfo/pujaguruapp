@@ -111,8 +111,12 @@ android {
         applicationId "com.panditjiapp.pujaguru"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 16
-        versionName "1.0.7"
+        versionCode project.hasProperty("VERSION_CODE")
+            ? project.property("VERSION_CODE").toInteger()
+            : 16
+        versionName project.hasProperty("VERSION_NAME")
+            ? project.property("VERSION_NAME").toString()
+            : "1.0.7"
         missingDimensionStrategy "react-native-capture-protection", "base"
         resValue "string", "app_name", (project.env.get("APP_NAME") ?: "Pujaguru")
     }
