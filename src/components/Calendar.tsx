@@ -5,53 +5,46 @@ import { COLORS, wp, hp, THEMESHADOW, COMMON_LIST_STYLE } from '../theme/theme';
 import Fonts from '../theme/fonts';
 import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
 
-interface CalendarProps {
-  onDateSelect?: (date: string) => void;
-  month?: string;
-  onMonthChange?: (direction: 'prev' | 'next') => void;
-  date: number;
-  selectableDates?: string[];
-  disableMonthChange?: boolean;
-}
+export const MONTH_NAMES = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
 
-function getMonthYearFromString(monthStr: string) {
-  const [monthName, yearStr] = monthStr.split(' ');
-  const month = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ].findIndex(m => m.toLowerCase() === monthName.toLowerCase());
-  const year = parseInt(yearStr, 10);
-  return { month, year };
+export function getMonthYearFromString(monthStr?: string): {
+  month: number;
+  year: number;
+} {
+  const now = new Date();
+  if (!monthStr || typeof monthStr !== 'string') {
+    return { month: now.getMonth(), year: now.getFullYear() };
+  }
+  const parts = monthStr.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    const monthName = parts[0].toLowerCase();
+    const yearNum = parseInt(parts[1], 10);
+    const mIdx = MONTH_NAMES.findIndex(m => m.toLowerCase() === monthName);
+    if (mIdx !== -1 && !isNaN(yearNum) && yearNum >= 2000 && yearNum <= 2100) {
+      return { month: mIdx, year: yearNum };
+    }
+  }
+  return { month: now.getMonth(), year: now.getFullYear() };
 }
 
 function getMonthName(month: number): string {
-  return [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ][month];
+  return MONTH_NAMES[Math.max(0, Math.min(11, month))];
 }
 
-type CalendarDayObject = {
+export type CalendarDayObject = {
   dateString: string;
   day: number;
   month: number;
@@ -59,23 +52,42 @@ type CalendarDayObject = {
   timestamp: number;
 };
 
+interface CalendarProps {
+  onDateSelect?: (date: string) => void;
+  month?: string;
+  onMonthChange?: (
+    direction: 'prev' | 'next',
+    dateObj?: CalendarDayObject,
+  ) => void;
+  date?: number;
+  selectedDate?: string;
+  selectableDates?: string[];
+  disableMonthChange?: boolean;
+}
+
 const Calendar: React.FC<CalendarProps> = ({
   onDateSelect,
   month,
   onMonthChange,
   selectableDates,
   disableMonthChange,
+  selectedDate,
 }) => {
   const [currentSelected, setCurrentSelected] = useState<string>();
 
+  const activeSelected =
+    selectedDate !== undefined ? selectedDate : currentSelected;
+
   const { month: monthIdx, year } = useMemo(() => {
-    if (month) return getMonthYearFromString(month);
-    const today = new Date();
-    return { month: today.getMonth(), year: today.getFullYear() };
+    return getMonthYearFromString(month);
   }, [month]);
 
   const initialDate = useMemo(() => {
-    return `${year}-${String(monthIdx + 1).padStart(2, '0')}-01`;
+    const safeMonth = Math.max(0, Math.min(11, monthIdx));
+    const safeYear =
+      isNaN(year) || year < 2000 ? new Date().getFullYear() : year;
+    const mStr = String(safeMonth + 1).padStart(2, '0');
+    return `${safeYear}-${mStr}-01`;
   }, [monthIdx, year]);
 
   const todayObj = new Date();
@@ -83,19 +95,28 @@ const Calendar: React.FC<CalendarProps> = ({
     todayObj.getMonth() + 1,
   ).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
 
+  const isViewingCurrentMonth =
+    todayObj.getFullYear() === year && todayObj.getMonth() === monthIdx;
+
+  const isCurrentMonthOrPast =
+    year < todayObj.getFullYear() ||
+    (year === todayObj.getFullYear() && monthIdx <= todayObj.getMonth());
+
   const markedDates: { [date: string]: any } = {};
 
-  // Always mark the current date with primaryBackgroundButton background color
-  markedDates[todayStr] = {
-    customStyles: {
-      container: styles.todayContainer,
-      text: styles.todayText,
-    },
-  };
+  // Always mark the current date with primaryBackgroundButton background color ONLY when viewing today's month
+  if (isViewingCurrentMonth) {
+    markedDates[todayStr] = {
+      customStyles: {
+        container: styles.todayContainer,
+        text: styles.todayText,
+      },
+    };
+  }
 
   // If the selected date is not today, mark it with primary color
-  if (currentSelected && currentSelected !== todayStr) {
-    markedDates[currentSelected] = {
+  if (activeSelected && activeSelected !== todayStr) {
+    markedDates[activeSelected] = {
       customStyles: {
         container: styles.selectedContainer,
         text: styles.selectedText,
@@ -120,16 +141,17 @@ const Calendar: React.FC<CalendarProps> = ({
   const handleMonthChange = (dateObj: CalendarDayObject) => {
     if (disableMonthChange) return;
     if (!onMonthChange) return;
-    const currentMonth = monthIdx + 1;
-    if (dateObj.month < currentMonth || dateObj.year < year) {
-      onMonthChange('prev');
-    } else if (dateObj.month > currentMonth || dateObj.year > year) {
-      onMonthChange('next');
+    const currentMonthNum = monthIdx + 1;
+    if (dateObj.month < currentMonthNum || dateObj.year < year) {
+      onMonthChange('prev', dateObj);
+    } else if (dateObj.month > currentMonthNum || dateObj.year > year) {
+      onMonthChange('next', dateObj);
     }
   };
 
   const handleDayPress = (day: CalendarDayObject) => {
     if (selectableDates && !selectableDates.includes(day.dateString)) {
+      onDateSelect?.(day.dateString);
       return;
     }
     setCurrentSelected(day.dateString);
@@ -145,6 +167,8 @@ const Calendar: React.FC<CalendarProps> = ({
         markedDates={markedDates}
         onDayPress={handleDayPress}
         onMonthChange={handleMonthChange}
+        disableArrowLeft={isCurrentMonthOrPast}
+        disableArrowRight={disableMonthChange}
         theme={
           {
             backgroundColor: COLORS.white,
@@ -179,12 +203,16 @@ const Calendar: React.FC<CalendarProps> = ({
             },
           } as any
         }
-        hideExtraDays={false}
-        renderArrow={(direction: 'left' | 'right') => (
-          <Text style={styles.arrowIcon}>
-            {direction === 'left' ? '‹' : '›'}
-          </Text>
-        )}
+        hideExtraDays={true}
+        renderArrow={(direction: 'left' | 'right') => {
+          if (direction === 'left' && isCurrentMonthOrPast) return null;
+          if (direction === 'right' && disableMonthChange) return null;
+          return (
+            <Text style={styles.arrowIcon}>
+              {direction === 'left' ? '‹' : '›'}
+            </Text>
+          );
+        }}
         firstDay={0}
         enableSwipeMonths={!disableMonthChange}
       />

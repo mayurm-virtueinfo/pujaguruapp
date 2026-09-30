@@ -99,10 +99,15 @@ const KundliListScreen = () => {
       <View style={styles.contentContainer}>
         <CustomeLoader loading={loading} />
         <FlatList
+          style={styles.flatList}
           data={kundliList}
           renderItem={renderItem}
           keyExtractor={item => item.id.toString()}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled={true}
+          refreshing={loading}
+          onRefresh={fetchKundliList}
           ListEmptyComponent={
             !loading ? (
               <Text style={styles.emptyText}>{t('no_kundli_found')}</Text>
@@ -133,9 +138,14 @@ const styles = StyleSheet.create({
     borderTopRightRadius: moderateScale(30),
     overflow: 'hidden',
   },
+  flatList: {
+    flex: 1,
+  },
   listContent: {
     padding: moderateScale(20),
+    paddingBottom: moderateScale(16),
     gap: moderateScale(12),
+    flexGrow: 1,
   },
   card: {
     ...COMMON_LIST_STYLE,
@@ -170,10 +180,10 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   buttonContainer: {
-    position: 'absolute',
-    bottom: moderateScale(20),
-    left: moderateScale(20),
-    right: moderateScale(20),
+    paddingHorizontal: moderateScale(20),
+    paddingTop: moderateScale(12),
+    paddingBottom: moderateScale(16),
+    backgroundColor: COLORS.pujaBackground,
   },
   createButton: {
     backgroundColor: COLORS.primary,

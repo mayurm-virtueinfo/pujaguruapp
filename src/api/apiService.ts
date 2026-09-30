@@ -1832,7 +1832,7 @@ export const searchCity = async (query: string): Promise<any[]> => {
   try {
     const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
       query,
-    )}&format=json&addressdetails=1&limit=5`;
+    )}&format=json&addressdetails=1&limit=8`;
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'PujaGuruApp/1.0',
