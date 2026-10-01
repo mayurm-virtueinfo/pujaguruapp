@@ -408,7 +408,7 @@ const BottomUserProfileScreen: React.FC = () => {
                   color={COLORS.primaryTextDark}
                 />
               </TouchableOpacity>
-              <View style={styles.divider} />
+              {/* <View style={styles.divider} />
               <TouchableOpacity
                 style={styles.editFieldContainer}
                 onPress={handleMcpServerNavigation}
@@ -420,7 +420,7 @@ const BottomUserProfileScreen: React.FC = () => {
                   size={20}
                   color={COLORS.primaryTextDark}
                 />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
             </View>
 
             {/* Group 3: Language */}

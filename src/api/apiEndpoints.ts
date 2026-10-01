@@ -39,6 +39,16 @@ class ApiEndpoints {
 export default ApiEndpoints;
 
 export const APP_URL = Config.BASE_URL;
+
+/**
+ * Returns the WebSocket base URL derived from Config.BASE_URL (http -> ws, https -> wss).
+ * Ensures consistency across development, staging, and production environments in release builds.
+ */
+export const getWebSocketBaseUrl = (): string => {
+  const rawUrl = (Config.BASE_URL || "").trim();
+  const baseUrl = rawUrl || "https://dev.puja-guru.com";
+  return baseUrl.replace(/\/+$/, "").replace(/^http/i, "ws");
+};
 export const GET_PUJALIST = '/app/pujalist/';
 export const POST_SIGNIN = '/app/auth/signin/';
 export const POST_SIGNUP = '/app/auth/register/';

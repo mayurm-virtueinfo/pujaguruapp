@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Fonts from '../../../theme/fonts';
 import { getDynamicHours } from '../../../api/apiService';
+import { getWebSocketBaseUrl } from '../../../api/apiEndpoints';
 
 const SearchPanditScreen: React.FC = () => {
   const route = useRoute();
@@ -88,9 +89,8 @@ const SearchPanditScreen: React.FC = () => {
       }
     }, dynamicTimeout * 60 * 1000);
 
-    let socketURL = __DEV__
-      ? `wss://dev.puja-guru.com/ws/bookings/${bookingId}/`
-      : `wss://puja-guru.com/ws/bookings/${bookingId}/`;
+    const wsBaseUrl = getWebSocketBaseUrl();
+    const socketURL = `${wsBaseUrl}/ws/bookings/${bookingId}/`;
 
     console.log('socketURL :: ', socketURL);
 

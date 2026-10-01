@@ -25,6 +25,7 @@ import {
   getChatHistory as getMessageHistory,
   postCreateMeeting,
 } from '../../../api/apiService';
+import { getWebSocketBaseUrl } from '../../../api/apiEndpoints';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomeLoader from '../../../components/CustomeLoader';
@@ -111,9 +112,8 @@ const UserChatScreen: React.FC = () => {
 
   useEffect(() => {
     if (accessToken && booking_id) {
-      let socketURL = __DEV__
-        ? `wss://dev.puja-guru.com/ws/chat/by-booking/${booking_id}/?token=${accessToken}`
-        : `wss://puja-guru.com/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
+      const wsBaseUrl = getWebSocketBaseUrl();
+      const socketURL = `${wsBaseUrl}/ws/chat/by-booking/${booking_id}/?token=${accessToken}`;
       console.log('socketURL :: ', socketURL);
 
       ws.current = new WebSocket(socketURL);
@@ -369,8 +369,11 @@ const UserChatScreen: React.FC = () => {
             <UserCustomHeader
               title={pandit_name || 'Chat'}
               showBackButton={true}
+              showVideoCallButton={false}
+              /* Video call commented out for now:
               showVideoCallButton={true}
               onVideoButtonPress={handleVideoCall}
+              */
             />
           </View>
         )}
@@ -456,7 +459,7 @@ const UserChatScreen: React.FC = () => {
                 'android.screensharing.enabled': true,
               }}
               eventListeners={eventListeners}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
           ) : (
             <View style={styles.jitsiView}>

@@ -6,7 +6,7 @@ export const handleIncomingMessage = (
   prevMessages: Message[],
   data: any,
   myUserId: any,
-) => {
+): Message[] => {
   // 1️⃣ Find the temporary message
   const tempMsg = prevMessages.find(msg => String(msg.id).startsWith('temp-'));
 
@@ -28,7 +28,7 @@ export const handleIncomingMessage = (
   }
 
   // 3️⃣ If no temp found, just append the new message
-  const newMsg = {
+  const newMsg: Message = {
     id: data.uuid,
     text: data.message,
     time: new Date(data.timestamp).toLocaleTimeString([], {

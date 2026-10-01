@@ -7,6 +7,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { useNetwork } from '../provider/NetworkProvider';
+import { getWebSocketBaseUrl } from '../api/apiEndpoints';
 
 interface WebSocketProviderProps {
   token: string;
@@ -35,10 +36,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
   const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const manuallyClosed = useRef(false);
 
-  const getSocketURL = () =>
-    __DEV__
-      ? `wss://dev.puja-guru.com/ws/user/updates/?token=${token}`
-      : `wss://puja-guru.com/ws/user/updates/?token=${token}`;
+  const getSocketURL = () => {
+    const wsBaseUrl = getWebSocketBaseUrl();
+    return `${wsBaseUrl}/ws/user/updates/?token=${token}`;
+  };
 
   /** ✅ Connect WebSocket */
   const connect = () => {
