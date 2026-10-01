@@ -447,7 +447,7 @@
 				DEVELOPMENT_TEAM = 5DSXYK6JTQ;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = PujaGuruApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Pujaguru;
+				INFOPLIST_KEY_CFBundleDisplayName = "PujaGuru-Hub";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -482,7 +482,7 @@
 				CURRENT_PROJECT_VERSION = 21;
 				DEVELOPMENT_TEAM = 5DSXYK6JTQ;
 				INFOPLIST_FILE = PujaGuruApp/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Pujaguru;
+				INFOPLIST_KEY_CFBundleDisplayName = "PujaGuru-Hub";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -604,10 +604,7 @@
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 					"-DRCT_REMOVE_LEGACY_ARCH=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				PODFILE_DIR = "$(SRCROOT)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
@@ -709,10 +706,7 @@
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 					"-DRCT_REMOVE_LEGACY_ARCH=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				PODFILE_DIR = "$(SRCROOT)";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;

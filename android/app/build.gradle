@@ -118,8 +118,7 @@ android {
             ? project.property("VERSION_NAME").toString()
             : "1.0.7"
         missingDimensionStrategy "react-native-capture-protection", "base"
-        resValue "string", "app_name", (project.env.get("APP_NAME") ?: "Pujaguru")
-        resValue "string", "build_config_package", "com.panditjiapp.pujaguru"
+        resValue "string", "app_name", (project.env.get("APP_NAME") ?: "PujaGuru-Hub")
     }
 
     buildFeatures {
