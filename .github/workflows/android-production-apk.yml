@@ -64,6 +64,46 @@ jobs:
           java-version: 17
           cache: "gradle"
 
+      - name: Install Android SDK components
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -name sdkmanager -type f | head -n 1)"
+          if [ -z "$SDKMANAGER" ]; then
+            echo "sdkmanager was not found under $SDK_ROOT" >&2
+            exit 1
+          fi
+          NDK_DIR="$SDK_ROOT/ndk/27.1.12297006"
+          # Remove incomplete installations and cached archives.
+          rm -rf "$NDK_DIR"
+          rm -rf "$HOME/.android/cache"
+          rm -rf "$SDK_ROOT/.temp"
+          set +o pipefail
+          yes | "$SDKMANAGER" --licenses >/dev/null 2>&1 || true
+          set -o pipefail
+          for attempt in 1 2 3; do
+            echo "Installing Android SDK components, attempt $attempt..."
+            set +o pipefail
+            yes | "$SDKMANAGER" --install \
+              "platform-tools" \
+              "platforms;android-36" \
+              "build-tools;36.0.0" \
+              "ndk;27.1.12297006"
+            sdkmanager_status=$?
+            set -o pipefail
+            if [ "$sdkmanager_status" -eq 0 ]; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Unable to install Android SDK components" >&2
+              exit "$sdkmanager_status"
+            fi
+            rm -rf "$NDK_DIR" "$HOME/.android/cache" "$SDK_ROOT/.temp"
+            sleep 10
+          done
+          test -f "$NDK_DIR/source.properties"
+
       - name: Setup Ruby (3.3)
         uses: ruby/setup-ruby@v1
         with:
@@ -106,6 +146,10 @@ jobs:
           RELEASE_STORE_PASSWORD=${KEYSTORE_PASSWORD:-android}
           RELEASE_KEY_ALIAS=${KEY_ALIAS:-androiddebugkey}
           RELEASE_KEY_PASSWORD=${KEY_PASSWORD:-android}
+          storeFile=app/pujaguru.keystore
+          storePassword=${KEYSTORE_PASSWORD:-android}
+          keyAlias=${KEY_ALIAS:-androiddebugkey}
+          keyPassword=${KEY_PASSWORD:-android}
           EOF
 
       - name: Setup Firebase Service Account
