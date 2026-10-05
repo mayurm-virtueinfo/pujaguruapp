@@ -1175,9 +1175,12 @@ const PaymentScreen: React.FC = () => {
                   : t('confirm_booking') || 'CONFIRM BOOKING'
               }
               onPress={handlePayment}
-              style={styles.buttonContainer}
+              style={[
+                styles.buttonContainer,
+                !acceptTerms && styles.buttonContainerDisabled,
+              ]}
               textStyle={styles.buttonText}
-              disabled={loading || isProcessingPayment}
+              disabled={loading || isProcessingPayment || !acceptTerms}
               activeOpacity={0.8}
             />
           </View>
@@ -1713,6 +1716,9 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 10,
     marginTop: 0,
+  },
+  buttonContainerDisabled: {
+    opacity: 0.45,
   },
   buttonText: {
     fontSize: 15,
