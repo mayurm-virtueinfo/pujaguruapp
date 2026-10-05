@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Calendar as RNCalendar } from 'react-native-calendars';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { COLORS, wp, hp, THEMESHADOW, COMMON_LIST_STYLE } from '../theme/theme';
 import Fonts from '../theme/fonts';
 import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
@@ -158,6 +159,23 @@ const Calendar: React.FC<CalendarProps> = ({
     onDateSelect?.(day.dateString);
   };
 
+  const renderArrow = useCallback(
+    (direction: 'left' | 'right') => {
+      if (direction === 'left' && isCurrentMonthOrPast) return null;
+      if (direction === 'right' && disableMonthChange) return null;
+      return (
+        <View style={styles.arrowButton}>
+          <Ionicons
+            name={direction === 'left' ? 'chevron-back' : 'chevron-forward'}
+            size={moderateScale(18)}
+            color={COLORS.primaryTextDark}
+          />
+        </View>
+      );
+    },
+    [isCurrentMonthOrPast, disableMonthChange],
+  );
+
   return (
     <View style={[styles.calendarContainer, COMMON_LIST_STYLE]}>
       <RNCalendar
@@ -173,28 +191,28 @@ const Calendar: React.FC<CalendarProps> = ({
           {
             backgroundColor: COLORS.white,
             calendarBackground: COLORS.white,
-            textSectionTitleColor: COLORS.pujaCardSubtext,
+            textSectionTitleColor: '#8C8E90',
             textSectionTitleDisabledColor: '#d9e1e8',
             dayTextColor: COLORS.primaryTextDark,
-            textDisabledColor: COLORS.pujaCardSubtext,
+            textDisabledColor: '#C4C7C9',
             monthTextColor: COLORS.primaryTextDark,
-            textMonthFontFamily: Fonts.Sen_Medium,
+            textMonthFontFamily: Fonts.Sen_Bold,
             textDayFontFamily: Fonts.Sen_Medium,
-            textDayHeaderFontFamily: Fonts.Sen_Medium,
-            textMonthFontSize: moderateScale(15),
-            textDayFontSize: moderateScale(12),
+            textDayHeaderFontFamily: Fonts.Sen_SemiBold,
+            textMonthFontSize: moderateScale(16),
+            textDayFontSize: moderateScale(13),
             textDayHeaderFontSize: moderateScale(12),
             arrowColor: COLORS.primaryTextDark,
             'stylesheet.day.basic': {
               base: {
-                width: wp(12),
-                height: hp(4),
+                width: wp(11.5),
+                height: hp(4.2),
                 alignItems: 'center',
                 justifyContent: 'center',
                 textAlign: 'center',
               },
               text: {
-                fontSize: moderateScale(12),
+                fontSize: moderateScale(13),
                 fontFamily: Fonts.Sen_Medium,
                 color: COLORS.primaryTextDark,
                 textAlign: 'center',
@@ -204,15 +222,7 @@ const Calendar: React.FC<CalendarProps> = ({
           } as any
         }
         hideExtraDays={true}
-        renderArrow={(direction: 'left' | 'right') => {
-          if (direction === 'left' && isCurrentMonthOrPast) return null;
-          if (direction === 'right' && disableMonthChange) return null;
-          return (
-            <Text style={styles.arrowIcon}>
-              {direction === 'left' ? '‹' : '›'}
-            </Text>
-          );
-        }}
+        renderArrow={renderArrow}
         firstDay={0}
         enableSwipeMonths={!disableMonthChange}
       />
@@ -223,8 +233,9 @@ const Calendar: React.FC<CalendarProps> = ({
 const styles = StyleSheet.create({
   calendarContainer: {
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(10),
-    paddingVertical: moderateScale(10),
+    borderRadius: moderateScale(16),
+    paddingVertical: moderateScale(12),
+    paddingHorizontal: moderateScale(6),
   },
   currentDataContainer: {
     marginBottom: verticalScale(8),
@@ -234,6 +245,14 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
+  },
+  arrowButton: {
+    width: moderateScale(32),
+    height: moderateScale(32),
+    borderRadius: moderateScale(16),
+    backgroundColor: '#F8F9FA',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   arrowIcon: {
     fontSize: moderateScale(18),

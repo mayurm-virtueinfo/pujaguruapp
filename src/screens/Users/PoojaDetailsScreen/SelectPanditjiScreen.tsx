@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   StyleSheet,
   Text,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   TextInput,
@@ -353,121 +352,197 @@ const SelectPanditjiScreen: React.FC = () => {
     }
   };
 
+  const filteredPanditjiData = useMemo(() => {
+    if (!searchText.trim()) {
+      return panditjiData;
+    }
+    const query = searchText.trim().toLowerCase();
+    return panditjiData.filter(
+      item =>
+        item.name?.toLowerCase().includes(query) ||
+        item.location?.toLowerCase().includes(query) ||
+        item.languages?.toLowerCase().includes(query),
+    );
+  }, [panditjiData, searchText]);
+
   const renderSearchInput = () => (
     <View style={styles.searchContainer}>
       <View style={styles.searchInputContainer}>
         <Ionicons
           name="search"
-          size={16}
+          size={18}
           color={COLORS.pujaTextSecondary}
           style={styles.searchIcon}
         />
         <TextInput
           style={styles.searchInput}
-          placeholder={t('search_panditji')}
+          placeholder={t('search_panditji') || 'Search Panditji'}
           placeholderTextColor={COLORS.pujaTextSecondary}
           value={searchText}
           onChangeText={setSearchText}
+          returnKeyType="search"
+          autoCorrect={false}
         />
+        {searchText.length > 0 && (
+          <TouchableOpacity
+            onPress={() => setSearchText('')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={styles.clearSearchButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="close-circle"
+              size={18}
+              color={COLORS.pujaTextSecondary}
+            />
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
 
   const renderPanditjiItem = ({
     item,
-    index,
   }: {
     item: PanditjiItem;
     index: number;
   }) => {
     const formattedPrice = formatCurrency(item.price);
+    const isSelected = selectedPanditji === item.id;
 
     return (
-      <View style={styles.panditjiContainer}>
-        <TouchableOpacity
-          style={styles.panditjiItem}
-          onPress={() => handlePanditjiSelect(item.id)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.panditjiContent}>
-            <View style={styles.imageContainer}>
-              <Image
-                source={{
-                  uri:
-                    item.image ||
-                    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
-                }}
-                style={styles.panditjiImage}
-              />
-              {item.isVerified && (
-                <View style={styles.verifiedBadge}>
-                  <MaterialIcons
-                    name="verified"
-                    size={16}
-                    color={COLORS.success}
-                  />
-                </View>
-              )}
-            </View>
-            <View style={styles.panditjiDetails}>
-              <Text style={styles.panditjiName}>{item.name}</Text>
-              <Text style={styles.panditjiLocation}>{item.location}</Text>
-              <Text style={styles.panditjiLanguages}>{item.languages}</Text>
-              {formattedPrice && (
-                <View style={styles.priceRow}>
-                  <Text style={styles.priceValue}>{formattedPrice}</Text>
-                </View>
-              )}
-            </View>
-            <TouchableOpacity
-              style={styles.selectionButton}
-              onPress={() => handlePanditjiSelect(item.id)}
-            >
-              {item.isSelected ? (
-                <Octicons
-                  name={'check-circle'}
-                  size={24}
-                  color={item.isSelected ? COLORS.primary : COLORS.inputBoder}
-                />
-              ) : (
+      <TouchableOpacity
+        style={[
+          styles.panditCard,
+          isSelected && styles.panditCardSelected,
+        ]}
+        onPress={() => handlePanditjiSelect(item.id)}
+        activeOpacity={0.75}
+      >
+        <View style={styles.panditCardContent}>
+          {/* Pandit Image & Verified Badge */}
+          <View style={styles.imageWrapper}>
+            <Image
+              source={{
+                uri:
+                  item.image ||
+                  'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+              }}
+              style={styles.panditjiImage}
+              resizeMode="cover"
+            />
+            {item.isVerified && (
+              <View style={styles.verifiedBadge}>
                 <MaterialIcons
-                  name={'radio-button-unchecked'}
-                  size={24}
-                  color={item.isSelected ? COLORS.primary : COLORS.inputBoder}
+                  name="verified"
+                  size={15}
+                  color={COLORS.success}
                 />
-              )}
-            </TouchableOpacity>
+              </View>
+            )}
           </View>
-        </TouchableOpacity>
-        {index !== panditjiData.length - 1 && <View style={styles.separator} />}
-      </View>
+
+          {/* Pandit Details */}
+          <View style={styles.panditjiDetails}>
+            <Text style={styles.panditjiName} numberOfLines={1}>
+              {item.name}
+            </Text>
+
+            {item.location ? (
+              <View style={styles.metaRow}>
+                <Ionicons
+                  name="location-outline"
+                  size={13}
+                  color={COLORS.pujaTextSecondary}
+                  style={styles.metaIcon}
+                />
+                <Text style={styles.panditjiLocation} numberOfLines={1}>
+                  {item.location}
+                </Text>
+              </View>
+            ) : null}
+
+            {item.languages ? (
+              <View style={styles.metaRow}>
+                <Ionicons
+                  name="language-outline"
+                  size={13}
+                  color={COLORS.pujaTextSecondary}
+                  style={styles.metaIcon}
+                />
+                <Text style={styles.panditjiLanguages} numberOfLines={1}>
+                  {item.languages}
+                </Text>
+              </View>
+            ) : null}
+
+            {formattedPrice && (
+              <View style={styles.priceRow}>
+                <Text style={styles.priceLabel}>
+                  {t('dakshina', 'Dakshina')}:{' '}
+                </Text>
+                <Text style={styles.priceValue}>{formattedPrice}</Text>
+              </View>
+            )}
+          </View>
+
+          {/* Selection Radio Icon */}
+          <View style={styles.selectionWrapper}>
+            {isSelected ? (
+              <MaterialIcons
+                name="radio-button-checked"
+                size={24}
+                color={COLORS.primary}
+              />
+            ) : (
+              <MaterialIcons
+                name="radio-button-unchecked"
+                size={24}
+                color="#CBD5E1"
+              />
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
     );
   };
 
-  // Custom ListEmptyComponent with button to trigger auto booking via postAutoBooking
   const renderEmptyComponent = () => (
-    <View style={{ alignItems: 'center', padding: 20 }}>
-      <Text
-        style={{
-          color: COLORS.pujaCardSubtext,
-          fontFamily: Fonts.Sen_Regular,
-          fontSize: moderateScale(15),
-          marginBottom: 16,
-        }}
-      >
-        {t('no_panditji_found') || 'No Panditji found'}
+    <View style={styles.emptyContainer}>
+      <View style={styles.emptyIconCircle}>
+        <Ionicons
+          name="people-outline"
+          size={36}
+          color={COLORS.pujaCardSubtext}
+        />
+      </View>
+      <Text style={styles.emptyTitle}>
+        {searchText.trim()
+          ? t('no_matching_panditji') || 'No Matching Panditji'
+          : t('no_panditji_found') || 'No Panditji found'}
       </Text>
-      {/* <PrimaryButton
-        title={t('search_panditji_automatic')}
-        onPress={handleSearchPandit}
-        textStyle={styles.buttonText}
-        style={{ width: 200 }}
-      /> */}
+      <Text style={styles.emptySubtitle}>
+        {searchText.trim()
+          ? t('try_different_search') || 'Try searching with another name or city'
+          : t('no_pandit_available_sub') ||
+            'Currently no Guruji is available for this location and date.'}
+      </Text>
+      {searchText.trim().length > 0 && (
+        <TouchableOpacity
+          style={styles.clearSearchFilterButton}
+          onPress={() => setSearchText('')}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.clearSearchFilterText}>
+            {t('clear_search') || 'Clear Search'}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { paddingTop: inset.top }]}>
+    <View style={[styles.safeArea, { paddingTop: inset.top }]}>
       <CustomeLoader loading={isLoading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('select_panditji')} showBackButton={true} />
@@ -479,39 +554,28 @@ const SelectPanditjiScreen: React.FC = () => {
         <View style={styles.absoluteMainContainer}>
           {renderSearchInput()}
           <FlatList
-            data={panditjiData}
+            data={filteredPanditjiData}
             renderItem={renderPanditjiItem}
             keyExtractor={item => item.id}
-            showsVerticalScrollIndicator={true}
-            contentContainerStyle={[styles.listContent, THEMESHADOW.shadow]}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
             keyboardShouldPersistTaps="handled"
             ListEmptyComponent={renderEmptyComponent}
           />
         </View>
         {panditjiData.length > 0 && (
-          <View
-            style={[
-              styles.absoluteButtonContainer,
-              {
-                position: 'absolute',
-                left: 0,
-                right: 0,
-                bottom: 0,
-                paddingBottom: verticalScale(14),
-                backgroundColor: COLORS.pujaBackground,
-              },
-            ]}
-          >
+          <View style={styles.absoluteButtonContainer}>
             <PrimaryButton
               title={t('next')}
               onPress={handleNextPress}
               disabled={!selectedPanditji}
               textStyle={styles.buttonText}
+              style={styles.nextButton}
             />
           </View>
         )}
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -519,28 +583,6 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.gradientStart,
-  },
-  headerBackground: {
-    backgroundColor: COLORS.gradientStart,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: scale(14),
-    height: verticalScale(136),
-  },
-  backButton: {
-    padding: scale(5),
-    marginRight: scale(10),
-  },
-  headerTitle: {
-    color: COLORS.white,
-    textAlign: 'center',
-    fontFamily: Fonts.Sen_Bold,
-    fontSize: moderateScale(18),
-    fontWeight: '700',
-    flex: 1,
-    marginRight: scale(39),
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -553,23 +595,27 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   searchContainer: {
-    paddingHorizontal: scale(24),
-    paddingTop: verticalScale(24),
-    paddingBottom: verticalScale(12),
-    backgroundColor: COLORS.pujaBackground,
+    paddingHorizontal: scale(16),
+    paddingTop: verticalScale(16),
+    paddingBottom: verticalScale(10),
   },
   searchInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.white,
-    borderRadius: 10,
+    borderRadius: moderateScale(12),
     borderWidth: 1,
-    borderColor: COLORS.inputBoder,
-    paddingHorizontal: 16,
-    height: 40,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: scale(12),
+    height: verticalScale(44),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   searchIcon: {
-    marginRight: scale(12),
+    marginRight: scale(8),
   },
   searchInput: {
     flex: 1,
@@ -578,45 +624,60 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
     padding: 0,
   },
+  clearSearchButton: {
+    padding: scale(4),
+  },
   listContent: {
+    paddingHorizontal: scale(16),
+    paddingTop: verticalScale(4),
+    paddingBottom: verticalScale(76),
+  },
+  panditCard: {
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(20),
-    marginHorizontal: scale(24),
+    borderRadius: moderateScale(14),
+    padding: moderateScale(14),
+    marginBottom: verticalScale(12),
+    borderWidth: 1.5,
+    borderColor: '#ECEFF1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  panditjiContainer: {
-    // marginBottom: verticalScale(8),
-    borderRadius: moderateScale(10),
-    overflow: 'hidden',
+  panditCardSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#FFFBFB',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  panditjiItem: {
-    borderRadius: moderateScale(10),
-    padding: scale(14),
-    minHeight: verticalScale(66),
+  panditCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  panditjiContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  imageContainer: {
+  imageWrapper: {
     position: 'relative',
-    marginRight: scale(14),
+    marginRight: scale(12),
   },
   panditjiImage: {
-    width: moderateScale(52),
-    height: moderateScale(52),
-    borderRadius: moderateScale(26),
+    width: moderateScale(54),
+    height: moderateScale(54),
+    borderRadius: moderateScale(27),
     backgroundColor: COLORS.inputBoder,
   },
   verifiedBadge: {
     position: 'absolute',
     right: scale(-2),
-    top: verticalScale(1),
+    bottom: verticalScale(-2),
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(8),
+    borderRadius: moderateScale(10),
     padding: scale(1),
+    borderWidth: 1.5,
+    borderColor: COLORS.white,
+    elevation: 2,
   },
   panditjiDetails: {
     flex: 1,
@@ -626,57 +687,113 @@ const styles = StyleSheet.create({
     color: COLORS.primaryTextDark,
     fontFamily: Fonts.Sen_Bold,
     fontSize: moderateScale(15),
-    fontWeight: '700',
+    marginBottom: verticalScale(3),
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: verticalScale(2),
+  },
+  metaIcon: {
+    marginRight: scale(4),
   },
   panditjiLocation: {
     color: COLORS.pujaCardSubtext,
     fontFamily: Fonts.Sen_Regular,
-    fontSize: moderateScale(13),
-    fontWeight: '400',
-    marginBottom: verticalScale(2),
+    fontSize: moderateScale(12),
+    flex: 1,
   },
   panditjiLanguages: {
     color: COLORS.pujaCardSubtext,
     fontFamily: Fonts.Sen_Regular,
-    fontSize: moderateScale(13),
-    fontWeight: '400',
-    width: wp(40),
-  },
-  selectionButton: {
-    padding: scale(4),
+    fontSize: moderateScale(12),
+    flex: 1,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: verticalScale(6),
+    marginTop: verticalScale(4),
+    backgroundColor: '#FFF1F2',
+    alignSelf: 'flex-start',
+    paddingHorizontal: scale(8),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(6),
+  },
+  priceLabel: {
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(11),
+    color: COLORS.primary,
   },
   priceValue: {
-    fontFamily: Fonts.Sen_SemiBold,
-    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Bold,
+    fontSize: moderateScale(13),
+    color: COLORS.primary,
+  },
+  selectionWrapper: {
+    paddingLeft: scale(8),
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: verticalScale(40),
+    paddingHorizontal: scale(20),
+  },
+  emptyIconCircle: {
+    width: moderateScale(64),
+    height: moderateScale(64),
+    borderRadius: moderateScale(32),
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: verticalScale(14),
+  },
+  emptyTitle: {
     color: COLORS.primaryTextDark,
+    fontFamily: Fonts.Sen_Bold,
+    fontSize: moderateScale(16),
+    marginBottom: verticalScale(6),
+    textAlign: 'center',
   },
-  separator: {
-    height: 1,
-    backgroundColor: COLORS.separatorColor,
-    marginHorizontal: scale(14),
+  emptySubtitle: {
+    color: COLORS.pujaCardSubtext,
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(13),
+    textAlign: 'center',
+    lineHeight: moderateScale(18),
   },
-  absoluteButtonContainer: {
-    paddingHorizontal: scale(24),
-    // paddingBottom is set dynamically in the component for safe area
-    backgroundColor: COLORS.pujaBackground,
+  clearSearchFilterButton: {
+    marginTop: verticalScale(14),
+    paddingHorizontal: scale(16),
+    paddingVertical: verticalScale(8),
+    backgroundColor: '#FEE2E2',
+    borderRadius: moderateScale(8),
+  },
+  clearSearchFilterText: {
+    fontFamily: Fonts.Sen_Medium,
+    fontSize: moderateScale(13),
+    color: COLORS.primary,
   },
   nextButton: {
-    backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: moderateScale(10),
+    marginTop: 0,
   },
-  disabledButton: {
-    backgroundColor: COLORS.inputBoder,
+  absoluteButtonContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: scale(20),
+    paddingTop: verticalScale(10),
+    paddingBottom: verticalScale(12),
+    backgroundColor: COLORS.pujaBackground,
+    borderTopWidth: 1,
+    borderTopColor: '#ECEFF1',
   },
   buttonText: {
     color: COLORS.primaryTextDark,
     textAlign: 'center',
-    fontFamily: Fonts.Sen_Regular,
+    fontFamily: Fonts.Sen_Bold,
     fontSize: moderateScale(15),
     textTransform: 'uppercase',
   },

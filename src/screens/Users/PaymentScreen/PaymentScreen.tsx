@@ -25,12 +25,12 @@ import Fonts from '../../../theme/fonts';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { Images } from '../../../theme/Images';
 import Octicons from 'react-native-vector-icons/Octicons';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useCommonToast } from '../../../common/CommonToast';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+// @ts-ignore
 import RazorpayCheckout from 'react-native-razorpay';
 import {
   getWallet,
@@ -692,77 +692,84 @@ const PaymentScreen: React.FC = () => {
     setRefundPolicyContent('');
   };
 
+  const formattedBookingDate = (() => {
+    if (!booking_date) return '';
+    const date = new Date(booking_date);
+    if (isNaN(date.getTime())) return booking_date;
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  })();
+
+  const hasPandit =
+    AutoModeSelection == false &&
+    Boolean(displayPanditImage && displayPanditName);
+
   const renderBookingData = () => (
     <View style={styles.bookingDataItem}>
-      <View style={styles.textContainer}>
-        <View style={styles.iconContainer}>
-          <Octicons name="location" size={20} color={COLORS.pujaCardSubtext} />
+      {/* Address Row */}
+      <View style={styles.detailRow}>
+        <View
+          style={[styles.detailIconContainer, { backgroundColor: '#FFF4EC' }]}
+        >
+          <Octicons name="location" size={16} color="#E65100" />
         </View>
-        <View style={styles.flexOne}>
-          <Text
-            style={[styles.bookingDataText, styles.flexWrapText]}
-            numberOfLines={0}
-          >
-            {translatedPoojaDescription}
+        <View style={styles.detailContent}>
+          <Text style={styles.detailLabel}>
+            {t('puja_location') || 'PUJA LOCATION'}
           </Text>
-        </View>
-      </View>
-      <View style={styles.textContainer}>
-        <View style={styles.iconContainer}>
-          <Octicons name="calendar" size={20} color={COLORS.pujaCardSubtext} />
-        </View>
-        <View>
-          <Text style={styles.bookingDataText}>
-            {(() => {
-              if (!booking_date) return '';
-              const date = new Date(booking_date);
-              if (isNaN(date.getTime())) return booking_date;
-              const dd = String(date.getDate()).padStart(2, '0');
-              const mm = String(date.getMonth() + 1).padStart(2, '0');
-              const yyyy = date.getFullYear();
-              return `${dd}/${mm}/${yyyy}`;
-            })()}
+          <Text style={styles.detailValue} numberOfLines={2}>
+            {translatedPoojaDescription || selectAddress || ''}
           </Text>
         </View>
       </View>
 
-      <View
-        style={[
-          styles.textContainer,
-          (AutoModeSelection == true ||
-            (AutoModeSelection == false &&
-              !(displayPanditName || displayPanditImage))) && {
-            borderBottomWidth: 0,
-          },
-        ]}
-      >
-        <View style={styles.iconContainer}>
-          <Octicons name="clock" size={20} color={COLORS.pujaCardSubtext} />
+      {/* Date Row */}
+      <View style={styles.detailRow}>
+        <View
+          style={[styles.detailIconContainer, { backgroundColor: '#FEECEB' }]}
+        >
+          <Octicons name="calendar" size={16} color={COLORS.primary} />
         </View>
-        <View>
-          <Text style={styles.bookingDataText}>{muhurat_time}</Text>
+        <View style={styles.detailContent}>
+          <Text style={styles.detailLabel}>
+            {t('puja_date') || 'PUJA DATE'}
+          </Text>
+          <Text style={styles.detailValue}>{formattedBookingDate}</Text>
         </View>
       </View>
 
-      {AutoModeSelection == false &&
-        displayPanditImage &&
-        displayPanditName && (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingTop: 12,
-            }}
-          >
-            <Image
-              source={{
-                uri: displayPanditImage,
-              }}
-              style={styles.panditImage}
-            />
-            <Text style={styles.bookingDataText}>{translatedPanditName}</Text>
+      {/* Muhurat Time Row */}
+      <View style={[styles.detailRow, !hasPandit && styles.detailRowNoBorder]}>
+        <View
+          style={[styles.detailIconContainer, { backgroundColor: '#FFF9E6' }]}
+        >
+          <Octicons name="clock" size={16} color="#D97706" />
+        </View>
+        <View style={styles.detailContent}>
+          <Text style={styles.detailLabel}>
+            {t('muhurat_time') || 'MUHURAT TIME'}
+          </Text>
+          <Text style={styles.detailValue}>{muhurat_time}</Text>
+        </View>
+      </View>
+
+      {/* Pandit Row if selected */}
+      {hasPandit && (
+        <View style={[styles.detailRow, styles.detailRowNoBorder]}>
+          <Image
+            source={{ uri: displayPanditImage }}
+            style={styles.panditAvatar}
+          />
+          <View style={styles.detailContent}>
+            <Text style={styles.detailLabel}>
+              {t('assigned_pandit') || 'ASSIGNED PANDIT'}
+            </Text>
+            <Text style={styles.detailValueBold}>{translatedPanditName}</Text>
           </View>
-        )}
+        </View>
+      )}
     </View>
   );
 
@@ -773,13 +780,23 @@ const PaymentScreen: React.FC = () => {
       <View
         style={[styles.paymentMethodsSection, COMMON_RADIO_CONTAINER_STYLE]}
       >
-        <Text style={styles.paymentMethodLabel}>
-          {t('select_payment_method') || 'Select Payment Method'}
-        </Text>
+        <View style={styles.paymentSectionHeader}>
+          <Text style={styles.paymentMethodLabel}>
+            {t('select_payment_method') || 'Select Payment Method'}
+          </Text>
+          <View style={styles.secureHeaderBadge}>
+            <MaterialIcons name="verified-user" size={13} color="#16A34A" />
+            <Text style={styles.secureHeaderText}>100% Secure</Text>
+          </View>
+        </View>
+
+        {/* Option 1: Pay Online */}
         <TouchableOpacity
           style={[
-            styles.paymentMethodRow,
-            walletCoversBooking && { opacity: 0.5 },
+            styles.paymentOptionCard,
+            selectedPaymentMethod === 'online' &&
+              styles.paymentOptionCardActive,
+            walletCoversBooking && styles.paymentOptionCardDisabled,
           ]}
           activeOpacity={walletCoversBooking ? 1 : 0.7}
           onPress={() => {
@@ -787,32 +804,58 @@ const PaymentScreen: React.FC = () => {
           }}
           disabled={walletCoversBooking}
         >
-          <View style={styles.paymentMethodInner}>
-            <View style={styles.radioButton}>
+          <View style={styles.paymentOptionLeft}>
+            <View
+              style={[
+                styles.paymentOptionIconWrap,
+                selectedPaymentMethod === 'online' &&
+                  styles.paymentOptionIconWrapActive,
+              ]}
+            >
               <MaterialIcons
-                name={
-                  selectedPaymentMethod === 'online'
-                    ? 'radio-button-checked'
-                    : 'radio-button-unchecked'
-                }
+                name="credit-card"
                 size={22}
                 color={
                   selectedPaymentMethod === 'online'
                     ? COLORS.primary
-                    : COLORS.inputBoder
+                    : COLORS.pujaCardSubtext
                 }
               />
             </View>
-            <Text style={styles.paymentMethodText}>
-              {t('pay_online') || 'Pay Online'}
-            </Text>
+            <View style={styles.paymentOptionTextWrap}>
+              <Text
+                style={[
+                  styles.paymentOptionTitle,
+                  selectedPaymentMethod === 'online' &&
+                    styles.paymentOptionTitleActive,
+                ]}
+              >
+                {t('pay_online') || 'Pay Online'}
+              </Text>
+              <Text style={styles.paymentOptionSubtitle}>
+                UPI, Cards, Netbanking & Wallets
+              </Text>
+            </View>
+          </View>
+          <View
+            style={[
+              styles.customRadioOuter,
+              selectedPaymentMethod === 'online' &&
+                styles.customRadioOuterActive,
+            ]}
+          >
+            {selectedPaymentMethod === 'online' && (
+              <View style={styles.customRadioInner} />
+            )}
           </View>
         </TouchableOpacity>
-        <View style={styles.divider} />
+
+        {/* Option 2: Cash on Service */}
         <TouchableOpacity
           style={[
-            styles.paymentMethodRow,
-            walletCoversBooking && { opacity: 0.5 },
+            styles.paymentOptionCard,
+            selectedPaymentMethod === 'cod' && styles.paymentOptionCardActive,
+            walletCoversBooking && styles.paymentOptionCardDisabled,
           ]}
           activeOpacity={walletCoversBooking ? 1 : 0.7}
           onPress={() => {
@@ -820,32 +863,64 @@ const PaymentScreen: React.FC = () => {
           }}
           disabled={walletCoversBooking}
         >
-          <View style={styles.paymentMethodInner}>
-            <View style={styles.radioButton}>
+          <View style={styles.paymentOptionLeft}>
+            <View
+              style={[
+                styles.paymentOptionIconWrap,
+                selectedPaymentMethod === 'cod' &&
+                  styles.paymentOptionIconWrapActive,
+              ]}
+            >
               <MaterialIcons
-                name={
-                  selectedPaymentMethod === 'cod'
-                    ? 'radio-button-checked'
-                    : 'radio-button-unchecked'
-                }
+                name="payments"
                 size={22}
                 color={
                   selectedPaymentMethod === 'cod'
                     ? COLORS.primary
-                    : COLORS.inputBoder
+                    : COLORS.pujaCardSubtext
                 }
               />
             </View>
-            <Text style={styles.paymentMethodText}>
-              {t('cash_on_delivery') || 'Cash on Service'}
-            </Text>
+            <View style={styles.paymentOptionTextWrap}>
+              <Text
+                style={[
+                  styles.paymentOptionTitle,
+                  selectedPaymentMethod === 'cod' &&
+                    styles.paymentOptionTitleActive,
+                ]}
+              >
+                {t('cash_on_delivery') || 'Cash on Service'}
+              </Text>
+              <Text style={styles.paymentOptionSubtitle}>
+                Pay directly to Panditji after the puja
+              </Text>
+            </View>
+          </View>
+          <View
+            style={[
+              styles.customRadioOuter,
+              selectedPaymentMethod === 'cod' && styles.customRadioOuterActive,
+            ]}
+          >
+            {selectedPaymentMethod === 'cod' && (
+              <View style={styles.customRadioInner} />
+            )}
           </View>
         </TouchableOpacity>
+
         {walletCoversBooking && (
-          <Text style={styles.walletCoverageMessage}>
-            {t('payment_method_disabled_wallet_full') ||
-              'Payment method selection is disabled because your wallet fully covers the booking amount.'}
-          </Text>
+          <View style={styles.walletCoverageBadge}>
+            <MaterialIcons
+              name="info-outline"
+              size={15}
+              color="#B45309"
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.walletCoverageMessage}>
+              {t('payment_method_disabled_wallet_full') ||
+                'Payment method selection is disabled because your wallet fully covers the booking amount.'}
+            </Text>
+          </View>
         )}
       </View>
     );
@@ -877,73 +952,125 @@ const PaymentScreen: React.FC = () => {
               <View style={styles.totalAmountGroup}>
                 <View style={[styles.totalSection, COMMON_LIST_STYLE]}>
                   <View style={styles.totalRow}>
-                    <Text style={styles.totalAmountLabelBold}>
-                      {t('total_payable')}
-                    </Text>
-                    <Text style={styles.totalAmountBold}>
-                      ₹ {grossAmount.toFixed(2)}
-                    </Text>
+                    <View style={styles.totalLeftInfo}>
+                      <View style={styles.totalBadgeIconWrap}>
+                        <MaterialIcons
+                          name="receipt"
+                          size={22}
+                          color={COLORS.primary}
+                        />
+                      </View>
+                      <View style={styles.totalTextColumn}>
+                        <Text style={styles.totalAmountLabelBold}>
+                          {t('total_payable') || 'Total Payable'}
+                        </Text>
+                        <Text style={styles.totalSubnote}>
+                          {t('includes_taxes') ||
+                            'Includes ritual dakshina & taxes'}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.totalPriceWrap}>
+                      <Text style={styles.totalAmountBold}>
+                        ₹ {(usePoints ? payableAmount : grossAmount).toFixed(2)}
+                      </Text>
+                    </View>
                   </View>
 
-                  {usePoints ? (
-                    <>
-                      <View style={styles.totalRow}>
-                        <Text style={styles.totalAmountLabel}>
-                          Wallet applied
+                  {usePoints && walletUseAmountCalc > 0 ? (
+                    <View style={styles.breakdownWrap}>
+                      <View style={styles.breakdownDivider} />
+                      <View style={styles.breakdownItemRow}>
+                        <Text style={styles.breakdownItemLabel}>Puja Fee</Text>
+                        <Text style={styles.breakdownItemValue}>
+                          ₹ {grossAmount.toFixed(2)}
                         </Text>
-                        <Text style={styles.totalAmount}>
+                      </View>
+                      <View style={styles.breakdownItemRow}>
+                        <View style={styles.walletDiscountLabelRow}>
+                          <MaterialIcons
+                            name="check-circle"
+                            size={14}
+                            color="#16A34A"
+                            style={{ marginRight: 4 }}
+                          />
+                          <Text style={styles.walletDiscountLabel}>
+                            Wallet Points Applied
+                          </Text>
+                        </View>
+                        <Text style={styles.walletDiscountValue}>
                           - ₹ {walletUseAmountCalc.toFixed(2)}
                         </Text>
                       </View>
-                      <View style={styles.totalRow}>
-                        <Text style={styles.totalAmountLabelBold}>To pay</Text>
-                        <Text style={styles.totalAmountBold}>
-                          ₹ {payableAmount.toFixed(2)}
-                        </Text>
-                      </View>
-                    </>
+                    </View>
                   ) : null}
                 </View>
               </View>
 
               {/* Use Points Group */}
               <View style={styles.usePointsGroup}>
-                <View style={[styles.pointsSection, COMMON_LIST_STYLE]}>
+                <TouchableOpacity
+                  style={[
+                    styles.pointsSection,
+                    COMMON_LIST_STYLE,
+                    usePoints && styles.pointsSectionActive,
+                  ]}
+                  activeOpacity={walletBalanceForCalc > 0 ? 0.7 : 1}
+                  onPress={() => {
+                    if (walletBalanceForCalc > 0) {
+                      setUsePoints(!usePoints);
+                    }
+                  }}
+                >
                   <View style={styles.pointsRow}>
                     <View style={styles.pointsLeft}>
-                      <View style={styles.checkboxContainer}>
-                        <TouchableOpacity
-                          onPress={() => setUsePoints(!usePoints)}
-                          style={styles.customCheckbox}
-                        >
-                          <MaterialCommunityIcons
-                            name={
-                              usePoints
-                                ? 'checkbox-outline'
-                                : 'checkbox-blank-outline'
-                            }
-                            size={24}
-                            color={
-                              usePoints ? COLORS.primary : COLORS.inputBoder
-                            }
+                      <View
+                        style={[
+                          styles.customCheckbox,
+                          usePoints && styles.customCheckboxActive,
+                        ]}
+                      >
+                        {usePoints && (
+                          <MaterialIcons
+                            name="check"
+                            size={16}
+                            color={COLORS.white}
                           />
-                        </TouchableOpacity>
+                        )}
                       </View>
-                      <Text style={styles.pointsLabel}>
-                        {t('use_available_points')}
-                      </Text>
+                      <View style={styles.pointsTextContainer}>
+                        <Text style={styles.pointsLabel}>
+                          {t('use_available_points') || 'Use Available Points'}
+                        </Text>
+                        <Text style={styles.pointsSubLabel}>
+                          {walletBalanceForCalc > 0
+                            ? usePoints
+                              ? `Save ₹${walletUseAmountCalc.toFixed(
+                                  2,
+                                )} with wallet points`
+                              : `Tap to apply up to ₹${walletBalanceForCalc.toFixed(
+                                  2,
+                                )}`
+                            : 'No wallet points available'}
+                        </Text>
+                      </View>
                     </View>
                     <View style={styles.pointsRight}>
-                      <Image
-                        source={Images.ic_coin}
-                        style={styles.pointsIcon}
-                      />
-                      <Text style={styles.pointsValue}>
-                        {walletData.balance}
-                      </Text>
+                      <View style={styles.coinBadge}>
+                        <Image
+                          source={Images.ic_coin}
+                          style={styles.pointsIcon}
+                        />
+                        <Text style={styles.pointsValue}>
+                          {walletData.balance !== undefined &&
+                          walletData.balance !== null
+                            ? Number(walletData.balance).toFixed(2)
+                            : '0.00'}
+                        </Text>
+                      </View>
                     </View>
                   </View>
-                </View>
+                </TouchableOpacity>
               </View>
 
               {/* Payment Methods Group */}
@@ -954,23 +1081,33 @@ const PaymentScreen: React.FC = () => {
               {/* Booking Data Group */}
               <View style={styles.bookingDataGroup}>
                 <View style={[styles.suggestedSection, COMMON_LIST_STYLE]}>
-                  <TouchableOpacity
-                    style={styles.suggestedPujaRow}
-                    activeOpacity={0.7}
-                  >
+                  <View style={styles.suggestedPujaRow}>
                     <View style={styles.suggestedLeft}>
                       <View style={styles.pujaImageContainer}>
                         <Image
-                          source={{ uri: puja_image }}
+                          source={{
+                            uri:
+                              puja_image ||
+                              'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
+                          }}
                           style={styles.pujaImage}
                         />
                       </View>
-                      <Text style={styles.suggestedPujaName}>
-                        {translatedPoojaName}
-                      </Text>
+                      <View style={styles.pujaHeaderInfo}>
+                        <Text
+                          style={styles.suggestedPujaName}
+                          numberOfLines={1}
+                        >
+                          {translatedPoojaName || puja_name || 'Puja Service'}
+                        </Text>
+                        <View style={styles.pujaBadgeTag}>
+                          <Text style={styles.pujaBadgeText}>
+                            Vedic Ceremony
+                          </Text>
+                        </View>
+                      </View>
                     </View>
-                    <View style={styles.emptyIconSpacer}></View>
-                  </TouchableOpacity>
+                  </View>
                   <View style={styles.bookingDataContainer}>
                     {renderBookingData()}
                   </View>
@@ -979,50 +1116,64 @@ const PaymentScreen: React.FC = () => {
 
               {/* Terms Group */}
               <View style={styles.termsGroup}>
-                <View style={[styles.termsSection, COMMON_LIST_STYLE]}>
+                <TouchableOpacity
+                  style={[styles.termsSection, COMMON_LIST_STYLE]}
+                  activeOpacity={0.7}
+                  onPress={() => setAcceptTerms(!acceptTerms)}
+                >
                   <View style={styles.termsRow}>
-                    <TouchableOpacity
-                      onPress={() => setAcceptTerms(!acceptTerms)}
-                      activeOpacity={0.7}
-                      style={styles.checkboxTouchable}
+                    <View
+                      style={[
+                        styles.customCheckbox,
+                        acceptTerms && styles.customCheckboxActive,
+                        { marginRight: 10 },
+                      ]}
                     >
-                      <MaterialCommunityIcons
-                        name={
-                          acceptTerms
-                            ? 'checkbox-outline'
-                            : 'checkbox-blank-outline'
-                        }
-                        size={24}
-                        color={
-                          acceptTerms ? COLORS.primary : COLORS.borderColor
-                        }
-                      />
-                    </TouchableOpacity>
-                    <Text style={styles.termsText} numberOfLines={1}>
-                      {t('accept_refund_policy')}{' '}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => {
-                        handleOpenRefundPolicy();
-                      }}
-                    >
-                      <Text style={styles.viewDetailsText}>
-                        {t('view_details') || 'View Details'}
+                      {acceptTerms && (
+                        <MaterialIcons
+                          name="check"
+                          size={16}
+                          color={COLORS.white}
+                        />
+                      )}
+                    </View>
+                    <Text style={styles.termsText} numberOfLines={2}>
+                      {t('accept_refund_policy') || 'I agree to the'}{' '}
+                      <Text
+                        style={styles.viewDetailsText}
+                        onPress={e => {
+                          e.stopPropagation();
+                          handleOpenRefundPolicy();
+                        }}
+                      >
+                        {t('view_details') || 'Cancellation & Refund Policy'}
                       </Text>
-                    </TouchableOpacity>
+                    </Text>
                   </View>
-                </View>
+                </TouchableOpacity>
               </View>
             </View>
           </ScrollView>
           <View
             style={[
               styles.fixedButtonContainer,
-              { paddingBottom: moderateScale(16) },
+              {
+                paddingBottom: inset.bottom,
+              },
             ]}
           >
+            <View style={styles.trustFooterRow}>
+              <MaterialIcons name="verified-user" size={14} color="#16A34A" />
+              <Text style={styles.trustFooterText}>
+                100% Safe & Verified Booking
+              </Text>
+            </View>
             <PrimaryButton
-              title={t('confirm_booking')}
+              title={
+                loading || isProcessingPayment
+                  ? 'Processing...'
+                  : t('confirm_booking') || 'CONFIRM BOOKING'
+              }
               onPress={handlePayment}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}
@@ -1104,125 +1255,117 @@ const styles = StyleSheet.create({
   },
   scrollContentContainer: {
     flexGrow: 1,
-    // paddingBottom: verticalScale(24),
   },
   contentWrapper: {
     width: '100%',
-    paddingHorizontal: moderateScale(24),
-    gap: moderateScale(24),
+    paddingHorizontal: moderateScale(16),
+    gap: moderateScale(14),
   },
   totalAmountGroup: {
-    marginTop: moderateScale(24),
+    marginTop: moderateScale(16),
   },
   usePointsGroup: {},
   paymentMethodsGroup: {},
   bookingDataGroup: {},
   termsGroup: {},
-  iconContainer: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: scale(14),
-  },
-  flexOne: {
-    flex: 1,
-  },
-  flexWrapText: {
-    flexWrap: 'wrap',
-  },
-  paymentMethodLabel: {
-    fontSize: 16,
-    fontFamily: Fonts.Sen_SemiBold,
-    color: COLORS.primaryTextDark,
-    marginBottom: moderateScale(12),
-  },
-  paymentMethodInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  walletCoverageMessage: {
-    color: COLORS.pujaCardSubtext,
-    fontSize: 13,
-    marginTop: 8,
-  },
-  emptyIconSpacer: {
-    height: 24,
-    width: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  totalAmountLabelBold: {
-    fontSize: 15,
-    fontFamily: Fonts.Sen_SemiBold,
-    color: COLORS.primaryTextDark,
-  },
-  totalAmountBold: {
-    fontSize: 15,
-    fontFamily: Fonts.Sen_SemiBold,
-    color: COLORS.primaryTextDark,
-  },
-  webViewStyle: {
-    flex: 1,
-    minHeight: 200,
-    backgroundColor: 'transparent',
-  },
-  webViewContainerStyle: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  modalPositioning: {
-    marginBottom: 0,
-    marginTop: 'auto' as const,
-  },
   totalSection: {
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(12),
+    borderRadius: moderateScale(14),
     padding: moderateScale(14),
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#F0ECE6',
   },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  totalInfo: {
+  totalLeftInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
+    marginRight: scale(10),
+  },
+  totalBadgeIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#FFF4EE',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: scale(10),
   },
-  totalInfoLeft: {
-    flexDirection: 'column',
+  totalTextColumn: {
     flex: 1,
   },
-  totalAmountLabel: {
+  totalAmountLabelBold: {
     fontSize: 15,
-    fontFamily: Fonts.Sen_Medium,
+    fontFamily: Fonts.Sen_Bold,
     color: COLORS.primaryTextDark,
   },
-  pujaName: {
-    fontSize: 13,
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.pujaCardSubtext,
-    marginTop: verticalScale(4),
-  },
-  totalAmount: {
-    fontSize: 15,
-    fontFamily: Fonts.Sen_SemiBold,
-    color: COLORS.primaryTextDark,
-  },
-  feeNoteText: {
-    fontSize: 12,
-    fontFamily: Fonts.Sen_Medium,
+  totalSubnote: {
+    fontSize: 11,
+    fontFamily: Fonts.Sen_Regular,
     color: COLORS.pujaCardSubtext,
     marginTop: 2,
   },
-  amoutContainer: {
+  totalPriceWrap: {
     alignItems: 'flex-end',
-    justifyContent: 'center',
+  },
+  totalAmountBold: {
+    fontSize: 18,
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+  },
+  breakdownWrap: {
+    marginTop: moderateScale(10),
+  },
+  breakdownDivider: {
+    height: 1,
+    backgroundColor: '#F0ECE6',
+    marginBottom: moderateScale(8),
+  },
+  breakdownItemRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 3,
+  },
+  breakdownItemLabel: {
+    fontSize: 13,
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.pujaCardSubtext,
+  },
+  breakdownItemValue: {
+    fontSize: 13,
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primaryTextDark,
+  },
+  walletDiscountLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  walletDiscountLabel: {
+    fontSize: 13,
+    fontFamily: Fonts.Sen_Medium,
+    color: '#16A34A',
+  },
+  walletDiscountValue: {
+    fontSize: 13,
+    fontFamily: Fonts.Sen_Bold,
+    color: '#16A34A',
   },
   pointsSection: {
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(12),
-    paddingVertical: moderateScale(14),
+    borderRadius: moderateScale(14),
+    paddingHorizontal: moderateScale(14),
+    paddingVertical: moderateScale(12),
+    borderWidth: 1.5,
+    borderColor: '#F0ECE6',
+  },
+  pointsSectionActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#FFFDFB',
   },
   pointsRow: {
     flexDirection: 'row',
@@ -1233,63 +1376,189 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-  },
-  checkboxContainer: {
-    marginRight: scale(5),
+    marginRight: 8,
   },
   customCheckbox: {
-    width: 24,
-    height: 24,
-    borderRadius: moderateScale(6),
-    borderColor: COLORS.inputBoder,
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.white,
+    marginRight: scale(10),
+  },
+  customCheckboxActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  pointsTextContainer: {
+    flex: 1,
   },
   pointsLabel: {
-    fontSize: 15,
-    fontFamily: Fonts.Sen_Medium,
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Bold,
     color: COLORS.primaryTextDark,
-    textAlign: 'center',
+  },
+  pointsSubLabel: {
+    fontSize: 11,
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.pujaCardSubtext,
+    marginTop: 2,
   },
   pointsRight: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  pointsIcon: { width: 18, height: 18, marginRight: 4 },
+  coinBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  pointsIcon: {
+    width: 17,
+    height: 17,
+    marginRight: 4,
+  },
   pointsValue: {
-    fontSize: moderateScale(15),
-    fontFamily: Fonts.Sen_SemiBold,
-    color: COLORS.primaryTextDark,
+    fontSize: 13,
+    fontFamily: Fonts.Sen_Bold,
+    color: '#B45309',
   },
   paymentMethodsSection: {
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(12),
-    paddingVertical: moderateScale(14),
+    borderRadius: moderateScale(14),
+    padding: moderateScale(14),
+    borderWidth: 1,
+    borderColor: '#F0ECE6',
   },
-  paymentMethodRow: {
+  paymentSectionHeader: {
     flexDirection: 'row',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: scale(4),
-    paddingVertical: 8,
+    marginBottom: moderateScale(12),
   },
-  paymentMethodText: {
+  paymentMethodLabel: {
     fontSize: 15,
-    fontFamily: Fonts.Sen_Medium,
+    fontFamily: Fonts.Sen_Bold,
     color: COLORS.primaryTextDark,
-    marginLeft: moderateScale(8),
   },
-  radioButton: {},
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    marginVertical: moderateScale(8),
+  secureHeaderBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
+  },
+  secureHeaderText: {
+    fontSize: 10,
+    fontFamily: Fonts.Sen_Bold,
+    color: '#16A34A',
+    marginLeft: 3,
+  },
+  paymentOptionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: moderateScale(12),
+    borderRadius: moderateScale(12),
+    borderWidth: 1.5,
+    borderColor: '#F0ECE6',
+    backgroundColor: COLORS.white,
+    marginBottom: moderateScale(10),
+  },
+  paymentOptionCardActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#FFF9F7',
+  },
+  paymentOptionCardDisabled: {
+    opacity: 0.5,
+  },
+  paymentOptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  paymentOptionIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#F7F7F7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: scale(10),
+  },
+  paymentOptionIconWrapActive: {
+    backgroundColor: '#FFE8E2',
+  },
+  paymentOptionTextWrap: {
+    flex: 1,
+  },
+  paymentOptionTitle: {
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+  },
+  paymentOptionTitleActive: {
+    color: COLORS.primaryTextDark,
+  },
+  paymentOptionSubtitle: {
+    fontSize: 11,
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.pujaCardSubtext,
+    marginTop: 2,
+  },
+  customRadioOuter: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+  },
+  customRadioOuterActive: {
+    borderColor: COLORS.primary,
+  },
+  customRadioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: COLORS.primary,
+  },
+  walletCoverageBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFBEB',
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 4,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  walletCoverageMessage: {
+    color: '#92400E',
+    fontSize: 12,
+    fontFamily: Fonts.Sen_Regular,
+    flex: 1,
   },
   suggestedSection: {
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(12),
-    paddingVertical: moderateScale(14),
+    borderRadius: moderateScale(14),
+    padding: moderateScale(14),
+    borderWidth: 1,
+    borderColor: '#F0ECE6',
   },
   suggestedPujaRow: {
     flexDirection: 'row',
@@ -1302,86 +1571,153 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   pujaImageContainer: {
-    marginRight: scale(14),
+    marginRight: scale(12),
   },
   pujaImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F0ECE6',
+  },
+  pujaHeaderInfo: {
+    flex: 1,
+    justifyContent: 'center',
   },
   suggestedPujaName: {
     fontSize: 15,
-    fontFamily: Fonts.Sen_SemiBold,
+    fontFamily: Fonts.Sen_Bold,
     color: COLORS.primaryTextDark,
+  },
+  pujaBadgeTag: {
+    backgroundColor: '#FFF4EE',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+  },
+  pujaBadgeText: {
+    fontSize: 10,
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primary,
+    letterSpacing: 0.3,
   },
   bookingDataContainer: {
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    marginTop: 12,
+    borderTopColor: '#F0ECE6',
+    marginTop: moderateScale(12),
+    paddingTop: moderateScale(4),
   },
   bookingDataItem: {
     flex: 1,
   },
-  textContainer: {
+  detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderBottomColor: COLORS.border,
+    borderBottomColor: '#F6F4F0',
     borderBottomWidth: 1,
-    paddingVertical: moderateScale(6),
+    paddingVertical: moderateScale(9),
   },
-  bookingDataText: {
-    fontSize: 15,
+  detailRowNoBorder: {
+    borderBottomWidth: 0,
+    paddingBottom: moderateScale(4),
+  },
+  detailIconContainer: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: scale(12),
+  },
+  detailContent: {
+    flex: 1,
+  },
+  detailLabel: {
+    fontSize: 10,
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.pujaCardSubtext,
+    letterSpacing: 0.5,
+  },
+  detailValue: {
+    fontSize: 13,
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
+    marginTop: 2,
   },
-  panditImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 25,
-    marginRight: scale(14),
-    borderWidth: 1,
-    borderColor: COLORS.inputBoder,
+  detailValueBold: {
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+    marginTop: 2,
+  },
+  panditAvatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    marginRight: scale(12),
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
   },
   termsSection: {
     backgroundColor: COLORS.white,
     borderRadius: moderateScale(12),
-    paddingVertical: moderateScale(14),
+    paddingVertical: moderateScale(10),
+    paddingHorizontal: moderateScale(12),
+    borderWidth: 1,
+    borderColor: '#F0ECE6',
   },
   termsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'nowrap',
-  },
-  checkboxTouchable: {
-    marginRight: 0,
   },
   termsText: {
-    fontSize: moderateScale(15),
-    fontFamily: Fonts.Sen_Medium,
+    fontSize: 12,
+    fontFamily: Fonts.Sen_Regular,
     color: COLORS.primaryTextDark,
     flex: 1,
-    flexShrink: 1,
-    textAlign: 'center',
-    marginRight: 2,
+    lineHeight: 18,
   },
   viewDetailsText: {
-    fontSize: moderateScale(15),
+    fontSize: 12,
     color: COLORS.primary,
     textDecorationLine: 'underline',
+    fontFamily: Fonts.Sen_Bold,
+  },
+  fixedButtonContainer: {
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderTopColor: '#F0ECE6',
+    paddingHorizontal: moderateScale(18),
+    paddingTop: moderateScale(10),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  trustFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: moderateScale(8),
+  },
+  trustFooterText: {
+    fontSize: 11,
     fontFamily: Fonts.Sen_Medium,
-    textAlign: 'center',
+    color: '#16A34A',
+    marginLeft: 4,
   },
   buttonContainer: {
-    height: 46,
-    borderRadius: 8,
+    height: 48,
+    borderRadius: 10,
+    marginTop: 0,
   },
   buttonText: {
     fontSize: 15,
-    fontFamily: Fonts.Sen_Medium,
-  },
-  fixedButtonContainer: {
-    backgroundColor: COLORS.pujaBackground,
-    paddingHorizontal: moderateScale(18),
+    fontFamily: Fonts.Sen_Bold,
+    letterSpacing: 0.5,
   },
   modalOverlay: {
     flex: 1,
@@ -1392,8 +1728,12 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: moderateScale(12),
-    borderTopRightRadius: moderateScale(12),
+    borderTopLeftRadius: moderateScale(16),
+    borderTopRightRadius: moderateScale(16),
+  },
+  modalPositioning: {
+    marginBottom: 0,
+    marginTop: 'auto' as const,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1403,17 +1743,16 @@ const styles = StyleSheet.create({
     paddingTop: moderateScale(18),
     paddingBottom: moderateScale(8),
     backgroundColor: COLORS.white,
-    borderTopLeftRadius: moderateScale(12),
-    borderTopRightRadius: moderateScale(12),
+    borderTopLeftRadius: moderateScale(16),
+    borderTopRightRadius: moderateScale(16),
     zIndex: 2,
   },
   modalTitle: {
-    fontSize: 18,
-    fontFamily: Fonts.Sen_SemiBold,
+    fontSize: 17,
+    fontFamily: Fonts.Sen_Bold,
     color: COLORS.primaryTextDark,
   },
   modalBody: {
-    // flex: 1,
     minHeight: '80%',
     backgroundColor: COLORS.white,
     paddingHorizontal: moderateScale(18),
@@ -1422,9 +1761,19 @@ const styles = StyleSheet.create({
     marginBottom: moderateScale(20),
   },
   modalText: {
-    fontSize: 15,
-    fontFamily: Fonts.Sen_Medium,
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Regular,
     color: COLORS.primaryTextDark,
+    lineHeight: 20,
+  },
+  webViewStyle: {
+    flex: 1,
+    minHeight: 200,
+    backgroundColor: 'transparent',
+  },
+  webViewContainerStyle: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
 });
 

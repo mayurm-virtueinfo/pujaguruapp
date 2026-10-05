@@ -11,6 +11,7 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  StatusBar,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -240,7 +241,10 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
   const handleResendOTP = async () => {
     try {
       setLoading(true);
-      const confirmation = await auth().signInWithPhoneNumber(phoneNumber, true);
+      const confirmation = await auth().signInWithPhoneNumber(
+        phoneNumber,
+        true,
+      );
       setOtpConfirmation(confirmation);
       setOtp(['', '', '', '', '', '']);
       showSuccessToast(t('otp_resent'));
@@ -272,19 +276,38 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-    >
-      <ImageBackground
-        source={Images.ic_splash_background}
-        style={styles.container}
-        resizeMode="cover"
+    <View style={styles.rootContainer}>
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="light-content"
+      />
+      {/* Top red splash background for the header and iOS pull-down bounce */}
+      <View
+        pointerEvents="none"
+        style={[
+          styles.headerBackgroundWrapper,
+          {
+            height: headerHeight + inset.top + 300 + moderateScale(60),
+          },
+        ]}
+      >
+        <ImageBackground
+          source={Images.ic_splash_background}
+          style={StyleSheet.absoluteFill}
+          resizeMode="cover"
+        />
+      </View>
+
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
             {/* HEADER: maximally responsive */}
@@ -338,7 +361,12 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
               </Text>
             </View>
 
-            <View style={styles.body}>
+            <View
+              style={[
+                styles.body,
+                { paddingBottom: Math.max(inset.bottom, moderateScale(24)) },
+              ]}
+            >
               <Text style={styles.mainTitle}>{t('otp_verification')}</Text>
               <Text style={styles.subtitle}>
                 {t('6_digit_code_has_been_sent')}
@@ -390,9 +418,9 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
               />
               <PrimaryButtonOutlined
                 onPress={async () => {
-                  const auth = getAuth();
+                  const authInstance = getAuth();
                   try {
-                    await auth.signOut();
+                    await authInstance.signOut();
                   } catch (e) {
                     console.log('Error signing out:', e);
                   }
@@ -404,12 +432,28 @@ const OTPVerificationScreen: React.FC<Props> = ({ navigation, route }) => {
           </View>
         </ScrollView>
         {isLoading && <CustomeLoader loading={isLoading} />}
-      </ImageBackground>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  rootContainer: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+  },
+  headerBackgroundWrapper: {
+    position: 'absolute',
+    top: -300,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.primary,
+    overflow: 'hidden',
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
   container: {
     flex: 1,
   },

@@ -21,7 +21,7 @@ export type UserPanditjiParamList = {
   goBack(): void;
   navigate(arg0: string): unknown;
   PanditjiScreen: undefined;
-  PanditDetailsScreen: { panditId: string };
+  PanditDetailsScreen: { panditId: string; pandit?: boolean };
   NotificationScreen: undefined;
   PoojaDetailScreen: any;
   PlaceSelectionScreen: any;

@@ -10075,7 +10075,7 @@ __metadata:
   resolution: "react-native-background-timer@https://github.com/jitsi/react-native-background-timer.git#commit=d180dfaa4486ae3ee17d01242db92cb3195f4718"
   peerDependencies:
     react-native: ">=0.47.0"
-  checksum: 3ea24357253a570946ac9f0bc89eac738dd9850f98fbd75c9f8627b14de50f327fd9d76ea7202da9fce677be432bda9f41e24803d75be043a12d63dc02a2b808
+  checksum: daee82ee6164eca6e0dd283430af805aeaecd03a78576d73ca2e739f5a2b8d94b5b267a03a1ec7218865e0795983a849cb593186008efc45a972816c2c04ceb6
   languageName: node
   linkType: hard
 
@@ -10084,7 +10084,7 @@ __metadata:
   resolution: "react-native-calendar-events@https://github.com/jitsi/react-native-calendar-events.git#commit=47f068dedfed7c0f72042e093f688eb11624eb7b"
   peerDependencies:
     react-native: ">=0.60.0"
-  checksum: d7303d7e77c91c1f5cbb6a0e246f029ee973aced975f1d8da86f9858e0e7bda5460bc0088684d1f919cb7f5854f6cd8d12dd3c71e2ef9f0e6017828c54a7c0a3
+  checksum: fb7a3b3f2a951304d0835714bacf1007b56554d70813dc658f214c2373be212123233ab88df302d7983adedfb2c8f4130aeb5c7ede4660e2be93dddcadac59d3
   languageName: node
   linkType: hard
 
@@ -10474,7 +10474,7 @@ __metadata:
   resolution: "react-native-sound@https://github.com/jitsi/react-native-sound.git#commit=ea13c97b5c2a4ff5e0d9bacbd9ff5e4457fe2c3c"
   peerDependencies:
     react-native: ">=0.8.0"
-  checksum: 0361ad99666eaa264b65b466de834729076ab0ba6d4c5195741cff807083e03ee399c5a0321eac4e856223c70bc3bef5826dbf18360c9c238471f6b0e096ae72
+  checksum: e192fed5433a7cbb4a43c05e7695ebbd2339dc7d6874a0934a34552cca259b98c20bca6d4dc8a45fd9ba53c4f8c4ff2a521f2b7a6dd7d8e5a8395e5f913d4db5
   languageName: node
   linkType: hard
 

@@ -4,16 +4,18 @@ import {
   StyleSheet,
   StatusBar,
   Platform,
-  ScrollView,
-  KeyboardAvoidingView,
   Alert,
   Text,
-  SafeAreaView,
+  TouchableOpacity,
+  ScrollView,
+  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { moderateScale } from 'react-native-size-matters';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { COLORS } from '../../../theme/theme';
-import UserCustomHeader from '../../../components/UserCustomHeader';
+import Fonts from '../../../theme/fonts';
 import ChatMessages from '../../../components/ChatMessages';
 import ChatInput from '../../../components/ChatInput';
 import {
@@ -30,32 +32,30 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppConstant from '../../../utils/appConstant';
 import CustomeLoader from '../../../components/CustomeLoader';
 import { handleIncomingMessage } from '../../../helper/helper';
-import {
-  KeyboardAwareScrollView,
-  KeyboardProvider,
-  KeyboardStickyView,
-} from 'react-native-keyboard-controller';
 import { requestCallPermissions } from '../../../configuration/firebaseMessaging';
 
-// Add a new date field to the Message interface
 export interface Message {
   id: string;
   text: string;
   time: string;
-  date?: string; // <-- Added
+  date?: string;
   isOwn: boolean;
 }
 
-const formatDate = (dateObj: Date) => {
-  // Format date as YYYY-MM-DD
+const formatDate = (dateObj: Date): string => {
   const y = dateObj.getFullYear();
   const m = (dateObj.getMonth() + 1).toString().padStart(2, '0');
   const d = dateObj.getDate().toString().padStart(2, '0');
   return `${y}-${m}-${d}`;
 };
 
+const SUGGESTED_MESSAGES = [
+  '🙏 Namaste Panditji',
+  '📋 What samagri do I need?',
+  '⏰ Please confirm the puja time',
+];
+
 const UserChatScreen: React.FC = () => {
-  const snapToOffsets = [125, 225, 325, 425, 525, 625];
   const route = useRoute() as any;
   const navigation = useNavigation();
   const {
@@ -79,6 +79,7 @@ const UserChatScreen: React.FC = () => {
     'https://meet.puja-guru.com/',
   );
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
   const ws = useRef<WebSocket | null>(null);
   const scrollViewRef = useRef<ScrollView | null>(null);
@@ -92,6 +93,21 @@ const UserChatScreen: React.FC = () => {
   } catch (e) {
     JitsiMeeting = null;
   }
+
+  // Hide bottom tab bar while in chat screen; restore on blur
+  useFocusEffect(
+    useCallback(() => {
+      const parent = (navigation as any)?.getParent?.();
+      if (parent && typeof parent.setOptions === 'function') {
+        parent.setOptions({ tabBarStyle: { display: 'none' } });
+      }
+      return () => {
+        if (parent && typeof parent.setOptions === 'function') {
+          parent.setOptions({ tabBarStyle: undefined });
+        }
+      };
+    }, [navigation]),
+  );
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -117,30 +133,26 @@ const UserChatScreen: React.FC = () => {
       console.log('socketURL :: ', socketURL);
 
       ws.current = new WebSocket(socketURL);
-      ws.current.onopen = () => console.log('✅ Connected to WebSocket');
+      ws.current.onopen = () => console.log('Connected to WebSocket');
       ws.current.onmessage = e => {
         const data = JSON.parse(e.data);
         console.log('Chat Data ::', data);
 
-        // Extract both time and date for the message
         setMessages(prev => {
           const normalized = handleIncomingMessage(prev, data, myUserId);
 
-          // Add a date property to the last message if it is missing
           if (normalized.length > 0) {
             const lastIdx = normalized.length - 1;
             const rawTimestamp = data.timestamp;
             let dateStr = '';
             if (rawTimestamp) {
               try {
-                // Use Date
                 const dateObj = new Date(rawTimestamp);
                 dateStr = formatDate(dateObj);
               } catch {
                 dateStr = '';
               }
             }
-            // Only overwrite if not already set
             if (!normalized[lastIdx].date) {
               normalized[lastIdx] = {
                 ...normalized[lastIdx],
@@ -150,6 +162,10 @@ const UserChatScreen: React.FC = () => {
           }
           return normalized;
         });
+
+        setTimeout(() => {
+          scrollToBottom(true);
+        }, 100);
       };
       ws.current.onerror = e => console.error('WebSocket error:', e.message);
       ws.current.onclose = e =>
@@ -158,7 +174,6 @@ const UserChatScreen: React.FC = () => {
     }
   }, [accessToken, myUserId, booking_id]);
 
-  // Auto start video call when navigated from notification with video_call flag
   useEffect(() => {
     const isVideoCall =
       video_call === true ||
@@ -191,12 +206,14 @@ const UserChatScreen: React.FC = () => {
               hour: '2-digit',
               minute: '2-digit',
             }),
-            date: formatDate(dateObj), // <-- add date
+            date: formatDate(dateObj),
             isOwn: msg.sender == myUserId,
           };
         });
         setMessages(normalized);
-        isUserAtBottom.current = true;
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: false });
+        }, 150);
       }
     } catch (error) {
       console.error('Error fetching chat history:', error);
@@ -207,14 +224,37 @@ const UserChatScreen: React.FC = () => {
 
   const scrollToBottom = useCallback((animated = true) => {
     if (scrollViewRef.current) {
-      setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated }), 100);
+      scrollViewRef.current.scrollToEnd({ animated });
     }
   }, []);
 
+  // Listen to keyboard show/hide to smoothly maintain chat position
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, () => {
+      setIsKeyboardOpen(true);
+      setTimeout(() => {
+        scrollToBottom(true);
+      }, 100);
+    });
+
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setIsKeyboardOpen(false);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [scrollToBottom]);
+
   const handleSendMessage = (text: string) => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      const tempId = `temp-${Date.now()}`; // ✅ unique string ID
-
+      const tempId = `temp-${Date.now()}`;
       const now = new Date();
 
       const messageData = {
@@ -224,20 +264,22 @@ const UserChatScreen: React.FC = () => {
       };
 
       const newMsg: Message = {
-        id: tempId, // temporary unique ID
+        id: tempId,
         text,
         time: now.toLocaleTimeString([], {
           hour: '2-digit',
           minute: '2-digit',
         }),
-        date: formatDate(now), // <-- set date to today
+        date: formatDate(now),
         isOwn: true,
       };
 
       setMessages(prev => [...prev, newMsg]);
       try {
         ws.current.send(JSON.stringify(messageData));
-        isUserAtBottom.current = true;
+        setTimeout(() => {
+          scrollToBottom(true);
+        }, 80);
       } catch (err) {
         console.log('Send failed:', err);
         setMessages(prev => prev.filter(msg => msg.id !== tempId));
@@ -250,15 +292,9 @@ const UserChatScreen: React.FC = () => {
   const handleScroll = (event: any) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     const isAtBottom =
-      contentOffset.y >= contentSize.height - layoutMeasurement.height - 10;
+      contentOffset.y >= contentSize.height - layoutMeasurement.height - 20;
     isUserAtBottom.current = isAtBottom;
   };
-
-  useEffect(() => {
-    if (isUserAtBottom.current) {
-      scrollToBottom();
-    }
-  }, [messages, scrollToBottom]);
 
   const handleVideoCall = async () => {
     const hasPermission = await requestCallPermissions();
@@ -334,194 +370,389 @@ const UserChatScreen: React.FC = () => {
     onEndpointMessageReceived,
   };
 
-  // Hide bottom tab bar during active call; restore when call ends
-  useEffect(() => {
-    const parent = (navigation as any)?.getParent?.();
-    if (!parent || typeof parent.setOptions !== 'function') return;
-    if (inCall) {
-      parent.setOptions({ tabBarStyle: { display: 'none' } });
-    } else {
-      parent.setOptions({ tabBarStyle: undefined });
-    }
-    return () => {
-      parent?.setOptions?.({ tabBarStyle: undefined });
-    };
-  }, [inCall, navigation]);
-
   return (
-    <KeyboardProvider>
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: COLORS.primaryBackground,
-          paddingTop: inCall ? 0 : insets.top, // Remove padding during video call
-        }}
-      >
-        <CustomeLoader loading={loading} />
-        <StatusBar
-          barStyle="light-content"
-          backgroundColor={COLORS.primaryBackground}
-          translucent={inCall} // Translucent during video call
-          hidden={inCall} // Hide status bar during video call
-        />
-        {!inCall && (
-          <View style={styles.safeArea}>
-            <UserCustomHeader
-              title={pandit_name || 'Chat'}
-              showBackButton={true}
-              showVideoCallButton={false}
-              /* Video call commented out for now:
-              showVideoCallButton={true}
-              onVideoButtonPress={handleVideoCall}
-              */
-            />
-          </View>
-        )}
+    <KeyboardAvoidingView
+      style={styles.screenContainer}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <CustomeLoader loading={loading} />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={COLORS.primaryBackground}
+        translucent={inCall}
+        hidden={inCall}
+      />
+
+      {/* Red Header Section */}
+      {!inCall && (
         <View
           style={[
-            styles.chatContainer,
-            inCall && {
-              borderTopLeftRadius: 0,
-              borderTopRightRadius: 0,
-              paddingTop: 0,
-              backgroundColor: '#000',
+            styles.headerWrapper,
+            {
+              paddingTop: insets.top,
             },
           ]}
         >
-          {!inCall ? (
-            <KeyboardAwareScrollView
-              extraKeyboardSpace={Platform.OS == 'android' ? -50 : -70}
-              style={styles.messagesContainer}
-              contentContainerStyle={{
-                flexGrow: 1,
-                justifyContent: 'flex-end',
-              }}
-              ref={scrollViewRef}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-              onContentSizeChange={() => {
-                if (isUserAtBottom.current) {
-                  scrollToBottom();
-                }
-              }}
-              keyboardShouldPersistTaps="handled"
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              activeOpacity={0.7}
             >
-              {messages.length === 0 ? (
-                <View style={styles.noChatContainer}>
-                  <Text style={styles.noChatText}>
-                    No chat messages yet. Start the conversation!
+              <Ionicons
+                name="chevron-back"
+                size={moderateScale(24)}
+                color={COLORS.white}
+              />
+            </TouchableOpacity>
+
+            <View style={styles.headerCenter}>
+              <Text style={styles.headerName} numberOfLines={1}>
+                {pandit_name || 'Chat'}
+              </Text>
+              {booking_id && (
+                <View style={styles.headerSubtitleRow}>
+                  <View style={styles.onlineDot} />
+                  <Text style={styles.headerSubtitle}>
+                    Booking #{booking_id}
                   </Text>
                 </View>
-              ) : (
-                <ChatMessages messages={messages} />
               )}
-            </KeyboardAwareScrollView>
-          ) : JitsiMeeting ? (
-            <JitsiMeeting
-              ref={jitsiMeeting}
-              room={roomName || 'defaultRoom'}
-              serverURL={serverUrl}
-              token={meetingToken || undefined}
-              disableScreenSharing={true}
-              disableInviteFunctions={true}
-              userInfo={{
-                displayName: currentUser?.first_name || 'User',
-                email: currentUser?.email || '',
-                avatarUrl: profile_img_url || currentUser?.profile_img_url,
-              }}
-              config={{
-                startWithAudioMuted: false,
-                startWithVideoMuted: false,
-                hideConferenceTimer: true,
-                prejoinPageEnabled: false,
-                requireDisplayName: false,
-                toolbarButtons: [
-                  'microphone',
-                  'camera',
-                  'hangup',
-                  'tileview',
-                  'fullscreen',
-                ],
-              }}
-              flags={{
-                'audio-mute.enabled': true,
-                'audio-unmute.enabled': true,
-                'video-mute.enabled': true,
-                'video-unmute.enabled': true,
-                'fullscreen.enabled': true,
-                'toolbox.enabled': true,
-                'microphone.enabled': true,
-                'camera.enabled': true,
-                'chat.enabled': false,
-                'pip.enabled': true,
-                'tile-view.enabled': true,
-                'ios.screensharing.enabled': true,
-                'android.screensharing.enabled': true,
-              }}
-              eventListeners={eventListeners}
-              style={StyleSheet.absoluteFill}
-            />
-          ) : (
-            <View style={styles.jitsiView}>
-              <Text
-                style={{ color: '#fff', textAlign: 'center', marginTop: 40 }}
-              >
-                Video call is not available. Please check your app installation.
-              </Text>
             </View>
-          )}
-          {!inCall && (
-            <KeyboardStickyView
-              offset={{ closed: 0, opened: Platform.OS == 'android' ? 50 : 85 }} // remove extra space
-              enabled={true}
-              style={{ backgroundColor: 'blue' }}
-            >
-              <ChatInput onSendMessage={handleSendMessage} />
-            </KeyboardStickyView>
-          )}
+
+            <View style={styles.headerRight}>
+              {/* Video call commented out: functionality not complete yet
+              <TouchableOpacity
+                onPress={handleVideoCall}
+                style={styles.videoCallButton}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons
+                  name="videocam"
+                  size={moderateScale(20)}
+                  color={COLORS.white}
+                />
+              </TouchableOpacity>
+              */}
+            </View>
+          </View>
+          {/* Subtle extension behind curved top corners */}
+          <View style={styles.headerCurveExtension} />
         </View>
+      )}
+
+      {/* Chat Canvas */}
+      <View
+        style={[
+          styles.chatCanvas,
+          !inCall && styles.chatCanvasOffset,
+          inCall && {
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
+            backgroundColor: '#000000',
+          },
+        ]}
+      >
+        {!inCall ? (
+          <View style={styles.chatBody}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.messagesContainer}
+              contentContainerStyle={[
+                styles.messagesContent,
+                messages.length === 0 && styles.messagesContentEmpty,
+              ]}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+              showsVerticalScrollIndicator={false}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+            >
+              {messages.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <View style={styles.emptyIconBadge}>
+                    <Ionicons
+                      name="chatbubbles"
+                      size={moderateScale(38)}
+                      color={COLORS.primaryBackground}
+                    />
+                  </View>
+                  <Text style={styles.emptyTitle}>
+                    Direct Chat with {pandit_name || 'Panditji'}
+                  </Text>
+                  <Text style={styles.emptySubtitle}>
+                    Have any questions regarding puja preparation, samagri, or
+                    timings? Send a message to get started.
+                  </Text>
+
+                  <View style={styles.suggestionsWrapper}>
+                    <Text style={styles.suggestionsHeader}>Quick Prompts</Text>
+                    <View style={styles.suggestionChipsList}>
+                      {SUGGESTED_MESSAGES.map((msg, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={styles.suggestionChip}
+                          onPress={() => handleSendMessage(msg)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.suggestionChipText}>{msg}</Text>
+                          <Ionicons
+                            name="arrow-up-circle"
+                            size={moderateScale(18)}
+                            color={COLORS.primaryBackground}
+                          />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </View>
+              ) : (
+                <ChatMessages
+                  messages={messages}
+                  panditName={pandit_name}
+                  panditAvatar={profile_img_url}
+                />
+              )}
+            </ScrollView>
+
+            <ChatInput
+              onSendMessage={handleSendMessage}
+              isKeyboardOpen={isKeyboardOpen}
+            />
+          </View>
+        ) : JitsiMeeting ? (
+          <JitsiMeeting
+            ref={jitsiMeeting}
+            room={roomName || 'defaultRoom'}
+            serverURL={serverUrl}
+            token={meetingToken || undefined}
+            disableScreenSharing={true}
+            disableInviteFunctions={true}
+            userInfo={{
+              displayName: currentUser?.first_name || 'User',
+              email: currentUser?.email || '',
+              avatarUrl: profile_img_url || currentUser?.profile_img_url,
+            }}
+            config={{
+              startWithAudioMuted: false,
+              startWithVideoMuted: false,
+              hideConferenceTimer: true,
+              prejoinPageEnabled: false,
+              requireDisplayName: false,
+              toolbarButtons: [
+                'microphone',
+                'camera',
+                'hangup',
+                'tileview',
+                'fullscreen',
+              ],
+            }}
+            flags={{
+              'audio-mute.enabled': true,
+              'audio-unmute.enabled': true,
+              'video-mute.enabled': true,
+              'video-unmute.enabled': true,
+              'fullscreen.enabled': true,
+              'toolbox.enabled': true,
+              'microphone.enabled': true,
+              'camera.enabled': true,
+              'chat.enabled': false,
+              'pip.enabled': true,
+              'tile-view.enabled': true,
+              'ios.screensharing.enabled': true,
+              'android.screensharing.enabled': true,
+            }}
+            eventListeners={eventListeners}
+            style={StyleSheet.absoluteFill}
+          />
+        ) : (
+          <View style={styles.jitsiFallbackView}>
+            <Text style={styles.jitsiFallbackText}>
+              Video call is not available. Please check your app installation.
+            </Text>
+          </View>
+        )}
       </View>
-    </KeyboardProvider>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
+  screenContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF', // Clean white background under keyboard prevents red bleed
+  },
+  headerWrapper: {
     backgroundColor: COLORS.primaryBackground,
   },
-  chatContainer: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: moderateScale(16),
+    paddingVertical: moderateScale(10),
+  },
+  headerCurveExtension: {
+    height: moderateScale(20),
+    backgroundColor: COLORS.primaryBackground,
+  },
+  backButton: {
+    padding: moderateScale(4),
+    width: moderateScale(36),
+    alignItems: 'flex-start',
+  },
+  headerCenter: {
     flex: 1,
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: moderateScale(30),
-    borderTopRightRadius: moderateScale(30),
-    paddingTop: moderateScale(24),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerName: {
+    fontSize: moderateScale(17),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.white,
+    letterSpacing: 0.2,
+  },
+  headerSubtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: moderateScale(2),
+  },
+  onlineDot: {
+    width: moderateScale(6),
+    height: moderateScale(6),
+    borderRadius: moderateScale(3),
+    backgroundColor: '#86EFAC',
+    marginRight: moderateScale(5),
+  },
+  headerSubtitle: {
+    fontSize: moderateScale(11.5),
+    fontFamily: Fonts.Sen_Regular,
+    color: 'rgba(255, 255, 255, 0.9)',
+  },
+  headerRight: {
+    width: moderateScale(36),
+    alignItems: 'flex-end',
+  },
+  videoCallButton: {
+    width: moderateScale(34),
+    height: moderateScale(34),
+    borderRadius: moderateScale(17),
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.35)',
+  },
+
+  chatCanvas: {
+    flex: 1,
+    backgroundColor: '#F8F9FD',
+    borderTopLeftRadius: moderateScale(28),
+    borderTopRightRadius: moderateScale(28),
+    overflow: 'hidden',
+  },
+  chatCanvasOffset: {
+    marginTop: -moderateScale(20),
+  },
+  chatBody: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
   messagesContainer: {
     flex: 1,
   },
-  noChatContainer: {
-    flex: 1,
+  messagesContent: {
+    flexGrow: 1,
+    paddingVertical: moderateScale(12),
+  },
+  messagesContentEmpty: {
+    justifyContent: 'center',
+  },
+
+  emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: moderateScale(24),
+    paddingHorizontal: moderateScale(28),
+    paddingVertical: moderateScale(32),
   },
-  noChatText: {
-    color: COLORS.textSecondary || '#888',
-    fontSize: moderateScale(16),
+  emptyIconBadge: {
+    width: moderateScale(80),
+    height: moderateScale(80),
+    borderRadius: moderateScale(40),
+    backgroundColor: '#FFEAEB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: moderateScale(16),
+    borderWidth: 1,
+    borderColor: '#FFD4D8',
+  },
+  emptyTitle: {
+    fontSize: moderateScale(17),
+    fontFamily: Fonts.Sen_Bold,
+    color: '#1E293B',
     textAlign: 'center',
-    marginTop: moderateScale(20),
-    fontWeight: '500',
+    marginBottom: moderateScale(8),
   },
-  jitsiView: {
+  emptySubtitle: {
+    fontSize: moderateScale(13.5),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: moderateScale(20),
+    marginBottom: moderateScale(24),
+  },
+  suggestionsWrapper: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  suggestionsHeader: {
+    fontSize: moderateScale(12),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+    marginBottom: moderateScale(10),
+  },
+  suggestionChipsList: {
+    width: '100%',
+    gap: moderateScale(8),
+  },
+  suggestionChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: moderateScale(10),
+    paddingHorizontal: moderateScale(14),
+    borderRadius: moderateScale(14),
+    borderWidth: 1,
+    borderColor: '#E8ECF2',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  suggestionChipText: {
+    fontSize: moderateScale(13.5),
+    fontFamily: Fonts.Sen_Medium,
+    color: '#334155',
+  },
+
+  jitsiFallbackView: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: moderateScale(20),
   },
-  jitsiFull: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
+  jitsiFallbackText: {
+    color: '#FFFFFF',
+    textAlign: 'center',
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Regular,
   },
 });
 

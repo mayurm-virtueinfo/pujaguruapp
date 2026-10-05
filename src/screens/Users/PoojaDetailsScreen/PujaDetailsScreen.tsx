@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,7 +12,6 @@ import {
   FlatList,
   Modal,
   Pressable,
-  Animated,
   LayoutAnimation,
   UIManager,
 } from 'react-native';
@@ -20,33 +19,43 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import Octicons from 'react-native-vector-icons/Octicons';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import CustomeLoader from '../../../components/CustomeLoader';
 import { useCommonToast } from '../../../common/CommonToast';
-import {
-  COLORS,
-  THEMESHADOW,
-  COMMON_LIST_STYLE,
-  COMMON_RADIO_CONTAINER_STYLE,
-} from '../../../theme/theme';
+import { COLORS, THEMESHADOW } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
 import {
   getPoojaDetails,
   getPoojaDetailsForPujaList,
 } from '../../../api/apiService';
-import {
-  translateData,
-  translateOne,
-  translateText,
-} from '../../../utils/TranslateData';
+import { translateData } from '../../../utils/TranslateData';
 import { moderateScale } from 'react-native-size-matters';
 
 type ArrangedItem =
   | { name: string; quantity?: string | number; units?: string }
   | string;
+
+interface UserReview {
+  id: number;
+  booking: number;
+  user_name: string;
+  rating: number;
+  pandit_id: number;
+  pandit_name: string;
+  review: string;
+  created_at: string;
+  images: {
+    id: number;
+    image: string;
+    uploaded_at: string;
+    booking: number;
+    pooja_name: string;
+  }[];
+}
 
 interface PujaDetails {
   id: number;
@@ -74,24 +83,6 @@ interface PujaDetails {
   user_arranged_items?: ArrangedItem[];
   pandit_arranged_items?: ArrangedItem[];
   user_reviews?: UserReview[];
-}
-
-interface UserReview {
-  id: number;
-  booking: number;
-  user_name: string;
-  rating: number;
-  pandit_id: number;
-  pandit_name: string;
-  review: string;
-  created_at: string;
-  images: {
-    id: number;
-    image: string;
-    uploaded_at: string;
-    booking: number;
-    pooja_name: string;
-  }[];
 }
 
 interface PricingOption {
@@ -123,20 +114,38 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-const ExpandableSection = ({
-  title,
-  expanded,
-  onPress,
-  items,
-  emptyText,
-  testID,
-}: {
+interface ExpandableSectionProps {
   title: string;
+  badgeCount?: number;
+  badgeLabel?: string;
+  iconName: string;
+  iconColor: string;
+  badgeBg?: string;
+  badgeTextColor?: string;
+  badgeBorderColor?: string;
   expanded: boolean;
   onPress: () => void;
   items: ArrangedItem[] | undefined;
   emptyText: string;
+  noteText?: string;
   testID?: string;
+}
+
+const ExpandableSection: React.FC<ExpandableSectionProps> = ({
+  title,
+  badgeCount = 0,
+  badgeLabel,
+  iconName,
+  iconColor,
+  badgeBg = '#F3F4F6',
+  badgeTextColor = '#374151',
+  badgeBorderColor = '#E5E7EB',
+  expanded,
+  onPress,
+  items,
+  emptyText,
+  noteText,
+  testID,
 }) => {
   const normalizedItems = normalizeArrangedItems(items);
 
@@ -145,44 +154,115 @@ const ExpandableSection = ({
   }, [expanded]);
 
   return (
-    <View style={[styles.expandableCard, COMMON_LIST_STYLE]}>
+    <View
+      style={[
+        styles.expandableCard,
+        expanded && { borderColor: iconColor },
+      ]}
+      testID={testID}
+    >
       <TouchableOpacity
         style={styles.expandableHeader}
         onPress={onPress}
-        activeOpacity={0.7}
+        activeOpacity={0.75}
       >
-        <Text style={styles.headerCardTitle}>{title}</Text>
-        <Octicons
-          name={expanded ? 'chevron-up' : 'chevron-down'}
-          size={20}
-          color={COLORS.black}
-        />
+        <View style={styles.expandableTitleRow}>
+          <View
+            style={[
+              styles.expandableIconCircle,
+              { backgroundColor: badgeBg },
+            ]}
+          >
+            <Ionicons name={iconName} size={20} color={iconColor} />
+          </View>
+          <View style={styles.expandableTextCol}>
+            <Text style={styles.expandableTitle}>{title}</Text>
+            {badgeLabel ? (
+              <Text style={styles.expandableSubText}>{badgeLabel}</Text>
+            ) : null}
+          </View>
+        </View>
+
+        <View style={styles.expandableHeaderRight}>
+          {badgeCount > 0 ? (
+            <View
+              style={[
+                styles.badgePill,
+                {
+                  backgroundColor: badgeBg,
+                  borderColor: badgeBorderColor,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.badgePillText,
+                  { color: badgeTextColor },
+                ]}
+              >
+                {badgeCount} {badgeCount === 1 ? 'Item' : 'Items'}
+              </Text>
+            </View>
+          ) : null}
+          <View style={styles.chevronCircle}>
+            <Ionicons
+              name={expanded ? 'chevron-up' : 'chevron-down'}
+              size={15}
+              color="#4B5563"
+            />
+          </View>
+        </View>
       </TouchableOpacity>
 
       {expanded && (
         <View style={styles.expandableContent}>
-          {!normalizedItems || normalizedItems.length === 0 ? (
-            <Text style={styles.itemText}>{emptyText}</Text>
+          {noteText ? (
+            <View
+              style={[
+                styles.expandableNoteBanner,
+                { backgroundColor: badgeBg },
+              ]}
+            >
+              <Ionicons
+                name="information-circle-outline"
+                size={15}
+                color={iconColor}
+              />
+              <Text
+                style={[
+                  styles.expandableNoteText,
+                  { color: badgeTextColor },
+                ]}
+              >
+                {noteText}
+              </Text>
+            </View>
+          ) : null}
+
+          {normalizedItems.length === 0 ? (
+            <View style={styles.emptyItemsWrapper}>
+              <Ionicons
+                name="checkmark-circle-outline"
+                size={22}
+                color="#9CA3AF"
+              />
+              <Text style={styles.emptyItemsText}>{emptyText}</Text>
+            </View>
           ) : (
             normalizedItems.map((item, idx) => (
-              <React.Fragment key={idx}>
-                <View style={styles.itemRow}>
-                  <View style={styles.itemMainContent}>
-                    <Octicons
-                      name="dot-fill"
-                      size={12}
-                      color={COLORS.black}
-                      style={styles.bulletIcon}
-                    />
-                    <Text style={styles.itemNameText}>{item.name}</Text>
-                  </View>
-                  {item.quantity ? (
+              <View key={idx} style={styles.itemCardRow}>
+                <View style={styles.itemIndexPill}>
+                  <Text style={styles.itemIndexText}>{idx + 1}</Text>
+                </View>
+                <Text style={styles.itemNameText}>{item.name}</Text>
+                {item.quantity ? (
+                  <View style={styles.itemQuantityBadge}>
                     <Text style={styles.itemQuantityText}>
                       {`${item.quantity} ${item.units ?? ''}`.trim()}
                     </Text>
-                  ) : null}
-                </View>
-              </React.Fragment>
+                  </View>
+                ) : null}
+              </View>
             ))
           )}
         </View>
@@ -204,6 +284,10 @@ const PujaDetailsScreen: React.FC = () => {
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute() as any;
   const { showErrorToast } = useCommonToast();
+  const showErrorToastRef = useRef(showErrorToast);
+  useEffect(() => {
+    showErrorToastRef.current = showErrorToast;
+  }, [showErrorToast]);
 
   const resolvedParams = (() => {
     if (route?.params?.poojaId) return route.params;
@@ -218,9 +302,7 @@ const PujaDetailsScreen: React.FC = () => {
   const [data, setData] = useState<PujaDetails | null>(null);
   const [originalData, setOriginalData] = useState<PujaDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [selectedPricingId, setSelectedPricingId] = useState<number | null>(
-    null,
-  );
+  const [selectedPricingId, setSelectedPricingId] = useState<number | null>(1);
   const [selectPrice, setSelectPrice] = useState<string>('');
   const [userItemsExpanded, setUserItemsExpanded] = useState<boolean>(false);
   const [panditItemsExpanded, setPanditItemsExpanded] =
@@ -230,21 +312,52 @@ const PujaDetailsScreen: React.FC = () => {
 
   const translationCacheRef = useRef<Map<string, PujaDetails>>(new Map());
 
-  // `poojaId` may be number or string
+  const fetchPoojaDetails = useCallback(
+    async (id: string) => {
+      setLoading(true);
+      try {
+        let response: any;
+        if (panditId !== undefined && panditId !== null && panditId !== '') {
+          response = await getPoojaDetails(panditId, id);
+        } else {
+          response = await getPoojaDetailsForPujaList(id);
+        }
+        if (response && response.success) {
+          const puja = response.data as PujaDetails;
+          setOriginalData(puja);
+          setData(puja);
+          // Default select "With Puja Items"
+          setSelectedPricingId(1);
+          setSelectPrice(String(puja.price_with_samagri ?? puja.base_price));
+        } else {
+          setOriginalData(null);
+          setData(null);
+        }
+      } catch (error: any) {
+        showErrorToastRef.current?.(
+          error?.response?.data?.message || 'Failed to fetch puja details',
+        );
+        setOriginalData(null);
+        setData(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [panditId],
+  );
+
   useEffect(() => {
     if (poojaId) {
       fetchPoojaDetails(String(poojaId));
     }
-  }, [poojaId, panditId]);
+  }, [poojaId, fetchPoojaDetails]);
 
-  // Defensive: also update translation on language change
   useEffect(() => {
     if (!originalData) return;
     let mounted = true;
     const handleTranslation = async () => {
       setLoading(true);
       try {
-        // Use language-cached translation
         const cached = translationCacheRef.current.get(currentLanguage);
         if (cached) {
           if (mounted) setData(cached);
@@ -280,48 +393,17 @@ const PujaDetailsScreen: React.FC = () => {
     };
   }, [currentLanguage, originalData]);
 
-  const fetchPoojaDetails = async (id: string) => {
-    setLoading(true);
-    try {
-      let response: any;
-      // We must supply both panditId & poojaId if panditId is present (number or string)
-      if (panditId !== undefined && panditId !== null && panditId !== '') {
-        console.log('this if block :: ', id);
-        response = await getPoojaDetails(panditId, id);
-      } else {
-        console.log('this else block :: ', id);
-        response = await getPoojaDetailsForPujaList(id);
-      }
-      console.log('Response of getPoojaDetails :: ', response.data);
-      if (response && response.success) {
-        setOriginalData(response.data);
-        setData(response.data);
-      } else {
-        setOriginalData(null);
-        setData(null);
-      }
-    } catch (error: any) {
-      showErrorToast(
-        error?.response?.data?.message || 'Failed to fetch puja details',
-      );
-      setOriginalData(null);
-      setData(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getPricingOptions = (data: PujaDetails): PricingOption[] => [
+  const getPricingOptions = (puja: PujaDetails): PricingOption[] => [
     {
       id: 1,
-      priceDes: t('with_puja_items'),
-      price: String(data.price_with_samagri ?? data.base_price),
+      priceDes: t('with_puja_items') || 'With Puja Samagri',
+      price: String(puja.price_with_samagri ?? puja.base_price),
       withPujaItem: true,
     },
     {
       id: 2,
-      priceDes: t('without_puja_items'),
-      price: String(data.price_without_samagri ?? data.base_price),
+      priceDes: t('without_puja_items') || 'Without Puja Samagri',
+      price: String(puja.price_without_samagri ?? puja.base_price),
       withPujaItem: false,
     },
   ];
@@ -342,7 +424,7 @@ const PujaDetailsScreen: React.FC = () => {
       samagri_required: selectedOption.withPujaItem,
       puja_image: originalData?.image_url ?? '',
       puja_name: originalData?.title ?? '',
-      price: selectPrice,
+      price: selectPrice || selectedOption.price,
       panditId: panditId,
       panditName: panditName,
       panditImage: panditImage,
@@ -351,8 +433,8 @@ const PujaDetailsScreen: React.FC = () => {
     });
   };
 
-  const handleCheckboxToggle = (id: number, price: string) => {
-    setSelectedPricingId(id === selectedPricingId ? null : id);
+  const handlePricingSelect = (id: number, price: string) => {
+    setSelectedPricingId(id);
     setSelectPrice(price);
   };
 
@@ -383,41 +465,42 @@ const PujaDetailsScreen: React.FC = () => {
   };
 
   const renderUserReview = ({ item }: { item: UserReview }) => (
-    <View style={[styles.reviewCard, THEMESHADOW.shadow]}>
+    <View style={styles.reviewCard}>
       <View style={styles.reviewHeader}>
-        <Text style={styles.reviewUserName}>{item.user_name}</Text>
-        <View style={styles.reviewRatingRow}>
-          {[1, 2, 3, 4, 5].map(i => (
-            <Octicons
-              key={i}
-              name="star-fill"
-              size={16}
-              color={
-                i <= item.rating
-                  ? COLORS.primaryBackgroundButton
-                  : COLORS.inputBoder
-              }
-              style={styles.reviewStar}
-            />
-          ))}
+        <View style={styles.avatarPlaceholder}>
+          <Text style={styles.avatarText}>
+            {item.user_name ? item.user_name.charAt(0).toUpperCase() : 'U'}
+          </Text>
+        </View>
+        <View style={styles.reviewUserInfo}>
+          <Text style={styles.reviewUserName}>{item.user_name}</Text>
+          <View style={styles.reviewRatingRow}>
+            {[1, 2, 3, 4, 5].map(i => (
+              <Ionicons
+                key={i}
+                name="star"
+                size={13}
+                color={i <= item.rating ? '#FFB900' : '#E0E0E0'}
+                style={styles.reviewStar}
+              />
+            ))}
+          </View>
         </View>
       </View>
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() =>
-          navigation.navigate('PanditDetailsScreen', {
-            panditId: item.pandit_id?.toString(),
-          })
-        }
-        style={{ flexDirection: 'row', gap: 5 }}
-      >
-        <Text style={styles.PanditName}>
-          {item.pandit_name ? `Pandit :` : ''}
-        </Text>
-        <Text style={styles.reviewPanditName}>
-          {item.pandit_name ? `${item.pandit_name}` : ''}
-        </Text>
-      </TouchableOpacity>
+      {item.pandit_name ? (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() =>
+            (navigation as any).navigate('PanditDetailsScreen', {
+              panditId: item.pandit_id?.toString(),
+            })
+          }
+          style={styles.panditBadgeRow}
+        >
+          <Ionicons name="person-circle-outline" size={14} color={COLORS.primary} />
+          <Text style={styles.panditBadgeText}>{item.pandit_name}</Text>
+        </TouchableOpacity>
+      ) : null}
       {item.review ? (
         <Text style={styles.reviewText}>{item.review}</Text>
       ) : null}
@@ -430,164 +513,228 @@ const PujaDetailsScreen: React.FC = () => {
 
   const renderReviewsSection = () => {
     if (!data?.user_reviews || data.user_reviews.length === 0) {
-      return (
-        <View style={styles.reviewsContainer}>
-          <Text style={styles.sectionTitle}>
-            {t('user_reviews') || 'User Reviews'}
-          </Text>
-          <Text style={styles.noReviewsText}>{t('no_review_text')}</Text>
-        </View>
-      );
+      return null;
     }
     return (
-      <View style={styles.reviewsContainer}>
-        <Text style={styles.sectionTitle}>
-          {t('user_reviews') || 'User Reviews'}
-        </Text>
+      <View style={styles.sectionContainer}>
+        <View style={styles.sectionHeaderRow}>
+          <Ionicons name="star" size={18} color="#FFB900" />
+          <Text style={styles.sectionTitle}>
+            {t('user_reviews') || 'Devotee Reviews'}
+          </Text>
+        </View>
         <FlatList
           data={data.user_reviews}
           keyExtractor={item => item.id.toString()}
           renderItem={renderUserReview}
           horizontal
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingVertical: 8 }}
+          contentContainerStyle={styles.reviewsListContent}
         />
       </View>
     );
   };
 
-  const handleMainImagePress = () => {
-    if (data?.image_url) {
-      setModalImageUri(data.image_url);
-      setImageModalVisible(true);
-    }
-  };
-
+  const panditItemsCount = data?.pandit_arranged_items?.length || 0;
+  const userItemsCount = data?.user_arranged_items?.length || 0;
   return (
     <SafeAreaView style={[styles.safeArea, { paddingTop: inset.top }]}>
       <CustomeLoader loading={loading} />
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBackground} />
       <UserCustomHeader title={t('puja_details')} showBackButton={true} />
-      <View style={styles.flexGrow}>
+
+      <View style={styles.mainContainer}>
         <ScrollView
           style={styles.scrollContainer}
           showsVerticalScrollIndicator={false}
-          bounces={false}
+          bounces={true}
           contentContainerStyle={{
-            paddingBottom: moderateScale(60) + (inset.bottom || 20),
+            paddingBottom: moderateScale(90),
           }}
         >
-          <View style={styles.contentWrapper}>
-            {/* image container */}
-            <View style={styles.imageContainer}>
-              <TouchableOpacity
-                activeOpacity={0.8}
-                onPress={handleMainImagePress}
-                testID="main-puja-image"
-              >
-                <Image
-                  source={{
-                    uri: data?.image_url,
-                  }}
-                  style={styles.heroImage}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-            </View>
+          {/* 1. Hero Image Section */}
+          <View style={styles.imageContainer}>
+            <Image
+              source={{
+                uri:
+                  data?.image_url ||
+                  'https://images.moneycontrol.com/static-mcnews/2024/09/20240904040802_Lord-Ganesha.jpg',
+              }}
+              style={styles.heroImage}
+              resizeMode="cover"
+            />
+          </View>
 
-            {/* 1. Title and description container */}
-            <View style={styles.detailsContainer}>
-              <Text style={styles.titelText}>{data?.title ?? ''}</Text>
-              <Text style={styles.descriptionText}>
-                {data?.short_description || ''}
-              </Text>
-            </View>
+          {/* 2. Title & Key Info Chips */}
+          <View style={styles.titleSection}>
+            <Text style={styles.mainTitle}>{data?.title ?? ''}</Text>
 
-            {/* 2. Benefits container */}
-            <View style={styles.detailsContainer}>
+            <View style={styles.metaChipsRow}>
+              <View style={styles.metaChip}>
+                <Ionicons name="time-outline" size={13} color={COLORS.primary} />
+                <Text style={styles.metaChipText}>1.5 - 2 Hours</Text>
+              </View>
+              <View style={styles.metaChip}>
+                <Ionicons name="home-outline" size={13} color={COLORS.primary} />
+                <Text style={styles.metaChipText}>At Your Location</Text>
+              </View>
+              <View style={styles.metaChip}>
+                <Ionicons name="sparkles-outline" size={13} color={COLORS.primary} />
+                <Text style={styles.metaChipText}>Authentic Vidhi</Text>
+              </View>
+            </View>
+          </View>
+
+          {/* 3. About / Significance Section (Deduplicated) */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderRow}>
+              <Ionicons name="book-outline" size={18} color={COLORS.primary} />
               <Text style={styles.sectionTitle}>
-                {t('benefits') || 'Benefits'}
+                {t('benefits') || 'Significance & Benefits'}
               </Text>
-              <View style={[styles.pricingContainer, COMMON_LIST_STYLE]}>
-                <Text style={[styles.descriptionText]}>
-                  {data?.description || 'No description available'}
-                </Text>
-              </View>
             </View>
+            <View style={styles.aboutCard}>
+              <Text style={styles.aboutText}>
+                {data?.description || data?.short_description || 'No description available'}
+              </Text>
+            </View>
+          </View>
 
-            {/* 3. Pricing Container */}
-            <View style={styles.detailsContainer}>
+          {/* 4. Pricing Option Cards */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderRow}>
+              <Ionicons name="pricetag-outline" size={18} color={COLORS.primary} />
               <Text style={styles.sectionTitle}>{t('pricing_options')}</Text>
-              <View style={COMMON_RADIO_CONTAINER_STYLE}>
-                {data ? (
-                  getPricingOptions(data).map((option, idx) => (
-                    <React.Fragment key={option.id}>
-                      <TouchableOpacity
-                        style={styles.pricingOption}
-                        activeOpacity={0.7}
-                        onPress={() =>
-                          handleCheckboxToggle(option.id, option.price)
-                        }
-                      >
-                        <Text style={styles.pricingText}>
-                          {option.priceDes} - Rs. {option.price}
-                        </Text>
-                        <Octicons
-                          name={
-                            selectedPricingId === option.id
-                              ? 'check-circle'
-                              : 'circle'
-                          }
-                          size={24}
-                          color={
-                            selectedPricingId === option.id
-                              ? COLORS.primary
-                              : COLORS.inputBoder
-                          }
-                        />
-                      </TouchableOpacity>
-                      {idx < getPricingOptions(data).length - 1 && (
-                        <View style={styles.divider} />
+            </View>
+
+            <View style={styles.pricingCardsContainer}>
+              {data ? (
+                getPricingOptions(data).map(option => {
+                  const isSelected = selectedPricingId === option.id;
+                  const isWithSamagri = option.withPujaItem;
+
+                  return (
+                    <TouchableOpacity
+                      key={option.id}
+                      style={[
+                        styles.pricingCard,
+                        isSelected && styles.pricingCardSelected,
+                      ]}
+                      activeOpacity={0.85}
+                      onPress={() => handlePricingSelect(option.id, option.price)}
+                    >
+                      {isWithSamagri && (
+                        <View style={styles.recommendedBadge}>
+                          <Ionicons name="sparkles" size={10} color="#9C6800" />
+                          <Text style={styles.recommendedBadgeText}>
+                            MOST POPULAR
+                          </Text>
+                        </View>
                       )}
-                    </React.Fragment>
-                  ))
-                ) : (
-                  <Text style={styles.pricingText}>No pricing available</Text>
-                )}
-              </View>
+
+                      <View style={styles.pricingCardBody}>
+                        <View style={styles.pricingCardLeft}>
+                          <Ionicons
+                            name={
+                              isSelected
+                                ? 'checkmark-circle'
+                                : 'ellipse-outline'
+                            }
+                            size={22}
+                            color={
+                              isSelected ? COLORS.primary : COLORS.border
+                            }
+                          />
+                          <View style={styles.pricingTextColumn}>
+                            <Text
+                              style={[
+                                styles.pricingOptionTitle,
+                                isSelected && styles.pricingOptionTitleSelected,
+                              ]}
+                            >
+                              {option.priceDes}
+                            </Text>
+                            <Text style={styles.pricingOptionSubtext}>
+                              {isWithSamagri
+                                ? panditItemsCount > 0
+                                  ? `Panditji brings all ${panditItemsCount} sacred samagri items`
+                                  : 'Panditji brings all required sacred items'
+                                : 'Puja vidhi only (You arrange samagri)'}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.pricingAmountCol}>
+                          <Text
+                            style={[
+                              styles.pricingAmountText,
+                              isSelected && styles.pricingAmountTextSelected,
+                            ]}
+                          >
+                            ₹{option.price}
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })
+              ) : (
+                <Text style={styles.emptyItemsText}>No pricing available</Text>
+              )}
+            </View>
+          </View>
+
+          {/* 5. Pandit & User Arranged Samagri Section */}
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeaderRow}>
+              <Ionicons name="cube-outline" size={18} color={COLORS.primary} />
+              <Text style={styles.sectionTitle}>
+                {t('arranged_items') || 'Puja Samagri & Items'}
+              </Text>
             </View>
 
-            {/* 4. User Arranged Items Container */}
-            <View style={styles.detailsContainer}>
-              <ExpandableSection
-                title={t('user_arranged_items')}
-                expanded={userItemsExpanded}
-                onPress={() => setUserItemsExpanded(prev => !prev)}
-                items={data?.user_arranged_items}
-                emptyText="No items required"
-                testID="user-arranged-items-section"
-              />
-            </View>
-
-            {/* 5. Pandit Arranged Items Container */}
-            <View style={styles.detailsContainer}>
+            <View style={styles.arrangedCardsContainer}>
               <ExpandableSection
                 title={t('pandit_arranged_items')}
+                badgeCount={panditItemsCount}
+                badgeLabel="Brought & provided by Panditji"
+                iconName="cube"
+                iconColor="#15803D"
+                badgeBg="#F0FDF4"
+                badgeTextColor="#15803D"
+                badgeBorderColor="#BBF7D0"
+                noteText="Panditji will bring all sacred vidhi items with them on puja day."
                 expanded={panditItemsExpanded}
                 onPress={() => setPanditItemsExpanded(prev => !prev)}
                 items={data?.pandit_arranged_items}
-                emptyText="No items provided"
+                emptyText={t('no_pandit_items') || 'No items required by Panditji'}
                 testID="pandit-arranged-items-section"
               />
-            </View>
 
-            {/* 6. User Reviews Container */}
-            <View style={styles.detailsContainer}>
-              {renderReviewsSection()}
+              <ExpandableSection
+                title={t('user_arranged_items')}
+                badgeCount={userItemsCount}
+                badgeLabel="Basic items to keep ready at home"
+                iconName="basket"
+                iconColor="#C2410C"
+                badgeBg="#FFF7ED"
+                badgeTextColor="#C2410C"
+                badgeBorderColor="#FED7AA"
+                noteText="Please arrange and keep these household items ready before Panditji arrives."
+                expanded={userItemsExpanded}
+                onPress={() => setUserItemsExpanded(prev => !prev)}
+                items={data?.user_arranged_items}
+                emptyText={t('no_user_items') || 'No items required to arrange'}
+                testID="user-arranged-items-section"
+              />
             </View>
           </View>
+
+          {/* 7. Devotee Reviews Section */}
+          {renderReviewsSection()}
         </ScrollView>
 
+        {/* 8. Bottom Action Button */}
         <View
           style={[
             styles.bottomButtonContainer,
@@ -599,7 +746,8 @@ const PujaDetailsScreen: React.FC = () => {
           <PrimaryButton title={t('next')} onPress={handleBookNowPress} />
         </View>
       </View>
-      {/* Image Modal for full screen preview */}
+
+      {/* Image Preview Modal */}
       <Modal
         visible={imageModalVisible}
         transparent={true}
@@ -619,7 +767,7 @@ const PujaDetailsScreen: React.FC = () => {
                   activeOpacity={0.8}
                   testID="close-image-modal"
                 >
-                  <Octicons name="x" size={20} color="#fff" />
+                  <Octicons name="x" size={20} color="#FFFFFF" />
                 </TouchableOpacity>
                 <Image
                   source={{ uri: modalImageUri }}
@@ -640,150 +788,428 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
-  flexGrow: {
+  mainContainer: {
     flex: 1,
     backgroundColor: COLORS.pujaBackground,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    overflow: 'hidden',
   },
   scrollContainer: {
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    flex: 1,
     backgroundColor: COLORS.pujaBackground,
-    flexGrow: 1,
   },
-  contentWrapper: {
-    width: '100%',
-    overflow: 'hidden',
-    gap: 24,
-  },
+
+  /* Hero Section */
   imageContainer: {
     width: '100%',
-    height: 200,
+    overflow: 'hidden',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    backgroundColor: COLORS.white,
   },
   heroImage: {
     width: '100%',
-    height: 200,
+    height: 220,
   },
-  detailsContainer: {
-    paddingHorizontal: 24,
+
+  /* Title & Meta Section */
+  titleSection: {
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 4,
   },
-  descriptionText: {
-    fontSize: 14,
-    fontFamily: Fonts.Sen_Regular,
-    textAlign: 'justify',
-  },
-  titelText: {
-    fontSize: 18,
-    fontFamily: Fonts.Sen_SemiBold,
+  mainTitle: {
+    fontSize: 22,
+    fontFamily: Fonts.Sen_Bold,
     color: COLORS.primaryTextDark,
+    letterSpacing: -0.3,
+    marginBottom: 10,
+  },
+  metaChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  metaChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#FFF1F2',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFE0E3',
+  },
+  metaChipText: {
+    fontSize: 12,
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primary,
+  },
+
+  /* Sections */
+  sectionContainer: {
+    paddingHorizontal: 16,
+    marginTop: 18,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 12,
+    paddingHorizontal: 4,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    marginBottom: 12,
+    letterSpacing: -0.2,
   },
-  pricingContainer: {
+
+  /* About / Significance Card */
+  aboutCard: {
+    ...THEMESHADOW.shadow,
     backgroundColor: COLORS.white,
-    paddingVertical: moderateScale(12),
+    borderRadius: 16,
+    padding: 16,
+    borderLeftWidth: 3.5,
+    borderLeftColor: '#FFA000',
+    borderWidth: 1,
+    borderColor: '#ECEFF1',
   },
-  pricingOption: {
+  aboutText: {
+    fontSize: 14,
+    fontFamily: Fonts.Sen_Regular,
+    color: '#424242',
+    lineHeight: 22,
+  },
+
+  /* Pricing Cards */
+  pricingCardsContainer: {
+    gap: 12,
+  },
+  pricingCard: {
+    ...THEMESHADOW.shadow,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E8ECEF',
+    position: 'relative',
+  },
+  pricingCardSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#FFF9F9',
+  },
+  recommendedBadge: {
+    position: 'absolute',
+    top: -10,
+    right: 16,
+    backgroundColor: '#FEF3D6',
+    borderWidth: 1,
+    borderColor: '#FAD889',
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  recommendedBadgeText: {
+    fontSize: 10,
+    fontFamily: Fonts.Sen_Bold,
+    color: '#8A5D00',
+    letterSpacing: 0.4,
+  },
+  pricingCardBody: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: moderateScale(14),
   },
-  pricingText: {
+  pricingCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    paddingRight: 10,
+  },
+  pricingTextColumn: {
+    flex: 1,
+  },
+  pricingOptionTitle: {
     fontSize: 15,
-    fontFamily: Fonts.Sen_Medium,
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+    marginBottom: 3,
   },
-  divider: {
-    borderColor: COLORS.border,
-    borderBottomWidth: 1,
+  pricingOptionTitleSelected: {
+    color: COLORS.primary,
   },
-  itemsContainer: {
-    backgroundColor: COLORS.white,
-    borderRadius: moderateScale(12),
-    padding: moderateScale(14),
+  pricingOptionSubtext: {
+    fontSize: 12,
+    fontFamily: Fonts.Sen_Regular,
+    color: '#666666',
+    lineHeight: 16,
+  },
+  pricingAmountCol: {
+    alignItems: 'flex-end',
+  },
+  pricingAmountText: {
+    fontSize: 18,
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+  },
+  pricingAmountTextSelected: {
+    color: COLORS.primary,
+  },
+
+  /* Expandable Cards (Samagri) */
+  arrangedCardsContainer: {
+    gap: 12,
   },
   expandableCard: {
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(12),
-    paddingHorizontal: moderateScale(14),
-    marginBottom: 0,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1.5,
+    borderColor: '#ECEFF1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   expandableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: moderateScale(14),
+    paddingVertical: 2,
   },
-  headerCardTitle: {
-    fontSize: 16,
+  expandableTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+    paddingRight: 8,
+  },
+  expandableIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expandableTextCol: {
+    flex: 1,
+  },
+  expandableTitle: {
+    fontSize: 15,
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+  },
+  expandableSubText: {
+    fontSize: 11.5,
+    fontFamily: Fonts.Sen_Regular,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  expandableHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  badgePill: {
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  badgePillText: {
+    fontSize: 11,
+    fontFamily: Fonts.Sen_Bold,
+  },
+  chevronCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expandableContent: {
+    paddingTop: 12,
+    paddingBottom: 2,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    marginTop: 10,
+  },
+  expandableNoteBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  expandableNoteText: {
+    fontSize: 11.5,
+    fontFamily: Fonts.Sen_Medium,
+    flex: 1,
+    lineHeight: 16,
+  },
+  itemCardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    marginBottom: 7,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  itemIndexPill: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  itemIndexText: {
+    fontSize: 11,
+    fontFamily: Fonts.Sen_SemiBold,
+    color: '#6B7280',
+  },
+  itemNameText: {
+    fontSize: 13.5,
+    fontFamily: Fonts.Sen_Medium,
+    color: '#1F2937',
+    flex: 1,
+  },
+  itemQuantityBadge: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  itemQuantityText: {
+    fontSize: 12,
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
   },
-  expandableContent: {
-    paddingBottom: moderateScale(14),
-  },
-  itemRow: {
-    flexDirection: 'row',
+  emptyItemsWrapper: {
     alignItems: 'center',
-    paddingVertical: 5,
+    justifyContent: 'center',
+    paddingVertical: 14,
+    gap: 6,
   },
-  itemMainContent: {
-    flex: 1,
+  emptyItemsText: {
+    fontSize: 13,
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+  },
+
+  /* Reviews */
+  reviewsListContent: {
+    paddingVertical: 4,
+    gap: 12,
+  },
+  reviewCard: {
+    ...THEMESHADOW.shadow,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 14,
+    width: 260,
+    borderWidth: 1,
+    borderColor: '#ECEFF1',
+  },
+  reviewHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    marginBottom: 8,
   },
-  bulletIcon: {
-    marginTop: 2,
+  avatarPlaceholder: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#FFEAEA',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  itemTextContainer: {
-    flex: 1,
-  },
-  itemNameText: {
-    fontSize: 15,
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.primaryTextDark,
-    lineHeight: 22,
-    flex: 1,
-  },
-  itemQuantityText: {
+  avatarText: {
     fontSize: 14,
     fontFamily: Fonts.Sen_Bold,
     color: COLORS.primary,
-    marginLeft: 8,
   },
-  itemDivider: {
-    borderColor: COLORS.inputBoder,
-    borderWidth: 0.5,
-    marginVertical: 10,
-    opacity: 0.5,
+  reviewUserInfo: {
+    flex: 1,
   },
-  itemText: {
+  reviewUserName: {
     fontSize: 14,
-    fontFamily: Fonts.Sen_Regular,
+    fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
   },
-  visualText: {
-    marginTop: 12,
-    fontSize: 14,
-    fontFamily: Fonts.Sen_Regular,
-    color: COLORS.primaryTextDark,
-    textAlign: 'justify',
+  reviewRatingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    marginTop: 2,
   },
-  buttonContainer: {
-    height: 46,
-    width: '100%',
+  reviewStar: {
+    marginRight: 1,
   },
-  buttonText: {
-    fontSize: 15,
+  panditBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#F7F7F7',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  panditBadgeText: {
+    fontSize: 12,
     fontFamily: Fonts.Sen_Medium,
+    color: COLORS.primary,
   },
+  reviewText: {
+    fontSize: 13,
+    fontFamily: Fonts.Sen_Regular,
+    color: '#4A4A4A',
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  reviewImagesRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 6,
+  },
+  reviewImage: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: '#E0E0E0',
+  },
+  reviewDate: {
+    fontSize: 11,
+    fontFamily: Fonts.Sen_Regular,
+    color: '#999999',
+  },
+
+  /* Bottom Button Container */
   bottomButtonContainer: {
     position: 'absolute',
     left: 0,
@@ -791,134 +1217,19 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: COLORS.pujaBackground,
     paddingHorizontal: 24,
-  },
-  reviewsContainer: {},
-  noReviewsText: {
-    fontSize: 14,
-    fontFamily: Fonts.Sen_Regular,
-    color: COLORS.primaryTextDark,
-    opacity: 0.7,
-    marginTop: 8,
-  },
-  reviewCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: 12,
-    padding: 14,
-    margin: 14,
-    minWidth: 220,
-    maxWidth: 260,
-  },
-  reviewHeader: {
-    marginBottom: 5,
-    gap: 8,
-  },
-  reviewUserName: {
-    fontSize: 15,
-    fontFamily: Fonts.Sen_SemiBold,
-    color: COLORS.primaryTextDark,
-  },
-  reviewRatingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  reviewStar: {
-    marginLeft: 1,
-  },
-  PanditName: {
-    fontSize: 13,
-    fontFamily: Fonts.Sen_Regular,
-    color: COLORS.black,
-    opacity: 0.7,
-    marginBottom: 2,
-  },
-  reviewPanditName: {
-    fontSize: 13,
-    fontFamily: Fonts.Sen_Regular,
-    color: COLORS.primaryBackgroundButton,
-    opacity: 0.7,
-    marginBottom: 2,
-    borderBottomWidth: 1,
-    borderColor: COLORS.primaryBackgroundButton,
-  },
-  reviewText: {
-    fontSize: 14,
-    fontFamily: Fonts.Sen_Regular,
-    color: COLORS.primaryTextDark,
-    marginBottom: 4,
-    marginTop: 2,
-  },
-  reviewImagesRow: {
-    flexDirection: 'row',
-    marginTop: 4,
-    marginBottom: 4,
-  },
-  reviewImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    marginRight: 6,
-    backgroundColor: COLORS.inputBoder,
-  },
-  reviewDate: {
-    fontSize: 12,
-    fontFamily: Fonts.Sen_Regular,
-    color: COLORS.primaryTextDark,
-    opacity: 0.5,
-    marginTop: 2,
+    paddingTop: moderateScale(4),
   },
 
-  showMoreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: COLORS.primary + '10',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '30',
-    alignSelf: 'center',
-    minWidth: 140,
-  },
-  showMoreText: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontFamily: Fonts.Sen_SemiBold,
-    letterSpacing: 0.3,
-  },
-  showLessButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: COLORS.primary + '10',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '30',
-    alignSelf: 'center',
-    minWidth: 140,
-  },
-  showLessText: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontFamily: Fonts.Sen_SemiBold,
-    letterSpacing: 0.3,
-  },
+  /* Fullscreen Image Modal */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: 'rgba(0,0,0,0.88)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    width: '90%',
-    height: '70%',
+    width: '92%',
+    height: '75%',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -926,18 +1237,18 @@ const styles = StyleSheet.create({
   fullScreenImage: {
     width: '100%',
     height: '100%',
-    borderRadius: 12,
-    backgroundColor: COLORS.inputBoder,
+    borderRadius: 16,
+    backgroundColor: '#222',
   },
   closeButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: 12,
+    right: 12,
     zIndex: 2,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 50,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 20,
     paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingVertical: 6,
   },
 });
 

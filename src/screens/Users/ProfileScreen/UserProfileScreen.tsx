@@ -1,15 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  StyleSheet,
-  View,
-  StatusBar,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  Platform,
-  Keyboard,
   Alert,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
   Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from 'react-native';
 import {
   NavigationProp,
@@ -17,32 +21,31 @@ import {
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import ImagePicker from 'react-native-image-crop-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import Fonts from '../../../theme/fonts';
-import { COLORS } from '../../../theme/theme';
-import PrimaryButton from '../../../components/PrimaryButton';
-import UserCustomHeader from '../../../components/UserCustomHeader';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { AuthStackParamList } from '../../../navigation/AuthNavigator';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import ImagePicker from 'react-native-image-crop-picker';
+import LinearGradient from 'react-native-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Icon from 'react-native-vector-icons/Ionicons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import ApiEndpoints, { APP_URL, POST_SIGNUP } from '../../../api/apiEndpoints';
 import {
   getCity,
   getState,
   postRegisterFCMToken,
 } from '../../../api/apiService';
-import ApiEndpoints, { APP_URL, POST_SIGNUP } from '../../../api/apiEndpoints';
+import { useCommonToast } from '../../../common/CommonToast';
 import CustomDropdown from '../../../components/CustomDropdown';
 import CustomeLoader from '../../../components/CustomeLoader';
-import Icon from 'react-native-vector-icons/Ionicons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import AppConstant from '../../../utils/appConstant';
-import ThemedInput from '../../../components/ThemedInput';
-import { moderateScale } from 'react-native-size-matters';
-import { useCommonToast } from '../../../common/CommonToast';
+import UserCustomHeader from '../../../components/UserCustomHeader';
 import { getFcmToken } from '../../../configuration/firebaseMessaging';
 import { useLocation } from '../../../context/LocationContext';
+import { AuthStackParamList } from '../../../navigation/AuthNavigator';
+import Fonts from '../../../theme/fonts';
+import { COLORS } from '../../../theme/theme';
+import AppConstant from '../../../utils/appConstant';
 import PermissionDeniedView from '../Panchang/components/PermissionDeniedView';
 
 type CompleteProfileScreenRouteProp = NavigationProp<
@@ -64,15 +67,10 @@ interface FormErrors {
   dob?: string;
 }
 
-// Helper to format date as DD/MM/YYYY for Indian display
-const formatDateIndian = (dateStr: string) => {
+const formatDateDisplay = (dateStr: string): string => {
   if (!dateStr) return '';
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return '';
-  const dd = String(date.getDate()).padStart(2, '0');
-  const mm = String(date.getMonth() + 1).padStart(2, '0');
-  const yyyy = date.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
+  const m = moment(dateStr);
+  return m.isValid() ? m.format('DD MMM YYYY') : '';
 };
 
 const UserProfileScreen: React.FC = () => {
@@ -80,7 +78,12 @@ const UserProfileScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const navigation = useNavigation<CompleteProfileScreenRouteProp>();
   const route = useRoute<CompleteProfileScreenRouteProps>();
-  const { phoneNumber, firstName, lastName, address, uid } = route?.params;
+  const { phoneNumber, firstName, lastName, address, uid } =
+    (route?.params as any) || {};
+
+  const userNameRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInput>(null);
+
   const [formData, setFormData] = useState({
     mobile: phoneNumber || '',
     firebase_uid: uid || '',
@@ -95,11 +98,16 @@ const UserProfileScreen: React.FC = () => {
     latitude: '0',
     longitude: '0',
   });
+
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [state, setState] = useState([]);
-  const [city, setCity] = useState([]);
+  const [tempDate, setTempDate] = useState<Date>(new Date(2000, 0, 1));
+  const [state, setState] = useState<Array<{ label: string; value: string }>>(
+    [],
+  );
+  const [city, setCity] = useState<Array<{ label: string; value: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [focusedField, setFocusedField] = useState<string | null>(null);
   const [profileImage, setProfileImage] = useState<{
     uri: string;
     name: string;
@@ -107,9 +115,6 @@ const UserProfileScreen: React.FC = () => {
   } | null>(null);
 
   const { showErrorToast } = useCommonToast();
-
-  console.log('latitude :: ', formData.latitude);
-  console.log('longitude :: ', formData.longitude);
 
   const {
     location: locationData,
@@ -121,7 +126,6 @@ const UserProfileScreen: React.FC = () => {
   useEffect(() => {
     if (locationData) {
       setFormData(prev => {
-        // Only update if we still have default 0 values, ensuring we don't overwrite if user somehow edited (though these are hidden fields usually)
         if (prev.latitude === '0' && prev.longitude === '0') {
           return {
             ...prev,
@@ -134,20 +138,13 @@ const UserProfileScreen: React.FC = () => {
     }
   }, [locationData]);
 
-  const handleFetchGPS = async () => {
-    // Manually trigger refresh if needed
-    setIsLoading(true);
-    await refreshLocation();
-    setIsLoading(false);
-  };
-
   useEffect(() => {
     const getStateData = async () => {
       setIsLoading(true);
       try {
         const response: any = await getState();
         if (Array.isArray(response?.data)) {
-          const stateData: any = response?.data.map((item: any) => ({
+          const stateData = response.data.map((item: any) => ({
             label: item.name,
             value: item.id,
           }));
@@ -156,7 +153,7 @@ const UserProfileScreen: React.FC = () => {
           setState([]);
         }
       } catch (error: any) {
-        console.log('error in get state data :: ', error);
+        console.log('Error fetching states:', error);
       } finally {
         setIsLoading(false);
       }
@@ -175,7 +172,7 @@ const UserProfileScreen: React.FC = () => {
       try {
         const response = await getCity(formData.state);
         if (Array.isArray(response)) {
-          const cityData: any = response.map((item: any) => ({
+          const cityData = response.map((item: any) => ({
             label: item.name,
             value: item.id,
           }));
@@ -184,7 +181,7 @@ const UserProfileScreen: React.FC = () => {
           setCity([]);
         }
       } catch (error: any) {
-        console.log('error in get city data :: ', error);
+        console.log('Error fetching cities:', error);
         setCity([]);
       } finally {
         setIsLoading(false);
@@ -198,53 +195,43 @@ const UserProfileScreen: React.FC = () => {
     const errors: FormErrors = {};
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!formData.first_name) {
-      errors.userName = t('invalid_user_name');
+    if (!formData.first_name || formData.first_name.trim().length < 2) {
+      errors.userName =
+        t('invalid_user_name') || 'Please enter a valid user name';
     }
 
-    if (!formData.email || !emailRegex.test(formData.email)) {
-      errors.email = t('invalid_email');
+    if (!formData.email || !emailRegex.test(formData.email.trim())) {
+      errors.email = t('invalid_email') || 'Please enter a valid email address';
     }
 
-    // Phone field is required, must be 10 digits, only numbers allowed
     if (!formData.mobile) {
       errors.phone = t('phone_required') || 'Phone number is required';
     } else if (!/^\+?\d+$/.test(formData.mobile)) {
       errors.phone =
         t('invalid_phone_digits') || 'Phone number must contain only numbers';
-    } else if (formData.mobile.length !== 13) {
-      errors.phone =
-        t('invalid_phone_length') || 'Phone number must be exactly 10 digits';
-    }
-
-    if (!formData.state) {
-      errors.state = t('state_required');
-    }
-
-    if (!formData.city) {
-      errors.location = t('city_required');
     }
 
     if (!formData.dob) {
       errors.dob = t('dob_required') || 'Date of Birth is required';
     }
 
+    if (!formData.state) {
+      errors.state = t('state_required') || 'State is required';
+    }
+
+    if (!formData.city) {
+      errors.location = t('city_required') || 'City is required';
+    }
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  const themedInputLabelStyle = {
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.inputLabelText,
-    marginBottom: 4,
-  };
-
   const handleSignUp = async () => {
-    console.log('formData :: ', formData);
-
     if (formData.latitude === '0' || formData.longitude === '0') {
-      showErrorToast('Please wait, fetching GPS location...');
+      showErrorToast(
+        t('fetching_gps_location') || 'Please wait, fetching GPS location...',
+      );
       return;
     }
 
@@ -256,28 +243,17 @@ const UserProfileScreen: React.FC = () => {
     try {
       const params = new FormData();
 
-      // Append all text fields from formData
       Object.keys(formData).forEach(key => {
         params.append(key, formData[key as keyof typeof formData]);
       });
 
       if (profileImage) {
-        // FIX 1: Ensure proper URI format for Android
-        // We now handle this in the picker functions, so we can trust profileImage.uri
-        const imageUri = profileImage.uri;
-
-        // FIX 2: Use proper object structure for React Native
         params.append('profile_img', {
-          uri: imageUri,
+          uri: profileImage.uri,
           name: profileImage.name,
           type: profileImage.type,
         } as any);
       }
-
-      console.log('FormData params:', params); // Debug log
-
-      const fullUrl = `${APP_URL}${POST_SIGNUP}`;
-      console.log('Full Fetch URL:', fullUrl);
 
       if (!APP_URL) {
         showErrorToast('Configuration Error: APP_URL is missing');
@@ -285,19 +261,16 @@ const UserProfileScreen: React.FC = () => {
         return;
       }
 
-      // Create a timeout promise
       const timeout = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Request timed out')), 15000); // 15s timeout
+        setTimeout(() => reject(new Error('Request timed out')), 15000);
       });
 
-      // Race the fetch against the timeout
       const response: any = await Promise.race([
         fetch(`${APP_URL}${POST_SIGNUP}`, {
           method: 'POST',
           headers: {
             Accept: 'application/json',
             'X-Master-Key': ApiEndpoints.XMasterKey,
-            // 'Content-Type': 'multipart/form-data', // Do NOT set this manually for fetch + FormData
           },
           body: params,
         }),
@@ -305,9 +278,7 @@ const UserProfileScreen: React.FC = () => {
       ]);
 
       const responseText = await response.text();
-      console.log('Response text:', responseText);
-
-      let responseJson;
+      let responseJson: any;
       try {
         responseJson = JSON.parse(responseText);
       } catch (e) {
@@ -353,9 +324,11 @@ const UserProfileScreen: React.FC = () => {
         navigation.navigate('UserAppBottomTabNavigator');
       }
     } catch (error: any) {
-      console.log('Error in user profile screen signup :: ', error);
-      console.log('error in sign up :: ', error?.response?.data || error);
-      showErrorToast('Network Error, Please try again');
+      console.log('Error in user profile signup:', error);
+      showErrorToast(
+        error?.response?.data?.message ||
+          'Network Error, Please check your connection and try again',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -363,26 +336,33 @@ const UserProfileScreen: React.FC = () => {
 
   const handleImagePicker = () => {
     Keyboard.dismiss();
-    Alert.alert(t('select_profile_picture'), t('choose_an_option'), [
-      { text: t('take_photo'), onPress: () => openCamera() },
-      { text: t('choose_from_gallery'), onPress: () => openGallery() },
-      { text: t('cancel'), style: 'cancel' },
-    ]);
+    Alert.alert(
+      t('select_profile_picture') || 'Select Profile Photo',
+      t('choose_an_option') || 'Choose photo from',
+      [
+        { text: t('take_photo') || 'Take Photo', onPress: () => openCamera() },
+        {
+          text: t('choose_from_gallery') || 'Choose from Gallery',
+          onPress: () => openGallery(),
+        },
+        { text: t('cancel') || 'Cancel', style: 'cancel' },
+      ],
+    );
   };
 
   const openCamera = async () => {
     try {
       const image1 = await ImagePicker.openCamera({
         mediaType: 'photo',
-        width: 160,
-        height: 160,
-        compressImageQuality: 0.5,
+        width: 240,
+        height: 240,
+        compressImageQuality: 0.7,
         cropping: true,
       });
 
-      const ext = image1.path.substr(image1.path.lastIndexOf('.') + 1);
+      const ext = image1.path.substring(image1.path.lastIndexOf('.') + 1);
       const partPhoto = {
-        name: (image1.modificationDate || Date.now()) + '.' + ext,
+        name: `${image1.modificationDate || Date.now()}.${ext}`,
         type: image1.mime,
         uri:
           Platform.OS === 'android'
@@ -404,15 +384,15 @@ const UserProfileScreen: React.FC = () => {
     try {
       const image1 = await ImagePicker.openPicker({
         mediaType: 'photo',
-        width: 160,
-        height: 160,
-        compressImageQuality: 0.5,
+        width: 240,
+        height: 240,
+        compressImageQuality: 0.7,
         cropping: true,
       });
 
-      const ext = image1.path.substr(image1.path.lastIndexOf('.') + 1);
+      const ext = image1.path.substring(image1.path.lastIndexOf('.') + 1);
       const partPhoto = {
-        name: (image1.modificationDate || Date.now()) + '.' + ext,
+        name: `${image1.modificationDate || Date.now()}.${ext}`,
         type: image1.mime,
         uri:
           Platform.OS === 'android'
@@ -430,30 +410,26 @@ const UserProfileScreen: React.FC = () => {
     }
   };
 
-  // Helper: Only allow numeric input and max 10 numbers in phone field
-  const handlePhoneChange = (text: string) => {
-    let cleaned = text.replace(/[^0-9+]/g, '');
-    if (cleaned.length > 13) {
-      cleaned = cleaned.slice(0, 13);
-    }
-    setFormData(prev => ({ ...prev, mobile: cleaned }));
-    setFormErrors(prev => ({ ...prev, phone: undefined }));
-  };
-
-  // This handler sets dob in API format (YYYY-MM-DD)
   const handleDateChange = (event: any, selectedDate?: Date) => {
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
-    }
-
-    if (selectedDate) {
-      const formattedDate = selectedDate.toISOString().split('T')[0]; // API (YYYY-MM-DD)
-      setFormData(prev => ({ ...prev, dob: formattedDate }));
-      setFormErrors(prev => ({ ...prev, dob: undefined }));
+      if (event.type === 'set' && selectedDate) {
+        const formattedDate = selectedDate.toISOString().split('T')[0];
+        setFormData(prev => ({ ...prev, dob: formattedDate }));
+        setFormErrors(prev => ({ ...prev, dob: undefined }));
+      }
+    } else if (selectedDate) {
+      setTempDate(selectedDate);
     }
   };
 
-  // Show permission denied view if location is not available during signup
+  const confirmIOSDate = () => {
+    const formattedDate = tempDate.toISOString().split('T')[0];
+    setFormData(prev => ({ ...prev, dob: formattedDate }));
+    setFormErrors(prev => ({ ...prev, dob: undefined }));
+    setShowDatePicker(false);
+  };
+
   if (!locationData && !locationLoading) {
     return (
       <View style={styles.container}>
@@ -465,8 +441,10 @@ const UserProfileScreen: React.FC = () => {
     );
   }
 
+  const containerDynamic = { paddingTop: inset.top };
+
   return (
-    <View style={[styles.container, { paddingTop: inset.top }]}>
+    <View style={[styles.container, containerDynamic]}>
       <CustomeLoader loading={isLoading} />
       <StatusBar
         translucent
@@ -475,168 +453,477 @@ const UserProfileScreen: React.FC = () => {
       />
       <LinearGradient
         colors={[COLORS.gradientStart, COLORS.gradientEnd]}
-        style={[styles.headerGradient]}
+        style={styles.headerGradient}
       />
-      <UserCustomHeader title={t('profile')} showBackButton={true} />
+      <UserCustomHeader
+        title={t('profile') || 'Profile'}
+        showBackButton={true}
+      />
 
-      <View style={styles.profileImageContainer}>
-        <TouchableOpacity onPress={handleImagePicker}>
-          <Image
-            source={{
-              uri:
-                profileImage?.uri ||
-                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSy3IRQZYt7VgvYzxEqdhs8R6gNE6cYdeJueyHS-Es3MXb9XVRQQmIq7tI0grb8GTlzBRU&usqp=CAU',
-            }}
-            style={styles.profileImage}
-          />
-          <View style={styles.editIconContainer}>
-            <Icon name="camera-outline" size={16} color={COLORS.white} />
-          </View>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.contentContainer}>
-        <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={styles.inputContainer}>
-            <ThemedInput
-              label={t('user_name')}
-              placeholder={t('enter_your_name')}
-              value={formData.first_name}
-              onChangeText={text => {
-                setFormData(prev => ({ ...prev, first_name: text }));
-                setFormErrors(prev => ({ ...prev, userName: undefined }));
-              }}
-              labelStyle={themedInputLabelStyle}
-              error={formErrors.userName}
-              required
-            />
-            <ThemedInput
-              label={t('email')}
-              placeholder={t('enter_your_email')}
-              value={formData.email}
-              onChangeText={text => {
-                setFormData(prev => ({ ...prev, email: text }));
-                setFormErrors(prev => ({ ...prev, email: undefined }));
-              }}
-              keyboardType="email-address"
-              textContentType="emailAddress"
-              autoComplete="email"
-              labelStyle={themedInputLabelStyle}
-              error={formErrors.email}
-              required
-            />
-            <TouchableOpacity onPress={() => setShowDatePicker(prev => !prev)}>
-              <View pointerEvents="none">
-                <ThemedInput
-                  label={t('dob') || 'Date of Birth'}
-                  placeholder={t('select_dob') || 'Select Date of Birth'}
-                  value={formatDateIndian(formData.dob)}
-                  onChangeText={() => {}}
-                  labelStyle={themedInputLabelStyle}
-                  editable={false}
-                  error={formErrors.dob}
+      <View style={styles.sheetContainer}>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="always"
+            keyboardDismissMode="on-drag"
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* Profile Avatar Header Section */}
+            <TouchableWithoutFeedback
+              onPress={Keyboard.dismiss}
+              accessible={false}
+            >
+              <View style={styles.avatarSection}>
+                <TouchableOpacity
+                  onPress={handleImagePicker}
+                  activeOpacity={0.85}
+                  style={styles.avatarTouchArea}
+                >
+                  <View style={styles.avatarRing}>
+                    {profileImage?.uri ? (
+                      <Image
+                        source={{ uri: profileImage.uri }}
+                        style={styles.avatarImage}
+                      />
+                    ) : (
+                      <View style={styles.avatarPlaceholder}>
+                        <Icon
+                          name="person"
+                          size={moderateScale(42)}
+                          color="#94A3B8"
+                        />
+                      </View>
+                    )}
+                    <View style={styles.cameraBadge}>
+                      <Icon
+                        name="camera"
+                        size={moderateScale(15)}
+                        color={COLORS.white}
+                      />
+                    </View>
+                  </View>
+                </TouchableOpacity>
+
+                <View style={styles.stepBadge}>
+                  <Text style={styles.stepBadgeText}>
+                    {t('step_2_of_2', 'Step 2 of 2')} •{' '}
+                    {t('account_details', 'Account & Location')}
+                  </Text>
+                </View>
+
+                <Text style={styles.avatarHintText}>
+                  {t(
+                    'tap_to_change_photo',
+                    'Tap on the avatar to upload a profile photo',
+                  )}
+                </Text>
+              </View>
+            </TouchableWithoutFeedback>
+
+            {/* Form Card */}
+            <View style={styles.formCard}>
+              {/* User Name */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>
+                  {t('user_name') || 'User Name'}
+                  <Text style={styles.redAsterisk}> *</Text>
+                </Text>
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={() => userNameRef.current?.focus()}
+                  style={[
+                    styles.inputWrapper,
+                    focusedField === 'first_name' && styles.inputWrapperFocused,
+                    formErrors.userName ? styles.inputWrapperError : null,
+                  ]}
+                >
+                  <Icon
+                    name="person-outline"
+                    size={moderateScale(18)}
+                    color={
+                      formErrors.userName
+                        ? '#EF4444'
+                        : focusedField === 'first_name'
+                        ? COLORS.primary
+                        : '#94A3B8'
+                    }
+                    style={styles.inputLeftIcon}
+                  />
+                  <TextInput
+                    ref={userNameRef}
+                    style={styles.inputField}
+                    placeholder={t('enter_your_name') || 'Enter user name'}
+                    placeholderTextColor="#94A3B8"
+                    value={formData.first_name}
+                    onChangeText={text => {
+                      setFormData(prev => ({ ...prev, first_name: text }));
+                      setFormErrors(prev => ({ ...prev, userName: undefined }));
+                    }}
+                    onFocus={() => setFocusedField('first_name')}
+                    onBlur={() => {
+                      setTimeout(() => {
+                        setFocusedField(prev =>
+                          prev === 'first_name' ? null : prev,
+                        );
+                      }, 100);
+                    }}
+                    autoCapitalize="words"
+                    autoComplete="name"
+                    returnKeyType="next"
+                    blurOnSubmit={false}
+                    onSubmitEditing={() => emailRef.current?.focus()}
+                  />
+                  {Boolean(formData.first_name) && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setFormData(prev => ({ ...prev, first_name: '' }));
+                      }}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Icon
+                        name="close-circle"
+                        size={moderateScale(16)}
+                        color="#CBD5E1"
+                      />
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+                {Boolean(formErrors.userName) && (
+                  <View style={styles.errorRow}>
+                    <Icon
+                      name="alert-circle"
+                      size={moderateScale(13)}
+                      color="#EF4444"
+                      style={styles.errorIcon}
+                    />
+                    <Text style={styles.errorText}>{formErrors.userName}</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Email */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>
+                  {t('email') || 'Email'}
+                  <Text style={styles.redAsterisk}> *</Text>
+                </Text>
+                <TouchableOpacity
+                  activeOpacity={1}
+                  onPress={() => emailRef.current?.focus()}
+                  style={[
+                    styles.inputWrapper,
+                    focusedField === 'email' && styles.inputWrapperFocused,
+                    formErrors.email ? styles.inputWrapperError : null,
+                  ]}
+                >
+                  <Icon
+                    name="mail-outline"
+                    size={moderateScale(18)}
+                    color={
+                      formErrors.email
+                        ? '#EF4444'
+                        : focusedField === 'email'
+                        ? COLORS.primary
+                        : '#94A3B8'
+                    }
+                    style={styles.inputLeftIcon}
+                  />
+                  <TextInput
+                    ref={emailRef}
+                    style={styles.inputField}
+                    placeholder={t('enter_your_email') || 'Enter your email'}
+                    placeholderTextColor="#94A3B8"
+                    value={formData.email}
+                    onChangeText={text => {
+                      setFormData(prev => ({ ...prev, email: text }));
+                      setFormErrors(prev => ({ ...prev, email: undefined }));
+                    }}
+                    onFocus={() => setFocusedField('email')}
+                    onBlur={() => {
+                      setTimeout(() => {
+                        setFocusedField(prev =>
+                          prev === 'email' ? null : prev,
+                        );
+                      }, 100);
+                    }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    returnKeyType="done"
+                    onSubmitEditing={() => Keyboard.dismiss()}
+                  />
+                  {Boolean(formData.email) && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        setFormData(prev => ({ ...prev, email: '' }));
+                      }}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Icon
+                        name="close-circle"
+                        size={moderateScale(16)}
+                        color="#CBD5E1"
+                      />
+                    </TouchableOpacity>
+                  )}
+                </TouchableOpacity>
+                {Boolean(formErrors.email) && (
+                  <View style={styles.errorRow}>
+                    <Icon
+                      name="alert-circle"
+                      size={moderateScale(13)}
+                      color="#EF4444"
+                      style={styles.errorIcon}
+                    />
+                    <Text style={styles.errorText}>{formErrors.email}</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Date of Birth */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>
+                  {t('dob') || 'Date of Birth'}
+                  <Text style={styles.redAsterisk}> *</Text>
+                </Text>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => {
+                    if (formData.dob) {
+                      setTempDate(new Date(formData.dob));
+                    }
+                    setShowDatePicker(true);
+                  }}
+                  style={[
+                    styles.inputWrapper,
+                    formErrors.dob ? styles.inputWrapperError : null,
+                  ]}
+                >
+                  <Icon
+                    name="calendar-outline"
+                    size={moderateScale(18)}
+                    color={formErrors.dob ? '#EF4444' : '#94A3B8'}
+                    style={styles.inputLeftIcon}
+                  />
+                  <Text
+                    style={[
+                      styles.pickerValueText,
+                      !formData.dob && styles.placeholderText,
+                    ]}
+                  >
+                    {formData.dob
+                      ? formatDateDisplay(formData.dob)
+                      : t('select_dob') || 'Select Date of Birth'}
+                  </Text>
+                  <Icon
+                    name="calendar"
+                    size={moderateScale(18)}
+                    color={COLORS.primary}
+                    style={styles.pickerActionIcon}
+                  />
+                </TouchableOpacity>
+                {Boolean(formErrors.dob) && (
+                  <View style={styles.errorRow}>
+                    <Icon
+                      name="alert-circle"
+                      size={moderateScale(13)}
+                      color="#EF4444"
+                      style={styles.errorIcon}
+                    />
+                    <Text style={styles.errorText}>{formErrors.dob}</Text>
+                  </View>
+                )}
+
+                {/* Date Picker (iOS Modal vs Android Dialog) */}
+                {Platform.OS === 'ios' ? (
+                  <Modal
+                    transparent={true}
+                    animationType="fade"
+                    visible={showDatePicker}
+                    onRequestClose={() => setShowDatePicker(false)}
+                  >
+                    <View style={styles.modalOverlay}>
+                      <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                          <TouchableOpacity
+                            onPress={() => setShowDatePicker(false)}
+                          >
+                            <Text style={styles.modalCancelText}>
+                              {t('cancel') || 'Cancel'}
+                            </Text>
+                          </TouchableOpacity>
+                          <Text style={styles.modalTitleText}>
+                            {t('dob') || 'Date of Birth'}
+                          </Text>
+                          <TouchableOpacity onPress={confirmIOSDate}>
+                            <Text style={styles.modalDoneText}>
+                              {t('done') || 'Done'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                        <DateTimePicker
+                          value={tempDate}
+                          mode="date"
+                          display="spinner"
+                          maximumDate={new Date()}
+                          onChange={handleDateChange}
+                          themeVariant="light"
+                          style={styles.iosDatePicker}
+                        />
+                      </View>
+                    </View>
+                  </Modal>
+                ) : (
+                  showDatePicker && (
+                    <DateTimePicker
+                      value={
+                        formData.dob
+                          ? new Date(formData.dob)
+                          : new Date(2000, 0, 1)
+                      }
+                      mode="date"
+                      display="default"
+                      maximumDate={new Date()}
+                      onChange={handleDateChange}
+                    />
+                  )
+                )}
+              </View>
+
+              {/* Phone (Verified) */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>
+                  {t('phone') || 'Phone'}
+                  <Text style={styles.redAsterisk}> *</Text>
+                </Text>
+                <View
+                  style={[styles.inputWrapper, styles.disabledInputWrapper]}
+                >
+                  <Icon
+                    name="call-outline"
+                    size={moderateScale(18)}
+                    color="#64748B"
+                    style={styles.inputLeftIcon}
+                  />
+                  <TextInput
+                    style={[styles.inputField, styles.disabledInputField]}
+                    value={formData.mobile}
+                    editable={false}
+                  />
+                  <View style={styles.verifiedBadge}>
+                    <Icon
+                      name="checkmark-circle"
+                      size={moderateScale(14)}
+                      color="#059669"
+                    />
+                    <Text style={styles.verifiedText}>
+                      {t('verified', 'Verified')}
+                    </Text>
+                  </View>
+                </View>
+                {Boolean(formErrors.phone) && (
+                  <View style={styles.errorRow}>
+                    <Icon
+                      name="alert-circle"
+                      size={moderateScale(13)}
+                      color="#EF4444"
+                      style={styles.errorIcon}
+                    />
+                    <Text style={styles.errorText}>{formErrors.phone}</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* State Dropdown */}
+              <View style={styles.fieldGroup}>
+                <CustomDropdown
+                  label={t('state') || 'State'}
+                  items={state}
+                  selectedValue={formData.state}
+                  onSelect={value => {
+                    setFormData(prev => ({ ...prev, state: value, city: '' }));
+                    setFormErrors(prev => ({
+                      ...prev,
+                      state: undefined,
+                      location: undefined,
+                    }));
+                  }}
+                  placeholder={t('enter_your_State') || 'Select your State'}
+                  error={formErrors.state}
                   required
                 />
               </View>
-            </TouchableOpacity>
-            {showDatePicker && (
-              <View>
-                {Platform.OS === 'ios' && (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'flex-end',
-                      marginBottom: 8,
-                    }}
-                  >
-                    <TouchableOpacity
-                      onPress={() => setShowDatePicker(false)}
-                      style={{
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        backgroundColor: COLORS.primary,
-                        borderRadius: 8,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: COLORS.white,
-                          fontFamily: Fonts.Sen_Bold,
-                          fontSize: 14,
-                        }}
-                      >
-                        {t('done') || 'Done'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-                <DateTimePicker
-                  value={formData.dob ? new Date(formData.dob) : new Date()}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={handleDateChange}
-                  maximumDate={new Date()}
-                  themeVariant="light"
+
+              {/* City Dropdown */}
+              <View style={styles.fieldGroup}>
+                <CustomDropdown
+                  label={t('city') || 'City'}
+                  items={city}
+                  selectedValue={formData.city}
+                  onSelect={value => {
+                    setFormData(prev => ({ ...prev, city: value }));
+                    setFormErrors(prev => ({ ...prev, location: undefined }));
+                  }}
+                  placeholder={
+                    formData.state
+                      ? t('enter_your_location') || 'Select your City'
+                      : t('select_state_first') || 'Select State First'
+                  }
+                  error={formErrors.location}
+                  required
                 />
               </View>
-            )}
-            <ThemedInput
-              label={t('phone')}
-              placeholder={t('enter_your_phone')}
-              value={formData.mobile}
-              // Phone input: only allow numbers, max 10, clear error on edit
-              onChangeText={handlePhoneChange}
-              autoComplete="tel"
-              textContentType="telephoneNumber"
-              maxLength={15}
-              labelStyle={themedInputLabelStyle}
-              error={formErrors.phone}
-              required
-              keyboardType="phone-pad"
-              editable={false}
-              style={styles.disabledInput}
-            />
-            <CustomDropdown
-              label={t('state')}
-              items={state}
-              selectedValue={formData.state}
-              onSelect={value => {
-                setFormData(prev => ({ ...prev, state: value, city: '' }));
-                setFormErrors(prev => ({
-                  ...prev,
-                  state: undefined,
-                  location: undefined,
-                }));
-              }}
-              placeholder={t('enter_your_State')}
-              error={formErrors.state}
-              required
-            />
-            <CustomDropdown
-              label={t('city')}
-              items={city}
-              selectedValue={formData.city}
-              onSelect={value => {
-                setFormData(prev => ({ ...prev, city: value }));
-                setFormErrors(prev => ({ ...prev, location: undefined }));
-              }}
-              placeholder={
-                formData.state
-                  ? t('enter_your_location')
-                  : t('select_state_first')
-              }
-              error={formErrors.location}
-              required
-            />
+            </View>
 
-            <PrimaryButton
-              title={t('save')}
+            {/* GPS Location Status Indicator */}
+            <View style={styles.locationStatusRow}>
+              <Icon
+                name={
+                  formData.latitude !== '0' && formData.longitude !== '0'
+                    ? 'navigate-circle'
+                    : 'compass-outline'
+                }
+                size={moderateScale(16)}
+                color={
+                  formData.latitude !== '0' && formData.longitude !== '0'
+                    ? '#059669'
+                    : '#D97706'
+                }
+                style={styles.locationIcon}
+              />
+              <Text style={styles.locationStatusText}>
+                {formData.latitude !== '0' && formData.longitude !== '0'
+                  ? t(
+                      'gps_connected',
+                      'GPS Coordinates linked for Vedic Charts',
+                    )
+                  : t('detecting_gps', 'Detecting location coordinates...')}
+              </Text>
+            </View>
+
+            {/* Save / Complete Button */}
+            <TouchableOpacity
+              style={styles.saveButton}
+              activeOpacity={0.85}
               onPress={handleSignUp}
-              style={styles.buttonContainer}
-              textStyle={styles.buttonText}
               disabled={isLoading}
-            />
-          </View>
-        </ScrollView>
+            >
+              <Text style={styles.saveButtonText}>
+                {t('save') || 'SAVE CHANGES'}
+              </Text>
+              <View style={styles.saveButtonIconCircle}>
+                <Icon
+                  name="arrow-forward"
+                  size={moderateScale(16)}
+                  color={COLORS.primaryTextDark}
+                />
+              </View>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </View>
     </View>
   );
@@ -652,58 +939,292 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 184,
-    backgroundColor: COLORS.primaryBackground,
+    height: 180,
   },
-  profileImageContainer: {
+  sheetContainer: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderTopLeftRadius: moderateScale(28),
+    borderTopRightRadius: moderateScale(28),
+    overflow: 'hidden',
+    marginTop: verticalScale(6),
+  },
+  keyboardView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: scale(18),
+    paddingTop: verticalScale(16),
+    paddingBottom: verticalScale(36),
+  },
+  avatarSection: {
+    alignItems: 'center',
+    marginBottom: verticalScale(14),
+  },
+  avatarTouchArea: {
+    marginBottom: verticalScale(10),
+  },
+  avatarRing: {
+    width: moderateScale(92),
+    height: moderateScale(92),
+    borderRadius: moderateScale(46),
+    backgroundColor: '#FFF0F1',
+    borderWidth: 3,
+    borderColor: '#FFE0E3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+    position: 'relative',
+  },
+  avatarImage: {
+    width: moderateScale(86),
+    height: moderateScale(86),
+    borderRadius: moderateScale(43),
+  },
+  avatarPlaceholder: {
+    width: moderateScale(86),
+    height: moderateScale(86),
+    borderRadius: moderateScale(43),
+    backgroundColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraBadge: {
     position: 'absolute',
-    top: 105,
-    alignSelf: 'center',
-    zIndex: 2,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    bottom: -2,
+    right: -2,
+    backgroundColor: COLORS.primary,
+    width: moderateScale(30),
+    height: moderateScale(30),
+    borderRadius: moderateScale(15),
+    alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 2,
     borderColor: COLORS.white,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  editIconContainer: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: COLORS.black,
-    borderRadius: 12,
-    padding: 4,
+  stepBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: scale(12),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(14),
+    marginBottom: verticalScale(6),
     borderWidth: 1,
-    borderColor: COLORS.white,
+    borderColor: '#E2E8F0',
   },
-  contentContainer: {
-    position: 'absolute',
-    top: 153,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: COLORS.backgroundPrimary,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingTop: 64,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    zIndex: 1,
+  stepBadgeText: {
+    fontFamily: Fonts.Sen_SemiBold,
+    fontSize: moderateScale(11),
+    color: '#64748B',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  inputContainer: {
-    gap: 16,
+  avatarHintText: {
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(12),
+    color: '#64748B',
+    textAlign: 'center',
   },
-  buttonContainer: {
-    height: 46,
+  formCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(20),
+    padding: moderateScale(18),
+    marginBottom: verticalScale(14),
+    borderWidth: 1,
+    borderColor: '#ECEFF1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  buttonText: {
-    fontSize: 15,
+  fieldGroup: {
+    marginBottom: verticalScale(14),
+  },
+  fieldLabel: {
+    fontFamily: Fonts.Sen_SemiBold,
+    fontSize: moderateScale(13),
+    color: '#334155',
+    marginBottom: verticalScale(6),
+  },
+  redAsterisk: {
+    color: '#DC2626',
+    fontFamily: Fonts.Sen_Bold,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: moderateScale(14),
+    borderWidth: 1.2,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: scale(14),
+    minHeight: verticalScale(48),
+  },
+  inputWrapperFocused: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.white,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  inputWrapperError: {
+    borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
+  },
+  inputLeftIcon: {
+    marginRight: scale(10),
+  },
+  inputField: {
+    flex: 1,
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(14),
+    color: '#1E293B',
+    paddingVertical: 0,
+  },
+  pickerValueText: {
+    flex: 1,
+    fontFamily: Fonts.Sen_Medium,
+    fontSize: moderateScale(14),
+    color: '#1E293B',
+  },
+  placeholderText: {
+    color: '#94A3B8',
+    fontFamily: Fonts.Sen_Regular,
+  },
+  pickerActionIcon: {
+    marginLeft: scale(8),
+  },
+  disabledInputWrapper: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+  },
+  disabledInputField: {
+    color: '#475569',
     fontFamily: Fonts.Sen_Medium,
   },
-  disabledInput: {
-    backgroundColor: COLORS.lightGray,
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: scale(8),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(8),
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  verifiedText: {
+    fontFamily: Fonts.Sen_SemiBold,
+    fontSize: moderateScale(11),
+    color: '#059669',
+    marginLeft: scale(4),
+  },
+  errorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: verticalScale(5),
+    paddingLeft: scale(2),
+  },
+  errorIcon: {
+    marginRight: scale(4),
+  },
+  errorText: {
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(12),
+    color: '#EF4444',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: moderateScale(22),
+    borderTopRightRadius: moderateScale(22),
+    paddingBottom: verticalScale(28),
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: scale(18),
+    paddingVertical: verticalScale(14),
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  modalTitleText: {
+    fontFamily: Fonts.Sen_Bold,
+    fontSize: moderateScale(15),
+    color: '#1E293B',
+  },
+  modalCancelText: {
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(14),
+    color: '#64748B',
+  },
+  modalDoneText: {
+    fontFamily: Fonts.Sen_Bold,
+    fontSize: moderateScale(14),
+    color: COLORS.primary,
+  },
+  iosDatePicker: {
+    height: verticalScale(190),
+  },
+  locationStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: verticalScale(18),
+    paddingHorizontal: scale(10),
+  },
+  locationIcon: {
+    marginRight: scale(6),
+  },
+  locationStatusText: {
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(12),
+    color: '#64748B',
+    textAlign: 'center',
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.primaryBackgroundButton,
+    borderRadius: moderateScale(16),
+    height: verticalScale(52),
+    shadowColor: COLORS.primaryBackgroundButton,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  saveButtonText: {
+    fontFamily: Fonts.Sen_Bold,
+    fontSize: moderateScale(16),
+    color: COLORS.primaryTextDark,
+    letterSpacing: 0.8,
+    marginRight: scale(8),
+  },
+  saveButtonIconCircle: {
+    width: moderateScale(26),
+    height: moderateScale(26),
+    borderRadius: moderateScale(13),
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

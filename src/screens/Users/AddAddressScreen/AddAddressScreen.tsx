@@ -5,9 +5,13 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  SafeAreaView,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import Fonts from '../../../theme/fonts';
+import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import { COLORS } from '../../../theme/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -71,6 +75,22 @@ const AddAddressScreen = () => {
   const didSetEditData = useRef(false);
   const route = useRoute<any>();
   const addressToEdit: Address | undefined = route.params?.addressToEdit;
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setIsKeyboardVisible(true),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setIsKeyboardVisible(false),
+    );
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   console.log('cityCoordinates :: ', cityCoordinates);
 
@@ -230,14 +250,12 @@ const AddAddressScreen = () => {
     }
   };
 
-  // Ensure stateId is passed as an integer to getCity
   const fetchCities = async (stateId: string) => {
     if (!stateId) return;
 
     setIsLoading(true);
     try {
-      const stateIdInt = parseInt(stateId, 10); // Ensure stateId is an integer
-      const response: any = await getCity(stateIdInt);
+      const response: any = await getCity(String(stateId));
       let cityList: any[] = Array.isArray(response)
         ? response
         : response?.data || [];
@@ -387,7 +405,6 @@ const AddAddressScreen = () => {
 
     let cityId = Number(formData.city) || 0;
     let addressTypeId = Number(formData.addressType) || 0;
-    let stateIdInt = formData.state ? parseInt(formData.state, 10) : 0; // ensure state as int
 
     const addressPayload = {
       name: formData.fullName,
@@ -396,7 +413,7 @@ const AddAddressScreen = () => {
       address_line2: formData.addressLine2,
       phone_number: formData.phoneNumber,
       city: cityId,
-      state: stateIdInt,
+      state: String(formData.state),
       pincode: formData.pincode,
       latitude: cityCoordinates?.latitude ?? 0,
       longitude: cityCoordinates?.longitude ?? 0,
@@ -454,134 +471,229 @@ const AddAddressScreen = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <CustomeLoader loading={isLoading} />
       <UserCustomHeader
         title={addressToEdit ? t('edit_address') : t('add_address')}
         showBackButton={true}
         onBackPress={handleBack}
       />
-      <ScrollView
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.formContainer}>
-          <View style={styles.inputGroup}>
-            <CustomTextInput
-              label={t('full_name')}
-              value={formData.fullName}
-              onChangeText={value => handleInputChange('fullName', value)}
-              placeholder={t('enter_full_name')}
-              error={formErrors.fullName}
-              required={true}
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <CustomTextInput
-              label={t('phone_number')}
-              value={formData.phoneNumber}
-              onChangeText={value => handleInputChange('phoneNumber', value)}
-              placeholder={t('enter_phone_number')}
-              keyboardType="phone-pad"
-              error={formErrors.phoneNumber}
-              onlyInteger={true}
-              maxIntegerLength={10}
-              required={true}
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <CustomTextInput
-              label={t('address_line1')}
-              value={formData.addressLine1}
-              onChangeText={value => handleInputChange('addressLine1', value)}
-              placeholder={t('enter_address_line1')}
-              error={formErrors.addressLine1}
-              required={true}
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <CustomTextInput
-              label={t('address_line2')}
-              value={formData.addressLine2}
-              onChangeText={value => handleInputChange('addressLine2', value)}
-              placeholder={t('enter_address_line2')}
-              error={formErrors.addressLine2}
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <CustomDropdown
-              items={stateOptions}
-              selectedValue={formData.state}
-              onSelect={value => handleInputChange('state', value)}
-              label={t('state')}
-              placeholder={t('select_state')}
-              error={formErrors.state}
-              required={true}
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <CustomDropdown
-              items={cityOptions}
-              selectedValue={formData.city}
-              onSelect={value => handleInputChange('city', value)}
-              label={t('city')}
-              placeholder={t('select_city')}
-              error={formErrors.city}
-              required={true}
-            />
-          </View>
-          <View style={styles.rowContainer}>
-            <View style={styles.halfInputGroup}>
-              <CustomTextInput
-                label={t('pincode')}
-                value={formData.pincode}
-                onChangeText={value => handleInputChange('pincode', value)}
-                placeholder={t('enter_pincode')}
-                keyboardType="phone-pad"
-                error={formErrors.pincode}
-                onlyInteger={true}
-                maxIntegerLength={6}
-                required={true}
-              />
+      <View style={styles.sheetContainer}>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={0}
+        >
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* Section 1: Contact Details Card */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeaderRow}>
+                <View style={styles.sectionIconCircle}>
+                  <Ionicons
+                    name="person-outline"
+                    size={16}
+                    color={COLORS.primary}
+                  />
+                </View>
+                <Text style={styles.sectionHeaderTitle}>
+                  {t('contact_details') || 'Contact Details'}
+                </Text>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <CustomTextInput
+                  label={t('full_name')}
+                  value={formData.fullName}
+                  onChangeText={value => handleInputChange('fullName', value)}
+                  placeholder={t('enter_full_name')}
+                  error={formErrors.fullName}
+                  required={true}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <CustomTextInput
+                  label={t('phone_number')}
+                  value={formData.phoneNumber}
+                  onChangeText={value =>
+                    handleInputChange('phoneNumber', value)
+                  }
+                  placeholder={t('enter_phone_number')}
+                  keyboardType="phone-pad"
+                  error={formErrors.phoneNumber}
+                  onlyInteger={true}
+                  maxIntegerLength={10}
+                  required={true}
+                />
+              </View>
             </View>
-            {/* <TouchableOpacity
-              style={styles.locationButton}
-              onPress={handleFetchGPS}
-              disabled={isLoading}>
-              <Icon
-                name="my-location"
-                size={18}
-                color={COLORS.primaryTextDark}
-              />
-              <Text style={styles.locationButtonText}>
-                {isLoading ? t('fetching_location') : t('my_location')}
-              </Text>
-            </TouchableOpacity> */}
-          </View>
-          <View style={styles.addressTypeGroup}>
-            <CustomDropdown
-              items={addressTypeOptions.map(opt => ({
-                ...opt,
-                label: t(opt.label.toLowerCase()),
-                value: String(opt.id),
-              }))}
-              selectedValue={formData.addressType}
-              onSelect={value => handleInputChange('addressType', value)}
-              label={t('type_of_address')}
-              placeholder={t('select_type_of_address')}
-              error={formErrors.addressType}
-              required={true}
+
+            {/* Section 2: Address Information Card */}
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeaderRow}>
+                <View style={styles.sectionIconCircle}>
+                  <Ionicons
+                    name="location-outline"
+                    size={16}
+                    color={COLORS.primary}
+                  />
+                </View>
+                <Text style={styles.sectionHeaderTitle}>
+                  {t('address_details') || 'Address Details'}
+                </Text>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <CustomTextInput
+                  label={t('address_line1')}
+                  value={formData.addressLine1}
+                  onChangeText={value =>
+                    handleInputChange('addressLine1', value)
+                  }
+                  placeholder={t('enter_address_line1')}
+                  error={formErrors.addressLine1}
+                  required={true}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <CustomTextInput
+                  label={t('address_line2')}
+                  value={formData.addressLine2}
+                  onChangeText={value =>
+                    handleInputChange('addressLine2', value)
+                  }
+                  placeholder={t('enter_address_line2')}
+                  error={formErrors.addressLine2}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <CustomDropdown
+                  items={stateOptions}
+                  selectedValue={formData.state}
+                  onSelect={value => handleInputChange('state', value)}
+                  label={t('state')}
+                  placeholder={t('select_state')}
+                  error={formErrors.state}
+                  required={true}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <CustomDropdown
+                  items={cityOptions}
+                  selectedValue={formData.city}
+                  onSelect={value => handleInputChange('city', value)}
+                  label={t('city')}
+                  placeholder={t('select_city')}
+                  error={formErrors.city}
+                  required={true}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <CustomTextInput
+                  label={t('pincode')}
+                  value={formData.pincode}
+                  onChangeText={value => handleInputChange('pincode', value)}
+                  placeholder={t('enter_pincode')}
+                  keyboardType="phone-pad"
+                  error={formErrors.pincode}
+                  onlyInteger={true}
+                  maxIntegerLength={6}
+                  required={true}
+                />
+              </View>
+
+              {/* Address Type Selection Chips */}
+              <View style={styles.addressTypeGroup}>
+                <Text style={styles.fieldLabel}>
+                  {t('type_of_address') || 'Type of Address'}
+                  <Text style={styles.redStar}> *</Text>
+                </Text>
+
+                <View style={styles.chipsRow}>
+                  {addressTypeOptions.map(opt => {
+                    const isSelected =
+                      String(formData.addressType) === String(opt.value);
+                    const lower = opt.label.toLowerCase();
+                    let iconName = 'location-outline';
+                    if (lower.includes('home')) {
+                      iconName = isSelected ? 'home' : 'home-outline';
+                    } else if (
+                      lower.includes('office') ||
+                      lower.includes('work')
+                    ) {
+                      iconName = isSelected ? 'business' : 'business-outline';
+                    }
+
+                    return (
+                      <TouchableOpacity
+                        key={opt.id}
+                        style={[
+                          styles.typeChip,
+                          isSelected && styles.typeChipSelected,
+                        ]}
+                        onPress={() =>
+                          handleInputChange('addressType', String(opt.value))
+                        }
+                        activeOpacity={0.75}
+                      >
+                        <Ionicons
+                          name={iconName}
+                          size={17}
+                          color={
+                            isSelected
+                              ? COLORS.primary
+                              : COLORS.pujaTextSecondary
+                          }
+                        />
+                        <Text
+                          style={[
+                            styles.typeChipText,
+                            isSelected && styles.typeChipTextSelected,
+                          ]}
+                        >
+                          {t(opt.label.toLowerCase()) || opt.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+                {formErrors.addressType ? (
+                  <Text style={styles.errorText}>{formErrors.addressType}</Text>
+                ) : null}
+              </View>
+            </View>
+          </ScrollView>
+
+          {/* Bottom Action Bar */}
+          <View
+            style={[
+              styles.bottomActionBar,
+              {
+                paddingBottom: isKeyboardVisible
+                  ? verticalScale(8)
+                  : Math.max(insets.bottom, verticalScale(12)),
+              },
+            ]}
+          >
+            <PrimaryButton
+              title={addressToEdit ? t('update_address') : t('save_address')}
+              onPress={handleSaveAddress}
+              style={styles.saveButton}
+              disabled={isLoading}
             />
           </View>
-          <PrimaryButton
-            title={addressToEdit ? t('update_address') : t('save_address')}
-            onPress={handleSaveAddress}
-            style={{ marginTop: 0 }}
-            disabled={isLoading}
-          />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </KeyboardAvoidingView>
+      </View>
+    </View>
   );
 };
 
@@ -590,48 +702,122 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
-  scrollContainer: {
+  sheetContainer: {
+    flex: 1,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    backgroundColor: COLORS.pujaBackground,
+    overflow: 'hidden',
+  },
+  keyboardView: {
     flex: 1,
     backgroundColor: COLORS.pujaBackground,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
   },
-  formContainer: {
-    padding: 24,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  halfInputGroup: {
+  scrollView: {
     flex: 1,
-    marginBottom: 16,
   },
-  rowContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 16,
+  scrollContent: {
+    paddingHorizontal: scale(16),
+    paddingTop: verticalScale(16),
+    paddingBottom: verticalScale(20),
   },
-  locationButton: {
-    height: 46,
-    borderWidth: 1,
-    borderColor: COLORS.primaryBackgroundButton,
+  sectionCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 10,
+    borderRadius: moderateScale(16),
+    padding: moderateScale(16),
+    marginBottom: verticalScale(14),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#ECEFF1',
+  },
+  sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    flex: 1,
-    marginTop: 23,
+    marginBottom: verticalScale(14),
+    paddingBottom: verticalScale(10),
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
-  locationButtonText: {
+  sectionIconCircle: {
+    width: moderateScale(28),
+    height: moderateScale(28),
+    borderRadius: moderateScale(14),
+    backgroundColor: '#FFF0F1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: scale(8),
+  },
+  sectionHeaderTitle: {
+    fontFamily: Fonts.Sen_Bold,
+    fontSize: moderateScale(15),
     color: COLORS.primaryTextDark,
-    fontSize: 14,
-    fontWeight: '500',
-    fontFamily: 'Sen-Medium',
+  },
+  inputGroup: {
+    marginBottom: verticalScale(14),
   },
   addressTypeGroup: {
-    marginBottom: 16,
+    marginTop: verticalScale(4),
+  },
+  fieldLabel: {
+    color: COLORS.inputLabelText,
+    fontFamily: Fonts.Sen_Medium,
+    fontSize: moderateScale(14),
+    marginBottom: verticalScale(8),
+  },
+  redStar: {
+    color: COLORS.error,
+    fontFamily: Fonts.Sen_Medium,
+    fontSize: moderateScale(14),
+  },
+  chipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: scale(10),
+  },
+  typeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: scale(14),
+    paddingVertical: verticalScale(9),
+    borderRadius: moderateScale(10),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    gap: scale(6),
+  },
+  typeChipSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#FFF0F1',
+    borderWidth: 1.5,
+  },
+  typeChipText: {
+    fontFamily: Fonts.Sen_Medium,
+    fontSize: moderateScale(13),
+    color: COLORS.primaryTextDark,
+  },
+  typeChipTextSelected: {
+    color: COLORS.primary,
+    fontFamily: Fonts.Sen_Bold,
+  },
+  errorText: {
+    color: COLORS.error,
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(12),
+    marginTop: verticalScale(4),
+  },
+  bottomActionBar: {
+    paddingHorizontal: scale(20),
+    paddingTop: verticalScale(10),
+    backgroundColor: COLORS.pujaBackground,
+    borderTopWidth: 1,
+    borderTopColor: '#ECEFF1',
+  },
+  saveButton: {
+    marginTop: 0,
   },
 });
 

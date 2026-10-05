@@ -153,6 +153,130 @@ export interface PoojaBookingTirthPlace {
   is_enabled: boolean;
 }
 
+export interface ArrangedItemObject {
+  name: string;
+  quantity?: string | number;
+  units?: string;
+  [key: string]: any;
+}
+
+export type ArrangedItem = string | ArrangedItemObject;
+
+export interface PoojaUserReview {
+  id?: number;
+  user_name?: string;
+  rating?: number;
+  comment?: string;
+  created_at?: string;
+  [key: string]: any;
+}
+
+export interface PoojaDetails {
+  id: number;
+  pooja_name: string;
+  pooja_image_url: string;
+  about_pooja: string;
+  base_price: number;
+  price_with_samagri: number;
+  price_without_samagri: number;
+  duration?: string;
+  is_favorite?: boolean;
+  pooja_category?: number;
+  pooja_type?: number;
+  slug?: string;
+  user_arranged_items?: ArrangedItem[];
+  pandit_arranged_items?: ArrangedItem[];
+  user_reviews?: PoojaUserReview[];
+  [key: string]: any;
+}
+
+export interface PoojaDetailsResponse {
+  success?: boolean;
+  status?: boolean;
+  message?: string;
+  data: PoojaDetails;
+}
+
+export interface MuhuratSlot {
+  start: string;
+  end: string;
+  type: string;
+  is_next_day?: boolean;
+  quality?: string;
+  [key: string]: any;
+}
+
+export interface MuhuratResponse {
+  status?: boolean;
+  message?: string;
+  choghadiya: MuhuratSlot[];
+  [key: string]: any;
+}
+
+export interface PanditAvailabilityDay {
+  id?: number;
+  date: string;
+  is_available: boolean;
+  [key: string]: any;
+}
+
+export interface PanditAvailabilityResponse {
+  status?: boolean;
+  message?: string;
+  data: PanditAvailabilityDay[];
+  [key: string]: any;
+}
+
+export interface AutoBookingRequestPayload {
+  pooja: string | number;
+  assignment_mode: number;
+  samagri_required: boolean;
+  address?: string | number | null;
+  tirth_place?: string | number | null;
+  booking_date: string;
+  muhurat_time: string;
+  muhurat_type: string;
+  pandit?: string | number | null;
+  long_distance?: boolean;
+}
+
+export interface AutoBookingResponse {
+  status?: boolean;
+  message?: string;
+  auto_booking_enabled?: boolean;
+  auto_booking_message?: string;
+  data?: {
+    booking_id: string | number;
+    [key: string]: any;
+  };
+  [key: string]: any;
+}
+
+export interface TirthPlaceResponse {
+  status?: boolean;
+  message?: string;
+  data: PoojaBookingTirthPlace[];
+  [key: string]: any;
+}
+
+export interface BookingAddress extends PoojaBookingAddress {
+  phone_number?: string;
+  address_type?: string;
+  city?: number;
+  city_name?: string;
+  state?: string;
+  pincode?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface AddressListResponse {
+  status?: boolean;
+  message?: string;
+  data: BookingAddress[];
+  [key: string]: any;
+}
+
 export interface HomeData {
   pandits: PanditItem[];
   puja: PujaItem[];
@@ -172,10 +296,15 @@ export interface RecommendedPandit {
 }
 export interface PujaItem {
   id: number;
+  pooja_id?: number;
   pooja_name: string;
   pooja_image_url: string;
   when_is_pooja: string;
   booking_date: string;
+  muhurat_time?: string;
+  address?: string;
+  booking_status?: string;
+  payment_status?: string;
 }
 export interface PricingOption {
   id: number;
@@ -990,11 +1119,26 @@ export const postRefreshToken = (data: RefreshTokenRequest) => {
   });
 };
 
-export const getPujaList = () => {
-  let apiUrl = GET_PUJALIST;
+export interface PujaApiItem {
+  id: number;
+  title: string;
+  short_description?: string;
+  description?: string;
+  image_url: string;
+  price_without_samagri: string;
+}
+
+export interface PujaListApiResponse {
+  success: boolean;
+  message: string;
+  data: PujaApiItem[];
+}
+
+export const getPujaList = (): Promise<PujaListApiResponse> => {
+  const apiUrl = GET_PUJALIST;
   return new Promise((resolve, reject) => {
     apiDev
-      .get(apiUrl)
+      .get<PujaListApiResponse>(apiUrl)
       .then(response => {
         resolve(response.data);
       })
@@ -1026,7 +1170,7 @@ export const getRecommendedPandit = (
   });
 };
 
-export const getTirthPlace = () => {
+export const getTirthPlace = (): Promise<TirthPlaceResponse | PoojaBookingTirthPlace[]> => {
   let apiUrl = GET_TIRTH_PLACE;
   return new Promise((resolve, reject) => {
     apiDev
@@ -1043,12 +1187,12 @@ export const getTirthPlace = () => {
 
 export const getMuhrat = (
   date: string,
-  latitude: string,
-  longitude: string,
-): Promise<any> => {
+  latitude?: string | number,
+  longitude?: string | number,
+): Promise<MuhuratResponse> => {
   const apiUrl = GET_MUHRAT.replace('{date}', date)
-    .replace('{latitude}', latitude)
-    .replace('{longitude}', longitude);
+    .replace('{latitude}', String(latitude ?? ''))
+    .replace('{longitude}', String(longitude ?? ''));
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)
@@ -1062,7 +1206,7 @@ export const getMuhrat = (
   });
 };
 
-export const getAddress = () => {
+export const getAddress = (): Promise<AddressListResponse | BookingAddress[]> => {
   let apiUrl = GET_USER_ADDRESS;
   return new Promise((resolve, reject) => {
     apiDev
@@ -1153,7 +1297,10 @@ export const updateAddress = (data: EditAddress) => {
   });
 };
 
-export const getPoojaDetails = (panditId: string, id: string): Promise<any> => {
+export const getPoojaDetails = (
+  panditId: string,
+  id: string,
+): Promise<PoojaDetailsResponse> => {
   const apiUrl = GET_POOJA_DETAILS.replace('{panditId}', panditId).replace(
     '{id}',
     id,
@@ -1171,7 +1318,9 @@ export const getPoojaDetails = (panditId: string, id: string): Promise<any> => {
   });
 };
 
-export const getPoojaDetailsForPujaList = (id: string): Promise<any> => {
+export const getPoojaDetailsForPujaList = (
+  id: string,
+): Promise<PoojaDetailsResponse> => {
   const apiUrl = GET_POOJA_DETAIL_FOR_PUJA_LIST.replace('{id}', id);
   return new Promise((resolve, reject) => {
     apiDev
@@ -1590,8 +1739,10 @@ export const getPanditPujaList = (panditId: string): Promise<any> => {
   });
 };
 
-export const getPanditAvailability = (panditId: any): Promise<any> => {
-  const apiUrl = GET_PANDIT_AVAILABILITY.replace('{pandit_id}', panditId);
+export const getPanditAvailability = (
+  panditId: string | number,
+): Promise<PanditAvailabilityResponse> => {
+  const apiUrl = GET_PANDIT_AVAILABILITY.replace('{pandit_id}', String(panditId));
   return new Promise((resolve, reject) => {
     apiDev
       .get(apiUrl)
@@ -1606,13 +1757,13 @@ export const getPanditAvailability = (panditId: any): Promise<any> => {
 };
 
 export const postAutoBooking = (
-  data: any,
-  latitude: any,
-  longitude: any,
-): Promise<any> => {
-  let apiUrl = POST_AUTO_BOOKING.replace('{latitude}', latitude).replace(
+  data: AutoBookingRequestPayload,
+  latitude?: string | number,
+  longitude?: string | number,
+): Promise<AutoBookingResponse> => {
+  let apiUrl = POST_AUTO_BOOKING.replace('{latitude}', String(latitude ?? '')).replace(
     '{longitude}',
-    longitude,
+    String(longitude ?? ''),
   );
   return new Promise((resolve, reject) => {
     apiDev

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,9 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  Image,
+  ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -16,7 +19,6 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import {
   COLORS,
   COMMON_LIST_STYLE,
-  COMMON_RADIO_CONTAINER_STYLE,
 } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import Calendar, {
@@ -33,28 +35,56 @@ import {
   getMuhrat,
   getPanditAvailability,
   postAutoBooking,
+  MuhuratSlot,
+  MuhuratResponse,
+  PanditAvailabilityResponse,
+  AutoBookingRequestPayload,
+  AutoBookingResponse,
 } from '../../../api/apiService';
 import { useCommonToast } from '../../../common/CommonToast';
 import CustomeLoader from '../../../components/CustomeLoader';
 import PrimaryButton from '../../../components/PrimaryButton';
 import { translateData } from '../../../utils/TranslateData';
 import CustomModal from '../../../components/CustomModal';
-import EditIcon from '../../../assets/svg/edit.svg';
 import { moderateScale, verticalScale } from 'react-native-size-matters';
 import { StackNavigationProp } from '@react-navigation/stack';
 
-const formatDateYYYYMMDD = (date: Date | string) => {
+export interface PujaBookingRouteParams {
+  poojaId: string | number;
+  samagri_required: boolean;
+  address?: string | number | null;
+  tirth?: string | number | null;
+  poojaName?: string;
+  poojaDescription?: string;
+  puja_image?: string;
+  puja_name?: string;
+  price?: string | number;
+  selectTirthPlaceName?: string;
+  selectAddressName?: string;
+  panditId?: string | number;
+  panditName?: string;
+  panditImage?: string;
+  description?: string;
+  selectedAddressLatitude?: string;
+  selectedAddressLongitude?: string;
+}
+
+interface StoredLocation {
+  latitude?: string | number;
+  longitude?: string | number;
+  [key: string]: any;
+}
+
+const formatDateYYYYMMDD = (date: Date | string): string => {
   if (typeof date === 'string') {
     if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
     const parsedDate = new Date(date);
     if (isNaN(parsedDate.getTime())) {
-      console.warn('Invalid date string in formatDateYYYYMMDD:', date);
       return formatDateYYYYMMDD(new Date());
     }
     date = parsedDate;
   }
   if (!(date instanceof Date) || isNaN(date.getTime())) {
-    console.warn('Invalid date object in formatDateYYYYMMDD:', date);
     return formatDateYYYYMMDD(new Date());
   }
   const year = date.getFullYear();
@@ -63,13 +93,13 @@ const formatDateYYYYMMDD = (date: Date | string) => {
   return `${year}-${month}-${day}`;
 };
 
-const isDateInPast = (dateStr: string) => {
+const isDateInPast = (dateStr: string): boolean => {
   if (!dateStr) return false;
   const todayStr = formatDateYYYYMMDD(new Date());
   return dateStr < todayStr;
 };
 
-const isToday = (dateStr: string) => {
+const isToday = (dateStr: string): boolean => {
   if (!dateStr) return false;
   const todayStr = formatDateYYYYMMDD(new Date());
   return dateStr === todayStr;
@@ -86,7 +116,6 @@ const parseTimeToMinutes = (timeStr: string): number | null => {
   const meridian = ampmMatch[3]?.toLowerCase();
   if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
   if (meridian) {
-    // Convert to 24h
     if (meridian === 'pm' && hours !== 12) hours += 12;
     if (meridian === 'am' && hours === 12) hours = 0;
   }
@@ -94,21 +123,57 @@ const parseTimeToMinutes = (timeStr: string): number | null => {
   return hours * 60 + minutes;
 };
 
-function addDaysToDate(dateStr: string, days: number) {
+function addDaysToDate(dateStr: string, days: number): string {
   const d = new Date(dateStr);
   d.setDate(d.getDate() + days);
   return formatDateYYYYMMDD(d);
 }
 
-// Adds is_next_day logic for "booking_date"
-function shouldSlotSetIsNextDay(slot: any): boolean {
-  return slot && typeof slot.is_next_day === 'boolean'
-    ? slot.is_next_day
-    : false;
+function shouldSlotSetIsNextDay(slot: MuhuratSlot | null | undefined): boolean {
+  return slot && typeof slot.is_next_day === 'boolean' ? slot.is_next_day : false;
 }
+
+const getMuhuratAuspiciousBadge = (type: string) => {
+  const norm = (type || '').toLowerCase();
+  if (norm.includes('amrit') || norm.includes('shubh') || norm.includes('good')) {
+    return {
+      bg: '#ECFDF5',
+      border: '#A7F3D0',
+      text: '#065F46',
+      icon: 'sparkles' as const,
+      label: 'Auspicious',
+    };
+  }
+  if (norm.includes('labh') || norm.includes('gain')) {
+    return {
+      bg: '#FFFBEB',
+      border: '#FDE68A',
+      text: '#92400E',
+      icon: 'star' as const,
+      label: 'Beneficial',
+    };
+  }
+  if (norm.includes('chal')) {
+    return {
+      bg: '#F3F4F6',
+      border: '#E5E7EB',
+      text: '#4B5563',
+      icon: 'time-outline' as const,
+      label: 'Neutral',
+    };
+  }
+  return {
+    bg: '#F9FAFB',
+    border: '#E5E7EB',
+    text: '#4B5563',
+    icon: 'time-outline' as const,
+    label: 'Muhurat',
+  };
+};
 
 const PujaBookingScreen: React.FC = () => {
   const route = useRoute();
+  const routeParams = (route?.params as PujaBookingRouteParams) || {};
   const {
     poojaId,
     samagri_required,
@@ -127,19 +192,25 @@ const PujaBookingScreen: React.FC = () => {
     description,
     selectedAddressLatitude,
     selectedAddressLongitude,
-  } = route?.params as any;
+  } = routeParams;
 
   const { t, i18n } = useTranslation();
-
   const currentLanguage = i18n.language;
-
   const { showErrorToast } = useCommonToast();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation<StackNavigationProp<UserPoojaListParamList>>();
+
+  const initialDateStr = useMemo(() => formatDateYYYYMMDD(new Date()), []);
+  const initialDateObj = useMemo(() => new Date(), []);
 
   const [translatedPoojaName, setTranslatedPoojaName] = useState<string>(
     poojaName || '',
   );
   const [translatedPoojaDescription, setTranslatedPoojaDescription] =
     useState<string>(poojaDescription || '');
+  const [translatedDescription, setTranslatedDescription] = useState<string>(
+    description || '',
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -176,18 +247,9 @@ const PujaBookingScreen: React.FC = () => {
     };
   }, [currentLanguage, poojaName, poojaDescription]);
 
-  const navigation =
-    useNavigation<StackNavigationProp<UserPoojaListParamList>>();
-
-  const today = new Date();
-
-  const [translatedDescription, setTranslatedDescription] = useState<string>(
-    description || '',
-  );
-
   useEffect(() => {
     let isMounted = true;
-    const translateDescription = async () => {
+    const translateDesc = async () => {
       if (currentLanguage === 'en' || !description) {
         if (isMounted) setTranslatedDescription(description || '');
         return;
@@ -204,39 +266,73 @@ const PujaBookingScreen: React.FC = () => {
         if (isMounted) setTranslatedDescription(description || '');
       }
     };
-    translateDescription();
+    translateDesc();
     return () => {
       isMounted = false;
     };
   }, [currentLanguage, description]);
 
   const [selectedSlot, setSelectedSlot] = useState<string>('');
-  const [selectedSlotObj, setSelectedSlotObj] = useState<any>(null);
+  const [selectedSlotObj, setSelectedSlotObj] = useState<MuhuratSlot | null>(null);
   const [additionalNotes, setAdditionalNotes] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<number>(today.getDate());
+  const [selectedDate, setSelectedDate] = useState<number>(initialDateObj.getDate());
   const [selectedDateString, setSelectedDateString] = useState<string>(
-    panditId ? '' : formatDateYYYYMMDD(today),
+    panditId ? '' : initialDateStr,
   );
   const [currentMonth, setCurrentMonth] = useState<string>(
-    `${today.toLocaleString('default', {
+    `${initialDateObj.toLocaleString('default', {
       month: 'long',
-    })} ${today.getFullYear()}`,
+    })} ${initialDateObj.getFullYear()}`,
   );
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [panditjiSelection, setPanditjiSelection] = useState<
-    'automatic' | 'manual'
-  >('automatic');
+  const [panditjiSelection, setPanditjiSelection] = useState<'automatic' | 'manual'>('automatic');
   const [loading, setLoading] = useState<boolean>(false);
-  const [location, setLocation] = useState<any>(null);
-  const [muhurats, setMuhurats] = useState<any[]>([]);
-  const [originalMuhurats, setOriginalMuhurats] = useState<any[]>([]);
+  const [muhuratLoading, setMuhuratLoading] = useState<boolean>(false);
+  const [location, setLocation] = useState<StoredLocation | null>(null);
+  const [muhurats, setMuhurats] = useState<MuhuratSlot[]>([]);
+  const [originalMuhurats, setOriginalMuhurats] = useState<MuhuratSlot[]>([]);
   const [availableDates, setAvailableDates] = useState<string[] | null>(null);
-  const insets = useSafeAreaInsets();
   const [customModalVisible, setCustomModalVisible] = useState<boolean>(false);
   const [customModalTitle, setCustomModalTitle] = useState<string>('');
   const [customModalMessage, setCustomModalMessage] = useState<string>('');
 
-  const translationCacheRef = useRef<Map<string, any>>(new Map());
+  const translationCacheRef = useRef<Map<string, MuhuratSlot[]>>(new Map());
+  const lastFetchedKeyRef = useRef<string>('');
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState<boolean>(false);
+  const [isNotesFocused, setIsNotesFocused] = useState<boolean>(false);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, () => {
+      setIsKeyboardVisible(true);
+    });
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setIsKeyboardVisible(false);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  const effectiveLat =
+    location?.latitude != null && location.latitude !== ''
+      ? String(location.latitude)
+      : selectedAddressLatitude
+      ? String(selectedAddressLatitude)
+      : '';
+  const effectiveLng =
+    location?.longitude != null && location.longitude !== ''
+      ? String(location.longitude)
+      : selectedAddressLongitude
+      ? String(selectedAddressLongitude)
+      : '';
 
   useEffect(() => {
     fetchLocation();
@@ -250,29 +346,27 @@ const PujaBookingScreen: React.FC = () => {
 
   const fetchLocation = async () => {
     try {
-      const location = await AsyncStorage.getItem(AppConstant.LOCATION);
-      if (location) {
-        const parsedLocation = JSON.parse(location);
+      const storedLocation = await AsyncStorage.getItem(AppConstant.LOCATION);
+      if (storedLocation) {
+        const parsedLocation = JSON.parse(storedLocation);
         setLocation(parsedLocation);
       }
     } catch (error) {
-      console.error('Error fetching  location ::', error);
+      console.error('Error fetching location ::', error);
     }
   };
 
   const fetchPanditAvailableDate = async () => {
+    if (!panditId) return;
     try {
       setLoading(true);
+      const response: PanditAvailabilityResponse = await getPanditAvailability(panditId);
+      const data = response?.data;
 
-      const response = await getPanditAvailability(panditId);
-
-      const Data = response?.data;
-
-      if (Data && Array.isArray(Data)) {
-        // Get all available dates from the response
-        const availableDatesList = Data.filter(
-          (item: any) => item.is_available && item.date,
-        ).map((item: any) => item.date);
+      if (data && Array.isArray(data)) {
+        const availableDatesList = data
+          .filter(item => item.is_available && item.date)
+          .map(item => item.date);
 
         if (availableDatesList.length > 0) {
           setAvailableDates(availableDatesList);
@@ -326,16 +420,17 @@ const PujaBookingScreen: React.FC = () => {
   };
 
   const postPujaBookingData = async (
-    data: any,
-    latitude: string,
-    longitude: string,
-  ) => {
+    data: AutoBookingRequestPayload,
+    latitude?: string,
+    longitude?: string,
+  ): Promise<AutoBookingResponse | undefined> => {
     setLoading(true);
     try {
       const response = await postAutoBooking(data, latitude, longitude);
       return response;
     } catch (error: any) {
       showErrorToast(error?.response?.data?.message || 'Failed to book puja');
+      return undefined;
     } finally {
       setLoading(false);
     }
@@ -343,7 +438,13 @@ const PujaBookingScreen: React.FC = () => {
 
   const fetchMuhurat = useCallback(
     async (dateString?: string) => {
-      const dateToFetch = formatDateYYYYMMDD(dateString || today);
+      const dateToFetch = formatDateYYYYMMDD(dateString || new Date());
+
+      if (!effectiveLat || !effectiveLng) {
+        setMuhuratLoading(false);
+        return;
+      }
+
       if (panditId) {
         if (
           !availableDates ||
@@ -352,51 +453,60 @@ const PujaBookingScreen: React.FC = () => {
         ) {
           setMuhurats([]);
           setOriginalMuhurats([]);
+          setMuhuratLoading(false);
           return;
         }
       }
+
+      const fetchKey = `${dateToFetch}_${effectiveLat}_${effectiveLng}_${currentLanguage}`;
+      if (lastFetchedKeyRef.current === fetchKey) {
+        return;
+      }
+      lastFetchedKeyRef.current = fetchKey;
+
       try {
-        setLoading(true);
-        const response = await getMuhrat(
+        setMuhuratLoading(true);
+
+        const cacheKey = `${currentLanguage}_${dateToFetch}`;
+        const cachedData = translationCacheRef.current.get(cacheKey);
+
+        if (cachedData) {
+          let result = cachedData;
+          if (dateToFetch === formatDateYYYYMMDD(new Date())) {
+            const now = new Date();
+            const nowMinutes = now.getHours() * 60 + now.getMinutes();
+            result = cachedData.filter((slot: MuhuratSlot) => {
+              const startMinutes = parseTimeToMinutes(slot.start);
+              return startMinutes !== null && startMinutes > nowMinutes;
+            });
+          }
+          setMuhurats(result);
+          setMuhuratLoading(false);
+          return;
+        }
+
+        const response: MuhuratResponse = await getMuhrat(
           dateToFetch,
-          location?.latitude,
-          location?.longitude,
+          effectiveLat,
+          effectiveLng,
         );
+
         if (response && Array.isArray(response.choghadiya)) {
           setOriginalMuhurats(response.choghadiya);
 
-          const translated: any = await translateData(
+          const translated = (await translateData(
             response.choghadiya,
             currentLanguage,
             ['type'],
-          );
-          const cacheKey = `${currentLanguage}_${dateToFetch}`;
-          const cachedData = translationCacheRef.current.get(cacheKey);
-
-          if (cachedData) {
-            // We NEVER show all muhurats for today, always only show future slots.
-            let result = cachedData;
-            if (dateToFetch === formatDateYYYYMMDD(new Date())) {
-              const now = new Date();
-              const nowMinutes = now.getHours() * 60 + now.getMinutes();
-              result = cachedData.filter((slot: any) => {
-                const startMinutes = parseTimeToMinutes(slot.start);
-                return startMinutes !== null && startMinutes > nowMinutes;
-              });
-            }
-            setMuhurats(result);
-            setLoading(false);
-            return;
-          }
+          )) as MuhuratSlot[];
 
           translationCacheRef.current.set(cacheKey, translated);
 
-          // -- Always for "today", show only future slots, never all --
           let filteredMuhurats = translated;
           if (dateToFetch === formatDateYYYYMMDD(new Date())) {
             const now = new Date();
             const nowMinutes = now.getHours() * 60 + now.getMinutes();
-            filteredMuhurats = translated.filter((slot: any) => {
+            filteredMuhurats = translated.filter((slot: MuhuratSlot) => {
               const startMinutes = parseTimeToMinutes(slot.start);
               return startMinutes !== null && startMinutes > nowMinutes;
             });
@@ -407,20 +517,27 @@ const PujaBookingScreen: React.FC = () => {
           setOriginalMuhurats([]);
         }
       } catch (error: any) {
-        showErrorToast(error);
+        showErrorToast(error?.message || 'Error fetching muhurat');
         setMuhurats([]);
         setOriginalMuhurats([]);
       } finally {
-        setLoading(false);
+        setMuhuratLoading(false);
       }
     },
-    [currentLanguage, location, panditId, availableDates],
+    [
+      currentLanguage,
+      effectiveLat,
+      effectiveLng,
+      panditId,
+      availableDates,
+      showErrorToast,
+    ],
   );
 
-  // Always fetch muhurat for selectedDateString, never show all muhurats for today
   useEffect(() => {
     if (
-      location &&
+      effectiveLat &&
+      effectiveLng &&
       selectedDateString &&
       (!panditId ||
         (panditId &&
@@ -436,11 +553,18 @@ const PujaBookingScreen: React.FC = () => {
     ) {
       setMuhurats([]);
       setOriginalMuhurats([]);
+      setMuhuratLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDateString, location, availableDates, panditId, fetchMuhurat]);
+  }, [
+    selectedDateString,
+    effectiveLat,
+    effectiveLng,
+    availableDates,
+    panditId,
+    fetchMuhurat,
+  ]);
 
-  const handleSlotSelect = (slot: any) => {
+  const handleSlotSelect = (slot: MuhuratSlot) => {
     const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
     if (selectedSlot === slotKey) {
       setSelectedSlot('');
@@ -451,16 +575,15 @@ const PujaBookingScreen: React.FC = () => {
     setSelectedSlotObj(slot);
   };
 
-  // The booking date may be next day for certain muhurat slots
   function getBookingDateWithNextDay(
-    selectedDateString: string,
-    slotObj: any,
+    dateStr: string,
+    slotObj: MuhuratSlot | null,
   ): string {
     const isNextDay = shouldSlotSetIsNextDay(slotObj);
     if (isNextDay) {
-      return addDaysToDate(selectedDateString, 1);
+      return addDaysToDate(dateStr, 1);
     }
-    return formatDateYYYYMMDD(selectedDateString);
+    return formatDateYYYYMMDD(dateStr);
   }
 
   const handleNextButtonPress = async () => {
@@ -487,16 +610,10 @@ const PujaBookingScreen: React.FC = () => {
       );
       return;
     }
-    // Use is_next_day logic for booking_date
-    let selectedDateISO = '';
-    if (!selectedSlotObj) {
-      selectedDateISO = formatDateYYYYMMDD(selectedDateString || today);
-    } else {
-      selectedDateISO = getBookingDateWithNextDay(
-        selectedDateString,
-        selectedSlotObj,
-      );
-    }
+
+    const selectedDateISO = !selectedSlotObj
+      ? formatDateYYYYMMDD(selectedDateString || initialDateStr)
+      : getBookingDateWithNextDay(selectedDateString, selectedSlotObj);
 
     if (isDateInPast(selectedDateISO)) {
       showErrorToast(
@@ -538,7 +655,7 @@ const PujaBookingScreen: React.FC = () => {
     }
 
     if (panditId) {
-      const data = {
+      const data: AutoBookingRequestPayload = {
         pooja: poojaId,
         assignment_mode: 2,
         samagri_required: samagri_required,
@@ -550,37 +667,37 @@ const PujaBookingScreen: React.FC = () => {
         pandit: panditId,
         long_distance: false,
       };
-      if (data) {
-        const response: any = await postPujaBookingData(
-          data,
-          selectedAddressLatitude,
-          selectedAddressLongitude,
-        );
-        if (response) {
-          navigation.navigate('PaymentScreen', {
-            poojaId: poojaId,
-            samagri_required: samagri_required,
-            address: address,
-            tirth: tirth,
-            booking_date: selectedDateISO,
-            muhurat_time: muhuratTime,
-            muhurat_type: muhuratType,
-            notes: additionalNotes,
-            puja_image: puja_image,
-            puja_name: puja_name,
-            price: price,
-            selectAddress: selectTirthPlaceName || selectAddressName,
-            booking_Id: response?.data?.booking_id,
-            pandit: panditId,
-            panditName: panditName,
-            panditImage: panditImage,
-            AutoModeSelection: false,
-            poojaDescription: poojaDescription,
-          });
-        }
+
+      const response = await postPujaBookingData(
+        data,
+        selectedAddressLatitude,
+        selectedAddressLongitude,
+      );
+      if (response) {
+        navigation.navigate('PaymentScreen', {
+          poojaId: poojaId,
+          samagri_required: samagri_required,
+          address: address,
+          tirth: tirth,
+          booking_date: selectedDateISO,
+          muhurat_time: muhuratTime,
+          muhurat_type: muhuratType,
+          notes: additionalNotes,
+          puja_image: puja_image,
+          puja_name: puja_name,
+          price: price,
+          selectAddress: selectTirthPlaceName || selectAddressName,
+          booking_Id: response?.data?.booking_id,
+          pandit: panditId,
+          panditName: panditName,
+          panditImage: panditImage,
+          AutoModeSelection: false,
+          poojaDescription: poojaDescription,
+        });
       }
       return;
     }
+
     setModalVisible(true);
   };
 
@@ -593,16 +710,11 @@ const PujaBookingScreen: React.FC = () => {
   ) => {
     setPanditjiSelection(selection);
     setModalVisible(false);
-    // Use is_next_day logic for booking_date
-    let selectedDateISO = '';
-    if (!selectedSlotObj) {
-      selectedDateISO = formatDateYYYYMMDD(selectedDateString || today);
-    } else {
-      selectedDateISO = getBookingDateWithNextDay(
-        selectedDateString,
-        selectedSlotObj,
-      );
-    }
+
+    const selectedDateISO = !selectedSlotObj
+      ? formatDateYYYYMMDD(selectedDateString || initialDateStr)
+      : getBookingDateWithNextDay(selectedDateString, selectedSlotObj);
+
     let muhuratTime = '';
     let muhuratType = '';
     if (selectedSlotObj) {
@@ -614,6 +726,7 @@ const PujaBookingScreen: React.FC = () => {
       );
       muhuratType = originalSlot ? originalSlot.type : selectedSlotObj.type;
     }
+
     if (!selectedDateISO) {
       showErrorToast(t('please_select_date') || 'Please select a date.');
       return;
@@ -661,8 +774,9 @@ const PujaBookingScreen: React.FC = () => {
       selectedAddressLongitude: selectedAddressLongitude,
       poojaDescription: poojaDescription,
     };
+
     if (selection === 'automatic') {
-      const data = {
+      const data: AutoBookingRequestPayload = {
         pooja: poojaId,
         assignment_mode: 1,
         samagri_required: samagri_required,
@@ -674,41 +788,39 @@ const PujaBookingScreen: React.FC = () => {
         long_distance: false,
       };
 
-      if (data) {
-        const response: any = await postPujaBookingData(
-          data,
-          selectedAddressLatitude,
-          selectedAddressLongitude,
-        );
-        if (response) {
-          const autoBookingEnabled = response?.auto_booking_enabled;
-          const autoBookingMessage = response?.auto_booking_message;
+      const response = await postPujaBookingData(
+        data,
+        selectedAddressLatitude,
+        selectedAddressLongitude,
+      );
+      if (response) {
+        const autoBookingEnabled = response?.auto_booking_enabled;
+        const autoBookingMessage = response?.auto_booking_message;
 
-          if (autoBookingEnabled === false) {
-            setCustomModalTitle(
-              t('feature_coming_soon') || 'Feature Coming Soon',
-            );
-            setCustomModalMessage(autoBookingMessage);
-            setCustomModalVisible(true);
-          } else {
-            navigation.navigate('PaymentScreen', {
-              poojaId: poojaId,
-              samagri_required: samagri_required,
-              address: address,
-              tirth: tirth,
-              booking_date: selectedDateISO,
-              muhurat_time: muhuratTime,
-              muhurat_type: muhuratType,
-              notes: additionalNotes,
-              puja_image: puja_image,
-              puja_name: puja_name,
-              price: price,
-              selectAddress: selectTirthPlaceName || selectAddressName,
-              booking_Id: response?.data?.booking_id,
-              AutoModeSelection: true,
-              poojaDescription: poojaDescription,
-            });
-          }
+        if (autoBookingEnabled === false) {
+          setCustomModalTitle(
+            t('feature_coming_soon') || 'Feature Coming Soon',
+          );
+          setCustomModalMessage(autoBookingMessage || '');
+          setCustomModalVisible(true);
+        } else {
+          navigation.navigate('PaymentScreen', {
+            poojaId: poojaId,
+            samagri_required: samagri_required,
+            address: address,
+            tirth: tirth,
+            booking_date: selectedDateISO,
+            muhurat_time: muhuratTime,
+            muhurat_type: muhuratType,
+            notes: additionalNotes,
+            puja_image: puja_image,
+            puja_name: puja_name,
+            price: price,
+            selectAddress: selectTirthPlaceName || selectAddressName,
+            booking_Id: response?.data?.booking_id,
+            AutoModeSelection: true,
+            poojaDescription: poojaDescription,
+          });
         }
       }
     } else if (selection === 'manual') {
@@ -720,86 +832,6 @@ const PujaBookingScreen: React.FC = () => {
     setCustomModalVisible(false);
     setModalVisible(true);
   };
-
-  const renderMuhuratSlots = () => (
-    <View style={styles.slotsContainer}>
-      <Text style={styles.slotsTitle}>{t('select_muhurat_time_slot')}</Text>
-      {loading ? (
-        <View style={styles.slotsListContainer}>
-          <Text>Muhurat Loading...</Text>
-        </View>
-      ) : (
-        <View style={[styles.slotsListContainer, COMMON_RADIO_CONTAINER_STYLE]}>
-          <View style={styles.slotsListInner}>
-            {muhurats.map((slot, index) => {
-              const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
-              const isSelected = selectedSlot === slotKey;
-              // is_next_day presentation
-              const isNextDay = shouldSlotSetIsNextDay(slot);
-
-              // Calculate which date the booking would be
-              const shownBookingDate = isNextDay
-                ? addDaysToDate(selectedDateString, 1)
-                : formatDateYYYYMMDD(selectedDateString);
-
-              return (
-                <View key={slotKey}>
-                  <TouchableOpacity
-                    style={styles.slotItem}
-                    onPress={() => handleSlotSelect(slot)}
-                    disabled={
-                      !!panditId &&
-                      (!availableDates ||
-                        !availableDates.includes(selectedDateString))
-                    }
-                  >
-                    <View style={styles.slotContent}>
-                      <View style={styles.slotTextContainer}>
-                        <Text style={styles.slotName}>{slot.type}</Text>
-                        <Text style={styles.slotTime}>
-                          {slot.start} - {slot.end}{' '}
-                          <Text style={styles.slotNextDayText}>
-                            {isNextDay && (
-                              <>
-                                {'\n'}
-                                {t('pooja_will_be_on') || 'Pooja on'}{' '}
-                                {new Date(shownBookingDate).toLocaleDateString(
-                                  'en-IN',
-                                  {
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric',
-                                  },
-                                )}
-                              </>
-                            )}
-                          </Text>
-                        </Text>
-                      </View>
-                      <View style={styles.slotSelection}>
-                        <Ionicons
-                          name={
-                            isSelected
-                              ? 'checkmark-circle-outline'
-                              : 'ellipse-outline'
-                          }
-                          size={24}
-                          color={isSelected ? COLORS.gradientEnd : '#E4E8E9'}
-                        />
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                  {index < muhurats.length - 1 && (
-                    <View style={styles.slotDivider} />
-                  )}
-                </View>
-              );
-            })}
-          </View>
-        </View>
-      )}
-    </View>
-  );
 
   const handleMonthChangeCommon = (
     direction: 'prev' | 'next',
@@ -840,13 +872,6 @@ const PujaBookingScreen: React.FC = () => {
     return { year: newYear, monthIdx: safeMonthIdx };
   };
 
-  const handlePanditMonthChange = (
-    direction: 'prev' | 'next',
-    dateObj?: any,
-  ) => {
-    handleMonthChangeCommon(direction, dateObj);
-  };
-
   const calendarProps = panditId
     ? {
         date: selectedDate,
@@ -859,8 +884,7 @@ const PujaBookingScreen: React.FC = () => {
             !availableDates.includes(dateString)
           ) {
             showErrorToast(
-              t('no_available_date_for_pandit') ||
-                'No available date for pandit',
+              t('no_available_date_for_pandit', 'No available date for selected pandit.'),
             );
             return;
           }
@@ -875,9 +899,10 @@ const PujaBookingScreen: React.FC = () => {
           setSelectedSlot('');
           setSelectedSlotObj(null);
           setMuhurats([]);
-          fetchMuhurat(dateString);
         },
-        onMonthChange: handlePanditMonthChange,
+        onMonthChange: (direction: 'prev' | 'next', dateObj?: any) => {
+          handleMonthChangeCommon(direction, dateObj);
+        },
         selectableDates: availableDates || [],
         disableMonthChange: false,
       }
@@ -892,14 +917,14 @@ const PujaBookingScreen: React.FC = () => {
             !/^\d{4}-\d{2}-\d{2}$/.test(dateString)
           ) {
             showErrorToast(
-              t('please_select_date') || 'Please select a valid date.',
+              t('please_select_date', 'Please select a valid date.'),
             );
             return;
           }
           const parsedDate = new Date(dateString);
           if (isNaN(parsedDate.getTime())) {
             showErrorToast(
-              t('please_select_date') || 'Please select a valid date.',
+              t('please_select_date', 'Please select a valid date.'),
             );
             return;
           }
@@ -913,13 +938,11 @@ const PujaBookingScreen: React.FC = () => {
               month: 'long',
             })} ${parsedDate.getFullYear()}`,
           );
-          if (!location) {
+          if (!effectiveLat || !effectiveLng) {
             showErrorToast(
-              t('location_not_found') ||
-                'Location not found. Please set your location first.',
+              t('location_not_found', 'Location not found. Please set your location first.'),
             );
           }
-          fetchMuhurat(dateString);
         },
         onMonthChange: (direction: 'prev' | 'next', dateObj?: any) => {
           const { year: newYear, monthIdx: newMonthIdx } =
@@ -933,105 +956,448 @@ const PujaBookingScreen: React.FC = () => {
           setSelectedSlot('');
           setSelectedSlotObj(null);
           setMuhurats([]);
-          fetchMuhurat(formattedDate);
         },
       };
+
+  const venueTitle = tirth
+    ? selectTirthPlaceName || translatedPoojaName || t('tirth_place') || 'Tirth Place'
+    : selectAddressName || t('my_place') || 'My Place';
+
+  const venueSubtitle = tirth
+    ? translatedPoojaDescription || ''
+    : poojaDescription || '';
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <CustomeLoader loading={loading} />
       <StatusBar barStyle="light-content" />
       <UserCustomHeader title={t('puja_booking')} showBackButton={true} />
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
-      >
-        <View style={styles.flex1}>
+
+      <View style={styles.sheetContainer}>
+        <KeyboardAvoidingView
+          style={styles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={0}
+        >
           <ScrollView
-            contentContainerStyle={[
-              styles.scrollContentContainer,
-              { paddingBottom: 80 + (insets.bottom || 20) },
-            ]}
+            ref={scrollViewRef}
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContentContainer}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.contentWrapper}>
-              {/* Header Group */}
-              <View style={styles.headerGroup}>
-                <Text style={styles.description}>{translatedDescription}</Text>
+              {/* 1. PUJA & VENUE SUMMARY CARD */}
+              <View style={[styles.summaryCard, COMMON_LIST_STYLE]}>
+                <View style={styles.summaryPujaRow}>
+                  {puja_image ? (
+                    <Image
+                      source={{ uri: puja_image }}
+                      style={styles.pujaImage}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.pujaImagePlaceholder}>
+                      <Ionicons
+                        name="flame"
+                        size={moderateScale(24)}
+                        color={COLORS.primary}
+                      />
+                    </View>
+                  )}
+                  <View style={styles.pujaInfoCol}>
+                    <Text style={styles.pujaTitleText} numberOfLines={1}>
+                      {puja_name || translatedDescription || t('pooja')}
+                    </Text>
+
+                    <View style={styles.badgesRow}>
+                      <View
+                        style={[
+                          styles.samagriBadge,
+                          {
+                            backgroundColor: samagri_required
+                              ? '#FFFBEB'
+                              : '#F3F4F6',
+                            borderColor: samagri_required
+                              ? '#FDE68A'
+                              : '#E5E7EB',
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name={samagri_required ? 'cube' : 'cube-outline'}
+                          size={moderateScale(11)}
+                          color={samagri_required ? '#D97706' : '#6B7280'}
+                        />
+                        <Text
+                          style={[
+                            styles.samagriBadgeText,
+                            {
+                              color: samagri_required ? '#B45309' : '#4B5563',
+                            },
+                          ]}
+                        >
+                          {samagri_required
+                            ? t('with_samagri') || 'With Samagri'
+                            : t('without_samagri') || 'Without Samagri'}
+                        </Text>
+                      </View>
+
+                      {price ? (
+                        <View style={styles.priceChip}>
+                          <Text style={styles.priceChipText}>₹{price}</Text>
+                        </View>
+                      ) : null}
+                    </View>
+                  </View>
+                </View>
+
+                <View style={styles.summaryDivider} />
+
+                {/* Venue Details */}
+                <View style={styles.summaryVenueRow}>
+                  <View
+                    style={[
+                      styles.venueIconBox,
+                      {
+                        backgroundColor: tirth ? '#FFF1ED' : '#EFF6FF',
+                        borderColor: tirth ? '#FED7AA' : '#BFDBFE',
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={tirth ? 'business' : 'home'}
+                      size={moderateScale(16)}
+                      color={tirth ? '#EA580C' : '#2563EB'}
+                    />
+                  </View>
+
+                  <View style={styles.venueInfoCol}>
+                    <Text style={styles.venueSubtext}>
+                      {tirth
+                        ? t('tirth_place') || 'Tirth Place (Pilgrimage)'
+                        : t('puja_place') || 'Puja Location'}
+                    </Text>
+                    <Text style={styles.venueTitleText} numberOfLines={1}>
+                      {venueTitle}
+                    </Text>
+                    {venueSubtitle ? (
+                      <Text style={styles.venueDescText} numberOfLines={2}>
+                        {venueSubtitle}
+                      </Text>
+                    ) : null}
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.changeVenueButton}
+                    onPress={() => navigation.goBack()}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name="create-outline"
+                      size={moderateScale(13)}
+                      color={COLORS.primary}
+                    />
+                    <Text style={styles.changeVenueButtonText}>
+                      {t('change') || 'Change'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              {/* Puja Place Group */}
-              <View style={styles.pujaPlaceGroup}>
-                <View style={[styles.pujaPlaceContainer, COMMON_LIST_STYLE]}>
-                  <View style={styles.pujaPlaceContent}>
-                    <View style={styles.pujaPlaceTextContainer}>
-                      <Text style={styles.pujaPlaceLabel}>
-                        {t('puja_place')}
-                      </Text>
-                      <Text style={styles.pujaPlaceValue}>
-                        {translatedPoojaName}: {translatedPoojaDescription}
+              {/* 2. CALENDAR SECTION */}
+              <View style={styles.sectionBlock}>
+                <View style={styles.sectionHeaderRow}>
+                  <View style={styles.sectionIconBadge}>
+                    <Ionicons
+                      name="calendar"
+                      size={moderateScale(15)}
+                      color={COLORS.primary}
+                    />
+                  </View>
+                  <Text style={styles.sectionHeaderTitle}>
+                    {t('select_booking_date') || 'Select Booking Date'}
+                  </Text>
+                </View>
+
+                <View style={styles.calendarWrapper}>
+                  <Calendar {...calendarProps} />
+
+                  <View style={styles.legendContainer}>
+                    <View style={styles.legendItem}>
+                      <View style={styles.currentDateIndicator} />
+                      <Text style={styles.legendText}>
+                        {t('current_date') || 'Today'}
                       </Text>
                     </View>
-                    <TouchableOpacity
-                      style={styles.editButton}
-                      onPress={() => navigation.goBack()}
-                    >
-                      <EditIcon />
-                    </TouchableOpacity>
+
+                    <View style={styles.legendItem}>
+                      <View style={styles.selectedDateIndicator} />
+                      <Text style={styles.legendText}>
+                        {t('selected_date') || 'Selected'}
+                      </Text>
+                    </View>
+
+                    {panditId ? (
+                      <View style={styles.legendItem}>
+                        <View style={styles.availableDateIndicator} />
+                        <Text style={styles.legendText}>
+                          {t('available_date') || 'Available'}
+                        </Text>
+                      </View>
+                    ) : null}
                   </View>
                 </View>
               </View>
 
-              {/* Calendar Group */}
-              <View style={styles.calendarGroup}>
-                <Calendar {...calendarProps} />
-
-                <View style={styles.legendContainer}>
-                  {/* Current date legend */}
-                  <View style={styles.currentDateIndicator} />
-                  <Text style={styles.legendTextWithMargin}>
-                    {t('current_date')}
-                  </Text>
-                  {panditId && (
-                    <>
-                      <View style={styles.availableDateIndicator} />
-                      <Text style={styles.legendText}>
-                        {t('available_date')}
-                      </Text>
-                    </>
-                  )}
+              {/* 3. MUHURAT TIME SLOTS */}
+              <View style={styles.sectionBlock}>
+                <View style={styles.sectionHeaderRow}>
+                  <View style={[styles.sectionIconBadge, { backgroundColor: '#FEF3C7' }]}>
+                    <Ionicons
+                      name="sunny"
+                      size={moderateScale(15)}
+                      color="#D97706"
+                    />
+                  </View>
+                  <View style={styles.sectionHeaderCol}>
+                    <Text style={styles.sectionHeaderTitle}>
+                      {t('select_muhurat_time_slot') || 'Auspicious Muhurat'}
+                    </Text>
+                    <Text style={styles.sectionHeaderSub}>
+                      {t('choose_muhurat_sub') ||
+                        'Select the most favorable Vedic choghadiya slot'}
+                    </Text>
+                  </View>
                 </View>
+
+                {muhuratLoading ? (
+                  <View style={[styles.loadingMuhuratCard, COMMON_LIST_STYLE]}>
+                    <ActivityIndicator size="small" color={COLORS.primary} />
+                    <Text style={styles.loadingMuhuratText}>
+                      {t('fetching_auspicious_muhurats') ||
+                        'Fetching auspicious timings...'}
+                    </Text>
+                  </View>
+                ) : muhurats.length === 0 ? (
+                  <View style={[styles.emptyMuhuratCard, COMMON_LIST_STYLE]}>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={moderateScale(32)}
+                      color="#9CA3AF"
+                    />
+                    <Text style={styles.emptyMuhuratTitle}>
+                      {t('no_muhurat_slots') || 'No Muhurat Slots Available'}
+                    </Text>
+                    <Text style={styles.emptyMuhuratSub}>
+                      {t('no_muhurat_slots_desc') ||
+                        'All auspicious slots for this date have passed or none are available. Please select another date.'}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.slotsGrid}>
+                    {muhurats.map((slot) => {
+                      const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
+                      const isSelected = selectedSlot === slotKey;
+                      const isNextDay = shouldSlotSetIsNextDay(slot);
+                      const badgeInfo = getMuhuratAuspiciousBadge(slot.type);
+
+                      const shownBookingDate = isNextDay
+                        ? addDaysToDate(selectedDateString, 1)
+                        : formatDateYYYYMMDD(selectedDateString);
+
+                      return (
+                        <TouchableOpacity
+                          key={slotKey}
+                          style={[
+                            styles.slotCard,
+                            COMMON_LIST_STYLE,
+                            isSelected && styles.slotCardSelected,
+                          ]}
+                          onPress={() => handleSlotSelect(slot)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={styles.slotMainRow}>
+                            <View style={styles.slotClockBadge}>
+                              <Ionicons
+                                name="time-outline"
+                                size={moderateScale(18)}
+                                color={isSelected ? COLORS.primary : '#6B7280'}
+                              />
+                            </View>
+
+                            <View style={styles.slotDetailsCol}>
+                              <View style={styles.slotTypeRow}>
+                                <Text style={styles.slotTypeName}>
+                                  {slot.type}
+                                </Text>
+                                <View
+                                  style={[
+                                    styles.slotQualityBadge,
+                                    {
+                                      backgroundColor: badgeInfo.bg,
+                                      borderColor: badgeInfo.border,
+                                    },
+                                  ]}
+                                >
+                                  <Ionicons
+                                    name={badgeInfo.icon}
+                                    size={moderateScale(10)}
+                                    color={badgeInfo.text}
+                                  />
+                                  <Text
+                                    style={[
+                                      styles.slotQualityText,
+                                      { color: badgeInfo.text },
+                                    ]}
+                                  >
+                                    {badgeInfo.label}
+                                  </Text>
+                                </View>
+                              </View>
+
+                              <Text style={styles.slotTimeRange}>
+                                {slot.start} - {slot.end}
+                              </Text>
+                            </View>
+
+                            <View style={styles.slotRadioWrapper}>
+                              <Ionicons
+                                name={
+                                  isSelected
+                                    ? 'checkmark-circle'
+                                    : 'ellipse-outline'
+                                }
+                                size={moderateScale(22)}
+                                color={
+                                  isSelected ? COLORS.primary : '#D1D5DB'
+                                }
+                              />
+                            </View>
+                          </View>
+
+                          {isNextDay && (
+                            <View style={styles.nextDayBanner}>
+                              <Ionicons
+                                name="information-circle"
+                                size={moderateScale(13)}
+                                color="#D97706"
+                              />
+                              <Text style={styles.nextDayBannerText}>
+                                {t('pooja_will_be_on') || 'Pooja on'}{' '}
+                                {new Date(shownBookingDate).toLocaleDateString(
+                                  'en-IN',
+                                  {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                  },
+                                )}
+                              </Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                )}
               </View>
 
-              {/* Muhurat Slots Group */}
-              <View style={styles.muhuratSlotsGroup}>
-                {renderMuhuratSlots()}
-              </View>
+              {/* 4. ADDITIONAL NOTES */}
+              <View style={styles.sectionBlock}>
+                <View style={styles.sectionHeaderRow}>
+                  <View style={[styles.sectionIconBadge, { backgroundColor: '#F3F4F6' }]}>
+                    <Ionicons
+                      name="document-text-outline"
+                      size={moderateScale(15)}
+                      color="#4B5563"
+                    />
+                  </View>
+                  <Text style={styles.sectionHeaderTitle}>
+                    {t('additional_notes') || 'Special Requests & Notes'}
+                  </Text>
+                </View>
 
-              {/* Notes Group */}
-              <View style={styles.notesGroup}>
-                <View style={styles.notesContainer}>
-                  <Text style={styles.notesLabel}>{t('additional_notes')}</Text>
+                <View
+                  style={[
+                    styles.notesCard,
+                    COMMON_LIST_STYLE,
+                    isNotesFocused && styles.notesCardFocused,
+                  ]}
+                >
                   <TextInput
                     style={styles.notesInput}
                     value={additionalNotes}
                     onChangeText={setAdditionalNotes}
-                    placeholder={t('please_arrange_for_flowers')}
-                    placeholderTextColor={COLORS.inputLabelText}
+                    placeholder={
+                      t('please_arrange_for_flowers') ||
+                      'e.g. Please bring extra flowers, or special sankalp details'
+                    }
+                    placeholderTextColor="#9CA3AF"
                     multiline
                     textAlignVertical="top"
+                    maxLength={300}
+                    onFocus={() => {
+                      setIsNotesFocused(true);
+                      setTimeout(() => {
+                        scrollViewRef.current?.scrollToEnd({ animated: true });
+                      }, 250);
+                    }}
+                    onBlur={() => setIsNotesFocused(false)}
                   />
+                  <View style={styles.notesBottomRow}>
+                    {isKeyboardVisible ? (
+                      <TouchableOpacity
+                        style={styles.dismissKeyboardBtn}
+                        onPress={() => Keyboard.dismiss()}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Ionicons
+                          name="checkmark-circle-outline"
+                          size={moderateScale(14)}
+                          color={COLORS.primary}
+                        />
+                        <Text style={styles.dismissKeyboardText}>
+                          {t('done') || 'Done'}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : null}
+                    <Text style={styles.notesCharCount}>
+                      {additionalNotes.length}/300
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
           </ScrollView>
-          <View style={styles.bottomButtonContainerFixed}>
-            <PrimaryButton title={t('next')} onPress={handleNextButtonPress} />
+
+          {/* BOTTOM ACTION BAR */}
+          <View
+            style={[
+              styles.bottomActionBar,
+              {
+                paddingBottom: isKeyboardVisible
+                  ? verticalScale(6)
+                  : insets.bottom > 0
+                  ? insets.bottom - 6
+                  : verticalScale(12),
+              },
+            ]}
+          >
+            <PrimaryButton
+              title={
+                panditId
+                  ? t('proceed_to_payment') || 'PROCEED TO PAYMENT'
+                  : t('next') || 'NEXT'
+              }
+              onPress={handleNextButtonPress}
+              style={styles.primaryBtn}
+            />
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </View>
 
       <PanditjiSelectionModal
         visible={modalVisible}
@@ -1039,6 +1405,7 @@ const PujaBookingScreen: React.FC = () => {
         onConfirm={handlePanditjiSelectionConfirm}
         initialSelection={panditjiSelection}
       />
+
       <CustomModal
         visible={customModalVisible}
         title={customModalTitle}
@@ -1059,187 +1426,417 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
+    backgroundColor: COLORS.pujaBackground,
   },
-  scrollContentContainer: {},
-  flex1: {
+  sheetContainer: {
     flex: 1,
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
     backgroundColor: COLORS.pujaBackground,
+    overflow: 'hidden',
   },
-  scrollContent: {
-    padding: moderateScale(24),
-    paddingBottom: verticalScale(50),
+  scrollView: {
+    flex: 1,
+  },
+  scrollContentContainer: {
+    paddingTop: verticalScale(14),
+    paddingBottom: verticalScale(20),
   },
   contentWrapper: {
-    width: '100%',
-    paddingHorizontal: moderateScale(24),
-    gap: moderateScale(24),
+    paddingHorizontal: moderateScale(18),
+    gap: verticalScale(16),
   },
-  headerGroup: {
-    marginTop: verticalScale(14),
+
+  // 1. SUMMARY CARD
+  summaryCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(16),
+    padding: moderateScale(14),
+    borderWidth: 1,
+    borderColor: '#F0ECE6',
   },
-  pujaPlaceGroup: {},
-  calendarGroup: {},
+  summaryPujaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  pujaImage: {
+    width: moderateScale(56),
+    height: moderateScale(56),
+    borderRadius: moderateScale(12),
+    backgroundColor: '#F3F4F6',
+  },
+  pujaImagePlaceholder: {
+    width: moderateScale(56),
+    height: moderateScale(56),
+    borderRadius: moderateScale(12),
+    backgroundColor: '#FDF2F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pujaInfoCol: {
+    flex: 1,
+    marginLeft: moderateScale(12),
+    justifyContent: 'center',
+  },
+  pujaTitleText: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+    marginBottom: verticalScale(5),
+  },
+  badgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(8),
+  },
+  samagriBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(4),
+    paddingHorizontal: moderateScale(8),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(8),
+    borderWidth: 1,
+  },
+  samagriBadgeText: {
+    fontSize: moderateScale(11),
+    fontFamily: Fonts.Sen_SemiBold,
+  },
+  priceChip: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: moderateScale(8),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(8),
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  priceChipText: {
+    fontSize: moderateScale(11),
+    fontFamily: Fonts.Sen_Bold,
+    color: '#92400E',
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginVertical: verticalScale(12),
+  },
+  summaryVenueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  venueIconBox: {
+    width: moderateScale(36),
+    height: moderateScale(36),
+    borderRadius: moderateScale(10),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  venueInfoCol: {
+    flex: 1,
+    marginLeft: moderateScale(10),
+    marginRight: moderateScale(8),
+  },
+  venueSubtext: {
+    fontSize: moderateScale(10.5),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.pujaCardSubtext,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  venueTitleText: {
+    fontSize: moderateScale(13.5),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+    marginTop: verticalScale(1),
+  },
+  venueDescText: {
+    fontSize: moderateScale(11.5),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#6B7280',
+    marginTop: verticalScale(2),
+    lineHeight: moderateScale(15),
+  },
+  changeVenueButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(3),
+    paddingHorizontal: moderateScale(10),
+    paddingVertical: verticalScale(6),
+    borderRadius: moderateScale(20),
+    backgroundColor: '#FFF5F5',
+    borderWidth: 1,
+    borderColor: '#FED7D7',
+  },
+  changeVenueButtonText: {
+    fontSize: moderateScale(11.5),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primary,
+  },
+
+  // 2. SECTION BLOCK & HEADERS
+  sectionBlock: {
+    gap: verticalScale(10),
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(8),
+  },
+  sectionHeaderCol: {
+    flex: 1,
+  },
+  sectionIconBadge: {
+    width: moderateScale(28),
+    height: moderateScale(28),
+    borderRadius: moderateScale(8),
+    backgroundColor: '#FDF2F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sectionHeaderTitle: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+  },
+  sectionHeaderSub: {
+    fontSize: moderateScale(11.5),
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.pujaCardSubtext,
+    marginTop: verticalScale(1),
+  },
+
+  // CALENDAR WRAPPER & LEGEND
+  calendarWrapper: {},
   legendContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: verticalScale(12),
+    marginTop: verticalScale(10),
+    gap: moderateScale(18),
+    backgroundColor: COLORS.white,
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: moderateScale(14),
+    borderRadius: moderateScale(20),
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(6),
   },
   currentDateIndicator: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: moderateScale(13),
+    height: moderateScale(13),
+    borderRadius: moderateScale(6.5),
     backgroundColor: COLORS.primaryBackgroundButton,
-    marginRight: 6,
-    borderWidth: 1,
-    borderColor: COLORS.primaryBackgroundButton,
+  },
+  selectedDateIndicator: {
+    width: moderateScale(13),
+    height: moderateScale(13),
+    borderRadius: moderateScale(6.5),
+    backgroundColor: COLORS.primary,
   },
   availableDateIndicator: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 1,
+    width: moderateScale(13),
+    height: moderateScale(13),
+    borderRadius: moderateScale(6.5),
+    borderWidth: 1.5,
     borderColor: COLORS.gradientEnd,
-    marginRight: 6,
     backgroundColor: COLORS.white,
   },
   legendText: {
-    fontSize: moderateScale(12),
+    fontSize: moderateScale(11.5),
+    fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
   },
-  legendTextWithMargin: {
-    fontSize: moderateScale(12),
-    color: COLORS.primaryTextDark,
-    marginRight: moderateScale(16),
-  },
-  muhuratSlotsGroup: {},
-  notesGroup: {},
-  content: {
-    flex: 1,
-    borderTopLeftRadius: moderateScale(30),
-    borderTopRightRadius: moderateScale(30),
-    marginBottom: moderateScale(0),
-    padding: moderateScale(24),
-  },
-  description: {
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_Regular,
-    color: COLORS.primaryTextDark,
-  },
-  pujaPlaceContainer: {
+
+  // 3. MUHURAT SLOTS
+  loadingMuhuratCard: {
     backgroundColor: COLORS.white,
-    borderRadius: moderateScale(10),
-    padding: moderateScale(14),
-  },
-  pujaPlaceContent: {
-    flexDirection: 'row',
+    borderRadius: moderateScale(14),
+    paddingVertical: verticalScale(24),
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: verticalScale(8),
+    borderWidth: 1,
+    borderColor: '#F0ECE6',
   },
-  pujaPlaceTextContainer: {
-    flex: 1,
-  },
-  pujaPlaceLabel: {
-    fontSize: moderateScale(13),
+  loadingMuhuratText: {
+    fontSize: moderateScale(12.5),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.pujaCardSubtext,
-    marginBottom: verticalScale(4),
   },
-  pujaPlaceValue: {
-    fontSize: moderateScale(15),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.primaryTextDark,
+  emptyMuhuratCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(14),
+    paddingVertical: verticalScale(24),
+    paddingHorizontal: moderateScale(20),
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: verticalScale(6),
+    borderWidth: 1,
+    borderColor: '#F0ECE6',
   },
-  editButton: {},
-  slotsContainer: {},
-  slotsTitle: {
-    fontSize: moderateScale(18),
+  emptyMuhuratTitle: {
+    fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_SemiBold,
     color: COLORS.primaryTextDark,
-    marginBottom: moderateScale(12),
+    textAlign: 'center',
+    marginTop: verticalScale(4),
   },
-  slotsListContainer: {
-    borderRadius: moderateScale(10),
-    overflow: Platform.OS === 'android' ? 'hidden' : undefined,
+  emptyMuhuratSub: {
+    fontSize: moderateScale(12),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: moderateScale(16),
   },
-  slotsListInner: {
-    overflow: 'hidden',
+  slotsGrid: {
+    gap: verticalScale(10),
   },
-  slotItem: {
-    paddingVertical: verticalScale(14),
+  slotCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(14),
+    padding: moderateScale(13),
+    borderWidth: 1.5,
+    borderColor: '#F0ECE6',
   },
-  slotContent: {
+  slotCardSelected: {
+    borderColor: COLORS.primaryBackgroundButton,
+    backgroundColor: '#FFFDF9',
+  },
+  slotMainRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  slotTextContainer: {
-    flex: 1,
-  },
-  slotName: {
-    fontSize: moderateScale(15),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.primaryTextDark,
-    marginBottom: verticalScale(4),
-  },
-  slotTime: {
-    fontSize: moderateScale(13),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.pujaCardSubtext,
-  },
-  slotNextDayText: {
-    color: COLORS.primaryTextDark,
-    fontSize: moderateScale(12),
-  },
-  slotSelection: {},
-  slotDivider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-  },
-  notesContainer: {},
-  notesLabel: {
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_Medium,
-    color: '#6C7278',
-    marginBottom: moderateScale(12),
-  },
-  notesInput: {
-    backgroundColor: COLORS.white,
+  slotClockBadge: {
+    width: moderateScale(36),
+    height: moderateScale(36),
     borderRadius: moderateScale(10),
-    borderWidth: 1,
-    borderColor: '#E4E8E9',
-    padding: moderateScale(14),
-    fontSize: moderateScale(14),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.primaryTextDark,
-    minHeight: verticalScale(100),
-    textAlignVertical: 'top',
-  },
-  bottomButtonContainerFixed: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: moderateScale(24),
-    paddingBottom: moderateScale(16),
-    backgroundColor: COLORS.pujaBackground,
-    zIndex: 10,
-  },
-  nextButton: {
-    backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: moderateScale(10),
-    paddingVertical: verticalScale(16),
+    backgroundColor: '#F9FAFB',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  nextButtonText: {
-    fontSize: moderateScale(15),
-    fontFamily: Fonts.Sen_Medium,
+  slotDetailsCol: {
+    flex: 1,
+    marginLeft: moderateScale(12),
+  },
+  slotTypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(8),
+  },
+  slotTypeName: {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Bold,
     color: COLORS.primaryTextDark,
+  },
+  slotQualityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(3),
+    paddingHorizontal: moderateScale(7),
+    paddingVertical: verticalScale(2),
+    borderRadius: moderateScale(6),
+    borderWidth: 1,
+  },
+  slotQualityText: {
+    fontSize: moderateScale(10),
+    fontFamily: Fonts.Sen_Bold,
     textTransform: 'uppercase',
+  },
+  slotTimeRange: {
+    fontSize: moderateScale(12.5),
+    fontFamily: Fonts.Sen_Medium,
+    color: COLORS.pujaCardSubtext,
+    marginTop: verticalScale(2),
+  },
+  slotRadioWrapper: {
+    marginLeft: moderateScale(8),
+  },
+  nextDayBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(5),
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: moderateScale(8),
+    paddingVertical: verticalScale(4),
+    borderRadius: moderateScale(6),
+    marginTop: verticalScale(8),
+  },
+  nextDayBannerText: {
+    fontSize: moderateScale(11),
+    fontFamily: Fonts.Sen_Medium,
+    color: '#92400E',
+  },
+
+  // 4. NOTES CARD
+  notesCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(14),
+    padding: moderateScale(12),
+    borderWidth: 1.5,
+    borderColor: '#F0ECE6',
+  },
+  notesCardFocused: {
+    borderColor: COLORS.primaryBackgroundButton,
+    backgroundColor: '#FFFDF9',
+  },
+  notesInput: {
+    fontSize: moderateScale(13),
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
+    minHeight: verticalScale(70),
+    textAlignVertical: 'top',
+    padding: 0,
+  },
+  notesBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: verticalScale(6),
+  },
+  dismissKeyboardBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(4),
+    paddingVertical: verticalScale(2),
+    paddingHorizontal: moderateScale(6),
+    borderRadius: moderateScale(6),
+    backgroundColor: '#FFF5F5',
+  },
+  dismissKeyboardText: {
+    fontSize: moderateScale(11),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primary,
+  },
+  notesCharCount: {
+    fontSize: moderateScale(10.5),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#9CA3AF',
+    marginLeft: 'auto',
+  },
+
+  // BOTTOM ACTION BAR
+  bottomActionBar: {
+    paddingHorizontal: moderateScale(18),
+    paddingTop: verticalScale(6),
+    backgroundColor: COLORS.pujaBackground,
+    borderTopWidth: 1,
+    borderTopColor: '#F0ECE6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  primaryBtn: {
+    marginTop: 0,
   },
 });
 
 export default PujaBookingScreen;
+

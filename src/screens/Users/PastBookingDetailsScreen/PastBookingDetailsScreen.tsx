@@ -5,140 +5,330 @@ import {
   StyleSheet,
   ScrollView,
   Image,
-  Dimensions,
   TouchableOpacity,
+  StatusBar,
+  Linking,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { moderateScale, verticalScale } from 'react-native-size-matters';
-import { COLORS, THEMESHADOW } from '../../../theme/theme';
+import { moderateScale } from 'react-native-size-matters';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import { COLORS } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import { getPastBookings } from '../../../api/apiService';
 import CustomeLoader from '../../../components/CustomeLoader';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 
-const { width: screenWidth } = Dimensions.get('window');
+const DEFAULT_PUJA_IMAGE =
+  'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg';
 
-// Helper: how many items previewed when collapsed
-const SAMAGRI_COLLAPSE_COUNT = 3;
+const DEFAULT_PANDIT_AVATAR =
+  'https://cdn.builder.io/api/v1/image/assets/TEMP/db9492299c701c6ca2a23d6de9fc258e7ec2b5fd?width=160';
+
+const SAMAGRI_COLLAPSE_COUNT = 4;
+
+type ItemType =
+  | string
+  | {
+      name?: string;
+      item_name?: string;
+      quantity?: string | number;
+      units?: string;
+    };
+
+type AssignedPanditType = {
+  pandit_name?: string;
+  profile_img_url?: string | null;
+  phone?: string | null;
+};
+
+type PastBookingDetailsType = {
+  id: number | string;
+  pooja_name?: string;
+  pooja_image_url?: string | null;
+  booking_date?: string;
+  muhurat_time?: string | null;
+  muhurat_type?: string | null;
+  tirth_place_name?: string | null;
+  amount?: string | number;
+  payment_status?: string | null;
+  booking_status?: string;
+  notes?: string | null;
+  samagri_required?: boolean;
+  address_details?: any;
+  address?: string | null;
+  location_display?: string | null;
+  assigned_pandit?: AssignedPanditType | null;
+  user_arranged_items?: ItemType[];
+  pandit_arranged_items?: ItemType[];
+};
 
 const PastBookingDetailsScreen = ({ navigation }: { navigation?: any }) => {
   const route = useRoute();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const { pujaId, id } = (route.params as any) || {};
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bookingDetails, setBookingDetails] = useState<any>(null);
-  // "showMore" state: 'user', 'pandit', or null (only one expanded at a time)
-  const [samagriExpand, setSamagriExpand] = useState<null | 'user' | 'pandit'>(
+  const [bookingDetails, setBookingDetails] =
+    useState<PastBookingDetailsType | null>(null);
+  const [samagriExpand, setSamagriExpand] = useState<'user' | 'pandit' | null>(
     null,
   );
-  console.log("bookingDetails",bookingDetails);
-  
-useEffect(() => {
-    fetchBookingDetails();
-  }, []);
-  // Fetch Booking Details (by pujaId/id)
+  const [heroImageError, setHeroImageError] = useState(false);
+  const [panditImageError, setPanditImageError] = useState(false);
+
   const fetchBookingDetails = useCallback(async () => {
     setError(null);
     setLoading(true);
     try {
       const response: any = await getPastBookings();
-      
-      let data = response?.data;
-      let matched;
+      const data = response?.data;
+      let matched: PastBookingDetailsType | null = null;
       if (data && Array.isArray(data)) {
-        matched = data.find(item => String(item.id) === String(pujaId || id));
+        matched =
+          data.find(item => String(item.id) === String(pujaId || id)) || null;
       }
-      
-      setBookingDetails(matched || null);
-    } catch (err) {
-      setError(t('error_loading_data') || 'Error loading data');
+      setBookingDetails(matched);
+    } catch {
+      setError(t('error_loading_data') || 'Error loading ceremony details');
       setBookingDetails(null);
     } finally {
       setLoading(false);
     }
-  }, [pujaId, t]);
+  }, [pujaId, id, t]);
 
-  // Date formatting helper
-  const formatDateWithOrdinal = (dateString: string) => {
+  useEffect(() => {
+    fetchBookingDetails();
+  }, [fetchBookingDetails]);
+
+  const formatDateWithOrdinal = (dateString?: string) => {
     if (!dateString) return '';
-    const dateObj = new Date(dateString);
-    if (isNaN(dateObj.getTime())) return dateString;
-    const day = dateObj.getDate();
-    const month = dateObj.toLocaleString('default', { month: 'long' });
-    const s = ['th', 'st', 'nd', 'rd'];
-    const v = day % 100;
-    const ordinal = s[(v - 20) % 10] || s[v] || s[0];
-    return `${day}${ordinal} ${month}`;
+    try {
+      const parts = dateString.split('-');
+      if (parts.length === 3) {
+        const year = parts[0];
+        const monthIndex = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        const months = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December',
+        ];
+        if (monthIndex >= 0 && monthIndex < 12 && !isNaN(day)) {
+          const s = ['th', 'st', 'nd', 'rd'];
+          const v = day % 100;
+          const ordinal = s[(v - 20) % 10] || s[v] || s[0];
+          return `${day}${ordinal} ${months[monthIndex]} ${year}`;
+        }
+      }
+
+      const dateObj = new Date(dateString);
+      if (isNaN(dateObj.getTime())) return dateString;
+      const day = dateObj.getDate();
+      const month = dateObj.toLocaleString('en-US', { month: 'long' });
+      const year = dateObj.getFullYear();
+      const s = ['th', 'st', 'nd', 'rd'];
+      const v = day % 100;
+      const ordinal = s[(v - 20) % 10] || s[v] || s[0];
+      return `${day}${ordinal} ${month} ${year}`;
+    } catch {
+      return dateString || '';
+    }
   };
 
-  // Status color mapping
-  const getStatusColor = (status: string) => {
-    if (!status) return COLORS.textSecondary;
-    if (
-      status.toLowerCase().includes('success') ||
-      status.toLowerCase().includes('completed')
-    ) {
-      return COLORS.success || '#2ecc71';
+  const getStatusBadge = (status?: string) => {
+    const s = status?.toLowerCase() || '';
+    if (s.includes('complete') || s.includes('success')) {
+      return {
+        label: t('completed') || 'Completed',
+        textColor: '#059669',
+        bgColor: '#ECFDF5',
+        borderColor: '#A7F3D0',
+        icon: 'checkmark-circle' as const,
+        bannerTitle: t('ceremony_completed') || 'Ceremony Completed',
+        bannerSub:
+          t('ceremony_completed_desc') ||
+          'All sacred rituals concluded with divine Vedic blessings.',
+      };
     }
-    if (status.toLowerCase().includes('pending')) {
-      return COLORS.warning || '#f1c40f';
+    if (s.includes('cancel')) {
+      return {
+        label: t('cancelled') || 'Cancelled',
+        textColor: '#DC2626',
+        bgColor: '#FEF2F2',
+        borderColor: '#FECACA',
+        icon: 'close-circle' as const,
+        bannerTitle: t('booking_cancelled') || 'Booking Cancelled',
+        bannerSub:
+          t('booking_cancelled_desc') || 'This ceremony booking was cancelled.',
+      };
     }
-    if (
-      status.toLowerCase().includes('fail') ||
-      status.toLowerCase().includes('cancel')
-    ) {
-      return COLORS.error || '#e74c3c';
+    if (s.includes('reject')) {
+      return {
+        label: t('rejected') || 'Rejected',
+        textColor: '#DC2626',
+        bgColor: '#FEF2F2',
+        borderColor: '#FECACA',
+        icon: 'alert-circle' as const,
+        bannerTitle: t('booking_rejected') || 'Booking Rejected',
+        bannerSub:
+          t('booking_rejected_desc') ||
+          'This ceremony booking could not be accepted.',
+      };
     }
-    return COLORS.textSecondary;
+    return {
+      label: s ? s.charAt(0).toUpperCase() + s.slice(1) : 'Archived',
+      textColor: '#2563EB',
+      bgColor: '#EFF6FF',
+      borderColor: '#BFDBFE',
+      icon: 'bookmark' as const,
+      bannerTitle: t('past_booking') || 'Past Ceremony',
+      bannerSub:
+        t('past_booking_desc') ||
+        'Archived record of previously scheduled ritual.',
+    };
   };
 
-  // Readable address
-  const getAddressString = (address: any) => {
-    if (!address) return '';
-    if (typeof address === 'string') return address;
-    if (typeof address === 'object' && address.full_address)
-      return address.full_address;
+  const getPaymentBadge = (status?: string | null) => {
+    const s = status?.toLowerCase() || '';
+    if (s.includes('success') || s.includes('paid') || s.includes('complete')) {
+      return {
+        label: t('paid') || 'Paid',
+        textColor: '#059669',
+        bgColor: '#ECFDF5',
+        borderColor: '#A7F3D0',
+        icon: 'checkmark-circle' as const,
+      };
+    }
+    if (s.includes('pending')) {
+      return {
+        label: t('pending') || 'Pending',
+        textColor: '#D97706',
+        bgColor: '#FFFBEB',
+        borderColor: '#FDE68A',
+        icon: 'time' as const,
+      };
+    }
+    return {
+      label: s ? s.charAt(0).toUpperCase() + s.slice(1) : t('paid') || 'Paid',
+      textColor: '#059669',
+      bgColor: '#ECFDF5',
+      borderColor: '#A7F3D0',
+      icon: 'checkmark-circle' as const,
+    };
+  };
+
+  const getAddressString = (addressData: any) => {
+    if (!addressData) return '';
+    if (typeof addressData === 'string') return addressData;
+    if (typeof addressData === 'object' && addressData.full_address) {
+      return addressData.full_address;
+    }
+    if (typeof addressData === 'object' && addressData.address_line1) {
+      return [
+        addressData.address_line1,
+        addressData.address_line2,
+        addressData.city,
+        addressData.state,
+      ]
+        .filter(Boolean)
+        .join(', ');
+    }
     return '';
   };
 
-  // Item array helpers
-  const flattenItems = (arr: any[] = []) => {
+  const flattenItems = (arr: any[] = []): ItemType[] => {
     if (!Array.isArray(arr)) return [];
     return arr.flat ? arr.flat().filter(Boolean) : arr.filter(Boolean);
   };
 
-  // Loader
-  // if (loading) {
-  //   return (
-  //     <View style={styles.centered}>
-  //       <CustomeLoader loading={loading} />
-  //     </View>
-  //   );
-  // }
-  // Error
+  const handleCallPandit = (phoneNumber: string) => {
+    Linking.openURL(`tel:${phoneNumber}`);
+  };
+
   if (error) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
-    );
-  }
-  // Not found
-  if (!bookingDetails && !loading) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.notFoundText}>
-          {t('no_item_available') || 'No details found.'}
-        </Text>
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <UserCustomHeader
+          title={t('past_booking_details') || 'Ceremony Details'}
+          showBackButton
+          onBackPress={() => navigation?.goBack && navigation.goBack()}
+        />
+        <View style={styles.centered}>
+          <View style={styles.errorIconCircle}>
+            <Ionicons
+              name="alert-circle"
+              size={moderateScale(38)}
+              color="#DC2626"
+            />
+          </View>
+          <Text style={styles.errorTitle}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={fetchBookingDetails}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name="refresh"
+              size={16}
+              color="#FFFFFF"
+              style={styles.btnIconMargin}
+            />
+            <Text style={styles.retryButtonText}>{t('retry') || 'Retry'}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
 
-  // Data destructure for past booking
+  if (!bookingDetails && !loading) {
+    return (
+      <View style={[styles.container, { paddingTop: insets.top }]}>
+        <UserCustomHeader
+          title={t('past_booking_details') || 'Ceremony Details'}
+          showBackButton
+          onBackPress={() => navigation?.goBack && navigation.goBack()}
+        />
+        <View style={styles.centered}>
+          <View style={styles.emptyIconCircle}>
+            <Ionicons
+              name="document-text-outline"
+              size={moderateScale(38)}
+              color={COLORS.primary}
+            />
+          </View>
+          <Text style={styles.emptyTitle}>
+            {t('no_item_available') || 'No Ceremony Details Found'}
+          </Text>
+          <Text style={styles.emptySubtext}>
+            We could not locate this ceremony record.
+          </Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation?.goBack && navigation.goBack()}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.backButtonText}>
+              {t('go_back') || 'Go Back'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
   const {
     pooja_name,
     pooja_image_url,
@@ -147,9 +337,6 @@ useEffect(() => {
     muhurat_type,
     tirth_place_name,
     amount,
-    booking_user_name,
-    booking_user_img,
-    booking_user_mobile,
     payment_status,
     notes,
     samagri_required,
@@ -158,637 +345,1094 @@ useEffect(() => {
     assigned_pandit,
     user_arranged_items,
     pandit_arranged_items,
-    address, // fallback
-    location_display, // fallback
+    address,
+    location_display,
   } = bookingDetails || {};
 
-  // Items
   const userItems = flattenItems(user_arranged_items);
   const panditItems = flattenItems(pandit_arranged_items);
+  const statusConfig = getStatusBadge(booking_status);
+  const paymentConfig = getPaymentBadge(payment_status);
+  const fullAddress =
+    getAddressString(address_details) || location_display || address || '';
 
-  // SamagriList UI modeled after ConfirmPujaDetails
-  function SamagriList({
-    label,
-    items,
-    isExpanded,
-    onToggle,
-    isPandit,
-    testID,
-  }: {
-    label: string;
-    items: any[];
-    isExpanded: boolean;
-    onToggle: () => void;
-    isPandit?: boolean;
-    testID?: string;
-  }) {
-    const showCollapse = items.length > SAMAGRI_COLLAPSE_COUNT;
-    const shownItems = isExpanded
-      ? items
-      : items.slice(0, SAMAGRI_COLLAPSE_COUNT);
-    return (
-      <View style={{ marginBottom: moderateScale(12) }}>
-        <Text
-          style={[
-            styles.samagriListLabel,
-            isPandit
-              ? styles.samagriListLabelPandit
-              : styles.samagriListLabelUser,
-          ]}
-        >
-          {label}
-        </Text>
-        {items && items.length > 0 ? (
-          <>
-            <View style={styles.samagriListItemsWrapper} testID={testID}>
-              {shownItems.map((item, idx) => (
-                <View
-                  key={idx}
-                  style={[
-                    styles.samagriChip,
-                    isPandit
-                      ? styles.samagriChipPandit
-                      : styles.samagriChipUser,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.samagriChipText,
-                      isPandit
-                        ? { color: COLORS.gray }
-                        : { color: COLORS.primary },
-                    ]}
-                  >
-                    {typeof item === 'string'
-                      ? item
-                      : item.name ?? item.item_name ?? '-'}
-                  </Text>
-                </View>
-              ))}
-              {showCollapse && (
-                <TouchableOpacity
-                  onPress={onToggle}
-                  style={styles.samagriShowMoreBtn}
-                >
-                  <Text
-                    style={styles.samagriShowMoreText}
-                    testID={testID ? `${testID}-show-toggle` : undefined}
-                  >
-                    {isExpanded
-                      ? t('Show Less') || 'Show Less'
-                      : t('Show More') || 'Show More'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          </>
-        ) : (
-          <Text style={styles.samagriNoItem}>
-            {t('no_items_found') || 'No items found.'}
-          </Text>
-        )}
-      </View>
-    );
-  }
+  const heroImageUri =
+    heroImageError || !pooja_image_url ? DEFAULT_PUJA_IMAGE : pooja_image_url;
 
-  // Show samagri expanded details - now "show more/less" for user and pandit, only one at a time
-  function renderSamagriExpandable() {
-    return (
-      <View style={[styles.card, THEMESHADOW.shadow]}>
-        <Text style={styles.sectionHeader}>
-          {t('items_arranged') || 'Samagri Arrangement'}
-        </Text>
-        {samagri_required === true ? (
-          <>
-            <SamagriList
-              label={t('user_will_arrange') || 'You will arrange'}
-              items={userItems}
-              isExpanded={samagriExpand === 'user'}
-              onToggle={() =>
-                setSamagriExpand(prev => (prev === 'user' ? null : 'user'))
-              }
-              isPandit={false}
-              testID="user-samagri"
-            />
-            <SamagriList
-              label={t('pandit_will_arrange') || 'Pandit will arrange'}
-              items={panditItems}
-              isExpanded={samagriExpand === 'pandit'}
-              onToggle={() =>
-                setSamagriExpand(prev => (prev === 'pandit' ? null : 'pandit'))
-              }
-              isPandit={true}
-              testID="pandit-samagri"
-            />
-            {userItems.length === 0 && panditItems.length === 0 && (
-              <Text style={styles.samagriNoArrangement}>
-                {t('no_arrangement_info') || 'No arrangement info available'}
-              </Text>
-            )}
-          </>
-        ) : samagri_required === false ? (
-          <>
-            <Text style={styles.narrativeInfo}>
-              {t('samagri_not_required_note') ||
-                'Samagri is not required. Pandit and user arranged items as below.'}
-            </Text>
-            <SamagriList
-              label={t('user_will_arrange') || 'You will arrange'}
-              items={userItems}
-              isExpanded={samagriExpand === 'user'}
-              onToggle={() =>
-                setSamagriExpand(prev => (prev === 'user' ? null : 'user'))
-              }
-              isPandit={false}
-              testID="user-samagri"
-            />
-            <SamagriList
-              label={t('pandit_will_arrange') || 'Pandit will arrange'}
-              items={panditItems}
-              isExpanded={samagriExpand === 'pandit'}
-              onToggle={() =>
-                setSamagriExpand(prev => (prev === 'pandit' ? null : 'pandit'))
-              }
-              isPandit={true}
-              testID="pandit-samagri"
-            />
-            {userItems.length === 0 && panditItems.length === 0 && (
-              <Text style={styles.samagriNoArrangement}>
-                {t('no_arrangement_info') || 'No arrangement info available'}
-              </Text>
-            )}
-          </>
-        ) : (
-          <Text style={styles.samagriNoArrangement}>
-            {t('samagri_arrangement_not_specified') ||
-              'Samagri arrangement not specified.'}
-          </Text>
-        )}
-      </View>
-    );
-  }
+  const panditImageUri =
+    panditImageError || !assigned_pandit?.profile_img_url
+      ? DEFAULT_PANDIT_AVATAR
+      : assigned_pandit.profile_img_url;
 
-  // Large Card, as in reference
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <CustomeLoader loading={loading} />
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="light-content"
+      />
       <UserCustomHeader
-        title={t('past_booking_details') || 'Completed Puja Details'}
+        title={t('past_booking_details') || 'Ceremony Details'}
         showBackButton
         onBackPress={() => navigation?.goBack && navigation.goBack()}
       />
-      {
-        loading ? (<View style={{flex:1,backgroundColor:COLORS.white}}></View>): (<ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* Hero image */}
-        <Image
-          source={
-            pooja_image_url
-              ? { uri: pooja_image_url }
-              : {
-                  uri: 'https://cdn.builder.io/api/v1/image/assets/TEMP/db9492299c701c6ca2a23d6de9fc258e7ec2b5fd?width=160',
-                }
-          }
-          style={[
-            styles.heroImage,
-            { width: screenWidth, height: verticalScale(200) },
-          ]}
-          resizeMode="stretch"
-        />
-        <View
-          style={{
-            flex: 1,
-            paddingHorizontal: moderateScale(24),
-            paddingTop: verticalScale(24),
-          }}
-        >
-          <Text style={styles.pujaTitle}>{pooja_name || t('Puja Name')}</Text>
-          {/* Booking Info Card */}
-          <View style={[styles.card, THEMESHADOW.shadow]}>
-            <View style={styles.cardInner}>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{t('date')}</Text>
-                <Text style={styles.detailValue}>
-                  {formatDateWithOrdinal(booking_date) || '-'}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{t('amount')}</Text>
-                <Text style={[styles.detailValue, { color: COLORS.success }]}>
-                  ₹{amount || '0'}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{t('muhurat')}</Text>
-                <Text style={styles.detailValue}>
-                  {muhurat_type && `(${muhurat_type})`}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{t('muhurat_time')}</Text>
-                <Text style={styles.detailValue}>{muhurat_time || '-'}</Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{t('temple')}</Text>
-                <Text style={styles.detailValue}>
-                  {tirth_place_name || '-'}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{t('samagri_required')}</Text>
-                <Text
-                  style={[
-                    styles.detailValue,
-                    {
-                      color:
-                        samagri_required === true
-                          ? COLORS.success
-                          : samagri_required === false
-                          ? COLORS.error
-                          : COLORS.textPrimary,
-                    },
-                  ]}
-                >
-                  {samagri_required === true
-                    ? t('Yes')
-                    : samagri_required === false
-                    ? t('No')
-                    : '-'}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{t('payment_status')}</Text>
-                <Text
-                  style={[
-                    styles.detailValue,
-                    { color: getStatusColor(payment_status) },
-                  ]}
-                >
-                  {payment_status
-                    ? payment_status.charAt(0).toUpperCase() +
-                      payment_status.slice(1)
-                    : '-'}
-                </Text>
-              </View>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>{t('booking_status')}</Text>
-                <Text
-                  style={[
-                    styles.detailValue,
-                    { color: getStatusColor(booking_status) },
-                  ]}
-                >
-                  {booking_status
-                    ? booking_status.charAt(0).toUpperCase() +
-                      booking_status.slice(1)
-                    : '-'}
-                </Text>
-              </View>
-              {notes && (
-                <View style={styles.notesContainer}>
-                  <Text style={styles.notesLabel}>{t('notes')}</Text>
-                  <Text style={styles.notesValue}>{notes}</Text>
-                </View>
-              )}
-            </View>
-          </View>
 
-          {/* Pandit Details Card (if exists) */}
-          {assigned_pandit && assigned_pandit.pandit_name ? (
-            <View style={[styles.userCard, THEMESHADOW.shadow]}>
-              <Image
-                source={
-                  assigned_pandit.profile_img_url
-                    ? { uri: assigned_pandit.profile_img_url }
-                    : {
-                        uri: 'https://cdn.builder.io/api/v1/image/assets/TEMP/db9492299c701c6ca2a23d6de9fc258e7ec2b5fd?width=160',
-                      }
-                }
-                style={styles.userImage}
-                resizeMode="cover"
-              />
-              <View style={styles.userInfo}>
-                <Text style={styles.userName}>
-                  {assigned_pandit.pandit_name}
+      {loading ? (
+        <View style={styles.loaderPlaceholder} />
+      ) : (
+        <View style={styles.sheetContainer}>
+          <ScrollView
+            style={styles.scrollView}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
+          >
+            {/* 1. Status Announcement Banner */}
+            <View
+              style={[
+                styles.statusBanner,
+                {
+                  backgroundColor: statusConfig.bgColor,
+                  borderColor: statusConfig.borderColor,
+                },
+              ]}
+            >
+              <View style={styles.statusBannerIconContainer}>
+                <Ionicons
+                  name={statusConfig.icon}
+                  size={moderateScale(24)}
+                  color={statusConfig.textColor}
+                />
+              </View>
+              <View style={styles.statusBannerTextContainer}>
+                <Text
+                  style={[
+                    styles.statusBannerTitle,
+                    { color: statusConfig.textColor },
+                  ]}
+                >
+                  {statusConfig.bannerTitle}
                 </Text>
-                {assigned_pandit.phone ? (
-                  <Text style={styles.userMobile}>{assigned_pandit.phone}</Text>
+                <Text style={styles.statusBannerSubtitle}>
+                  {statusConfig.bannerSub}
+                </Text>
+              </View>
+            </View>
+
+            {/* 2. Hero Puja Card */}
+            <View style={styles.heroCard}>
+              <View style={styles.heroImageWrapper}>
+                <Image
+                  source={{ uri: heroImageUri }}
+                  style={styles.heroImage}
+                  resizeMode="cover"
+                  onError={() => setHeroImageError(true)}
+                />
+                <View style={styles.heroOverlayBadgeRow}>
+                  <View
+                    style={[
+                      styles.heroStatusPill,
+                      {
+                        backgroundColor: statusConfig.bgColor,
+                        borderColor: statusConfig.borderColor,
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={statusConfig.icon}
+                      size={moderateScale(12)}
+                      color={statusConfig.textColor}
+                      style={styles.chipIconMargin}
+                    />
+                    <Text
+                      style={[
+                        styles.heroStatusPillText,
+                        { color: statusConfig.textColor },
+                      ]}
+                    >
+                      {statusConfig.label}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.heroCardContent}>
+                <Text style={styles.pujaTitle}>
+                  {pooja_name || t('puja_name') || 'Sacred Ceremony'}
+                </Text>
+                {booking_date ? (
+                  <View style={styles.heroDateRow}>
+                    <Ionicons
+                      name="calendar"
+                      size={moderateScale(14)}
+                      color={COLORS.primary}
+                      style={styles.btnIconMargin}
+                    />
+                    <Text style={styles.heroDateText}>
+                      {formatDateWithOrdinal(booking_date)}
+                    </Text>
+                  </View>
                 ) : null}
               </View>
             </View>
-          ) : null}
 
-          {/* Samagri Arrangement - show more/less controlled per type, only one expanded at a time */}
-          {renderSamagriExpandable()}
+            {/* 3. Key Ceremony Metrics Grid */}
+            <View style={styles.statsGrid}>
+              {/* Date & Muhurat Card */}
+              <View style={styles.statCard}>
+                <View style={[styles.statIconCircle, styles.blueBg]}>
+                  <Ionicons
+                    name="time"
+                    size={moderateScale(18)}
+                    color="#2563EB"
+                  />
+                </View>
+                <Text style={styles.statLabel}>
+                  {t('muhurat') || 'Muhurat & Time'}
+                </Text>
+                <Text style={styles.statValue} numberOfLines={1}>
+                  {muhurat_time || '-'}
+                </Text>
+                {muhurat_type ? (
+                  <Text style={styles.statSubText} numberOfLines={1}>
+                    {muhurat_type}
+                  </Text>
+                ) : null}
+              </View>
 
-          {/* Address Card */}
-          {(address_details || location_display || address) && (
-            <View style={[styles.addressCard, THEMESHADOW.shadow]}>
-              <Text style={styles.addressLabel}>{t('Address Details')}</Text>
-              <Text style={styles.addressValue}>
-                {getAddressString(address_details) ||
-                  location_display ||
-                  address ||
-                  '-'}
-              </Text>
+              {/* Dakshina Amount Card */}
+              <View style={styles.statCard}>
+                <View style={[styles.statIconCircle, styles.greenBg]}>
+                  <Ionicons
+                    name="cash"
+                    size={moderateScale(18)}
+                    color="#059669"
+                  />
+                </View>
+                <Text style={styles.statLabel}>
+                  {t('amount') || 'Total Dakshina'}
+                </Text>
+                <Text
+                  style={[styles.statValue, styles.greenText]}
+                  numberOfLines={1}
+                >
+                  ₹{amount || '0'}
+                </Text>
+                <Text style={styles.statSubText} numberOfLines={1}>
+                  {paymentConfig.label}
+                </Text>
+              </View>
+
+              {/* Payment Status Card */}
+              <View style={styles.statCard}>
+                <View
+                  style={[
+                    styles.statIconCircle,
+                    { backgroundColor: paymentConfig.bgColor },
+                  ]}
+                >
+                  <Ionicons
+                    name={paymentConfig.icon}
+                    size={moderateScale(18)}
+                    color={paymentConfig.textColor}
+                  />
+                </View>
+                <Text style={styles.statLabel}>
+                  {t('payment_status') || 'Payment'}
+                </Text>
+                <Text
+                  style={[styles.statValue, { color: paymentConfig.textColor }]}
+                  numberOfLines={1}
+                >
+                  {paymentConfig.label}
+                </Text>
+                <Text style={styles.statSubText} numberOfLines={1}>
+                  {amount ? `₹${amount}` : '-'}
+                </Text>
+              </View>
+
+              {/* Samagri Status Card */}
+              <View style={styles.statCard}>
+                <View
+                  style={[
+                    styles.statIconCircle,
+                    samagri_required === true
+                      ? styles.greenBg
+                      : samagri_required === false
+                      ? styles.warmAmberBg
+                      : styles.neutralBg,
+                  ]}
+                >
+                  <Ionicons
+                    name="basket"
+                    size={moderateScale(18)}
+                    color={
+                      samagri_required === true
+                        ? '#059669'
+                        : samagri_required === false
+                        ? '#D97706'
+                        : '#64748B'
+                    }
+                  />
+                </View>
+                <Text style={styles.statLabel}>
+                  {t('samagri_required') || 'Samagri'}
+                </Text>
+                <Text
+                  style={[
+                    styles.statValue,
+                    samagri_required === true
+                      ? styles.greenText
+                      : samagri_required === false
+                      ? styles.amberDarkText
+                      : styles.neutralDarkText,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {samagri_required === true
+                    ? t('Yes') || 'Provided'
+                    : samagri_required === false
+                    ? t('No') || 'Not Required'
+                    : '-'}
+                </Text>
+                <Text style={styles.statSubText} numberOfLines={1}>
+                  {userItems.length + panditItems.length > 0
+                    ? `${userItems.length + panditItems.length} items total`
+                    : 'Arrangement recorded'}
+                </Text>
+              </View>
             </View>
-          )}
+
+            {/* 4. Assigned Panditji Card */}
+            {assigned_pandit && assigned_pandit.pandit_name ? (
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionCardHeader}>
+                  <Ionicons
+                    name="person-circle"
+                    size={moderateScale(18)}
+                    color={COLORS.primary}
+                    style={styles.btnIconMargin}
+                  />
+                  <Text style={styles.sectionCardTitle}>
+                    {t('assigned_pandit') || 'Officiating Panditji'}
+                  </Text>
+                </View>
+
+                <View style={styles.panditCardInner}>
+                  <View style={styles.panditAvatarWrapper}>
+                    <Image
+                      source={{ uri: panditImageUri }}
+                      style={styles.panditAvatar}
+                      resizeMode="cover"
+                      onError={() => setPanditImageError(true)}
+                    />
+                    <View style={styles.verifiedBadgeIcon}>
+                      <Ionicons
+                        name="checkmark-circle"
+                        size={moderateScale(16)}
+                        color="#059669"
+                      />
+                    </View>
+                  </View>
+
+                  <View style={styles.panditDetails}>
+                    <Text style={styles.panditName} numberOfLines={1}>
+                      {assigned_pandit.pandit_name}
+                    </Text>
+                    <Text style={styles.panditRoleText}>
+                      {t('vedic_pandit') || 'Verified Vedic Priest'}
+                    </Text>
+                    {assigned_pandit.phone ? (
+                      <View style={styles.panditPhoneRow}>
+                        <Ionicons
+                          name="call-outline"
+                          size={moderateScale(12)}
+                          color="#64748B"
+                          style={styles.chipIconMargin}
+                        />
+                        <Text style={styles.panditPhoneText}>
+                          {assigned_pandit.phone}
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  {assigned_pandit.phone ? (
+                    <TouchableOpacity
+                      style={styles.callPanditBtn}
+                      activeOpacity={0.8}
+                      onPress={() => handleCallPandit(assigned_pandit.phone!)}
+                    >
+                      <Ionicons
+                        name="call"
+                        size={moderateScale(16)}
+                        color={COLORS.primary}
+                      />
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              </View>
+            ) : null}
+
+            {/* 5. Venue & Address Card */}
+            {(tirth_place_name || fullAddress) && (
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionCardHeader}>
+                  <Ionicons
+                    name="location-sharp"
+                    size={moderateScale(18)}
+                    color={COLORS.primary}
+                    style={styles.btnIconMargin}
+                  />
+                  <Text style={styles.sectionCardTitle}>
+                    {t('venue_details') || 'Ceremony Location & Venue'}
+                  </Text>
+                </View>
+
+                {tirth_place_name ? (
+                  <View style={styles.tirthRow}>
+                    <View style={styles.tirthIconCircle}>
+                      <Ionicons
+                        name="business"
+                        size={moderateScale(15)}
+                        color="#D97706"
+                      />
+                    </View>
+                    <View style={styles.flex1}>
+                      <Text style={styles.tirthLabel}>
+                        {t('temple_place') || 'Sacred Pilgrimage / Temple'}
+                      </Text>
+                      <Text style={styles.tirthValue}>{tirth_place_name}</Text>
+                    </View>
+                  </View>
+                ) : null}
+
+                {fullAddress ? (
+                  <View style={styles.addressBox}>
+                    <Ionicons
+                      name="navigate-circle-outline"
+                      size={moderateScale(16)}
+                      color="#64748B"
+                      style={styles.addressIcon}
+                    />
+                    <Text style={styles.addressText}>{fullAddress}</Text>
+                  </View>
+                ) : null}
+              </View>
+            )}
+
+            {/* 6. Samagri Arrangement Card */}
+            {(userItems.length > 0 || panditItems.length > 0) && (
+              <View style={styles.sectionCard}>
+                <View style={styles.sectionCardHeader}>
+                  <Ionicons
+                    name="sparkles"
+                    size={moderateScale(17)}
+                    color={COLORS.primary}
+                    style={styles.btnIconMargin}
+                  />
+                  <Text style={styles.sectionCardTitle}>
+                    {t('items_arranged') || 'Samagri Arrangement'}
+                  </Text>
+                </View>
+
+                {/* User Items */}
+                {userItems.length > 0 && (
+                  <View style={styles.samagriSubSection}>
+                    <View style={styles.samagriSubHeader}>
+                      <Text style={styles.samagriSubTitle}>
+                        {t('user_will_arrange') || 'Items Arranged by You'}
+                      </Text>
+                      <View style={styles.samagriCountPill}>
+                        <Text style={styles.samagriCountPillText}>
+                          {userItems.length}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.samagriChipsRow}>
+                      {(samagriExpand === 'user'
+                        ? userItems
+                        : userItems.slice(0, SAMAGRI_COLLAPSE_COUNT)
+                      ).map((item, idx) => {
+                        const name =
+                          typeof item === 'string'
+                            ? item
+                            : item.name || item.item_name || '-';
+                        return (
+                          <View
+                            key={`user-samagri-${idx}`}
+                            style={styles.samagriChipUser}
+                          >
+                            <Ionicons
+                              name="checkmark"
+                              size={moderateScale(11)}
+                              color={COLORS.primary}
+                              style={styles.chipIconMargin}
+                            />
+                            <Text style={styles.samagriChipUserText}>
+                              {name}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+
+                    {userItems.length > SAMAGRI_COLLAPSE_COUNT && (
+                      <TouchableOpacity
+                        style={styles.expandToggleBtn}
+                        activeOpacity={0.7}
+                        onPress={() =>
+                          setSamagriExpand(prev =>
+                            prev === 'user' ? null : 'user',
+                          )
+                        }
+                      >
+                        <Text style={styles.expandToggleText}>
+                          {samagriExpand === 'user'
+                            ? t('show_less') || 'Show Less'
+                            : `+${userItems.length - SAMAGRI_COLLAPSE_COUNT} ${
+                                t('show_more') || 'more'
+                              }`}
+                        </Text>
+                        <Ionicons
+                          name={
+                            samagriExpand === 'user'
+                              ? 'chevron-up'
+                              : 'chevron-down'
+                          }
+                          size={moderateScale(13)}
+                          color={COLORS.primary}
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* Divider between samagri lists if both exist */}
+                {userItems.length > 0 && panditItems.length > 0 && (
+                  <View style={styles.samagriDivider} />
+                )}
+
+                {/* Pandit Items */}
+                {panditItems.length > 0 && (
+                  <View style={styles.samagriSubSection}>
+                    <View style={styles.samagriSubHeader}>
+                      <Text style={[styles.samagriSubTitle, styles.amberText]}>
+                        {t('pandit_will_arrange') ||
+                          'Items Arranged by Panditji'}
+                      </Text>
+                      <View style={[styles.samagriCountPill, styles.amberBg]}>
+                        <Text
+                          style={[
+                            styles.samagriCountPillText,
+                            styles.amberText,
+                          ]}
+                        >
+                          {panditItems.length}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.samagriChipsRow}>
+                      {(samagriExpand === 'pandit'
+                        ? panditItems
+                        : panditItems.slice(0, SAMAGRI_COLLAPSE_COUNT)
+                      ).map((item, idx) => {
+                        const name =
+                          typeof item === 'string'
+                            ? item
+                            : item.name || item.item_name || '-';
+                        return (
+                          <View
+                            key={`pandit-samagri-${idx}`}
+                            style={styles.samagriChipPandit}
+                          >
+                            <Ionicons
+                              name="sparkles"
+                              size={moderateScale(10)}
+                              color="#B45309"
+                              style={styles.chipIconMargin}
+                            />
+                            <Text style={styles.samagriChipPanditText}>
+                              {name}
+                            </Text>
+                          </View>
+                        );
+                      })}
+                    </View>
+
+                    {panditItems.length > SAMAGRI_COLLAPSE_COUNT && (
+                      <TouchableOpacity
+                        style={styles.expandToggleBtn}
+                        activeOpacity={0.7}
+                        onPress={() =>
+                          setSamagriExpand(prev =>
+                            prev === 'pandit' ? null : 'pandit',
+                          )
+                        }
+                      >
+                        <Text
+                          style={[styles.expandToggleText, styles.amberText]}
+                        >
+                          {samagriExpand === 'pandit'
+                            ? t('show_less') || 'Show Less'
+                            : `+${
+                                panditItems.length - SAMAGRI_COLLAPSE_COUNT
+                              } ${t('show_more') || 'more'}`}
+                        </Text>
+                        <Ionicons
+                          name={
+                            samagriExpand === 'pandit'
+                              ? 'chevron-up'
+                              : 'chevron-down'
+                          }
+                          size={moderateScale(13)}
+                          color="#B45309"
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* 7. Special Notes Card */}
+            {notes ? (
+              <View style={styles.notesCard}>
+                <View style={styles.notesHeaderRow}>
+                  <Ionicons
+                    name="document-text-outline"
+                    size={moderateScale(16)}
+                    color="#D97706"
+                    style={styles.btnIconMargin}
+                  />
+                  <Text style={styles.notesTitle}>
+                    {t('notes') || 'Ceremony Notes'}
+                  </Text>
+                </View>
+                <Text style={styles.notesText}>{notes}</Text>
+              </View>
+            ) : null}
+          </ScrollView>
         </View>
-      </ScrollView>)
-      }
+      )}
     </View>
   );
 };
-
-export default PastBookingDetailsScreen;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.primaryBackground,
   },
-  centered: {
+  loaderPlaceholder: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: '#F8F9FD',
   },
-  errorText: {
-    color: COLORS.error || 'red',
-    fontSize: 16,
-    fontFamily: Fonts.Sen_Medium,
-  },
-  notFoundText: {
-    color: COLORS.gray || '#888',
-    fontSize: 16,
-    fontFamily: Fonts.Sen_Medium,
+  sheetContainer: {
+    flex: 1,
+    backgroundColor: '#F8F9FD',
+    borderTopLeftRadius: moderateScale(28),
+    borderTopRightRadius: moderateScale(28),
+    overflow: 'hidden',
   },
   scrollView: {
     flex: 1,
-    backgroundColor: COLORS.pujaBackground,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
   },
   scrollContent: {
-    paddingBottom: verticalScale(32),
+    paddingHorizontal: moderateScale(16),
+    paddingTop: moderateScale(16),
+    paddingBottom: moderateScale(20),
+  },
+
+  // Status Banner
+  statusBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: moderateScale(14),
+    borderRadius: moderateScale(16),
+    borderWidth: 1,
+    marginBottom: moderateScale(14),
+  },
+  statusBannerIconContainer: {
+    marginRight: moderateScale(12),
+  },
+  statusBannerTextContainer: {
+    flex: 1,
+  },
+  statusBannerTitle: {
+    fontSize: moderateScale(14.5),
+    fontFamily: Fonts.Sen_Bold,
+    marginBottom: moderateScale(2),
+  },
+  statusBannerSubtitle: {
+    fontSize: moderateScale(12),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#475569',
+    lineHeight: moderateScale(16),
+  },
+
+  // Hero Card
+  heroCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(18),
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E8ECF2',
+    marginBottom: moderateScale(14),
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2.5,
+  },
+  heroImageWrapper: {
+    width: '100%',
+    height: moderateScale(170),
+    backgroundColor: '#E2E8F0',
+    position: 'relative',
   },
   heroImage: {
     width: '100%',
-    height: verticalScale(200),
-    borderBottomLeftRadius: moderateScale(24),
-    borderBottomRightRadius: moderateScale(24),
-    backgroundColor: COLORS.backGroundSecondary,
+    height: '100%',
+  },
+  heroOverlayBadgeRow: {
+    position: 'absolute',
+    top: moderateScale(10),
+    right: moderateScale(10),
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  heroStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: moderateScale(10),
+    paddingVertical: moderateScale(4),
+    borderRadius: moderateScale(12),
+    borderWidth: 1,
+  },
+  heroStatusPillText: {
+    fontSize: moderateScale(11.5),
+    fontFamily: Fonts.Sen_Bold,
+  },
+  heroCardContent: {
+    padding: moderateScale(16),
   },
   pujaTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: COLORS.primary,
-    textAlign: 'center',
-    marginBottom: verticalScale(20),
-    paddingHorizontal: moderateScale(16),
+    fontSize: moderateScale(19),
     fontFamily: Fonts.Sen_Bold,
+    color: '#0F172A',
+    marginBottom: moderateScale(6),
   },
-  card: {
-    backgroundColor: COLORS.white,
-    borderRadius: moderateScale(16),
-    padding: moderateScale(16),
-    marginBottom: verticalScale(20),
-  },
-  cardInner: {
-    gap: 12,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: verticalScale(8),
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  detailLabel: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
-    fontFamily: Fonts.Sen_Medium,
-  },
-  detailValue: {
-    fontSize: 16,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-    textAlign: 'right',
-    fontFamily: Fonts.Sen_SemiBold,
-  },
-  notesContainer: {
-    backgroundColor: COLORS.backGroundSecondary,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
-  },
-  notesLabel: {
-    fontSize: 15,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-    marginBottom: 4,
-    fontFamily: Fonts.Sen_Medium,
-  },
-  notesValue: {
-    fontSize: 15,
-    color: COLORS.textPrimary,
-    fontWeight: '400',
-    fontFamily: Fonts.Sen_Regular,
-  },
-  userCard: {
+  heroDateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderRadius: moderateScale(16),
-    padding: moderateScale(16),
-    marginBottom: verticalScale(20),
-    gap: 12,
   },
-  userImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.backGroundSecondary,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: 4,
-    fontFamily: Fonts.Sen_SemiBold,
-  },
-  userMobile: {
-    fontSize: 15,
-    color: COLORS.textSecondary,
-    fontFamily: Fonts.Sen_Regular,
-  },
-  addressCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: moderateScale(16),
-    padding: moderateScale(16),
-    marginBottom: verticalScale(20),
-  },
-  addressLabel: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-    marginBottom: 8,
+  heroDateText: {
+    fontSize: moderateScale(13),
     fontFamily: Fonts.Sen_Medium,
-  },
-  addressValue: {
-    fontSize: 15,
-    color: COLORS.textPrimary,
-    fontWeight: '400',
-    fontFamily: Fonts.Sen_Regular,
-  },
-  sectionHeader: {
-    fontSize: 16.5,
-    color: COLORS.primary,
-    fontFamily: Fonts.Sen_SemiBold,
-    marginBottom: moderateScale(7),
-    letterSpacing: 0.5,
-  },
-  subtitle: {
-    fontFamily: Fonts.Sen_SemiBold,
-    fontSize: 15,
-    color: COLORS.primary,
-    marginBottom: moderateScale(4),
-    letterSpacing: 0.23,
-  },
-  itemsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    minHeight: moderateScale(27),
-    marginHorizontal: -2,
-    alignItems: 'center',
-  },
-  itemTagYou: {
-    backgroundColor: COLORS.primary + '15',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 13,
-    marginRight: moderateScale(6),
-    marginBottom: moderateScale(5),
-  },
-  itemTagYouText: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontFamily: Fonts.Sen_Medium,
-  },
-  itemTagPandit: {
-    backgroundColor: COLORS.gray + '15',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 13,
-    marginRight: moderateScale(6),
-    marginBottom: moderateScale(5),
-  },
-  itemTagPanditText: {
-    color: COLORS.gray,
-    fontSize: 14,
-    fontFamily: Fonts.Sen_Medium,
-  },
-  infoText: {
-    fontFamily: Fonts.Sen_Regular,
-    fontSize: 14.5,
-    color: COLORS.gray,
-    marginTop: moderateScale(4),
-    marginLeft: moderateScale(2),
-  },
-  narrativeInfo: {
-    fontFamily: Fonts.Sen_Regular,
-    fontSize: 13.5,
-    color: COLORS.gray,
-    marginTop: moderateScale(6),
-    marginBottom: 4,
-    marginLeft: moderateScale(1),
-    letterSpacing: 0,
-    lineHeight: 19,
-  },
-  showMoreText: {
-    fontSize: 14,
-    textDecorationLine: 'underline',
-    paddingHorizontal: moderateScale(5),
-    paddingVertical: moderateScale(2),
+    color: '#475569',
   },
 
-  // Add styles for ConfirmPujaDetails-style chips/list
-  samagriListLabel: {
-    fontFamily: Fonts.Sen_SemiBold,
-    fontSize: 15.25,
-    marginBottom: moderateScale(4),
-    letterSpacing: 0.23,
-    color: COLORS.primary,
-  },
-  samagriListLabelUser: {
-    color: COLORS.primary,
-  },
-  samagriListLabelPandit: {
-    color: COLORS.gray,
-  },
-  samagriListItemsWrapper: {
+  // 2x2 Stats Grid
+  statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    alignItems: 'center',
-    marginLeft: -2,
-    minHeight: moderateScale(27),
+    gap: moderateScale(10),
+    marginBottom: moderateScale(14),
   },
-  samagriChip: {
+  statCard: {
+    width: '48.5%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(16),
+    padding: moderateScale(13),
+    borderWidth: 1,
+    borderColor: '#E8ECF2',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 1.5,
+  },
+  statIconCircle: {
+    width: moderateScale(36),
+    height: moderateScale(36),
+    borderRadius: moderateScale(18),
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: moderateScale(8),
+  },
+  statLabel: {
+    fontSize: moderateScale(11.5),
+    fontFamily: Fonts.Sen_Medium,
+    color: '#64748B',
+    marginBottom: moderateScale(2),
+  },
+  statValue: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Bold,
+    color: '#0F172A',
+    marginBottom: moderateScale(2),
+  },
+  statSubText: {
+    fontSize: moderateScale(11),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#94A3B8',
+  },
+
+  // General Section Card
+  sectionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(16),
+    padding: moderateScale(16),
+    borderWidth: 1,
+    borderColor: '#E8ECF2',
+    marginBottom: moderateScale(14),
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  sectionCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 13,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    marginRight: moderateScale(6),
-    marginBottom: moderateScale(5),
-    backgroundColor: COLORS.primary + '15',
+    marginBottom: moderateScale(14),
+  },
+  sectionCardTitle: {
+    fontSize: moderateScale(14.5),
+    fontFamily: Fonts.Sen_Bold,
+    color: '#0F172A',
+  },
+
+  // Pandit Card
+  panditCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  panditAvatarWrapper: {
+    position: 'relative',
+    marginRight: moderateScale(14),
+  },
+  panditAvatar: {
+    width: moderateScale(56),
+    height: moderateScale(56),
+    borderRadius: moderateScale(28),
+    borderWidth: 2,
+    borderColor: '#F1F5F9',
+    backgroundColor: '#E2E8F0',
+  },
+  verifiedBadgeIcon: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: moderateScale(10),
+  },
+  panditDetails: {
+    flex: 1,
+  },
+  panditName: {
+    fontSize: moderateScale(15.5),
+    fontFamily: Fonts.Sen_Bold,
+    color: '#0F172A',
+    marginBottom: moderateScale(2),
+  },
+  panditRoleText: {
+    fontSize: moderateScale(12),
+    fontFamily: Fonts.Sen_Medium,
+    color: '#64748B',
+    marginBottom: moderateScale(4),
+  },
+  panditPhoneRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  panditPhoneText: {
+    fontSize: moderateScale(12),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#64748B',
+  },
+  callPanditBtn: {
+    width: moderateScale(40),
+    height: moderateScale(40),
+    borderRadius: moderateScale(20),
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: moderateScale(10),
+  },
+
+  // Venue & Tirth
+  tirthRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFBEB',
+    borderRadius: moderateScale(12),
+    padding: moderateScale(10),
+    marginBottom: moderateScale(10),
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  tirthIconCircle: {
+    width: moderateScale(30),
+    height: moderateScale(30),
+    borderRadius: moderateScale(15),
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: moderateScale(10),
+  },
+  tirthLabel: {
+    fontSize: moderateScale(11),
+    fontFamily: Fonts.Sen_Medium,
+    color: '#B45309',
+  },
+  tirthValue: {
+    fontSize: moderateScale(13),
+    fontFamily: Fonts.Sen_Bold,
+    color: '#78350F',
+  },
+  addressBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: '#F8FAFC',
+    borderRadius: moderateScale(12),
+    padding: moderateScale(12),
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  addressIcon: {
+    marginRight: moderateScale(8),
+    marginTop: moderateScale(1),
+  },
+  addressText: {
+    flex: 1,
+    fontSize: moderateScale(12.5),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#334155',
+    lineHeight: moderateScale(18),
+  },
+
+  // Samagri Card
+  samagriSubSection: {
+    marginBottom: moderateScale(6),
+  },
+  samagriSubHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: moderateScale(10),
+  },
+  samagriSubTitle: {
+    fontSize: moderateScale(13),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: COLORS.primary,
+  },
+  samagriCountPill: {
+    backgroundColor: '#FFF7ED',
+    paddingHorizontal: moderateScale(8),
+    paddingVertical: moderateScale(2),
+    borderRadius: moderateScale(10),
+  },
+  samagriCountPillText: {
+    fontSize: moderateScale(11),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primary,
+  },
+  samagriChipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: moderateScale(7),
   },
   samagriChipUser: {
-    backgroundColor: COLORS.primary + '15',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    paddingHorizontal: moderateScale(10),
+    paddingVertical: moderateScale(5),
+    borderRadius: moderateScale(12),
   },
-  samagriChipPandit: {
-    backgroundColor: COLORS.gray + '15',
-  },
-  samagriChipText: {
-    fontSize: 14,
+  samagriChipUserText: {
+    fontSize: moderateScale(12),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primary,
   },
-  samagriShowMoreBtn: {
-    paddingHorizontal: moderateScale(5),
-    paddingVertical: moderateScale(2),
-    justifyContent: 'center',
+  samagriChipPandit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    paddingHorizontal: moderateScale(10),
+    paddingVertical: moderateScale(5),
+    borderRadius: moderateScale(12),
   },
-  samagriShowMoreText: {
+  samagriChipPanditText: {
+    fontSize: moderateScale(12),
+    fontFamily: Fonts.Sen_Medium,
+    color: '#92400E',
+  },
+  expandToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginTop: moderateScale(8),
+    paddingVertical: moderateScale(3),
+  },
+  expandToggleText: {
+    fontSize: moderateScale(12),
     fontFamily: Fonts.Sen_Bold,
     color: COLORS.primary,
-    fontSize: 14,
-    textDecorationLine: 'underline',
+    marginRight: moderateScale(3),
   },
-  samagriNoItem: {
-    fontFamily: Fonts.Sen_Regular,
-    fontSize: 14.5,
-    color: COLORS.gray,
-    marginTop: moderateScale(4),
-    marginLeft: moderateScale(2),
+  samagriDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: moderateScale(12),
   },
-  samagriNoArrangement: {
+
+  // Notes Card
+  notesCard: {
+    backgroundColor: '#FFFBEB',
+    borderRadius: moderateScale(16),
+    padding: moderateScale(14),
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    marginBottom: moderateScale(16),
+  },
+  notesHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: moderateScale(6),
+  },
+  notesTitle: {
+    fontSize: moderateScale(13.5),
+    fontFamily: Fonts.Sen_Bold,
+    color: '#B45309',
+  },
+  notesText: {
+    fontSize: moderateScale(12.5),
     fontFamily: Fonts.Sen_Regular,
-    fontSize: 14.5,
-    color: COLORS.gray,
-    marginTop: moderateScale(8),
-    marginLeft: moderateScale(2),
+    color: '#78350F',
+    lineHeight: moderateScale(18),
+  },
+
+  // Centered error / empty states
+  centered: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8F9FD',
+    paddingHorizontal: moderateScale(24),
+  },
+  errorIconCircle: {
+    width: moderateScale(70),
+    height: moderateScale(70),
+    borderRadius: moderateScale(35),
+    backgroundColor: '#FEF2F2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: moderateScale(14),
+  },
+  errorTitle: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Bold,
+    color: '#0F172A',
+    textAlign: 'center',
+    marginBottom: moderateScale(16),
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: moderateScale(20),
+    paddingVertical: moderateScale(10),
+    borderRadius: moderateScale(20),
+  },
+  retryButtonText: {
+    fontSize: moderateScale(13.5),
+    fontFamily: Fonts.Sen_Bold,
+    color: '#FFFFFF',
+  },
+  emptyIconCircle: {
+    width: moderateScale(70),
+    height: moderateScale(70),
+    borderRadius: moderateScale(35),
+    backgroundColor: '#FFF7ED',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: moderateScale(14),
+  },
+  emptyTitle: {
+    fontSize: moderateScale(16),
+    fontFamily: Fonts.Sen_Bold,
+    color: '#0F172A',
+    textAlign: 'center',
+    marginBottom: moderateScale(6),
+  },
+  emptySubtext: {
+    fontSize: moderateScale(13),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#64748B',
+    textAlign: 'center',
+    marginBottom: moderateScale(20),
+  },
+  backButton: {
+    paddingHorizontal: moderateScale(20),
+    paddingVertical: moderateScale(10),
+    borderRadius: moderateScale(20),
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  backButtonText: {
+    fontSize: moderateScale(13),
+    fontFamily: Fonts.Sen_SemiBold,
+    color: '#334155',
+  },
+  btnIconMargin: {
+    marginRight: moderateScale(6),
+  },
+  chipIconMargin: {
+    marginRight: moderateScale(4),
+  },
+  blueBg: {
+    backgroundColor: '#EFF6FF',
+  },
+  greenBg: {
+    backgroundColor: '#ECFDF5',
+  },
+  greenText: {
+    color: '#059669',
+  },
+  warmAmberBg: {
+    backgroundColor: '#FFFBEB',
+  },
+  neutralBg: {
+    backgroundColor: '#F1F5F9',
+  },
+  amberDarkText: {
+    color: '#D97706',
+  },
+  neutralDarkText: {
+    color: '#475569',
+  },
+  flex1: {
+    flex: 1,
+  },
+  amberText: {
+    color: '#B45309',
+  },
+  amberBg: {
+    backgroundColor: '#FEF3C7',
   },
 });
+
+export default PastBookingDetailsScreen;

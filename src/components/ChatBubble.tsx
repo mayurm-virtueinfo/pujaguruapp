@@ -1,74 +1,71 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { moderateScale } from 'react-native-size-matters';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import Fonts from '../theme/fonts';
-import { COLORS, wp } from '../theme/theme';
+import { COLORS } from '../theme/theme';
 
-interface ChatBubbleProps {
+export interface ChatBubbleProps {
   text: string;
   time: string;
   isOwn: boolean;
-  date?: string; // Add optional date prop (expects any format)
+  date?: string;
+  panditAvatar?: string;
+  panditName?: string;
 }
 
-// Helper to format date string to DDMMYYYY
-const formatDateToDDMMYYYY = (dateString?: string) => {
-  if (!dateString) return '';
-  // Try parsing with Date when ISO string, fallback to just show as is.
-  let dateObj: Date | null = null;
-
-  // Try to parse common formats, fallback to plain string
-  if (dateString.match(/^\d{4}-\d{2}-\d{2}/)) {
-    // e.g., 2024-05-12
-    dateObj = new Date(dateString);
-  } else if (dateString.match(/^\d{2}\/\d{2}\/\d{4}/)) {
-    // e.g., 12/05/2024 DD/MM/YYYY
-    const [d, m, y] = dateString.split(/[\/\-\.]/);
-    dateObj = new Date(`${y}-${m}-${d}`);
-  }
-  if (dateObj && !isNaN(dateObj.getTime())) {
-    const dd = `0${dateObj.getDate()}`.slice(-2);
-    const mm = `0${dateObj.getMonth() + 1}`.slice(-2);
-    const yyyy = dateObj.getFullYear();
-    return `${dd}/${mm}/${yyyy}`;
-  }
-  // If not parseable, try to split or fallback as is
-  // Try for timestamps: 2024-05-12T10:15:00Z etc.
-  const match = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) {
-    return `${match[3]}${match[2]}${match[1]}`;
-  }
-  // Fallback
-  return dateString;
-};
-
-const ChatBubble: React.FC<ChatBubbleProps> = ({ text, time, isOwn, date }) => {
-  const formattedDate = date ? formatDateToDDMMYYYY(date) : '';
-  return (
-    <View
-      style={[
-        styles.container,
-        isOwn ? styles.ownMessage : styles.otherMessage,
-      ]}
-    >
-      <View
-        style={[styles.bubble, isOwn ? styles.ownBubble : styles.otherBubble]}
-      >
-        <Text
-          style={[
-            styles.messageText,
-            isOwn ? styles.ownText : styles.otherText,
-          ]}
+const ChatBubble: React.FC<ChatBubbleProps> = ({
+  text,
+  time,
+  isOwn,
+  panditAvatar,
+  panditName,
+}) => {
+  if (isOwn) {
+    return (
+      <View style={styles.ownContainer}>
+        <LinearGradient
+          colors={['#FB3440', '#EA1B29']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.ownBubble}
         >
-          {text}
-        </Text>
-        <View style={[styles.row, isOwn ? styles.rowRight : styles.rowLeft]}>
-          {formattedDate !== '' && (
-            <Text style={[styles.metaText, styles.dateMetaText]}>
-              {formattedDate}
-            </Text>
-          )}
-          <Text style={[styles.metaText, styles.timeMetaText]}>{time}</Text>
+          <Text style={styles.ownMessageText}>{text}</Text>
+          <View style={styles.ownMetaRow}>
+            <Text style={styles.ownTimeText}>{time}</Text>
+            <Ionicons
+              name="checkmark-done"
+              size={moderateScale(13)}
+              color="rgba(255, 255, 255, 0.9)"
+            />
+          </View>
+        </LinearGradient>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.otherContainer}>
+      <View style={styles.otherAvatarWrapper}>
+        {panditAvatar ? (
+          <Image source={{ uri: panditAvatar }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatarFallback}>
+            <MaterialIcons
+              name="person"
+              size={moderateScale(15)}
+              color={COLORS.primaryBackground}
+            />
+          </View>
+        )}
+      </View>
+
+      <View style={styles.otherBubble}>
+        <Text style={styles.otherMessageText}>{text}</Text>
+        <View style={styles.otherMetaRow}>
+          <Text style={styles.otherTimeText}>{time}</Text>
         </View>
       </View>
     </View>
@@ -76,74 +73,105 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ text, time, isOwn, date }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginBottom: moderateScale(14),
-    maxWidth: wp(75),
-  },
-  ownMessage: {
+  ownContainer: {
     alignSelf: 'flex-end',
     alignItems: 'flex-end',
-  },
-  otherMessage: {
-    alignSelf: 'flex-start',
-    alignItems: 'flex-start',
-  },
-  bubble: {
-    paddingHorizontal: moderateScale(16),
-    paddingVertical: moderateScale(11),
-    borderRadius: moderateScale(10),
-    minHeight: moderateScale(40),
-    justifyContent: 'center',
+    marginVertical: moderateScale(4),
+    maxWidth: '82%',
   },
   ownBubble: {
-    backgroundColor: COLORS.chatUserBackground,
-    borderTopRightRadius: moderateScale(10),
-    borderTopLeftRadius: moderateScale(10),
-    borderBottomLeftRadius: moderateScale(10),
-    borderBottomRightRadius: 0,
+    paddingHorizontal: moderateScale(14),
+    paddingTop: moderateScale(10),
+    paddingBottom: moderateScale(8),
+    borderTopLeftRadius: moderateScale(18),
+    borderTopRightRadius: moderateScale(18),
+    borderBottomLeftRadius: moderateScale(18),
+    borderBottomRightRadius: moderateScale(4),
+    shadowColor: '#FB3440',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  otherBubble: {
-    backgroundColor: COLORS.chatColor,
-    borderTopRightRadius: moderateScale(10),
-    borderTopLeftRadius: moderateScale(10),
-    borderBottomRightRadius: moderateScale(10),
-    borderBottomLeftRadius: 0,
-  },
-  messageText: {
+  ownMessageText: {
     fontSize: moderateScale(14),
     fontFamily: Fonts.Sen_Regular,
-    marginBottom: moderateScale(8),
+    color: '#FFFFFF',
+    lineHeight: moderateScale(20),
   },
-  ownText: {
-    color: COLORS.primaryTextDark,
-    textAlign: 'right',
-  },
-  otherText: {
-    color: COLORS.primaryTextDark,
-    textAlign: 'left',
-  },
-  row: {
+  ownMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: moderateScale(2),
-    gap: moderateScale(6),
-  },
-  rowRight: {
     justifyContent: 'flex-end',
+    marginTop: moderateScale(4),
+    gap: moderateScale(4),
   },
-  rowLeft: {
-    justifyContent: 'flex-start',
-  },
-  metaText: {
-    fontSize: moderateScale(11),
+  ownTimeText: {
+    fontSize: moderateScale(10.5),
     fontFamily: Fonts.Sen_Regular,
-    color: COLORS.pujaCardSubtext,
+    color: 'rgba(255, 255, 255, 0.85)',
   },
-  dateMetaText: {
-    opacity: 0.8,
+
+  otherContainer: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    alignItems: 'flex-end',
+    marginVertical: moderateScale(4),
+    maxWidth: '84%',
   },
-  timeMetaText: {
-    fontWeight: '500',
+  otherAvatarWrapper: {
+    marginRight: moderateScale(8),
+    marginBottom: moderateScale(2),
+  },
+  avatarImage: {
+    width: moderateScale(28),
+    height: moderateScale(28),
+    borderRadius: moderateScale(14),
+    backgroundColor: '#E5E7EB',
+  },
+  avatarFallback: {
+    width: moderateScale(28),
+    height: moderateScale(28),
+    borderRadius: moderateScale(14),
+    backgroundColor: '#FFEAEA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFD4D8',
+  },
+  otherBubble: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: moderateScale(14),
+    paddingTop: moderateScale(10),
+    paddingBottom: moderateScale(8),
+    borderTopLeftRadius: moderateScale(18),
+    borderTopRightRadius: moderateScale(18),
+    borderBottomRightRadius: moderateScale(18),
+    borderBottomLeftRadius: moderateScale(4),
+    borderWidth: 1,
+    borderColor: '#E8ECF2',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  otherMessageText: {
+    fontSize: moderateScale(14),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#1E293B',
+    lineHeight: moderateScale(20),
+  },
+  otherMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginTop: moderateScale(4),
+  },
+  otherTimeText: {
+    fontSize: moderateScale(10.5),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#94A3B8',
   },
 });
 
