@@ -27,10 +27,7 @@ import { translateData } from '../../../utils/TranslateData';
 const DEFAULT_PUJA_IMAGE =
   'https://as2.ftcdn.net/v2/jpg/06/68/18/97/1000_F_668189711_Esn6zh9PEetE727cyIc9U34NjQOS1b35.jpg';
 
-type NavigationProp = StackNavigationProp<
-  UserProfileParamList,
-  'UpcomingPuja'
->;
+type NavigationProp = StackNavigationProp<UserProfileParamList, 'UpcomingPuja'>;
 
 const formatBookingDate = (dateStr?: string | null): string => {
   if (!dateStr) return '';
@@ -252,9 +249,7 @@ const UpcomingPuja: React.FC = () => {
                       <View
                         style={[
                           styles.timeBadge,
-                          isToday
-                            ? styles.todayBadge
-                            : styles.normalTimeBadge,
+                          isToday ? styles.todayBadge : styles.normalTimeBadge,
                         ]}
                       >
                         <Ionicons
@@ -438,7 +433,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: moderateScale(16),
     paddingTop: moderateScale(20),
-    paddingBottom: moderateScale(110),
+    paddingBottom: moderateScale(20),
   },
 
   // List Header Row

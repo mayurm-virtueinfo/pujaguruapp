@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { moderateScale } from 'react-native-size-matters';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import Fonts from '../theme/fonts';
@@ -21,27 +20,26 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
   time,
   isOwn,
   panditAvatar,
-  panditName,
 }) => {
   if (isOwn) {
     return (
       <View style={styles.ownContainer}>
-        <LinearGradient
-          colors={['#FB3440', '#EA1B29']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.ownBubble}
-        >
-          <Text style={styles.ownMessageText}>{text}</Text>
-          <View style={styles.ownMetaRow}>
-            <Text style={styles.ownTimeText}>{time}</Text>
-            <Ionicons
-              name="checkmark-done"
-              size={moderateScale(13)}
-              color="rgba(255, 255, 255, 0.9)"
+        <View style={styles.ownBubbleWrapper}>
+          <View style={styles.ownBubble}>
+            <LinearGradient
+              colors={['#FB3440', '#EA1B29']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFill}
             />
+            <Text style={styles.ownMessageText}>{text}</Text>
+            {Boolean(time) && (
+              <View style={styles.ownMetaRow}>
+                <Text style={styles.ownTimeText}>{time}</Text>
+              </View>
+            )}
           </View>
-        </LinearGradient>
+        </View>
       </View>
     );
   }
@@ -64,9 +62,11 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({
 
       <View style={styles.otherBubble}>
         <Text style={styles.otherMessageText}>{text}</Text>
-        <View style={styles.otherMetaRow}>
-          <Text style={styles.otherTimeText}>{time}</Text>
-        </View>
+        {Boolean(time) && (
+          <View style={styles.otherMetaRow}>
+            <Text style={styles.otherTimeText}>{time}</Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -79,6 +79,14 @@ const styles = StyleSheet.create({
     marginVertical: moderateScale(4),
     maxWidth: '82%',
   },
+  ownBubbleWrapper: {
+    shadowColor: '#FB3440',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 3,
+    elevation: 2,
+    borderRadius: moderateScale(18),
+  },
   ownBubble: {
     paddingHorizontal: moderateScale(14),
     paddingTop: moderateScale(10),
@@ -87,11 +95,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: moderateScale(18),
     borderBottomLeftRadius: moderateScale(18),
     borderBottomRightRadius: moderateScale(4),
-    shadowColor: '#FB3440',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 3,
-    elevation: 2,
+    overflow: 'hidden',
+    minWidth: moderateScale(80),
   },
   ownMessageText: {
     fontSize: moderateScale(14),
@@ -150,6 +155,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: moderateScale(4),
     borderWidth: 1,
     borderColor: '#E8ECF2',
+    minWidth: moderateScale(70),
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,

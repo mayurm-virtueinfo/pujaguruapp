@@ -479,14 +479,6 @@ const BottomUserProfileScreen: React.FC = () => {
           <Text style={styles.sectionHeaderTitle}>{t('account_settings')}</Text>
           <View style={styles.sectionCard}>
             <MenuItem
-              icon="person-outline"
-              iconColor="#0284C7"
-              iconBg="#E0F2FE"
-              label={t('edit_profile')}
-              onPress={handleEditNavigation}
-            />
-            <View style={styles.rowDivider} />
-            <MenuItem
               icon="log-out-outline"
               iconColor="#DC2626"
               iconBg="#FEF2F2"

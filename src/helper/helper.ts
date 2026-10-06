@@ -2,11 +2,34 @@ import { Message } from '../screens/Users/UserChatScreen/UserChatScreen';
 
 export const LOCATION_UPDATED_EVENT = 'LOCATION_UPDATED';
 
+const parseIncomingTime = (timestamp?: string): string => {
+  if (timestamp) {
+    const d = new Date(timestamp);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    }
+  }
+  return new Date().toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
 export const handleIncomingMessage = (
   prevMessages: Message[],
   data: any,
   myUserId: any,
 ): Message[] => {
+  const msgTime = parseIncomingTime(data?.timestamp);
+  const msgText = data?.message || data?.content || '';
+  const msgId = data?.uuid || data?.id || `msg-${Date.now()}`;
+  const isOwn =
+    String(data?.sender_id) === String(myUserId) ||
+    String(data?.sender) === String(myUserId);
+
   // 1️⃣ Find the temporary message
   const tempMsg = prevMessages.find(msg => String(msg.id).startsWith('temp-'));
 
@@ -15,13 +38,10 @@ export const handleIncomingMessage = (
     return prevMessages.map(msg =>
       msg.id === tempMsg.id
         ? {
-            id: data.uuid,
-            text: data.message,
-            time: new Date(data.timestamp).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            }),
-            isOwn: data.sender_id == myUserId,
+            id: msgId,
+            text: msgText,
+            time: msgTime,
+            isOwn,
           }
         : msg,
     );
@@ -29,13 +49,10 @@ export const handleIncomingMessage = (
 
   // 3️⃣ If no temp found, just append the new message
   const newMsg: Message = {
-    id: data.uuid,
-    text: data.message,
-    time: new Date(data.timestamp).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-    }),
-    isOwn: data.sender_id == myUserId,
+    id: msgId,
+    text: msgText,
+    time: msgTime,
+    isOwn,
   };
 
   return [...prevMessages, newMsg];

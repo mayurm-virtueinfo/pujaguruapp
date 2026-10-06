@@ -197,17 +197,23 @@ const UserChatScreen: React.FC = () => {
     try {
       const response: any = await getMessageHistory(booking_id);
       if (response) {
-        const normalized = response.map((msg: any) => {
-          const dateObj = msg.timestamp ? new Date(msg.timestamp) : new Date();
+        const normalized = response.map((msg: any, idx: number) => {
+          let dateObj = new Date();
+          if (msg.timestamp) {
+            const parsed = new Date(msg.timestamp);
+            if (!isNaN(parsed.getTime())) {
+              dateObj = parsed;
+            }
+          }
           return {
-            id: msg.uuid,
-            text: msg.content || msg.message,
+            id: msg.uuid || msg.id || `msg-${idx}-${Date.now()}`,
+            text: msg.content || msg.message || '',
             time: dateObj.toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',
             }),
             date: formatDate(dateObj),
-            isOwn: msg.sender == myUserId,
+            isOwn: String(msg.sender) === String(myUserId),
           };
         });
         setMessages(normalized);
