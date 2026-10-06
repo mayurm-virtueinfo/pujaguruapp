@@ -630,5 +630,17 @@
   "chandra_kundli": "ચંદ્ર કુંડળી",
   "dasamsa_career_chart": "દશમાંશ કારકિર્દી કુંડળી",
   "create_first_kundli_desc": "ગ્રહોની સ્થિતિ અને ભવિષ્યફળ જાણવા માટે તમારી વૈદિક કુંડળી બનાવો.",
-  "ascendant_lagna": "લગ્ન (Lagna)"
+  "ascendant_lagna": "લગ્ન (Lagna)",
+  "no_pandit_available_sub": "હાલમાં આ સ્થળ માટે અન્ય કોઈ ગુરુજી ઉપલબ્ધ નથી.",
+  "no_matching_panditji": "કોઈ મેળ ખાતા પંડિતજી મળ્યા નથી",
+  "clear_search": "શોધ સાફ કરો",
+  "available_gurujis": "ઉપલબ્ધ ગુરુજીઓ",
+  "confirm_panditji": "પંડિતજીની પસંદગીની પુષ્ટિ કરો",
+  "select_panditji_prompt": "આગળ વધવા માટે પંડિતજી પસંદ કરો",
+  "estimated_dakshina": "દક્ષિણા",
+  "tap_to_select": "પસંદ કરો",
+  "tirth_place": "તીર્થ સ્થાન",
+  "TIRTH_PLACE": "તીર્થ સ્થાન",
+  "no_matching_puja": "કોઈ મેળ ખાતી પૂજા મળી નથી",
+  "no_puja_available_desc": "હાલમાં આ પંડિતજી માટે કોઈ પૂજા ઉપલબ્ધ નથી."
 }

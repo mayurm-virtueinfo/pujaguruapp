@@ -614,5 +614,17 @@
   "chandra_kundli": "चंद्र कुंडली",
   "dasamsa_career_chart": "दशमांश करिअर कुंडली",
   "create_first_kundli_desc": "ग्रहांचे प्रभाव आणि भविष्य जाणून घेण्यासाठी तुमची वैदिक कुंडली तयार करा.",
-  "ascendant_lagna": "लग्न (Lagna)"
+  "ascendant_lagna": "लग्न (Lagna)",
+  "no_pandit_available_sub": "सध्या या स्थानासाठी इतर कोणतेही गुरुजी उपलब्ध नाहीत.",
+  "no_matching_panditji": "कोणतेही जुळणारे पंडितजी सापडले नाहीत",
+  "clear_search": "शोध साफ करा",
+  "available_gurujis": "उपलब्ध गुरुजी",
+  "confirm_panditji": "पंडितजींच्या निवडीची पुष्टी करा",
+  "select_panditji_prompt": "पुढे जाण्यासाठी पंडितजी निवडा",
+  "estimated_dakshina": "दक्षिणा",
+  "tap_to_select": "निवडा",
+  "tirth_place": "तीर्थ स्थान",
+  "TIRTH_PLACE": "तीर्थ स्थान",
+  "no_matching_puja": "कोणतीही जुळणारी पूजा सापडली नाही",
+  "no_puja_available_desc": "सध्या या पंडितजींसाठी कोणतीही पूजा उपलब्ध नाही."
 }

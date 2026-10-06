@@ -630,5 +630,17 @@
   "chandra_kundli": "Chandra Kundli",
   "dasamsa_career_chart": "Dasamsa Career Chart",
   "create_first_kundli_desc": "Generate your Vedic birth chart to get planetary insights and predictions.",
-  "ascendant_lagna": "Ascendant (Lagna)"
+  "ascendant_lagna": "Ascendant (Lagna)",
+  "no_pandit_available_sub": "Currently no other Guruji is available for this location.",
+  "no_matching_panditji": "No Matching Panditji",
+  "clear_search": "Clear Search",
+  "available_gurujis": "Available Gurujis",
+  "confirm_panditji": "Confirm Panditji Selection",
+  "select_panditji_prompt": "Choose a Panditji to proceed",
+  "estimated_dakshina": "Dakshina",
+  "tap_to_select": "Select",
+  "tirth_place": "Tirth Place",
+  "TIRTH_PLACE": "Tirth Place",
+  "no_matching_puja": "No matching puja found",
+  "no_puja_available_desc": "No pujas available for this Panditji at the moment."
 }

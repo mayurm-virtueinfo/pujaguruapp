@@ -7,13 +7,11 @@ import {
   StatusBar,
   Image,
   TouchableOpacity,
-  Platform,
   RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { moderateScale } from 'react-native-size-matters';
 import { COLORS } from '../../../theme/theme';
 import PrimaryButton from '../../../components/PrimaryButton';
@@ -85,7 +83,10 @@ const ConfirmPujaDetails: React.FC = () => {
       translationCacheRef.current.set(currentLanguage, translatedData);
       setPujaDetails(translatedData);
     } catch (error) {
-      console.error('Error fetching puja details in ConfirmPujaDetails:', error);
+      console.error(
+        'Error fetching puja details in ConfirmPujaDetails:',
+        error,
+      );
       setPujaDetails(null);
     } finally {
       setLoading(false);
@@ -122,7 +123,7 @@ const ConfirmPujaDetails: React.FC = () => {
           });
         }
       }
-    } catch (_e) {}
+    } catch {}
     return dateStr;
   };
 
@@ -299,19 +300,11 @@ const ConfirmPujaDetails: React.FC = () => {
                         {pandit.pandit_name}
                       </Text>
                       <Text style={styles.panditSubtext}>
-                        {pandit.mobile ? `+91 ${pandit.mobile}` : 'Verified Panditji'}
+                        {pandit.mobile
+                          ? `+91 ${pandit.mobile}`
+                          : 'Verified Panditji'}
                       </Text>
                     </View>
-
-                    {!isAutoMode && (
-                      <TouchableOpacity
-                        style={styles.changePanditButton}
-                        onPress={onChoosePanditClick}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.changePanditButtonText}>Change</Text>
-                      </TouchableOpacity>
-                    )}
                   </View>
                 </View>
               ) : (
@@ -472,7 +465,9 @@ const ConfirmPujaDetails: React.FC = () => {
                     </View>
                     <View style={styles.detailCol}>
                       <Text style={styles.detailLabel}>
-                        {t('venue_address', { defaultValue: 'Venue / Address' })}
+                        {t('venue_address', {
+                          defaultValue: 'Venue / Address',
+                        })}
                       </Text>
                       <Text style={styles.detailValue} numberOfLines={3}>
                         {pujaDetails.address ||
@@ -515,9 +510,14 @@ const ConfirmPujaDetails: React.FC = () => {
                   <View style={styles.itemPillsRow}>
                     <View style={styles.itemPill}>
                       <Text style={styles.itemPillLabel}>
-                        {t('panditji_items', { defaultValue: 'Panditji Items' })}:
+                        {t('panditji_items', {
+                          defaultValue: 'Panditji Items',
+                        })}
+                        :
                       </Text>
-                      <Text style={styles.itemPillCount}>{panditItemsCount}</Text>
+                      <Text style={styles.itemPillCount}>
+                        {panditItemsCount}
+                      </Text>
                     </View>
                     <View style={styles.itemPill}>
                       <Text style={styles.itemPillLabel}>
@@ -573,9 +573,12 @@ const ConfirmPujaDetails: React.FC = () => {
                     <Text style={styles.paymentAmount}>
                       ₹{' '}
                       {pujaDetails.amount
-                        ? parseFloat(pujaDetails.amount).toLocaleString('en-IN', {
-                            minimumFractionDigits: 0,
-                          })
+                        ? parseFloat(pujaDetails.amount).toLocaleString(
+                            'en-IN',
+                            {
+                              minimumFractionDigits: 0,
+                            },
+                          )
                         : '0'}
                     </Text>
                     {pujaDetails.payment_status === 'success' && (
@@ -825,19 +828,6 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.Sen_Regular,
     color: '#64748B',
     marginTop: moderateScale(2),
-  },
-  changePanditButton: {
-    paddingHorizontal: moderateScale(12),
-    paddingVertical: moderateScale(6),
-    borderRadius: moderateScale(10),
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  changePanditButtonText: {
-    fontSize: moderateScale(12.5),
-    fontFamily: Fonts.Sen_SemiBold,
-    color: COLORS.primary,
   },
 
   // Auto assign row
