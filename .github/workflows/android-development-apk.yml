@@ -51,6 +51,9 @@ jobs:
 
           echo "Version Validation Passed: versionName=$VERSION_NAME, versionCode=$VERSION_CODE"
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Setup Node.js (22.x)
         uses: actions/setup-node@v4
         with:
@@ -111,7 +114,7 @@ jobs:
           bundler-cache: true
 
       - name: Install Node Dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Reconstruct Development Environment (.env.development)
         shell: bash

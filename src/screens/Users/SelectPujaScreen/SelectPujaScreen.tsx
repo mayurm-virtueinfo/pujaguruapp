@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
@@ -8,15 +14,9 @@ import {
   StatusBar,
   TouchableOpacity,
   Image,
-  ViewStyle,
-  Platform,
+  TextInput,
 } from 'react-native';
-import {
-  COLORS,
-  THEMESHADOW,
-  COMMON_LIST_STYLE,
-  COMMON_CARD_STYLE,
-} from '../../../theme/theme';
+import { COLORS } from '../../../theme/theme';
 import { getPanditPujaList } from '../../../api/apiService';
 import Fonts from '../../../theme/fonts';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -28,7 +28,7 @@ import { useTranslation } from 'react-i18next';
 import CustomeLoader from '../../../components/CustomeLoader';
 import { useCommonToast } from '../../../common/CommonToast';
 import { UserHomeParamList } from '../../../navigation/User/UsetHomeStack';
-import Octicons from 'react-native-vector-icons/Octicons';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import PrimaryButton from '../../../components/PrimaryButton';
 import { translateData } from '../../../utils/TranslateData';
 
@@ -47,6 +47,13 @@ type ScreenNavigationProp = StackNavigationProp<
   'SelectPujaScreen'
 >;
 
+function formatPrice(priceStr: string | number | undefined): string {
+  if (!priceStr) return '0';
+  const num = typeof priceStr === 'number' ? priceStr : parseFloat(priceStr);
+  if (isNaN(num)) return String(priceStr);
+  return num % 1 === 0 ? num.toFixed(0) : num.toFixed(2);
+}
+
 const SelectPujaScreen: React.FC = () => {
   const inset = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
@@ -59,11 +66,11 @@ const SelectPujaScreen: React.FC = () => {
   const [pujaList, setPujaList] = useState<PujaItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [selectedPujaId, setSelectedPujaId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
   const navigation = useNavigation<ScreenNavigationProp>();
   const route = useRoute() as any;
-  const { panditId, panditName, panditImage, panditCity } = route?.params;
-
-  console.log('SelectPujaScreen route?.params :: ', route?.params);
+  const { panditId, panditName, panditImage, panditCity } = route?.params || {};
 
   const translationCacheRef = useRef<Map<string, any>>(new Map());
 
@@ -98,7 +105,7 @@ const SelectPujaScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [panditId, currentLanguage]);
+  }, [panditId, currentLanguage, showErrorToast]);
 
   useEffect(() => {
     fetchPujaList();
@@ -123,11 +130,19 @@ const SelectPujaScreen: React.FC = () => {
         panditImage,
         panditCity,
         poojaId: originalPuja?.pooja_id ?? selectedPujaId,
-        // poojaName: originalPuja?.pooja_name,
-        // poojaCaption: originalPuja?.pooja_caption,
       });
     }
   };
+
+  const filteredPujaList = useMemo(() => {
+    if (!searchQuery.trim()) return pujaList;
+    const query = searchQuery.toLowerCase().trim();
+    return pujaList.filter(
+      item =>
+        item.pooja_name?.toLowerCase().includes(query) ||
+        item.pooja_caption?.toLowerCase().includes(query),
+    );
+  }, [pujaList, searchQuery]);
 
   return (
     <SafeAreaView style={[styles.container, { paddingTop: inset.top }]}>
@@ -147,108 +162,208 @@ const SelectPujaScreen: React.FC = () => {
           style={styles.scrollView}
           contentContainerStyle={[
             styles.scrollViewContent,
-            { paddingBottom: moderateScale(65) + inset.bottom },
+            { paddingBottom: moderateScale(90) + inset.bottom },
           ]}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.pujaListSection}>
-            <Text style={styles.sectionTitle}>{t('select_puja')}</Text>
+          {/* 1. Selected Pandit Card (Context Header) */}
+          {panditName ? (
+            <View style={styles.panditCard}>
+              {panditImage ? (
+                <Image
+                  source={{ uri: panditImage }}
+                  style={styles.panditAvatar}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.panditAvatarPlaceholder}>
+                  <Ionicons name="person" size={20} color={COLORS.primary} />
+                </View>
+              )}
+              <View style={styles.panditInfo}>
+                <View style={styles.panditTitleRow}>
+                  <Text style={styles.panditName} numberOfLines={1}>
+                    {panditName}
+                  </Text>
+                  <View style={styles.verifiedBadge}>
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={12}
+                      color="#16A34A"
+                    />
+                    <Text style={styles.verifiedBadgeText}>Verified</Text>
+                  </View>
+                </View>
+                <Text style={styles.panditSubtitle} numberOfLines={1}>
+                  {panditCity
+                    ? `${panditCity} • Available for Bookings`
+                    : t('selected_panditji') || 'Selected Panditji'}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+
+          {/* 2. Section Header & Count Badge */}
+          <View style={styles.headerSection}>
+            <View style={styles.titleRow}>
+              <Text style={styles.sectionTitle}>{t('select_puja')}</Text>
+              {pujaList.length > 0 ? (
+                <View style={styles.countBadge}>
+                  <Text style={styles.countBadgeText}>
+                    {filteredPujaList.length}{' '}
+                    {filteredPujaList.length === 1 ? 'Puja' : 'Pujas'}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
             <Text style={styles.sectionSubtitle}>
               {t('choose_the_puja_you_wish_to_book_from_the_list_below')}
             </Text>
-            <View style={[styles.pujaListContainer, COMMON_LIST_STYLE]}>
-              {pujaList.length === 0 ? (
-                <View style={{ padding: 24, alignItems: 'center' }}>
-                  <Text
-                    style={{
-                      color: COLORS.pujaTextSecondary,
-                      fontFamily: Fonts.Sen_Regular,
-                    }}
+          </View>
+
+          {/* 3. Search Bar (when list is sizable) */}
+          {pujaList.length > 3 ? (
+            <View style={styles.searchContainer}>
+              <Ionicons
+                name="search-outline"
+                size={18}
+                color="#9CA3AF"
+                style={styles.searchIcon}
+              />
+              <TextInput
+                style={styles.searchInput}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder={t('search_puja') || 'Search puja by name...'}
+                placeholderTextColor="#9CA3AF"
+                clearButtonMode="while-editing"
+              />
+              {searchQuery.length > 0 ? (
+                <TouchableOpacity
+                  onPress={() => setSearchQuery('')}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="close-circle" size={18} color="#9CA3AF" />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+          ) : null}
+
+          {/* 4. Puja Cards List */}
+          <View style={styles.pujaCardsList}>
+            {filteredPujaList.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Ionicons
+                  name={searchQuery ? 'search-outline' : 'flame-outline'}
+                  size={42}
+                  color="#CBD5E1"
+                />
+                <Text style={styles.emptyTitle}>
+                  {searchQuery
+                    ? t('no_matching_puja') || 'No matching puja found'
+                    : t('no_puja_found') || 'No puja found.'}
+                </Text>
+                <Text style={styles.emptySubtitle}>
+                  {searchQuery
+                    ? t('try_different_search') ||
+                      'Try searching with a different term.'
+                    : t('no_puja_available_desc') ||
+                      'No pujas available for this Panditji at the moment.'}
+                </Text>
+              </View>
+            ) : (
+              filteredPujaList.map(puja => {
+                const isSelected = selectedPujaId === puja.pooja_id;
+                return (
+                  <TouchableOpacity
+                    key={puja.pooja_id}
+                    style={[
+                      styles.pujaCard,
+                      isSelected && styles.pujaCardSelected,
+                    ]}
+                    activeOpacity={0.85}
+                    onPress={() => handleSelectPuja(puja.pooja_id)}
                   >
-                    {t('no_puja_found') || 'No puja found.'}
-                  </Text>
-                </View>
-              ) : (
-                pujaList.map((puja, idx) => (
-                  <React.Fragment key={puja.pooja_id}>
-                    <TouchableOpacity
-                      style={styles.item}
-                      activeOpacity={0.7}
-                      onPress={() => handleSelectPuja(puja.pooja_id)}
-                    >
-                      <View style={styles.imageContainer}>
+                    <View style={styles.imageWrapper}>
+                      {puja.pooja_image ? (
                         <Image
                           source={{ uri: puja.pooja_image }}
-                          style={styles.image}
+                          style={styles.pujaImage}
+                          resizeMode="cover"
                         />
-                      </View>
-                      <View style={{ flex: 1, marginLeft: 14 }}>
-                        <View style={styles.content}>
-                          <Text style={styles.title}>{puja.pooja_name}</Text>
-                          <Text
-                            style={styles.description}
-                            numberOfLines={2}
-                            ellipsizeMode="tail"
-                          >
-                            {puja.pooja_caption}
+                      ) : (
+                        <View style={styles.pujaImagePlaceholder}>
+                          <Ionicons
+                            name="flame"
+                            size={24}
+                            color={COLORS.primary}
+                          />
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.cardContentCol}>
+                      <Text
+                        style={[
+                          styles.pujaTitle,
+                          isSelected && styles.pujaTitleSelected,
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {puja.pooja_name}
+                      </Text>
+                      {puja.pooja_caption ? (
+                        <Text
+                          style={styles.pujaCaption}
+                          numberOfLines={2}
+                          ellipsizeMode="tail"
+                        >
+                          {puja.pooja_caption}
+                        </Text>
+                      ) : null}
+
+                      <View style={styles.priceRow}>
+                        <Text style={styles.priceText}>
+                          ₹{formatPrice(puja.price_with_samagri)}
+                        </Text>
+                        <View style={styles.samagriBadge}>
+                          <Ionicons
+                            name="cube-outline"
+                            size={11}
+                            color="#B45309"
+                          />
+                          <Text style={styles.samagriBadgeText}>
+                            {t('with_samagri')}
                           </Text>
                         </View>
-                        <View style={styles.row}>
-                          <View
-                            style={{
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <Text style={styles.price}>
-                              ₹{parseFloat(puja.price_with_samagri).toFixed(2)}
-                            </Text>
-                            <Text style={styles.priceLabel}>
-                              {' '}
-                              {t('with_samagri')}
-                            </Text>
-                          </View>
-                        </View>
                       </View>
-                      <View
-                        style={{
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          marginLeft: 8,
-                        }}
-                      >
-                        <Octicons
-                          name={
-                            selectedPujaId === puja.pooja_id
-                              ? 'check-circle'
-                              : 'circle'
-                          }
-                          size={24}
-                          color={
-                            selectedPujaId === puja.pooja_id
-                              ? COLORS.primary
-                              : COLORS.inputBoder
-                          }
-                        />
-                      </View>
-                    </TouchableOpacity>
-                    {idx < pujaList.length - 1 && (
-                      <View>
-                        <View style={styles.separator} />
-                      </View>
-                    )}
-                  </React.Fragment>
-                ))
-              )}
-            </View>
+                    </View>
+
+                    <View style={styles.radioCol}>
+                      <Ionicons
+                        name={
+                          isSelected ? 'checkmark-circle' : 'ellipse-outline'
+                        }
+                        size={24}
+                        color={isSelected ? COLORS.primary : '#D1D5DB'}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
+            )}
           </View>
         </ScrollView>
-        {/* Fixed Next Button */}
+
+        {/* 5. Fixed Bottom Action Bar */}
         <View
           style={[
-            styles.bottomButtonContainerFixed,
+            styles.bottomBar,
             {
-              paddingBottom: moderateScale(16),
+              paddingBottom:
+                inset.bottom > 0 ? inset.bottom - 4 : verticalScale(14),
             },
           ]}
         >
@@ -256,7 +371,7 @@ const SelectPujaScreen: React.FC = () => {
             title={t('next')}
             onPress={handleNext}
             disabled={!selectedPujaId}
-            activeOpacity={1}
+            style={styles.nextBtn}
           />
         </View>
       </View>
@@ -275,129 +390,274 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: moderateScale(30),
     borderTopRightRadius: moderateScale(30),
     overflow: 'hidden',
-    paddingVertical: 24,
   },
   scrollView: {
     flex: 1,
   },
-  scrollViewContent: {},
-  recommendedSection: {},
-  sectionTitle: {
-    color: COLORS.primaryTextDark,
-    fontFamily: Fonts.Sen_SemiBold,
-    fontSize: 18,
-    marginBottom: 5,
+  scrollViewContent: {
+    paddingHorizontal: moderateScale(20),
+    paddingTop: moderateScale(20),
   },
-  sectionSubtitle: {
-    color: COLORS.pujaTextSecondary,
-    fontFamily: Fonts.Sen_Regular,
-    fontSize: 15,
-    marginBottom: 5,
-  },
-  pujaListSection: {
-    paddingHorizontal: 24,
-  },
-  pujaListContainer: {
+
+  /* Pandit Header Card */
+  panditCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: COLORS.white,
-    borderRadius: 14,
-    marginTop: 10,
+    borderRadius: moderateScale(14),
+    padding: moderateScale(12),
+    marginBottom: moderateScale(16),
+    borderWidth: 1,
+    borderColor: '#ECEFF1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  detailContainer: {
-    width: '100%',
+  panditAvatar: {
+    width: moderateScale(46),
+    height: moderateScale(46),
+    borderRadius: moderateScale(23),
+    backgroundColor: '#F3F4F6',
   },
-  item: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    ...(COMMON_CARD_STYLE as ViewStyle),
-  },
-  imageContainer: {
-    width: 80,
-    height: 80,
-  },
-  image: {
-    width: 80,
-    height: 86,
-    borderRadius: 8,
-  },
-  content: {
-    flex: 1,
-  },
-  row: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexDirection: 'row',
-  },
-  title: {
-    color: COLORS.primaryTextDark,
-    fontFamily: Fonts.Sen_Bold,
-    fontSize: 15,
-  },
-  description: {
-    color: COLORS.pujaCardSubtext,
-    fontFamily: Fonts.Sen_Regular,
-    fontSize: 13,
-    fontWeight: '400',
-    paddingTop: 6,
-  },
-  price: {
-    color: COLORS.pujaCardPrice,
-    fontFamily: Fonts.Sen_Bold,
-    fontSize: 16,
-  },
-  priceWithout: {
-    color: COLORS.pujaCardSubtext,
-    fontFamily: Fonts.Sen_Bold,
-    fontSize: 15,
-    marginLeft: 8,
-  },
-  priceLabel: {
-    color: COLORS.pujaCardSubtext,
-    fontFamily: Fonts.Sen_Regular,
-    fontSize: 12,
-    marginLeft: 2,
-  },
-  button: {
-    backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 24,
+  panditAvatarPlaceholder: {
+    width: moderateScale(46),
+    height: moderateScale(46),
+    borderRadius: moderateScale(23),
+    backgroundColor: '#FEE2E2',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  buttonText: {
+  panditInfo: {
+    flex: 1,
+    marginLeft: moderateScale(12),
+  },
+  panditTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(6),
+  },
+  panditName: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Bold,
     color: COLORS.primaryTextDark,
-    textAlign: 'center',
+    flexShrink: 1,
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: moderateScale(6),
+    paddingVertical: verticalScale(2),
+    borderRadius: moderateScale(10),
+    gap: 3,
+  },
+  verifiedBadgeText: {
+    fontSize: moderateScale(10),
+    fontFamily: Fonts.Sen_Medium,
+    color: '#15803D',
+  },
+  panditSubtitle: {
+    fontSize: moderateScale(12),
     fontFamily: Fonts.Sen_Regular,
-    fontSize: 15,
-    textTransform: 'uppercase',
+    color: '#6B7280',
+    marginTop: verticalScale(2),
   },
-  separator: {
+
+  /* Section Header */
+  headerSection: {
+    marginBottom: moderateScale(14),
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: verticalScale(4),
+  },
+  sectionTitle: {
+    color: COLORS.primaryTextDark,
+    fontFamily: Fonts.Sen_Bold,
+    fontSize: moderateScale(18),
+    letterSpacing: -0.3,
+  },
+  countBadge: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: moderateScale(9),
+    paddingVertical: verticalScale(3),
+    borderRadius: moderateScale(12),
+  },
+  countBadgeText: {
+    fontSize: moderateScale(11),
+    fontFamily: Fonts.Sen_Medium,
+    color: '#4B5563',
+  },
+  sectionSubtitle: {
+    color: '#6C7278',
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(13),
+    lineHeight: moderateScale(18),
+  },
+
+  /* Search Bar */
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(12),
+    paddingHorizontal: moderateScale(12),
+    height: moderateScale(42),
+    marginBottom: moderateScale(14),
+    borderWidth: 1,
+    borderColor: '#ECEFF1',
+  },
+  searchIcon: {
+    marginRight: moderateScale(8),
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: moderateScale(13.5),
+    fontFamily: Fonts.Sen_Regular,
+    color: COLORS.primaryTextDark,
+    paddingVertical: 0,
+  },
+
+  /* Puja Cards List */
+  pujaCardsList: {
+    gap: moderateScale(12),
+  },
+  pujaCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(14),
+    padding: moderateScale(12),
+    borderWidth: 1.5,
+    borderColor: '#ECEFF1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  pujaCardSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: '#FFF9F9',
+  },
+  imageWrapper: {
+    width: moderateScale(72),
+    height: moderateScale(72),
+    borderRadius: moderateScale(10),
+    overflow: 'hidden',
+    backgroundColor: '#F3F4F6',
+  },
+  pujaImage: {
     width: '100%',
-    height: 1,
-    backgroundColor: COLORS.border,
+    height: '100%',
   },
-  bottomButtonContainerFixed: {
+  pujaImagePlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFF1F2',
+  },
+  cardContentCol: {
+    flex: 1,
+    marginLeft: moderateScale(12),
+    paddingRight: moderateScale(6),
+  },
+  pujaTitle: {
+    color: COLORS.primaryTextDark,
+    fontFamily: Fonts.Sen_Bold,
+    fontSize: moderateScale(15),
+    marginBottom: verticalScale(2),
+  },
+  pujaTitleSelected: {
+    color: COLORS.primary,
+  },
+  pujaCaption: {
+    color: '#6B7280',
+    fontFamily: Fonts.Sen_Regular,
+    fontSize: moderateScale(12),
+    lineHeight: moderateScale(16),
+    marginBottom: verticalScale(6),
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: moderateScale(8),
+  },
+  priceText: {
+    color: COLORS.primaryTextDark,
+    fontFamily: Fonts.Sen_Bold,
+    fontSize: moderateScale(15),
+  },
+  samagriBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+    paddingHorizontal: moderateScale(6),
+    paddingVertical: verticalScale(2),
+    borderRadius: moderateScale(6),
+  },
+  samagriBadgeText: {
+    fontSize: moderateScale(10.5),
+    fontFamily: Fonts.Sen_Medium,
+    color: '#B45309',
+  },
+  radioCol: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: moderateScale(8),
+  },
+
+  /* Empty State */
+  emptyContainer: {
+    backgroundColor: COLORS.white,
+    borderRadius: moderateScale(14),
+    paddingVertical: moderateScale(36),
+    paddingHorizontal: moderateScale(20),
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ECEFF1',
+  },
+  emptyTitle: {
+    fontSize: moderateScale(15),
+    fontFamily: Fonts.Sen_Bold,
+    color: COLORS.primaryTextDark,
+    marginTop: verticalScale(10),
+    marginBottom: verticalScale(4),
+  },
+  emptySubtitle: {
+    fontSize: moderateScale(12.5),
+    fontFamily: Fonts.Sen_Regular,
+    color: '#9CA3AF',
+    textAlign: 'center',
+  },
+
+  /* Bottom Bar */
+  bottomBar: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
     backgroundColor: COLORS.pujaBackground,
-    paddingHorizontal: moderateScale(24),
+    borderTopWidth: 1,
+    borderTopColor: '#F0ECE6',
+    paddingHorizontal: moderateScale(20),
+    paddingTop: verticalScale(8),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 8,
   },
-  nextButton: {
-    backgroundColor: COLORS.primaryBackgroundButton,
-    borderRadius: moderateScale(10),
-    paddingVertical: verticalScale(16),
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nextButtonText: {
-    fontSize: moderateScale(15),
-    fontFamily: Fonts.Sen_Medium,
-    color: COLORS.primaryTextDark,
-    textTransform: 'uppercase',
+  nextBtn: {
+    marginTop: 0,
   },
 });
 

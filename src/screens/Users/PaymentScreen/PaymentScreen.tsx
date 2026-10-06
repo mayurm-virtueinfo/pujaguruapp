@@ -7,14 +7,13 @@ import {
   StatusBar,
   TouchableOpacity,
   Image,
-  Platform,
   Alert,
   BackHandler,
   Modal,
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
-import { moderateScale, scale, verticalScale } from 'react-native-size-matters';
+import { moderateScale, scale } from 'react-native-size-matters';
 import PrimaryButton from '../../../components/PrimaryButton';
 import {
   COLORS,

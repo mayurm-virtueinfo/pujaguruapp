@@ -1,25 +1,17 @@
-import {
-  useNavigation,
-  useNavigationState,
-  useRoute,
-  DrawerActions,
-} from '@react-navigation/native';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import {
   View,
   Text,
   TouchableOpacity,
   StatusBar,
   StyleSheet,
-  Platform,
 } from 'react-native';
-import {SafeAreaView, useSafeAreaInsets} from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import React from 'react';
-import LinearGradient from 'react-native-linear-gradient';
-import {COLORS} from '../theme/theme';
+import { COLORS } from '../theme/theme';
 import Fonts from '../theme/fonts';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 import Feather from 'react-native-vector-icons/Feather';
 
 interface UserCustomHeaderProps {
@@ -57,9 +49,8 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
   onCalendarPress,
   onVideoButtonPress,
 }) => {
-  const {t, i18n} = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation();
-  const inset = useSafeAreaInsets();
 
   const handleBackPress = () => {
     if (onBackPress) {
@@ -91,102 +82,108 @@ const UserCustomHeader: React.FC<UserCustomHeaderProps> = ({
           // {paddingTop: Platform.OS === 'android' ? inset.top : 0},
           // {height: Platform.OS === 'ios' ? 50 : 100},
         ]}> */}
-        {/* Header Content */}
-        <View style={styles.headerContainer}>
-          <View style={styles.leftContainer}>
-            {showBackButton && (
-              <TouchableOpacity
-                onPress={handleBackPress}
-                style={styles.iconButton}>
-                <Ionicons name="chevron-back" size={24} color={COLORS.white} />
-              </TouchableOpacity>
-            )}
-            {showMenuButton && (
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.dispatch(DrawerActions.toggleDrawer())
-                }
-                style={styles.iconButton}>
-                <Ionicons name="menu" size={24} color={COLORS.white} />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View style={styles.titleContainer}>
-            <Text style={styles.titleText}>{title}</Text>
-          </View>
-
-          <View style={styles.rightContainer}>
-            {showCalendarButton && (
-              <TouchableOpacity
-                onPress={onCalendarPress}
-                style={styles.iconButton}>
-                <Ionicons
-                  name="calendar-outline"
-                  size={24}
-                  color={COLORS.white}
-                />
-              </TouchableOpacity>
-            )}
-            {showBellButton && (
-              <TouchableOpacity
-                onPress={handleNotificationPress}
-                style={styles.iconButton}>
-                <MaterialIcons
-                  name="notifications"
-                  size={24}
-                  color={COLORS.white}
-                />
-              </TouchableOpacity>
-            )}
-            {showCirclePlusButton && (
-              <TouchableOpacity onPress={onPlusPress} style={styles.iconButton}>
-                <Ionicons
-                  name="add-circle-outline"
-                  size={24}
-                  color={COLORS.white}
-                />
-              </TouchableOpacity>
-            )}
-            {showCallButton && (
-              <TouchableOpacity
-                onPress={() => console.log('Call Icon pressed')}
-                style={styles.iconButton}>
-                <Ionicons name="call-outline" size={24} color={COLORS.white} />
-              </TouchableOpacity>
-            )}
-            {showVideoCallButton && (
-              <TouchableOpacity
-                onPress={onVideoButtonPress}
-                style={styles.iconButton}>
-                <Ionicons
-                  name="videocam-outline"
-                  size={24}
-                  color={COLORS.white}
-                />
-              </TouchableOpacity>
-            )}
-            {showSliderButton && (
-              <TouchableOpacity
-                onPress={() => console.log('Slider Icon pressed')}
-                style={styles.iconButton}>
-                <Feather
-                  name="sliders"
-                  size={24}
-                  color={COLORS.white}
-                  style={{transform: [{rotate: '270deg'}]}}
-                />
-              </TouchableOpacity>
-            )}
-            {showSkipButton && (
-              <TouchableOpacity
-                onPress={() => console.log('Call Icon pressed')}
-                style={styles.iconButton}>
-                <Text style={styles.skipButton}>{t('skip')}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+      {/* Header Content */}
+      <View style={styles.headerContainer}>
+        <View style={styles.leftContainer}>
+          {showBackButton && (
+            <TouchableOpacity
+              onPress={handleBackPress}
+              style={styles.iconButton}
+            >
+              <Ionicons name="chevron-back" size={24} color={COLORS.white} />
+            </TouchableOpacity>
+          )}
+          {showMenuButton && (
+            <TouchableOpacity
+              onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
+              style={styles.iconButton}
+            >
+              <Ionicons name="menu" size={24} color={COLORS.white} />
+            </TouchableOpacity>
+          )}
         </View>
+
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleText}>{title}</Text>
+        </View>
+
+        <View style={styles.rightContainer}>
+          {showCalendarButton && (
+            <TouchableOpacity
+              onPress={onCalendarPress}
+              style={styles.iconButton}
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={24}
+                color={COLORS.white}
+              />
+            </TouchableOpacity>
+          )}
+          {showBellButton && (
+            <TouchableOpacity
+              onPress={handleNotificationPress}
+              style={styles.iconButton}
+            >
+              <MaterialIcons
+                name="notifications"
+                size={24}
+                color={COLORS.white}
+              />
+            </TouchableOpacity>
+          )}
+          {showCirclePlusButton && (
+            <TouchableOpacity onPress={onPlusPress} style={styles.iconButton}>
+              <Ionicons
+                name="add-circle-outline"
+                size={24}
+                color={COLORS.white}
+              />
+            </TouchableOpacity>
+          )}
+          {showCallButton && (
+            <TouchableOpacity
+              onPress={() => console.log('Call Icon pressed')}
+              style={styles.iconButton}
+            >
+              <Ionicons name="call-outline" size={24} color={COLORS.white} />
+            </TouchableOpacity>
+          )}
+          {showVideoCallButton && (
+            <TouchableOpacity
+              onPress={onVideoButtonPress}
+              style={styles.iconButton}
+            >
+              <Ionicons
+                name="videocam-outline"
+                size={24}
+                color={COLORS.white}
+              />
+            </TouchableOpacity>
+          )}
+          {showSliderButton && (
+            <TouchableOpacity
+              onPress={() => console.log('Slider Icon pressed')}
+              style={styles.iconButton}
+            >
+              <Feather
+                name="sliders"
+                size={24}
+                color={COLORS.white}
+                style={{ transform: [{ rotate: '270deg' }] }}
+              />
+            </TouchableOpacity>
+          )}
+          {showSkipButton && (
+            <TouchableOpacity
+              onPress={() => console.log('Call Icon pressed')}
+              style={styles.iconButton}
+            >
+              <Text style={styles.skipButton}>{t('skip')}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
       {/* </LinearGradient> */}
     </>
   );

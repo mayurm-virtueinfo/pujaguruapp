@@ -155,10 +155,7 @@ const ExpandableSection: React.FC<ExpandableSectionProps> = ({
 
   return (
     <View
-      style={[
-        styles.expandableCard,
-        expanded && { borderColor: iconColor },
-      ]}
+      style={[styles.expandableCard, expanded && { borderColor: iconColor }]}
       testID={testID}
     >
       <TouchableOpacity
@@ -168,10 +165,7 @@ const ExpandableSection: React.FC<ExpandableSectionProps> = ({
       >
         <View style={styles.expandableTitleRow}>
           <View
-            style={[
-              styles.expandableIconCircle,
-              { backgroundColor: badgeBg },
-            ]}
+            style={[styles.expandableIconCircle, { backgroundColor: badgeBg }]}
           >
             <Ionicons name={iconName} size={20} color={iconColor} />
           </View>
@@ -194,12 +188,7 @@ const ExpandableSection: React.FC<ExpandableSectionProps> = ({
                 },
               ]}
             >
-              <Text
-                style={[
-                  styles.badgePillText,
-                  { color: badgeTextColor },
-                ]}
-              >
+              <Text style={[styles.badgePillText, { color: badgeTextColor }]}>
                 {badgeCount} {badgeCount === 1 ? 'Item' : 'Items'}
               </Text>
             </View>
@@ -229,10 +218,7 @@ const ExpandableSection: React.FC<ExpandableSectionProps> = ({
                 color={iconColor}
               />
               <Text
-                style={[
-                  styles.expandableNoteText,
-                  { color: badgeTextColor },
-                ]}
+                style={[styles.expandableNoteText, { color: badgeTextColor }]}
               >
                 {noteText}
               </Text>
@@ -497,7 +483,11 @@ const PujaDetailsScreen: React.FC = () => {
           }
           style={styles.panditBadgeRow}
         >
-          <Ionicons name="person-circle-outline" size={14} color={COLORS.primary} />
+          <Ionicons
+            name="person-circle-outline"
+            size={14}
+            color={COLORS.primary}
+          />
           <Text style={styles.panditBadgeText}>{item.pandit_name}</Text>
         </TouchableOpacity>
       ) : null}
@@ -540,7 +530,10 @@ const PujaDetailsScreen: React.FC = () => {
   return (
     <SafeAreaView style={[styles.safeArea, { paddingTop: inset.top }]}>
       <CustomeLoader loading={loading} />
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primaryBackground} />
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={COLORS.primaryBackground}
+      />
       <UserCustomHeader title={t('puja_details')} showBackButton={true} />
 
       <View style={styles.mainContainer}>
@@ -571,15 +564,27 @@ const PujaDetailsScreen: React.FC = () => {
 
             <View style={styles.metaChipsRow}>
               <View style={styles.metaChip}>
-                <Ionicons name="time-outline" size={13} color={COLORS.primary} />
+                <Ionicons
+                  name="time-outline"
+                  size={13}
+                  color={COLORS.primary}
+                />
                 <Text style={styles.metaChipText}>1.5 - 2 Hours</Text>
               </View>
               <View style={styles.metaChip}>
-                <Ionicons name="home-outline" size={13} color={COLORS.primary} />
+                <Ionicons
+                  name="home-outline"
+                  size={13}
+                  color={COLORS.primary}
+                />
                 <Text style={styles.metaChipText}>At Your Location</Text>
               </View>
               <View style={styles.metaChip}>
-                <Ionicons name="sparkles-outline" size={13} color={COLORS.primary} />
+                <Ionicons
+                  name="sparkles-outline"
+                  size={13}
+                  color={COLORS.primary}
+                />
                 <Text style={styles.metaChipText}>Authentic Vidhi</Text>
               </View>
             </View>
@@ -595,7 +600,9 @@ const PujaDetailsScreen: React.FC = () => {
             </View>
             <View style={styles.aboutCard}>
               <Text style={styles.aboutText}>
-                {data?.description || data?.short_description || 'No description available'}
+                {data?.description ||
+                  data?.short_description ||
+                  'No description available'}
               </Text>
             </View>
           </View>
@@ -603,7 +610,11 @@ const PujaDetailsScreen: React.FC = () => {
           {/* 4. Pricing Option Cards */}
           <View style={styles.sectionContainer}>
             <View style={styles.sectionHeaderRow}>
-              <Ionicons name="pricetag-outline" size={18} color={COLORS.primary} />
+              <Ionicons
+                name="pricetag-outline"
+                size={18}
+                color={COLORS.primary}
+              />
               <Text style={styles.sectionTitle}>{t('pricing_options')}</Text>
             </View>
 
@@ -621,7 +632,9 @@ const PujaDetailsScreen: React.FC = () => {
                         isSelected && styles.pricingCardSelected,
                       ]}
                       activeOpacity={0.85}
-                      onPress={() => handlePricingSelect(option.id, option.price)}
+                      onPress={() =>
+                        handlePricingSelect(option.id, option.price)
+                      }
                     >
                       {isWithSamagri && (
                         <View style={styles.recommendedBadge}>
@@ -641,9 +654,7 @@ const PujaDetailsScreen: React.FC = () => {
                                 : 'ellipse-outline'
                             }
                             size={22}
-                            color={
-                              isSelected ? COLORS.primary : COLORS.border
-                            }
+                            color={isSelected ? COLORS.primary : COLORS.border}
                           />
                           <View style={styles.pricingTextColumn}>
                             <Text
@@ -707,7 +718,9 @@ const PujaDetailsScreen: React.FC = () => {
                 expanded={panditItemsExpanded}
                 onPress={() => setPanditItemsExpanded(prev => !prev)}
                 items={data?.pandit_arranged_items}
-                emptyText={t('no_pandit_items') || 'No items required by Panditji'}
+                emptyText={
+                  t('no_pandit_items') || 'No items required by Panditji'
+                }
                 testID="pandit-arranged-items-section"
               />
 
@@ -1121,17 +1134,22 @@ const styles = StyleSheet.create({
 
   /* Reviews */
   reviewsListContent: {
-    paddingVertical: 4,
+    paddingVertical: 8,
+    paddingHorizontal: 2,
     gap: 12,
   },
   reviewCard: {
-    ...THEMESHADOW.shadow,
     backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 14,
     width: 260,
     borderWidth: 1,
     borderColor: '#ECEFF1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
   },
   reviewHeader: {
     flexDirection: 'row',

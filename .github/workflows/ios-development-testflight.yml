@@ -60,6 +60,9 @@ jobs:
             echo "version_code not provided. Fastlane will auto-increment from latest TestFlight build (+1)."
           fi
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Setup Node.js (22.x)
         uses: actions/setup-node@v4
         with:
@@ -73,7 +76,7 @@ jobs:
           bundler-cache: true
 
       - name: Install Node Dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: CocoaPods Cache
         uses: actions/cache@v4

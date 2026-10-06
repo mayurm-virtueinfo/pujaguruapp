@@ -6,13 +6,18 @@ import {
   SafeAreaView,
   StatusBar,
   Image,
+  BackHandler,
 } from 'react-native';
-import React from 'react';
+import React, { useCallback } from 'react';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Fonts from '../../../theme/fonts';
 import { COLORS } from '../../../theme/theme';
 import { Images } from '../../../theme/Images';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  useNavigation,
+  CommonActions,
+  useFocusEffect,
+} from '@react-navigation/native';
 import UserCustomHeader from '../../../components/UserCustomHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -24,11 +29,49 @@ const BookingSuccessfullyScreen: React.FC = () => {
 
   const inset = useSafeAreaInsets();
   const navigation: any = useNavigation();
-  const route = useRoute();
 
-  const { booking, auto } = route.params as any;
+  const handleGoToHome = useCallback(() => {
+    const parentNavigator = navigation.getParent?.();
+    if (parentNavigator) {
+      parentNavigator.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'UserHomeNavigator',
+              state: {
+                index: 0,
+                routes: [{ name: 'UserHomeScreen' }],
+              },
+            },
+          ],
+        }),
+      );
+    } else {
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'UserHomeScreen' }],
+        }),
+      );
+    }
+  }, [navigation]);
 
-  console.log('auto', auto);
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        handleGoToHome();
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress,
+      );
+
+      return () => subscription.remove();
+    }, [handleGoToHome]),
+  );
 
   return (
     <SafeAreaView style={[styles.safeArea, { paddingTop: inset.top }]}>
@@ -52,11 +95,7 @@ const BookingSuccessfullyScreen: React.FC = () => {
             </Text>
             <PrimaryButton
               title={t('go_to_home')}
-              onPress={() => {
-                navigation.navigate('UserHomeNavigator', {
-                  screen: 'UserHomeScreen',
-                });
-              }}
+              onPress={handleGoToHome}
               style={styles.buttonContainer}
               textStyle={styles.buttonText}
             />

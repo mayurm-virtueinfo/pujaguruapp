@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   View,
   Text,
@@ -16,10 +22,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {
-  COLORS,
-  COMMON_LIST_STYLE,
-} from '../../../theme/theme';
+import { COLORS, COMMON_LIST_STYLE } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import Calendar, {
   MONTH_NAMES,
@@ -130,12 +133,18 @@ function addDaysToDate(dateStr: string, days: number): string {
 }
 
 function shouldSlotSetIsNextDay(slot: MuhuratSlot | null | undefined): boolean {
-  return slot && typeof slot.is_next_day === 'boolean' ? slot.is_next_day : false;
+  return slot && typeof slot.is_next_day === 'boolean'
+    ? slot.is_next_day
+    : false;
 }
 
 const getMuhuratAuspiciousBadge = (type: string) => {
   const norm = (type || '').toLowerCase();
-  if (norm.includes('amrit') || norm.includes('shubh') || norm.includes('good')) {
+  if (
+    norm.includes('amrit') ||
+    norm.includes('shubh') ||
+    norm.includes('good')
+  ) {
     return {
       bg: '#ECFDF5',
       border: '#A7F3D0',
@@ -198,7 +207,8 @@ const PujaBookingScreen: React.FC = () => {
   const currentLanguage = i18n.language;
   const { showErrorToast } = useCommonToast();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation<StackNavigationProp<UserPoojaListParamList>>();
+  const navigation =
+    useNavigation<StackNavigationProp<UserPoojaListParamList>>();
 
   const initialDateStr = useMemo(() => formatDateYYYYMMDD(new Date()), []);
   const initialDateObj = useMemo(() => new Date(), []);
@@ -273,9 +283,13 @@ const PujaBookingScreen: React.FC = () => {
   }, [currentLanguage, description]);
 
   const [selectedSlot, setSelectedSlot] = useState<string>('');
-  const [selectedSlotObj, setSelectedSlotObj] = useState<MuhuratSlot | null>(null);
+  const [selectedSlotObj, setSelectedSlotObj] = useState<MuhuratSlot | null>(
+    null,
+  );
   const [additionalNotes, setAdditionalNotes] = useState<string>('');
-  const [selectedDate, setSelectedDate] = useState<number>(initialDateObj.getDate());
+  const [selectedDate, setSelectedDate] = useState<number>(
+    initialDateObj.getDate(),
+  );
   const [selectedDateString, setSelectedDateString] = useState<string>(
     panditId ? '' : initialDateStr,
   );
@@ -285,7 +299,9 @@ const PujaBookingScreen: React.FC = () => {
     })} ${initialDateObj.getFullYear()}`,
   );
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const [panditjiSelection, setPanditjiSelection] = useState<'automatic' | 'manual'>('automatic');
+  const [panditjiSelection, setPanditjiSelection] = useState<
+    'automatic' | 'manual'
+  >('automatic');
   const [loading, setLoading] = useState<boolean>(false);
   const [muhuratLoading, setMuhuratLoading] = useState<boolean>(false);
   const [location, setLocation] = useState<StoredLocation | null>(null);
@@ -342,6 +358,7 @@ const PujaBookingScreen: React.FC = () => {
     if (panditId) {
       fetchPanditAvailableDate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [panditId]);
 
   const fetchLocation = async () => {
@@ -360,7 +377,9 @@ const PujaBookingScreen: React.FC = () => {
     if (!panditId) return;
     try {
       setLoading(true);
-      const response: PanditAvailabilityResponse = await getPanditAvailability(panditId);
+      const response: PanditAvailabilityResponse = await getPanditAvailability(
+        panditId,
+      );
       const data = response?.data;
 
       if (data && Array.isArray(data)) {
@@ -884,7 +903,10 @@ const PujaBookingScreen: React.FC = () => {
             !availableDates.includes(dateString)
           ) {
             showErrorToast(
-              t('no_available_date_for_pandit', 'No available date for selected pandit.'),
+              t(
+                'no_available_date_for_pandit',
+                'No available date for selected pandit.',
+              ),
             );
             return;
           }
@@ -940,7 +962,10 @@ const PujaBookingScreen: React.FC = () => {
           );
           if (!effectiveLat || !effectiveLng) {
             showErrorToast(
-              t('location_not_found', 'Location not found. Please set your location first.'),
+              t(
+                'location_not_found',
+                'Location not found. Please set your location first.',
+              ),
             );
           }
         },
@@ -960,7 +985,10 @@ const PujaBookingScreen: React.FC = () => {
       };
 
   const venueTitle = tirth
-    ? selectTirthPlaceName || translatedPoojaName || t('tirth_place') || 'Tirth Place'
+    ? selectTirthPlaceName ||
+      translatedPoojaName ||
+      t('tirth_place') ||
+      'Tirth Place'
     : selectAddressName || t('my_place') || 'My Place';
 
   const venueSubtitle = tirth
@@ -1127,14 +1155,14 @@ const PujaBookingScreen: React.FC = () => {
                   <View style={styles.legendContainer}>
                     <View style={styles.legendItem}>
                       <View style={styles.currentDateIndicator} />
-                      <Text style={styles.legendText}>
+                      <Text style={styles.legendText} numberOfLines={1}>
                         {t('current_date') || 'Today'}
                       </Text>
                     </View>
 
                     <View style={styles.legendItem}>
                       <View style={styles.selectedDateIndicator} />
-                      <Text style={styles.legendText}>
+                      <Text style={styles.legendText} numberOfLines={1}>
                         {t('selected_date') || 'Selected'}
                       </Text>
                     </View>
@@ -1142,7 +1170,7 @@ const PujaBookingScreen: React.FC = () => {
                     {panditId ? (
                       <View style={styles.legendItem}>
                         <View style={styles.availableDateIndicator} />
-                        <Text style={styles.legendText}>
+                        <Text style={styles.legendText} numberOfLines={1}>
                           {t('available_date') || 'Available'}
                         </Text>
                       </View>
@@ -1154,7 +1182,12 @@ const PujaBookingScreen: React.FC = () => {
               {/* 3. MUHURAT TIME SLOTS */}
               <View style={styles.sectionBlock}>
                 <View style={styles.sectionHeaderRow}>
-                  <View style={[styles.sectionIconBadge, { backgroundColor: '#FEF3C7' }]}>
+                  <View
+                    style={[
+                      styles.sectionIconBadge,
+                      { backgroundColor: '#FEF3C7' },
+                    ]}
+                  >
                     <Ionicons
                       name="sunny"
                       size={moderateScale(15)}
@@ -1197,7 +1230,7 @@ const PujaBookingScreen: React.FC = () => {
                   </View>
                 ) : (
                   <View style={styles.slotsGrid}>
-                    {muhurats.map((slot) => {
+                    {muhurats.map(slot => {
                       const slotKey = `${slot.start}_${slot.end}_${slot.type}`;
                       const isSelected = selectedSlot === slotKey;
                       const isNextDay = shouldSlotSetIsNextDay(slot);
@@ -1270,9 +1303,7 @@ const PujaBookingScreen: React.FC = () => {
                                     : 'ellipse-outline'
                                 }
                                 size={moderateScale(22)}
-                                color={
-                                  isSelected ? COLORS.primary : '#D1D5DB'
-                                }
+                                color={isSelected ? COLORS.primary : '#D1D5DB'}
                               />
                             </View>
                           </View>
@@ -1307,7 +1338,12 @@ const PujaBookingScreen: React.FC = () => {
               {/* 4. ADDITIONAL NOTES */}
               <View style={styles.sectionBlock}>
                 <View style={styles.sectionHeaderRow}>
-                  <View style={[styles.sectionIconBadge, { backgroundColor: '#F3F4F6' }]}>
+                  <View
+                    style={[
+                      styles.sectionIconBadge,
+                      { backgroundColor: '#F3F4F6' },
+                    ]}
+                  >
                     <Ionicons
                       name="document-text-outline"
                       size={moderateScale(15)}
@@ -1394,6 +1430,7 @@ const PujaBookingScreen: React.FC = () => {
               }
               onPress={handleNextButtonPress}
               style={styles.primaryBtn}
+              disabled={!selectedSlot || loading}
             />
           </View>
         </KeyboardAvoidingView>
@@ -1610,12 +1647,14 @@ const styles = StyleSheet.create({
   calendarWrapper: {},
   legendContainer: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
+    justifyContent: 'center',
+    gap: moderateScale(8),
     marginTop: verticalScale(10),
     backgroundColor: COLORS.white,
-    paddingVertical: verticalScale(10),
-    paddingHorizontal: moderateScale(10),
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: moderateScale(8),
     borderRadius: moderateScale(14),
     borderWidth: 1,
     borderColor: '#F3F4F6',
@@ -1623,38 +1662,41 @@ const styles = StyleSheet.create({
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: moderateScale(5),
-    flex: 1,
-    justifyContent: 'center',
+    gap: moderateScale(6),
+    backgroundColor: '#F9FAFB',
+    paddingHorizontal: moderateScale(10),
+    paddingVertical: verticalScale(5),
+    borderRadius: moderateScale(20),
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   currentDateIndicator: {
-    width: moderateScale(12),
-    height: moderateScale(12),
-    borderRadius: moderateScale(6),
+    width: moderateScale(10),
+    height: moderateScale(10),
+    borderRadius: moderateScale(5),
     backgroundColor: COLORS.primaryBackgroundButton,
     flexShrink: 0,
   },
   selectedDateIndicator: {
-    width: moderateScale(12),
-    height: moderateScale(12),
-    borderRadius: moderateScale(6),
+    width: moderateScale(10),
+    height: moderateScale(10),
+    borderRadius: moderateScale(5),
     backgroundColor: COLORS.primary,
     flexShrink: 0,
   },
   availableDateIndicator: {
-    width: moderateScale(12),
-    height: moderateScale(12),
-    borderRadius: moderateScale(6),
+    width: moderateScale(10),
+    height: moderateScale(10),
+    borderRadius: moderateScale(5),
     borderWidth: 1.5,
     borderColor: COLORS.gradientEnd,
     backgroundColor: COLORS.white,
     flexShrink: 0,
   },
   legendText: {
-    fontSize: moderateScale(11),
+    fontSize: moderateScale(11.5),
     fontFamily: Fonts.Sen_Medium,
     color: COLORS.primaryTextDark,
-    flexShrink: 1,
   },
 
   // 3. MUHURAT SLOTS
@@ -1843,4 +1885,3 @@ const styles = StyleSheet.create({
 });
 
 export default PujaBookingScreen;
-

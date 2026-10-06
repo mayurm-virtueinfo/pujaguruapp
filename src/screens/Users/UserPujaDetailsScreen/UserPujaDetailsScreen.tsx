@@ -37,7 +37,6 @@ import {
 import { translateData, translateText } from '../../../utils/TranslateData';
 import CustomeLoader from '../../../components/CustomeLoader';
 import { useWebSocket } from '../../../context/WebSocketContext';
-import ChatIcon from '../../../assets/svg/chat.svg';
 import Clipboard from '@react-native-clipboard/clipboard';
 
 type PanditDataType = {
@@ -740,7 +739,11 @@ const UserPujaDetailsScreen: React.FC = () => {
                           color={COLORS.primary}
                         />
                       ) : (
-                        <ChatIcon width={22} height={22} />
+                        <Ionicons
+                          name="chatbubble-ellipses"
+                          size={moderateScale(21)}
+                          color={isInProgress ? '#94A3B8' : COLORS.primary}
+                        />
                       )}
                     </TouchableOpacity>
                   </View>

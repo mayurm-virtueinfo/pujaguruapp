@@ -13,6 +13,7 @@ import { COLORS } from '../../../theme/theme';
 import Fonts from '../../../theme/fonts';
 import PrimaryButton from '../../../components/PrimaryButton';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { UserPoojaListParamList } from '../../../navigation/User/UserPoojaListNavigator';
@@ -235,9 +236,9 @@ const PlaceSelectionScreen: React.FC = () => {
                     : styles.iconContainerTirthInactive,
                 ]}
               >
-                <Ionicons
-                  name="water"
-                  size={22}
+                <MaterialIcons
+                  name="temple-hindu"
+                  size={24}
                   color={selectedPlaceId === 2 ? '#EA580C' : '#4B5563'}
                 />
               </View>

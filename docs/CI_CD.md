@@ -49,12 +49,35 @@ All release workflows are manually triggered via `workflow_dispatch` and accept 
    - **Release Version Code** (e.g. `17`)
 5. Click the green **Run workflow** button.
 
-### B. Via Local Fastlane Execution (Dry Run / Testing)
+### B. Prerequisites & Corepack Setup (Local & CI)
 
-Ensure gems are installed:
-```bash
-bundle install
+This project uses **Yarn Berry (v3.6.4)** specified via the `"packageManager"` field in `package.json`.
+
+If your environment has classic Yarn 1 (`1.22.x`) installed globally, you may see:
+```text
+error This project's package.json defines "packageManager": "yarn@3.6.4". However the current global version of Yarn is 1.22.22.
+Presence of the "packageManager" field indicates that the project is meant to be used with Corepack...
 ```
+
+#### How to Resolve:
+1. **Locally in terminal** (run once):
+   ```bash
+   corepack enable
+   ```
+   *Corepack is bundled with Node.js (v16.9+). Enabling it automatically switches `yarn` to the exact version declared in `package.json` (`3.6.4`).*
+
+2. **In GitHub Actions**:
+   All workflows in `.github/workflows/` have `corepack enable` configured prior to `actions/setup-node@v4`, followed by `yarn install --immutable`.
+
+3. **Install Dependencies**:
+   ```bash
+   yarn install
+   ```
+
+4. **Ensure Ruby Gems are installed**:
+   ```bash
+   bundle install
+   ```
 
 #### Android Development APK:
 ```bash

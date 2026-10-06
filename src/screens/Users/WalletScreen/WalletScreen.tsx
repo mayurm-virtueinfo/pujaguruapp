@@ -379,73 +379,76 @@ const WalletScreen: React.FC = () => {
           }
         >
           {/* 1. Modern Digital Wallet Card */}
-          <LinearGradient
-            colors={['#DC2626', '#B91C1C', '#881337']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.walletCardGradient}
-          >
-            {/* Ambient Graphic Circles */}
-            <View pointerEvents="none" style={styles.cardCircleOne} />
-            <View pointerEvents="none" style={styles.cardCircleTwo} />
+          <View style={styles.walletCardContainer}>
+            <View style={styles.walletCardInner}>
+              {/* Ambient Graphic Circles */}
+              <LinearGradient
+                colors={['#DC2626', '#B91C1C', '#881337']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              <View pointerEvents="none" style={styles.cardCircleOne} />
+              <View pointerEvents="none" style={styles.cardCircleTwo} />
 
-            {/* Top Row: User Name & Wallet Identity */}
-            <View style={styles.cardHeaderRow}>
-              <View style={styles.cardIdentityGroup}>
-                <View style={styles.walletIconCircle}>
+              {/* Top Row: User Name & Wallet Identity */}
+              <View style={styles.cardHeaderRow}>
+                <View style={styles.cardIdentityGroup}>
+                  <View style={styles.walletIconCircle}>
+                    <Ionicons
+                      name="wallet"
+                      size={moderateScale(16)}
+                      color="#FFFFFF"
+                    />
+                  </View>
+                  <View style={styles.cardNameWrapper}>
+                    <Text style={styles.cardMemberName} numberOfLines={1}>
+                      {walletData.user_name || 'PujaGuru Member'}
+                    </Text>
+                    <Text style={styles.cardSubText}>
+                      {t('wallet') || 'Spiritual Wallet'}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Middle: Available Balance Display */}
+              <View style={styles.cardBalanceSection}>
+                <Text style={styles.cardBalanceLabel}>
+                  {t('wallet_balance') || 'Available Balance'}
+                </Text>
+                <View style={styles.cardBalanceValueRow}>
                   <Ionicons
-                    name="wallet"
-                    size={moderateScale(16)}
-                    color="#FFFFFF"
+                    name="cash"
+                    size={moderateScale(28)}
+                    color="#FCD34D"
+                    style={styles.cardBalanceIcon}
                   />
-                </View>
-                <View style={styles.cardNameWrapper}>
-                  <Text style={styles.cardMemberName} numberOfLines={1}>
-                    {walletData.user_name || 'PujaGuru Member'}
-                  </Text>
-                  <Text style={styles.cardSubText}>
-                    {t('wallet') || 'Spiritual Wallet'}
+                  <Text style={styles.cardBalanceAmount}>
+                    {formatCurrency(walletData.balance)}
                   </Text>
                 </View>
               </View>
-            </View>
 
-            {/* Middle: Available Balance Display */}
-            <View style={styles.cardBalanceSection}>
-              <Text style={styles.cardBalanceLabel}>
-                {t('wallet_balance') || 'Available Balance'}
-              </Text>
-              <View style={styles.cardBalanceValueRow}>
-                <Ionicons
-                  name="cash"
-                  size={moderateScale(28)}
-                  color="#FCD34D"
-                  style={styles.cardBalanceIcon}
-                />
-                <Text style={styles.cardBalanceAmount}>
-                  {formatCurrency(walletData.balance)}
+              {/* Bottom Row: Rule Pill & Guarantee */}
+              <View style={styles.cardFooterRow}>
+                <View style={styles.cardRulePill}>
+                  <Ionicons
+                    name="sparkles"
+                    size={moderateScale(12)}
+                    color="#FCD34D"
+                    style={styles.timeIconMargin}
+                  />
+                  <Text style={styles.cardRulePillText} numberOfLines={1}>
+                    {t('wallet_points_rule') || '1 Point = ₹1 Rupee'}
+                  </Text>
+                </View>
+                <Text style={styles.cardSecureText} numberOfLines={1}>
+                  {t('secure_instant') || '100% Usable'}
                 </Text>
               </View>
             </View>
-
-            {/* Bottom Row: Rule Pill & Guarantee */}
-            <View style={styles.cardFooterRow}>
-              <View style={styles.cardRulePill}>
-                <Ionicons
-                  name="sparkles"
-                  size={moderateScale(12)}
-                  color="#FCD34D"
-                  style={styles.timeIconMargin}
-                />
-                <Text style={styles.cardRulePillText}>
-                  {t('wallet_points_rule') || '1 Point = ₹1 Rupee'}
-                </Text>
-              </View>
-              <Text style={styles.cardSecureText}>
-                {t('secure_instant') || '100% Usable'}
-              </Text>
-            </View>
-          </LinearGradient>
+          </View>
 
           {/* 2. Quick Metrics Row (Credited vs Debited) */}
           <View style={styles.metricsRow}>
@@ -774,17 +777,22 @@ const styles = StyleSheet.create({
   },
 
   // 1. Digital Wallet Card
-  walletCardGradient: {
+  walletCardContainer: {
     borderRadius: moderateScale(22),
-    padding: moderateScale(18),
-    position: 'relative',
-    overflow: 'hidden',
     shadowColor: '#DC2626',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 6,
     marginBottom: moderateScale(16),
+  },
+  walletCardInner: {
+    borderRadius: moderateScale(22),
+    paddingHorizontal: moderateScale(18),
+    paddingTop: moderateScale(18),
+    paddingBottom: moderateScale(14),
+    overflow: 'hidden',
+    position: 'relative',
   },
   cardCircleOne: {
     position: 'absolute',
@@ -807,7 +815,7 @@ const styles = StyleSheet.create({
   cardHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: moderateScale(16),
+    marginBottom: moderateScale(14),
   },
   cardIdentityGroup: {
     flexDirection: 'row',
@@ -837,7 +845,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.8)',
   },
   cardBalanceSection: {
-    marginBottom: moderateScale(18),
+    marginBottom: moderateScale(14),
   },
   cardBalanceLabel: {
     fontSize: moderateScale(12),
@@ -866,25 +874,29 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: moderateScale(10),
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.18)',
+    borderTopColor: 'rgba(255, 255, 255, 0.22)',
   },
   cardRulePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    backgroundColor: 'rgba(0, 0, 0, 0.18)',
     paddingHorizontal: moderateScale(8),
-    paddingVertical: moderateScale(3),
+    paddingVertical: moderateScale(4),
     borderRadius: moderateScale(8),
+    flexShrink: 1,
+    marginRight: moderateScale(8),
   },
   cardRulePillText: {
     fontSize: moderateScale(11.5),
     fontFamily: Fonts.Sen_Medium,
     color: '#FEF3C7',
+    flexShrink: 1,
   },
   cardSecureText: {
     fontSize: moderateScale(11),
     fontFamily: Fonts.Sen_Regular,
-    color: 'rgba(255, 255, 255, 0.75)',
+    color: 'rgba(255, 255, 255, 0.85)',
+    flexShrink: 0,
   },
 
   // 2. Metrics Row

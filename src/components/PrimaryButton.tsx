@@ -4,11 +4,11 @@ import {
   TouchableOpacity,
   Text,
   StyleSheet,
+  StyleProp,
   GestureResponderEvent,
   ViewStyle,
   TextStyle,
   ActivityIndicator,
-  View,
 } from 'react-native';
 import { COLORS } from '../theme/theme';
 import Fonts from '../theme/fonts';
@@ -18,7 +18,7 @@ interface Props {
   title: string;
   onPress: (event: GestureResponderEvent) => void;
   disabled?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   textStyle?: TextStyle;
   loading?: boolean;
   activeOpacity?: number;
