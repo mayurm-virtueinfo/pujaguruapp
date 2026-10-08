@@ -66,6 +66,7 @@ const CalendarScreen = () => {
     location: locationData,
     refreshLocation,
     permissionStatus,
+    isLocationServiceEnabled,
   } = useLocation();
 
   const inset = useSafeAreaInsets();
@@ -462,6 +463,7 @@ const CalendarScreen = () => {
           <InlineLocationRequest
             onAllow={refreshLocation}
             permissionStatus={permissionStatus}
+            isLocationServiceEnabled={isLocationServiceEnabled}
             message={
               t('enable_location_panchang_desc') ||
               'Enable location to see Panchang and Muhurat for your area'

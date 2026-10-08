@@ -88,6 +88,7 @@ const UserHomeScreen: React.FC = () => {
     location: contextLocation,
     refreshLocation,
     permissionStatus,
+    isLocationServiceEnabled,
     loading: locationLoading,
   } = useLocation();
 
@@ -398,6 +399,7 @@ const UserHomeScreen: React.FC = () => {
                     <InlineLocationRequest
                       onAllow={refreshLocation}
                       permissionStatus={permissionStatus}
+                      isLocationServiceEnabled={isLocationServiceEnabled}
                     />
                   ) : (
                     <Text style={styles.noPanditText}>

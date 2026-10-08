@@ -13,7 +13,7 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
-import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import { promptForEnableLocationIfNeeded } from 'react-native-android-location-enabler';
 
 export interface LocationData {
@@ -34,7 +34,9 @@ interface LocationContextType {
     | 'unavailable'
     | 'limited'
     | 'undetermined';
+  isLocationServiceEnabled: boolean;
   refreshLocation: () => Promise<void>;
+  openLocationSettings: (target?: 'app' | 'device') => Promise<void>;
 }
 
 const LocationContext = createContext<LocationContextType | undefined>(
@@ -55,17 +57,85 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({
     | 'limited'
     | 'undetermined'
   >('undetermined');
+  const [isLocationServiceEnabled, setIsLocationServiceEnabled] =
+    useState<boolean>(true);
+
+  /**
+   * Checks current permission status without prompting user.
+   */
+  const checkLocationPermissionOnly = async (): Promise<
+    LocationContextType['permissionStatus']
+  > => {
+    if (Platform.OS === 'ios') {
+      try {
+        const authResult = await Geolocation.requestAuthorization('whenInUse');
+        console.log(
+          '📱 [Location Debug] AppState check - Geolocation.requestAuthorization:',
+          authResult,
+        );
+        if (authResult === 'disabled') {
+          return 'unavailable';
+        }
+        const status = await check(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+        console.log(
+          '📱 [Location Debug] AppState check - react-native-permissions check:',
+          status,
+        );
+        return status;
+      } catch (e) {
+        console.warn('📱 [Location Debug] checkLocationPermissionOnly error:', e);
+        return 'undetermined';
+      }
+    }
+    try {
+      const fine = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      );
+      const coarse = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+      );
+      const res = fine || coarse ? 'granted' : 'denied';
+      console.log(
+        '🤖 [Location Debug] AppState check - Android permissions:',
+        res,
+      );
+      return res;
+    } catch {
+      return 'undetermined';
+    }
+  };
 
   /**
    * Requests location permission.
    * @returns Whether permission was granted.
    */
-  /* Simplifies permission requests */
   const requestLocationPermission = async (): Promise<
     LocationContextType['permissionStatus']
   > => {
     if (Platform.OS === 'ios') {
+      // First check if phone global location service is disabled
+      try {
+        const authResult = await Geolocation.requestAuthorization('whenInUse');
+        console.log(
+          '📱 [Location Debug] iOS Geolocation.requestAuthorization result:',
+          authResult,
+        );
+        if (authResult === 'disabled') {
+          setIsLocationServiceEnabled(false);
+          return 'unavailable';
+        }
+      } catch (err) {
+        console.warn(
+          '📱 [Location Debug] iOS Geolocation.requestAuthorization err:',
+          err,
+        );
+      }
+
       const status = await request(PERMISSIONS.IOS.LOCATION_WHEN_IN_USE);
+      console.log(
+        '📱 [Location Debug] iOS react-native-permissions request status:',
+        status,
+      );
       return status;
     }
     // Android
@@ -77,6 +147,11 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({
       const fine = granted[PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION];
       const coarse =
         granted[PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION];
+
+      console.log('🤖 [Location Debug] Android Permissions.requestMultiple:', {
+        fine,
+        coarse,
+      });
 
       if (
         fine === PermissionsAndroid.RESULTS.GRANTED ||
@@ -94,21 +169,39 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({
 
       return 'denied';
     } catch (err) {
-      console.warn(err);
+      console.warn('🤖 [Location Debug] Android permission request error:', err);
       return 'denied';
     }
   };
 
   /* Simplifies GPS service check */
   const ensureLocationServicesEnabled = async (): Promise<boolean> => {
-    if (Platform.OS !== 'android') return true;
+    if (Platform.OS === 'ios') {
+      try {
+        const authResult = await Geolocation.requestAuthorization('whenInUse');
+        console.log(
+          '📱 [Location Debug] ensureLocationServicesEnabled (iOS):',
+          authResult,
+        );
+        return authResult !== 'disabled';
+      } catch (err) {
+        console.warn('📱 [Location Debug] iOS ensureLocationServicesEnabled error:', err);
+        return false;
+      }
+    }
+    // Android
     try {
       const result = await promptForEnableLocationIfNeeded({
         interval: 10000,
         waitForAccurate: false,
       });
+      console.log(
+        '🤖 [Location Debug] ensureLocationServicesEnabled (Android):',
+        result,
+      );
       return result === 'enabled' || result === 'already-enabled';
-    } catch {
+    } catch (err) {
+      console.warn('🤖 [Location Debug] Android promptForEnableLocationIfNeeded err:', err);
       return false;
     }
   };
@@ -117,16 +210,56 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({
   const getLocationWithFallback = (): Promise<LocationData> => {
     return new Promise((resolve, reject) => {
       Geolocation.getCurrentPosition(
-        pos =>
+        pos => {
+          console.log('✅ [Location Debug] Coordinates received:', {
+            lat: pos.coords.latitude,
+            lon: pos.coords.longitude,
+          });
           resolve({
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
             timestamp: new Date(pos.timestamp).toISOString(),
-          }),
-        err => reject(err),
+          });
+        },
+        err => {
+          console.warn(
+            '❌ [Location Debug] Geolocation.getCurrentPosition failed:',
+            err,
+          );
+          if (
+            err.code === 2 ||
+            err.message?.toLowerCase().includes('turned off') ||
+            err.message?.toLowerCase().includes('disabled')
+          ) {
+            setIsLocationServiceEnabled(false);
+            setPermissionStatus('unavailable');
+          }
+          reject(err);
+        },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 },
       );
     });
+  };
+
+  /*
+   * Opens settings appropriately for app permissions vs device GPS.
+   */
+  const openLocationSettings = async (
+    target: 'app' | 'device' = 'app',
+  ): Promise<void> => {
+    if (Platform.OS === 'android' && target === 'device') {
+      try {
+        await Linking.sendIntent('android.settings.LOCATION_SOURCE_SETTINGS');
+        return;
+      } catch (err) {
+        console.warn('Failed to open Android location source settings:', err);
+      }
+    }
+    try {
+      await Linking.openSettings();
+    } catch (err) {
+      console.warn('Failed to open app settings:', err);
+    }
   };
 
   /*
@@ -143,21 +276,34 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({
 
       // 1. Permission
       const status = await requestLocationPermission();
+      console.log('📍 [Location Debug] Permission status resolved:', status);
       setPermissionStatus(status);
+
+      if (status === 'unavailable') {
+        setIsLocationServiceEnabled(false);
+        if (!backgroundUpdate) setLoading(false);
+        return null;
+      }
 
       if (status !== 'granted' && status !== 'limited') {
         if (!backgroundUpdate) setLoading(false);
         return null; // Permission denied or blocked
       }
 
-      // 2. Services (GPS)
-      const gpsEnabled = await ensureLocationServicesEnabled();
-      if (!gpsEnabled && Platform.OS === 'android') {
+      // 2. Services (GPS / iOS Master Switch)
+      const servicesEnabled = await ensureLocationServicesEnabled();
+      console.log(
+        '📍 [Location Debug] Location Services enabled result:',
+        servicesEnabled,
+      );
+      setIsLocationServiceEnabled(servicesEnabled);
+      if (!servicesEnabled) {
+        setPermissionStatus('unavailable');
         if (!backgroundUpdate) setLoading(false);
         return null;
       }
 
-      // 3. Fetch
+      // 3. Fetch Coordinates
       const freshLoc = await getLocationWithFallback();
       if (freshLoc) {
         const enrichedLoc = {
@@ -166,11 +312,11 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({
         };
 
         setLocation(enrichedLoc); // Update State
-        // Cache code removed
+        setIsLocationServiceEnabled(true);
         return enrichedLoc;
       }
     } catch (err: any) {
-      console.warn('fetchCurrentLocation failed:', err);
+      console.warn('❌ [Location Debug] fetchCurrentLocation error:', err);
       setError(err.message || 'Failed to fetch location');
     } finally {
       if (!backgroundUpdate) setLoading(false);
@@ -196,15 +342,18 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({
     loadLocation();
 
     // AppState listener to refresh on foreground
-    const subscription = AppState.addEventListener('change', nextAppState => {
+    const subscription = AppState.addEventListener('change', async nextAppState => {
       if (nextAppState === 'active') {
         console.log(
           '🔄 [Location] App Foregrounded. Checking permission status...',
         );
-        // Only auto-refresh if permission is already granted
-        // This prevents infinite loop when returning from settings with permission denied
-        if (permissionStatus === 'granted') {
-          loadLocation();
+        const currentPerm = await checkLocationPermissionOnly();
+        setPermissionStatus(currentPerm);
+
+        if (currentPerm === 'granted' || currentPerm === 'limited') {
+          await fetchCurrentLocation(true);
+        } else if (currentPerm === 'unavailable') {
+          setIsLocationServiceEnabled(false);
         }
       }
     });
@@ -222,9 +371,11 @@ export const LocationProvider: React.FC<{ children: ReactNode }> = ({
         loading,
         error,
         permissionStatus,
+        isLocationServiceEnabled,
         refreshLocation: async () => {
           await fetchCurrentLocation(false);
         }, // Manual Force Refresh
+        openLocationSettings,
       }}
     >
       {children}

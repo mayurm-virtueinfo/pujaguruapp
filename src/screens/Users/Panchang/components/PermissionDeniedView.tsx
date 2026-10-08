@@ -7,6 +7,7 @@ import {
   Dimensions,
   StatusBar,
   Linking,
+  Platform,
 } from 'react-native';
 import { COLORS } from '../../../../theme/theme';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -19,20 +20,74 @@ const { width } = Dimensions.get('window');
 interface PermissionDeniedViewProps {
   onRetry: () => void;
   isPermanent?: boolean;
+  isGlobalDisabled?: boolean;
 }
 
 const PermissionDeniedView: React.FC<PermissionDeniedViewProps> = ({
   onRetry,
   isPermanent = false,
+  isGlobalDisabled = false,
 }) => {
   const { t } = useTranslation();
 
-  const handlePrimaryAction = () => {
-    if (isPermanent) {
+  const handlePrimaryAction = async () => {
+    if (isGlobalDisabled) {
+      if (Platform.OS === 'android') {
+        try {
+          await Linking.sendIntent('android.settings.LOCATION_SOURCE_SETTINGS');
+          return;
+        } catch {
+          onRetry();
+          return;
+        }
+      }
+      // On iOS: User guide is shown. Do NOT redirect to App Settings. Retry / re-check.
+      onRetry();
+    } else if (isPermanent) {
+      // Only redirect to App Settings when app-level permission is permanently blocked!
       Linking.openSettings();
     } else {
       onRetry();
     }
+  };
+
+  const getTitle = (): string => {
+    if (isGlobalDisabled) {
+      return t('location_services_disabled') || 'Location Services Disabled';
+    }
+    return t('location_required') || 'Location Access Required';
+  };
+
+  const getSubtitle = (): string => {
+    if (isGlobalDisabled) {
+      if (Platform.OS === 'ios') {
+        return (
+          t('location_services_disabled_desc_ios') ||
+          'Location Services are turned off on your iPhone.\n\nTo enable:\n1. Open iPhone Settings\n2. Go to Privacy & Security\n3. Tap Location Services and turn it ON'
+        );
+      }
+      return (
+        t('gps_enable_message') ||
+        'GPS is currently disabled. Please enable GPS to use location-based features.'
+      );
+    }
+    return (
+      t('location_permission_desc') ||
+      'To provide you with accurate Panchang, Muhurat, and nearby Panditji recommendations, we need access to your location.'
+    );
+  };
+
+  const getButtonTitle = (): string => {
+    if (isGlobalDisabled) {
+      if (Platform.OS === 'android') {
+        return t('enable_gps') || 'Enable GPS';
+      }
+      return t('retry') || 'Retry';
+    }
+    if (isPermanent) {
+      return t('open_settings') || 'Open Settings';
+    }
+    return t('allow_access') || 'Allow Access';
   };
 
   return (
@@ -48,16 +103,19 @@ const PermissionDeniedView: React.FC<PermissionDeniedViewProps> = ({
       >
         <View style={styles.contentContainer}>
           <View style={styles.iconCircle}>
-            <Ionicons name="location" size={64} color={COLORS.primary} />
+            <Ionicons
+              name={isGlobalDisabled ? 'navigate-circle' : 'location'}
+              size={64}
+              color={COLORS.primary}
+            />
           </View>
           
           <Text style={styles.title}>
-            {t('location_required') || 'Location Access Required'}
+            {getTitle()}
           </Text>
           
           <Text style={styles.subtitle}>
-            {t('location_permission_desc') || 
-             'To provide you with accurate Panchang, Muhurat, and nearby Panditji recommendations, we need access to your location.'}
+            {getSubtitle()}
           </Text>
 
           <View style={styles.actionContainer}>
@@ -67,17 +125,21 @@ const PermissionDeniedView: React.FC<PermissionDeniedViewProps> = ({
               activeOpacity={0.8}
             >
               <Text style={styles.primaryButtonText}>
-                {isPermanent ? (t('open_settings') || 'Open Settings') : (t('allow_access') || 'Allow Access')}
+                {getButtonTitle()}
               </Text>
               <Ionicons 
-                name={isPermanent ? "settings-outline" : "navigate-circle-outline"} 
+                name={
+                  isGlobalDisabled || isPermanent
+                    ? 'settings-outline'
+                    : 'navigate-circle-outline'
+                } 
                 size={20} 
                 color={COLORS.primary} 
                 style={styles.buttonIcon}
               />
             </TouchableOpacity>
             
-            {!isPermanent && (
+            {!isPermanent && !isGlobalDisabled && (
               <TouchableOpacity 
                 style={styles.secondaryButton}
                 onPress={() => Linking.openSettings()}

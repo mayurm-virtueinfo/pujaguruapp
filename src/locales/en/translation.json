@@ -378,6 +378,7 @@
   "gps_enabled_successfully": "GPS enabled successfully!",
   "gps_disabled": "GPS is disabled",
   "location_services_disabled": "Location Services Disabled",
+  "location_services_disabled_desc_ios": "Location Services are turned off on your iPhone.\n\nTo enable:\n1. Open iPhone Settings\n2. Go to Privacy & Security\n3. Tap Location Services and turn it ON",
   "invalid_otp_length": "Please enter a valid 6-digit OTP",
   "past_booking_details": "Booking Details",
   "date": "Date",

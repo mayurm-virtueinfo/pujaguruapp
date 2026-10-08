@@ -120,6 +120,7 @@ const UserProfileScreen: React.FC = () => {
     location: locationData,
     refreshLocation,
     permissionStatus,
+    isLocationServiceEnabled,
     loading: locationLoading,
   } = useLocation();
 
@@ -436,6 +437,9 @@ const UserProfileScreen: React.FC = () => {
         <PermissionDeniedView
           onRetry={refreshLocation}
           isPermanent={permissionStatus === 'blocked'}
+          isGlobalDisabled={
+            permissionStatus === 'unavailable' || !isLocationServiceEnabled
+          }
         />
       </View>
     );

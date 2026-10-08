@@ -371,6 +371,7 @@
   "gps_enabled_successfully": "GPS यशस्वीरित्या सक्रिय झाले!",
   "gps_disabled": "GPS अकार्यान्वित केले आहे",
   "location_services_disabled": "स्थान सेवा अकार्यान्वित",
+  "location_services_disabled_desc_ios": "आपल्या iPhone वर स्थान सेवा बंद आहेत.\n\nसुरू करण्यासाठी:\n1. iPhone Settings उघडा\n2. Privacy & Security वर जा\n3. Location Services सुरू करा",
   "past_booking_details": "बुकिंग तपशील",
   "date": "तारीख",
   "puja_location": "पूजेचे ठिकाण",
