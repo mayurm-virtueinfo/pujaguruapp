@@ -52,6 +52,64 @@ interface PendingPuja {
   when_is_pooja?: string;
 }
 
+const formatBookingDate = (dateStr?: string | null): string => {
+  if (!dateStr) return '';
+  try {
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const monthIndex = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+
+      const now = new Date();
+      if (
+        now.getFullYear() === year &&
+        now.getMonth() === monthIndex &&
+        now.getDate() === day
+      ) {
+        return 'Today';
+      }
+
+      const months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      if (monthIndex >= 0 && monthIndex < 12 && !isNaN(day)) {
+        return `${months[monthIndex]} ${day < 10 ? '0' + day : day}, ${year}`;
+      }
+    }
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      const now = new Date();
+      if (
+        now.getFullYear() === d.getFullYear() &&
+        now.getMonth() === d.getMonth() &&
+        now.getDate() === d.getDate()
+      ) {
+        return 'Today';
+      }
+      return d.toLocaleDateString('en-US', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    }
+  } catch {
+    // fallback
+  }
+  return dateStr;
+};
+
 const UserHomeScreen: React.FC = () => {
   const navigation: any = useNavigation();
   const [pujas, setPujas] = useState<PujaItem[]>([]);
@@ -82,7 +140,11 @@ const UserHomeScreen: React.FC = () => {
   const lastFetched = useRef<number>(0);
   const lastFetchedLanguage = useRef<string>(currentLanguage);
   const refreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const secondaryRefreshTimeout = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
   const processedMessageCount = useRef(0);
+  const recentlyAcceptedIds = useRef<Set<string>>(new Set());
 
   const {
     location: contextLocation,
@@ -148,11 +210,16 @@ const UserHomeScreen: React.FC = () => {
           }
         }
 
-        const pendingArr: PendingPuja[] = Array.isArray(activeRes?.bookings)
+        const rawPending: PendingPuja[] = Array.isArray(activeRes?.bookings)
           ? activeRes.bookings
           : activeRes?.bookings
           ? [activeRes.bookings]
           : [];
+
+        // Exclude any booking that we already know was accepted
+        const pendingArr = rawPending.filter(
+          p => !recentlyAcceptedIds.current.has(String(p.id)),
+        );
 
         // 🔠 Translate all content
         const [tPujas, tInProgress, tPending, tRecommended]: any =
@@ -181,7 +248,16 @@ const UserHomeScreen: React.FC = () => {
             ]),
           ]);
 
-        setPujas(tPujas || []);
+        setPujas(currentPujas => {
+          const serverPujas: PujaItem[] = tPujas || [];
+          const serverIds = new Set(serverPujas.map(p => String(p.id)));
+          const preserved = currentPujas.filter(
+            p =>
+              recentlyAcceptedIds.current.has(String(p.id)) &&
+              !serverIds.has(String(p.id)),
+          );
+          return [...preserved, ...serverPujas];
+        });
         setInProgressPujas(tInProgress || []);
         setPendingPujas(tPending || []);
         setRecomendedPandits(tRecommended || []);
@@ -270,6 +346,68 @@ const UserHomeScreen: React.FC = () => {
     }
   }, [loadAllData, contextLocation, refreshLocation]);
 
+  // ⚡ Dedicated booking-only loader (bypasses GPS, recommended pandits, and concurrency lock)
+  const refreshBookingsOnly = useCallback(async () => {
+    try {
+      console.log(
+        '🔄 [UserHomeScreen] Fetching fresh booking data from server...',
+      );
+      const [upcomingRes, inProgressRes, activeRes]: any = await Promise.all([
+        getUpcomingPujas().catch(() => []),
+        getInProgress().catch(() => []),
+        getActivePuja().catch(() => ({ bookings: [] })),
+      ]);
+
+      const rawPending: PendingPuja[] = Array.isArray(activeRes?.bookings)
+        ? activeRes.bookings
+        : activeRes?.bookings
+        ? [activeRes.bookings]
+        : [];
+
+      // Exclude any booking that we already know was accepted
+      const pendingArr = rawPending.filter(
+        p => !recentlyAcceptedIds.current.has(String(p.id)),
+      );
+
+      const [tPujas, tInProgress, tPending]: any = await Promise.all([
+        translateData(upcomingRes, currentLanguage, [
+          'pooja_name',
+          'when_is_pooja',
+        ]),
+        translateData(inProgressRes, currentLanguage, ['pooja_name']),
+        Promise.all(
+          pendingArr.map(async p => {
+            if (p.pooja) {
+              const translatedPooja = await translateData(
+                p.pooja,
+                currentLanguage,
+                ['title', 'pooja_name'],
+              );
+              return { ...p, pooja: translatedPooja } as PendingPuja;
+            }
+            return p;
+          }),
+        ),
+      ]);
+
+      setPujas(currentPujas => {
+        const serverPujas: PujaItem[] = tPujas || [];
+        const serverIds = new Set(serverPujas.map(p => String(p.id)));
+        const preserved = currentPujas.filter(
+          p =>
+            recentlyAcceptedIds.current.has(String(p.id)) &&
+            !serverIds.has(String(p.id)),
+        );
+        return [...preserved, ...serverPujas];
+      });
+      setInProgressPujas(tInProgress || []);
+      setPendingPujas(tPending || []);
+      console.log('✅ [UserHomeScreen] Booking data refreshed successfully!');
+    } catch (err) {
+      console.warn('⚠️ [UserHomeScreen] Failed to refresh bookings:', err);
+    }
+  }, [currentLanguage]);
+
   useEffect(() => {
     // If no new messages, do nothing
     if (messages.length <= processedMessageCount.current) return;
@@ -281,9 +419,11 @@ const UserHomeScreen: React.FC = () => {
     newMessages.forEach(msg => {
       if (!msg) return;
 
-      const { type, action, booking_id } = msg;
+      const type = String(msg.type || '').toLowerCase();
+      const action = String(msg.action || '').toLowerCase();
+      const bookingId = msg.booking_id ?? msg.id;
 
-      // Check for specific update criteria
+      // Check for booking update criteria
       if (
         type === 'booking_update' &&
         (action === 'accepted' ||
@@ -292,24 +432,121 @@ const UserHomeScreen: React.FC = () => {
           action === 'cancelled')
       ) {
         console.log(
-          `✅ [WebSocket] Triggering refresh due to booking #${booking_id} update`,
+          `✅ [WebSocket] Received booking #${bookingId} update: action=${action}`,
         );
         shouldRefresh = true;
+
+        // ⚡ 1. Instant Optimistic UI State Updates (0ms lag)
+        if (action === 'accepted' && bookingId) {
+          console.log(
+            `⚡ [WebSocket Optimistic] Moving booking #${bookingId} to Upcoming Puja`,
+          );
+          recentlyAcceptedIds.current.add(String(bookingId));
+          // Auto-clear after 15 seconds once backend DB is well past committed
+          setTimeout(() => {
+            recentlyAcceptedIds.current.delete(String(bookingId));
+          }, 15000);
+
+          setPendingPujas(prev => {
+            const acceptedItem = prev.find(
+              p => String(p.id) === String(bookingId),
+            );
+            if (acceptedItem) {
+              const formattedDate =
+                acceptedItem.when_is_pooja ||
+                formatBookingDate(acceptedItem.booking_date);
+              const newUpcomingItem: PujaItem = {
+                id: acceptedItem.id,
+                pooja_name:
+                  acceptedItem.pooja?.title ||
+                  acceptedItem.pooja?.pooja_name ||
+                  'Puja',
+                pooja_image_url:
+                  acceptedItem.pooja?.image_url ||
+                  acceptedItem.pooja?.pooja_image_url ||
+                  '',
+                booking_date: acceptedItem.booking_date || '',
+                when_is_pooja: formattedDate,
+              };
+              setPujas(currentUpcoming => {
+                const exists = currentUpcoming.some(
+                  item => String(item.id) === String(acceptedItem.id),
+                );
+                if (exists) return currentUpcoming;
+                const updated = [...currentUpcoming, newUpcomingItem];
+                return updated.sort((a, b) => {
+                  const dateA = a.booking_date || '';
+                  const dateB = b.booking_date || '';
+                  if (dateA && dateB) return dateA.localeCompare(dateB);
+                  return 0;
+                });
+              });
+            }
+            return prev.filter(p => String(p.id) !== String(bookingId));
+          });
+        } else if (action === 'in_progress' && bookingId) {
+          console.log(
+            `⚡ [WebSocket Optimistic] Moving booking #${bookingId} to In-Progress`,
+          );
+          setPujas(prev => {
+            const item = prev.find(p => String(p.id) === String(bookingId));
+            if (item) {
+              setInProgressPujas(curr => {
+                const exists = curr.some(i => String(i.id) === String(item.id));
+                return exists ? curr : [item, ...curr];
+              });
+            }
+            return prev.filter(p => String(p.id) !== String(bookingId));
+          });
+        } else if (action === 'completed' && bookingId) {
+          console.log(
+            `⚡ [WebSocket Optimistic] Removing completed booking #${bookingId}`,
+          );
+          setInProgressPujas(prev =>
+            prev.filter(p => String(p.id) !== String(bookingId)),
+          );
+          setPujas(prev =>
+            prev.filter(p => String(p.id) !== String(bookingId)),
+          );
+        } else if (action === 'cancelled' && bookingId) {
+          console.log(
+            `⚡ [WebSocket Optimistic] Removing cancelled booking #${bookingId}`,
+          );
+          setPendingPujas(prev =>
+            prev.filter(p => String(p.id) !== String(bookingId)),
+          );
+          setPujas(prev =>
+            prev.filter(p => String(p.id) !== String(bookingId)),
+          );
+          setInProgressPujas(prev =>
+            prev.filter(p => String(p.id) !== String(bookingId)),
+          );
+        }
       }
     });
 
     // Update the tracker so we don't process these again
     processedMessageCount.current = messages.length;
 
-    // Trigger refresh if needed (debounced)
+    // 🔄 2. Server Sync to absorb backend database lag smoothly
     if (shouldRefresh) {
       if (refreshTimeout.current) clearTimeout(refreshTimeout.current);
+      if (secondaryRefreshTimeout.current)
+        clearTimeout(secondaryRefreshTimeout.current);
+
+      // Server sync at 2000ms after backend DB has committed
       refreshTimeout.current = setTimeout(() => {
-        console.log('🔄 Executing debounced refresh from WebSocket trigger');
-        onRefresh();
-      }, 1000);
+        console.log('🔄 [WebSocket] Executing server confirmation sync');
+        refreshBookingsOnly();
+      }, 2000);
     }
-  }, [messages, onRefresh]);
+
+    return () => {
+      if (refreshTimeout.current) clearTimeout(refreshTimeout.current);
+      if (secondaryRefreshTimeout.current)
+        clearTimeout(secondaryRefreshTimeout.current);
+    };
+  }, [messages, refreshBookingsOnly]);
 
   return (
     <View style={[styles.container, { paddingTop: inset.top }]}>
@@ -541,7 +778,8 @@ const UserHomeScreen: React.FC = () => {
                       <View style={styles.pujaTextContainer}>
                         <Text style={styles.pujaName}>{puja.pooja_name}</Text>
                         <Text style={styles.pujaDate}>
-                          {puja.when_is_pooja}
+                          {puja.when_is_pooja ||
+                            formatBookingDate(puja.booking_date)}
                         </Text>
                       </View>
                     </TouchableOpacity>
